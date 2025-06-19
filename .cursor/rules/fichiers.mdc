@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+description: Règles de traitement des fichiers uploadés (manuscrits)
+
+- Un projet peut contenir plusieurs fichiers
+- Stockage en local (chemin absolu sécurisé) ou bucket S3
+- Supprimer les fichiers sur suppression projet ou compte
+- Enregistrer `mimetype`, `filename`, `size` en DB
+- Vérifier les extensions (.doc, .docx, .pdf uniquement)

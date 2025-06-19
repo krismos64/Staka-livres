@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+description: Règles de conformité RGPD pour toutes les routes et actions
+
+- Toute suppression de compte supprime données ET fichiers
+- Export des données en JSON ou ZIP
+- Journalisation des suppressions et exports
+- Ajout du champ `consent` dans la table utilisateur
+- Token de confirmation pour suppression/export

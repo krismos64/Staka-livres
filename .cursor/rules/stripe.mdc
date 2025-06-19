@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+description: Règles spécifiques au paiement Stripe Checkout
+
+- Utiliser Stripe Checkout (paiement one-shot uniquement)
+- Stocker l’ID de session + metadata dans la DB
+- Sécuriser les webhooks (secret + signature)
+- Créer une facture PDF post-paiement (si besoin)
+- Ne jamais stocker les infos de carte

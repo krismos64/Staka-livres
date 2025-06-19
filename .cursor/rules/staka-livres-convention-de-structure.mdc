@@ -1,0 +1,25 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+description: Convention de structure du projet Staka-livres (MVC + validation + tests)
+
+
+Ce projet respecte une architecture modulaire MVC :
+
+- `routes/` ➜ routing REST Express
+- `controllers/` ➜ logique métier
+- `models/` ➜ Prisma + types TS
+- `middlewares/` ➜ auth, validation, logs
+- `sockets/` ➜ WebSocket events (client ↔ admin)
+- `utils/` ➜ helpers et outils
+- `prisma/` ➜ schema + migrations
+
+Chaque module (ex: user, projet, fichier) contient :
+- route dédiée
+- controller séparé
+- validation (express-validator ou Zod)
+- test associé
+
+Toutes les routes `/api/*` doivent être protégées par JWT.
