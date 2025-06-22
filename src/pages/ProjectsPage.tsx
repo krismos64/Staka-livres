@@ -20,6 +20,10 @@ interface Project {
   canDownload?: boolean;
 }
 
+interface ProjectsPageProps {
+  onNewProjectClick: () => void;
+}
+
 const projects: Project[] = [
   {
     id: 1,
@@ -147,7 +151,7 @@ function ProjectCard({ project }: { project: Project }) {
   );
 }
 
-function ProjectsPage() {
+function ProjectsPage({ onNewProjectClick }: ProjectsPageProps) {
   return (
     <section className="p-6">
       {/* Header */}
@@ -158,7 +162,10 @@ function ProjectsPage() {
             Gérez tous vos projets de correction et d'édition
           </p>
         </div>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-3 rounded-xl shadow-sm transition">
+        <button
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-3 rounded-xl shadow-sm transition"
+          onClick={onNewProjectClick}
+        >
           <i className="fas fa-plus mr-2"></i>
           Nouveau projet
         </button>

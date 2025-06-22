@@ -19,6 +19,7 @@ interface MainLayoutProps {
   onLogout: () => void;
   children: ReactNode;
   activeSection: SectionName; // Ajout pour la Sidebar
+  onNewProjectClick: () => void;
 }
 
 function MainLayout({
@@ -27,6 +28,7 @@ function MainLayout({
   onLogout,
   children,
   activeSection,
+  onNewProjectClick,
 }: MainLayoutProps) {
   return (
     <div>
@@ -40,6 +42,7 @@ function MainLayout({
         <Sidebar
           activeSection={activeSection}
           onSectionChange={onSectionChange}
+          onNewProjectClick={onNewProjectClick}
         />
         <main className="flex-1 p-6">{children}</main>
       </div>

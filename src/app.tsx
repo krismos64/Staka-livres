@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Dashboard from "./components/Dashboard";
 import LoginPage from "./components/LoginPage";
 import MainLayout from "./components/MainLayout";
+import ModalNouveauProjet from "./components/ModalNouveauProjet";
 import BillingPage from "./pages/BillingPage";
 import FilesPage from "./pages/FilesPage";
 import HelpPage from "./pages/HelpPage";
@@ -29,6 +30,8 @@ function App() {
   // Section active
   const [currentSection, setCurrentSection] =
     useState<SectionName>("dashboard");
+  // État pour le modal nouveau projet
+  const [showNewProjectModal, setShowNewProjectModal] = useState(false);
 
   // Gère la connexion
   const handleLogin = (e: React.FormEvent) => {
@@ -63,7 +66,11 @@ function App() {
       case "dashboard":
         return <Dashboard />;
       case "projects":
-        return <ProjectsPage />;
+        return (
+          <ProjectsPage
+            onNewProjectClick={() => setShowNewProjectModal(true)}
+          />
+        );
       case "messages":
         return <MessagesPage />;
       case "files":
@@ -84,14 +91,21 @@ function App() {
   return (
     <div className="App">
       {isLoggedIn ? (
-        <MainLayout
-          pageTitle={getPageTitle()}
-          onSectionChange={setCurrentSection}
-          onLogout={handleLogout}
-          activeSection={currentSection}
-        >
-          {renderSection()}
-        </MainLayout>
+        <>
+          <MainLayout
+            pageTitle={getPageTitle()}
+            onSectionChange={setCurrentSection}
+            onLogout={handleLogout}
+            activeSection={currentSection}
+            onNewProjectClick={() => setShowNewProjectModal(true)}
+          >
+            {renderSection()}
+          </MainLayout>
+          <ModalNouveauProjet
+            open={showNewProjectModal}
+            onClose={() => setShowNewProjectModal(false)}
+          />
+        </>
       ) : (
         <LoginPage onLogin={handleLogin} />
       )}

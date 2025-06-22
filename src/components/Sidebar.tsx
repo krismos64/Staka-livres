@@ -6,14 +6,21 @@ type SectionName =
   | "messages"
   | "files"
   | "billing"
-  | "help";
+  | "help"
+  | "profile"
+  | "settings";
 
 interface SidebarProps {
   activeSection: SectionName;
   onSectionChange: (section: SectionName) => void;
+  onNewProjectClick: () => void;
 }
 
-function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
+function Sidebar({
+  activeSection,
+  onSectionChange,
+  onNewProjectClick,
+}: SidebarProps) {
   return (
     <aside className="w-72 bg-white min-h-screen px-0 pt-10 border-r border-gray-200">
       <nav>
@@ -124,7 +131,10 @@ function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
             <h4 className="font-bold text-gray-900 mb-1 text-lg">
               Actions rapides
             </h4>
-            <button className="w-full bg-[#2563eb] hover:bg-[#2253e6] text-white text-lg font-semibold py-3 rounded-xl flex items-center justify-center gap-2 transition shadow-sm">
+            <button
+              className="w-full bg-[#2563eb] hover:bg-[#2253e6] text-white text-lg font-semibold py-3 rounded-xl flex items-center justify-center gap-2 transition shadow-sm"
+              onClick={onNewProjectClick}
+            >
               <i className="fas fa-plus"></i>
               Nouveau projet
             </button>
