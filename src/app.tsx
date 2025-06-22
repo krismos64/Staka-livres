@@ -4,8 +4,11 @@ import LoginPage from "./components/LoginPage";
 import MainLayout from "./components/MainLayout";
 import BillingPage from "./pages/BillingPage";
 import FilesPage from "./pages/FilesPage";
+import HelpPage from "./pages/HelpPage";
 import MessagesPage from "./pages/MessagesPage";
+import ProfilPage from "./pages/ProfilPage";
 import ProjectsPage from "./pages/ProjectsPage";
+import SettingsPage from "./pages/SettingsPage";
 
 import "./styles/global.css";
 
@@ -68,11 +71,11 @@ function App() {
       case "billing":
         return <BillingPage />;
       case "help":
-        return <div>Section Aide & Support (à développer)</div>;
+        return <HelpPage />;
       case "profile":
-        return <div>Section Profil (à développer)</div>;
+        return <ProfilPage />;
       case "settings":
-        return <div>Section Paramètres (à développer)</div>;
+        return <SettingsPage />;
       default:
         return <div>Section inconnue: {currentSection}</div>;
     }
