@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Dashboard from "./components/Dashboard";
 import LoginPage from "./components/LoginPage";
 import MainLayout from "./components/MainLayout";
+import BillingPage from "./pages/BillingPage";
 import FilesPage from "./pages/FilesPage";
 import MessagesPage from "./pages/MessagesPage";
 import ProjectsPage from "./pages/ProjectsPage";
@@ -65,7 +66,7 @@ function App() {
       case "files":
         return <FilesPage />;
       case "billing":
-        return <div>Section Facturation (à développer)</div>;
+        return <BillingPage />;
       case "help":
         return <div>Section Aide & Support (à développer)</div>;
       case "profile":
