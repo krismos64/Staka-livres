@@ -1,20 +1,20 @@
-FROM node:20
+# Image de base Node.js
+FROM node:20-alpine
 
-# Dossier de travail dans le conteneur
+# Définir le répertoire de travail
 WORKDIR /app
 
-# Copie des fichiers package.json + lock avant le reste
+# Copier les fichiers de dépendances
 COPY package*.json ./
 
-# Installation des dépendances
-RUN npm install -g typescript ts-node nodemon prisma && \
-    npm install
+# Installer les dépendances
+RUN npm install
 
-# Copie du reste du projet
+# Copier le code source
 COPY . .
 
-# Exposition du port
+# Exposer le port 3000
 EXPOSE 3000
 
-# Commande par défaut (overridden par docker-compose)
+# Commande pour démarrer l'application en mode développement
 CMD ["npm", "run", "dev"]
