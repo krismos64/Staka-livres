@@ -1,6 +1,7 @@
 import React from "react";
 import About from "../components/landing/About";
 import Contact from "../components/landing/Contact";
+import Excellence from "../components/landing/Excellence";
 import FAQ from "../components/landing/FAQ";
 import Footer from "../components/landing/Footer";
 import FreeSample from "../components/landing/FreeSample";
@@ -36,6 +37,9 @@ export default function LandingPage({ onAccessApp }: LandingPageProps) {
 
           {/* Testimonials Section */}
           <Testimonials />
+
+          {/* Excellence Section */}
+          <Excellence />
 
           {/* Packs Section */}
           <Packs />
@@ -95,7 +99,6 @@ export default function LandingPage({ onAccessApp }: LandingPageProps) {
                       Sections à migrer :
                     </h3>
                     <ul className="space-y-1 text-blue-700">
-                      <li>• Excellence Section</li>
                       <li>• Blog</li>
                     </ul>
                   </div>
@@ -141,6 +144,9 @@ export default function LandingPage({ onAccessApp }: LandingPageProps) {
                         • <code>TrustIndicators.tsx</code> ✅
                       </li>
                       <li>
+                        • <code>Excellence.tsx</code> ✅
+                      </li>
+                      <li>
                         • <code>Blog.tsx</code>
                       </li>
                     </ul>
@@ -167,7 +173,9 @@ export default function LandingPage({ onAccessApp }: LandingPageProps) {
                 <strong>Footer.tsx</strong> : Footer complet avec réseaux
                 sociaux, liens et newsletter !<br />✅{" "}
                 <strong>TrustIndicators.tsx</strong> : Badges de confiance avec
-                6 indicateurs de qualité !<br />
+                6 indicateurs de qualité !<br />✅{" "}
+                <strong>Excellence.tsx</strong> : Section excellence avec
+                statistiques et garanties !<br />
                 Le contenu complet de la maquette sera progressivement intégré
                 dans des composants React modulaires.
               </p>
