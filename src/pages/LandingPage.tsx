@@ -1,15 +1,23 @@
 import React from "react";
 import About from "../components/landing/About";
 import Contact from "../components/landing/Contact";
+import FAQ from "../components/landing/FAQ";
+import Footer from "../components/landing/Footer";
+import FreeSample from "../components/landing/FreeSample";
 import Hero from "../components/landing/Hero";
 import Navigation from "../components/landing/Navigation";
 import Packs from "../components/landing/Packs";
 import PricingCalculator from "../components/landing/PricingCalculator";
 import Services from "../components/landing/Services";
 import Testimonials from "../components/landing/Testimonials";
+import TrustIndicators from "../components/landing/TrustIndicators";
 import LayoutLanding from "../components/layout/LayoutLanding";
 
-export default function LandingPage() {
+interface LandingPageProps {
+  onAccessApp?: () => void;
+}
+
+export default function LandingPage({ onAccessApp }: LandingPageProps) {
   return (
     <LayoutLanding>
       <div className="bg-gray-50 text-gray-800 font-sans leading-relaxed">
@@ -19,6 +27,9 @@ export default function LandingPage() {
         <main id="main-content">
           {/* Hero Section */}
           <Hero />
+
+          {/* Trust Indicators Section */}
+          <TrustIndicators />
 
           {/* Services Section */}
           <Services />
@@ -35,8 +46,36 @@ export default function LandingPage() {
           {/* About Section */}
           <About />
 
+          {/* Free Sample Section */}
+          <FreeSample />
+
+          {/* FAQ Section */}
+          <FAQ />
+
           {/* Contact Section */}
           <Contact />
+
+          {/* Footer Section */}
+          <Footer />
+
+          {/* Accès temporaire à l'application */}
+          {onAccessApp && (
+            <section className="py-8 bg-blue-600 text-white text-center">
+              <div className="max-w-4xl mx-auto px-6">
+                <h3 className="text-xl font-bold mb-4">Accès Espace Client</h3>
+                <p className="mb-6">
+                  Déjà client ? Accédez à votre espace personnel
+                </p>
+                <button
+                  onClick={onAccessApp}
+                  className="bg-white text-blue-600 px-8 py-3 rounded-xl font-semibold hover:bg-gray-100 transition"
+                >
+                  <i className="fas fa-sign-in-alt mr-2"></i>
+                  Accéder à l'application
+                </button>
+              </div>
+            </section>
+          )}
 
           {/* Section temporaire indiquant que le reste sera découpé */}
           <section className="py-16 bg-white">
@@ -56,12 +95,8 @@ export default function LandingPage() {
                       Sections à migrer :
                     </h3>
                     <ul className="space-y-1 text-blue-700">
-                      <li>• Trust Indicators</li>
                       <li>• Excellence Section</li>
                       <li>• Blog</li>
-                      <li>• Free Sample Form</li>
-                      <li>• FAQ</li>
-                      <li>• Footer</li>
                     </ul>
                   </div>
                   <div>
@@ -91,19 +126,22 @@ export default function LandingPage() {
                         • <code>About.tsx</code> ✅
                       </li>
                       <li>
+                        • <code>FreeSample.tsx</code> ✅
+                      </li>
+                      <li>
                         • <code>Contact.tsx</code> ✅
                       </li>
                       <li>
-                        • <code>TrustIndicators.tsx</code>
+                        • <code>FAQ.tsx</code> ✅
+                      </li>
+                      <li>
+                        • <code>Footer.tsx</code> ✅
+                      </li>
+                      <li>
+                        • <code>TrustIndicators.tsx</code> ✅
                       </li>
                       <li>
                         • <code>Blog.tsx</code>
-                      </li>
-                      <li>
-                        • <code>FAQ.tsx</code>
-                      </li>
-                      <li>
-                        • <code>Footer.tsx</code>
                       </li>
                     </ul>
                   </div>
@@ -121,8 +159,15 @@ export default function LandingPage() {
                 <strong>PricingCalculator.tsx</strong> : Calculateur interactif
                 avec tarification dégressive !<br />✅{" "}
                 <strong>About.tsx</strong> : Présentation de l'équipe et moyens
-                de contact !<br />✅ <strong>Contact.tsx</strong> : Formulaire
-                de contact et coordonnées complètes !<br />
+                de contact !<br />✅ <strong>FreeSample.tsx</strong> :
+                Formulaire "10 pages gratuites" avec upload et validation !
+                <br />✅ <strong>Contact.tsx</strong> : Formulaire de contact et
+                coordonnées complètes !<br />✅ <strong>FAQ.tsx</strong> :
+                Questions fréquentes avec accordéon interactif !<br />✅{" "}
+                <strong>Footer.tsx</strong> : Footer complet avec réseaux
+                sociaux, liens et newsletter !<br />✅{" "}
+                <strong>TrustIndicators.tsx</strong> : Badges de confiance avec
+                6 indicateurs de qualité !<br />
                 Le contenu complet de la maquette sera progressivement intégré
                 dans des composants React modulaires.
               </p>

@@ -6,6 +6,7 @@ import BillingPage from "./pages/BillingPage";
 import Dashboard from "./pages/DashboardPage";
 import FilesPage from "./pages/FilesPage";
 import HelpPage from "./pages/HelpPage";
+import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import MessagesPage from "./pages/MessagesPage";
 import ProfilPage from "./pages/ProfilPage";
@@ -24,8 +25,12 @@ type SectionName =
   | "profile"
   | "settings";
 
+type AppMode = "landing" | "login" | "app";
+
 // Composant principal de l'application
 function App() {
+  // Mode de l'application : landing page par défaut
+  const [appMode, setAppMode] = useState<AppMode>("landing");
   // État pour la connexion
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   // Section active
@@ -38,12 +43,24 @@ function App() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggedIn(true);
+    setAppMode("app");
   };
 
   // Gère la déconnexion
   const handleLogout = () => {
     setIsLoggedIn(false);
     setCurrentSection("dashboard");
+    setAppMode("landing"); // Retour à la landing page
+  };
+
+  // Gère l'accès à l'application depuis la landing page
+  const handleAccessApp = () => {
+    setAppMode("login");
+  };
+
+  // Gère le retour à la landing page
+  const handleBackToLanding = () => {
+    setAppMode("landing");
   };
 
   // Mapping titre => section
@@ -92,7 +109,16 @@ function App() {
   return (
     <ToastProvider>
       <div className="App">
-        {isLoggedIn ? (
+        {appMode === "landing" && <LandingPage onAccessApp={handleAccessApp} />}
+
+        {appMode === "login" && (
+          <LoginPage
+            onLogin={handleLogin}
+            onBackToLanding={handleBackToLanding}
+          />
+        )}
+
+        {appMode === "app" && isLoggedIn && (
           <>
             <MainLayout
               pageTitle={getPageTitle()}
@@ -108,8 +134,6 @@ function App() {
               onClose={() => setShowNewProjectModal(false)}
             />
           </>
-        ) : (
-          <LoginPage onLogin={handleLogin} />
         )}
       </div>
     </ToastProvider>

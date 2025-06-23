@@ -18,13 +18,14 @@ const SignupForm = ({ onShowLogin }: { onShowLogin: () => void }) => (
 // --- Interface et Composant LoginPage ---
 interface LoginPageProps {
   onLogin: (e: React.FormEvent) => void;
+  onBackToLanding?: () => void;
 }
 
 /**
  * Page de connexion/inscription.
  * Ce composant gère l'affichage du formulaire de connexion ou d'inscription.
  */
-function LoginPage({ onLogin }: LoginPageProps) {
+function LoginPage({ onLogin, onBackToLanding }: LoginPageProps) {
   const [isShowingSignup, setIsShowingSignup] = useState(false);
 
   return (
@@ -36,6 +37,14 @@ function LoginPage({ onLogin }: LoginPageProps) {
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Espace Client</h1>
           <p className="text-blue-100">Staka Éditions</p>
+          {onBackToLanding && (
+            <button
+              onClick={onBackToLanding}
+              className="mt-4 text-blue-200 hover:text-white transition underline text-sm"
+            >
+              ← Retour à l'accueil
+            </button>
+          )}
         </div>
         {isShowingSignup ? (
           <SignupForm onShowLogin={() => setIsShowingSignup(false)} />
