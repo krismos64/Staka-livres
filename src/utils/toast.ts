@@ -1,3 +1,5 @@
+import React from "react";
+
 // Système de notifications toast pour l'application
 
 export type ToastType = "success" | "error" | "warning" | "info";
@@ -204,6 +206,3 @@ export const useToasts = () => {
     showToast,
   };
 };
-
-// Import de React pour le hook
-import React from "react";
