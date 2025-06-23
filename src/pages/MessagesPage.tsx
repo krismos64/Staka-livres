@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import ConversationList from "../components/ConversationList";
 import EmptyState from "../components/EmptyState";
-import MessageInput from "../components/MessageInput";
-import MessageThread from "../components/MessageThread";
+import MessageInput from "../components/forms/MessageInput";
+import ConversationList from "../components/messages/ConversationList";
+import MessageThread from "../components/messages/MessageThread";
 
 // Types TypeScript
 export interface User {

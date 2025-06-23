@@ -13,6 +13,9 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    restart: unless-stopped
     command: npm run dev
 
   # Si vous souhaitez ajouter une base de données plus tard,

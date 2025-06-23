@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import Dashboard from "./components/Dashboard";
-import LoginPage from "./components/LoginPage";
-import MainLayout from "./components/MainLayout";
-import ModalNouveauProjet from "./components/ModalNouveauProjet";
+import MainLayout from "./components/layout/MainLayout";
+import { ToastProvider } from "./components/layout/ToastProvider";
+import ModalNouveauProjet from "./components/modals/ModalNouveauProjet";
 import BillingPage from "./pages/BillingPage";
+import Dashboard from "./pages/Dashboard";
 import FilesPage from "./pages/FilesPage";
 import HelpPage from "./pages/HelpPage";
+import LoginPage from "./pages/LoginPage";
 import MessagesPage from "./pages/MessagesPage";
 import ProfilPage from "./pages/ProfilPage";
 import ProjectsPage from "./pages/ProjectsPage";
@@ -89,27 +90,29 @@ function App() {
   };
 
   return (
-    <div className="App">
-      {isLoggedIn ? (
-        <>
-          <MainLayout
-            pageTitle={getPageTitle()}
-            onSectionChange={setCurrentSection}
-            onLogout={handleLogout}
-            activeSection={currentSection}
-            onNewProjectClick={() => setShowNewProjectModal(true)}
-          >
-            {renderSection()}
-          </MainLayout>
-          <ModalNouveauProjet
-            open={showNewProjectModal}
-            onClose={() => setShowNewProjectModal(false)}
-          />
-        </>
-      ) : (
-        <LoginPage onLogin={handleLogin} />
-      )}
-    </div>
+    <ToastProvider>
+      <div className="App">
+        {isLoggedIn ? (
+          <>
+            <MainLayout
+              pageTitle={getPageTitle()}
+              onSectionChange={setCurrentSection}
+              onLogout={handleLogout}
+              activeSection={currentSection}
+              onNewProjectClick={() => setShowNewProjectModal(true)}
+            >
+              {renderSection()}
+            </MainLayout>
+            <ModalNouveauProjet
+              open={showNewProjectModal}
+              onClose={() => setShowNewProjectModal(false)}
+            />
+          </>
+        ) : (
+          <LoginPage onLogin={handleLogin} />
+        )}
+      </div>
+    </ToastProvider>
   );
 }
 

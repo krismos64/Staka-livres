@@ -16,5 +16,5 @@ COPY . .
 # Exposer le port 3000
 EXPOSE 3000
 
-# Commande pour démarrer l'application en mode développement
-CMD ["npm", "run", "dev"]
+# Commande pour lancer l'application en développement
+CMD npm run dev

@@ -1,9 +1,9 @@
 import React, { useCallback, useMemo, useState } from "react";
-import DeleteProjectModal from "../components/DeleteProjectModal";
-import EditProjectModal from "../components/EditProjectModal";
-import ProjectCard from "../components/ProjectCard";
-import ProjectDetailsModal from "../components/ProjectDetailsModal";
-import RateProjectModal from "../components/RateProjectModal";
+import DeleteProjectModal from "../components/modals/DeleteProjectModal";
+import EditProjectModal from "../components/modals/EditProjectModal";
+import ProjectDetailsModal from "../components/modals/ProjectDetailsModal";
+import RateProjectModal from "../components/modals/RateProjectModal";
+import ProjectCard from "../components/project/ProjectCard";
 
 // Types
 type ProjectStatus = "Terminé" | "En correction" | "En attente";

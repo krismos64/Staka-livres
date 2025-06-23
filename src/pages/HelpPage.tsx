@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import React, { ChangeEvent, FormEvent, useRef, useState } from "react";
+import { useToast } from "../components/layout/ToastProvider";
 
 // Mock FAQ (à remplacer par ta vraie source)
 const faqs = [
@@ -20,7 +22,7 @@ const faqs = [
   {
     question: "Comment télécharger mes fichiers corrigés ?",
     answer:
-      "Rendez-vous dans l’onglet « Mes fichiers » pour télécharger tous vos fichiers corrigés.",
+      "Rendez-vous dans l'onglet « Mes fichiers » pour télécharger tous vos fichiers corrigés.",
   },
   {
     question: "Que faire si je ne suis pas satisfait du résultat ?",
@@ -28,6 +30,19 @@ const faqs = [
       "Contactez le support : nous trouverons une solution personnalisée pour vous accompagner.",
   },
 ];
+
+// Config pour l'upload
+const MAX_FILE_SIZE_MB = 5;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+const ALLOWED_FILE_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+];
+const ALLOWED_EXTENSIONS_DISPLAY = ".pdf, .doc, .docx, .jpg, .png, .webp";
 
 // Pour le formulaire de contact
 const contactSubjects = [
@@ -39,9 +54,92 @@ const contactSubjects = [
 
 export default function HelpPage() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+
+  // --- Form state ---
+  const { showToast } = useToast();
   const [subject, setSubject] = useState(contactSubjects[0]);
   const [message, setMessage] = useState("");
-  const [fileName, setFileName] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const messageInputRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setFileError(null);
+    const selectedFile = e.target.files?.[0];
+
+    if (!selectedFile) {
+      setFile(null);
+      return;
+    }
+
+    // Validation du type
+    if (!ALLOWED_FILE_TYPES.includes(selectedFile.type)) {
+      setFileError(
+        `Format invalide. Formats acceptés : ${ALLOWED_EXTENSIONS_DISPLAY}`
+      );
+      setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    // Validation de la taille
+    if (selectedFile.size > MAX_FILE_SIZE_BYTES) {
+      setFileError(`Fichier trop volumineux (max ${MAX_FILE_SIZE_MB} Mo)`);
+      setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    setFile(selectedFile);
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    if (!message.trim()) {
+      showToast("error", "Champ requis", "Veuillez écrire un message.");
+      messageInputRef.current?.focus();
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    // Simulation d'un appel API
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    try {
+      // Simule un succès ou un échec aléatoire
+      if (Math.random() > 0.1) {
+        showToast(
+          "success",
+          "Message envoyé",
+          "Notre équipe vous répondra dans les meilleurs délais."
+        );
+        // Reset form
+        setSubject(contactSubjects[0]);
+        setMessage("");
+        setFile(null);
+        setFileError(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+      } else {
+        throw new Error("Erreur serveur simulée");
+      }
+    } catch (error) {
+      showToast(
+        "error",
+        "Erreur d'envoi",
+        "Un problème est survenu. Veuillez réessayer plus tard."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <section className="max-w-7xl mx-auto py-8 px-4">
@@ -63,59 +161,88 @@ export default function HelpPage() {
             </h3>
             <div className="divide-y divide-gray-100">
               {faqs.map((faq, i) => (
-                <button
-                  key={faq.question}
-                  className="w-full text-left py-5 focus:outline-none flex items-center justify-between group"
-                  onClick={() => setActiveFaq(activeFaq === i ? null : i)}
-                  aria-expanded={activeFaq === i}
-                  style={{ transition: "background 0.15s" }}
-                >
-                  <span className="font-medium text-gray-900 group-hover:text-blue-700 transition">
-                    {faq.question}
-                  </span>
-                  <i
-                    className={`fas ml-4 text-gray-400 group-hover:text-blue-700 transition ${
-                      activeFaq === i ? "fa-chevron-up" : "fa-chevron-down"
-                    }`}
-                  />
-                  {/* no underline, pas d'effet border */}
-                </button>
+                <div key={faq.question} className="py-1">
+                  <button
+                    className="w-full text-left py-4 focus:outline-none flex items-center justify-between group"
+                    onClick={() => setActiveFaq(activeFaq === i ? null : i)}
+                    aria-expanded={activeFaq === i}
+                    aria-controls={`faq-answer-${i}`}
+                    style={{ transition: "background 0.15s" }}
+                  >
+                    <span className="font-medium text-gray-900 group-hover:text-blue-700 transition">
+                      {faq.question}
+                    </span>
+                    <i
+                      className={`fas ml-4 text-gray-400 group-hover:text-blue-700 transition-transform duration-300 ${
+                        activeFaq === i ? "fa-chevron-up" : "fa-chevron-down"
+                      }`}
+                    />
+                  </button>
+                  <AnimatePresence>
+                    {activeFaq === i && (
+                      <motion.div
+                        id={`faq-answer-${i}`}
+                        role="region"
+                        initial={{ opacity: 0, height: 0, y: -10 }}
+                        animate={{
+                          opacity: 1,
+                          height: "auto",
+                          y: 0,
+                          transition: {
+                            height: { duration: 0.3, ease: "easeInOut" },
+                            opacity: { duration: 0.3, ease: "easeInOut" },
+                            y: { duration: 0.3, ease: "easeInOut" },
+                          },
+                        }}
+                        exit={{
+                          opacity: 0,
+                          height: 0,
+                          y: -10,
+                          transition: {
+                            height: { duration: 0.2, ease: "easeInOut" },
+                            opacity: { duration: 0.2, ease: "easeInOut" },
+                            y: { duration: 0.2, ease: "easeInOut" },
+                          },
+                        }}
+                        className="overflow-hidden"
+                      >
+                        <div className="p-5 text-gray-700 bg-gray-50 rounded-xl mt-2">
+                          {faq.answer}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               ))}
             </div>
-            {/* Réponse dépliée */}
-            {faqs.map(
-              (faq, i) =>
-                activeFaq === i && (
-                  <div
-                    key={faq.question + "-answer"}
-                    className="p-5 text-gray-700 bg-gray-50 rounded-xl mt-[-20px] mb-5"
-                  >
-                    {faq.answer}
-                  </div>
-                )
-            )}
           </div>
 
           {/* Bloc contact support */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-            <h3 className="font-semibold text-lg text-gray-900 mb-6">
+            <h3
+              id="contact-heading"
+              className="font-semibold text-lg text-gray-900 mb-6"
+            >
               Contacter le support
             </h3>
             <form
               className="space-y-6"
-              onSubmit={(e) => {
-                e.preventDefault();
-                alert("Message envoyé (démo)");
-              }}
+              onSubmit={handleSubmit}
+              aria-labelledby="contact-heading"
             >
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="contact-subject"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Sujet
                 </label>
                 <select
+                  id="contact-subject"
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
+                  disabled={isSubmitting}
                 >
                   {contactSubjects.map((s) => (
                     <option key={s} value={s}>
@@ -125,49 +252,104 @@ export default function HelpPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="contact-message"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Message
                 </label>
                 <textarea
+                  id="contact-message"
+                  ref={messageInputRef}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
                   rows={4}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Décrivez votre problème ou votre question..."
                   required
+                  disabled={isSubmitting}
                 />
               </div>
               {/* Pièce jointe */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="contact-file"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Pièce jointe (optionnel)
                 </label>
-                <label className="w-full border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center py-6 cursor-pointer hover:bg-gray-50 transition text-gray-500 text-sm font-medium">
+                <label
+                  className={`w-full border-2 border-dashed rounded-xl flex flex-col items-center justify-center py-6 transition text-gray-500 text-sm font-medium ${
+                    isSubmitting
+                      ? "bg-gray-100 cursor-not-allowed"
+                      : "cursor-pointer hover:bg-gray-50 border-gray-200"
+                  } ${fileError ? "border-red-400" : "border-gray-200"}`}
+                >
                   <input
+                    id="contact-file"
                     type="file"
                     className="hidden"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files[0]) {
-                        setFileName(e.target.files[0].name);
-                      }
-                    }}
+                    onChange={handleFileChange}
+                    ref={fileInputRef}
+                    disabled={isSubmitting}
+                    aria-describedby="file-error file-specs"
                   />
                   <i className="fas fa-paperclip text-2xl mb-2"></i>
-                  {fileName ? (
-                    <span className="text-gray-700">{fileName}</span>
+                  {file ? (
+                    <span className="text-gray-700 font-semibold">
+                      {file.name}
+                    </span>
                   ) : (
                     <span>
                       Glissez un fichier ici ou cliquez pour parcourir
                     </span>
                   )}
                 </label>
+                <div id="file-specs" className="text-xs text-gray-500 mt-2">
+                  Taille max: {MAX_FILE_SIZE_MB} Mo. Formats:{" "}
+                  {ALLOWED_EXTENSIONS_DISPLAY}
+                </div>
+                {fileError && (
+                  <p id="file-error" className="text-sm text-red-600 mt-2">
+                    {fileError}
+                  </p>
+                )}
               </div>
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-2 text-base"
+                disabled={isSubmitting}
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-3 text-base disabled:bg-blue-400 disabled:cursor-not-allowed"
               >
-                <i className="fas fa-paper-plane"></i>
-                Envoyer le message
+                {isSubmitting ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-1 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    <span>Envoi en cours...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-paper-plane"></i>
+                    <span>Envoyer le message</span>
+                  </>
+                )}
               </button>
             </form>
           </div>
@@ -201,12 +383,22 @@ export default function HelpPage() {
               <div className="flex items-center gap-2 text-gray-700">
                 <i className="fas fa-envelope text-blue-500"></i>
                 <span>Email</span>
-                <span className="ml-auto font-medium">support@staka.fr</span>
+                <a
+                  href="mailto:support@staka.fr"
+                  className="ml-auto font-medium text-gray-900 hover:text-blue-700 hover:underline"
+                >
+                  support@staka.fr
+                </a>
               </div>
               <div className="flex items-center gap-2 text-gray-700">
                 <i className="fas fa-phone text-green-500"></i>
                 <span>Téléphone</span>
-                <span className="ml-auto font-medium">06 15 07 81 52</span>
+                <a
+                  href="tel:+33615078152"
+                  className="ml-auto font-medium text-gray-900 hover:text-green-700 hover:underline"
+                >
+                  06 15 07 81 52
+                </a>
               </div>
               <div className="flex items-center gap-2 text-gray-700">
                 <i className="fas fa-clock text-purple-500"></i>
@@ -226,7 +418,7 @@ export default function HelpPage() {
                   href="#"
                   className="flex items-center gap-2 text-blue-700 font-medium hover:underline"
                 >
-                  <i className="fas fa-book"></i>Guide de l’auteur
+                  <i className="fas fa-book"></i>Guide de l'auteur
                 </a>
               </li>
               <li>
@@ -250,7 +442,7 @@ export default function HelpPage() {
                   href="#"
                   className="flex items-center gap-2 text-blue-700 font-medium hover:underline"
                 >
-                  <i className="fas fa-users"></i>Communauté d’auteurs
+                  <i className="fas fa-users"></i>Communauté d'auteurs
                 </a>
               </li>
             </ul>
