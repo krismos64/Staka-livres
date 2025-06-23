@@ -156,6 +156,57 @@ body {
   animation: spin 1s linear infinite;
 }
 
+/* Animations spécifiques messagerie */
+@keyframes messageSlideIn {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes messageSlideOut {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+}
+
+@keyframes typing {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-fadeIn {
+  animation: messageSlideIn 0.3s ease-out;
+}
+
+.animate-typing {
+  animation: typing 1.4s infinite;
+}
+
+/* Styling pour bulles de messages */
+.message-bubble-enter {
+  animation: messageSlideIn 0.3s ease-out;
+}
+
+.message-bubble-exit {
+  animation: messageSlideOut 0.3s ease-out;
+}
+
 /* Transitions pour les éléments interactifs */
 .transition-all {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
