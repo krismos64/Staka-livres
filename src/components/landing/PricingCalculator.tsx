@@ -22,6 +22,25 @@ export default function PricingCalculator() {
     handlePageChange(newPages);
   };
 
+  const handleOrderClick = () => {
+    console.log(`Commande pour ${pricing.total}€, ${pages} pages`);
+    // TODO: Rediriger vers le formulaire de commande ou ouvrir une modal
+  };
+
+  const handleFreeTestClick = () => {
+    console.log("Redirection vers test gratuit 10 pages");
+    // TODO: Rediriger vers #commande-gratuite
+    const element = document.getElementById("commande-gratuite");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const handleExpertChatClick = () => {
+    console.log("Ouverture chat expert");
+    // TODO: Ouvrir le chat ou rediriger vers contact
+  };
+
   return (
     <section
       id="calculateur-prix"
@@ -35,10 +54,12 @@ export default function PricingCalculator() {
             </span>{" "}
             intelligent
           </h2>
-          <p className="text-lg text-gray-600">
-            Découvrez le coût exact de votre correction avec notre tarification
-            dégressive
-          </p>
+          <div className="flex justify-center">
+            <p className="text-lg text-gray-600 text-center">
+              Découvrez le coût exact de votre correction avec notre
+              tarification dégressive
+            </p>
+          </div>
         </div>
 
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
@@ -228,15 +249,24 @@ export default function PricingCalculator() {
 
                 {/* Action Buttons */}
                 <div className="mt-6 space-y-3">
-                  <button className="w-full btn-primary text-white py-4 rounded-xl font-semibold text-lg">
+                  <button
+                    onClick={handleOrderClick}
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white py-4 rounded-xl font-semibold text-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                  >
                     <i className="fas fa-shopping-cart mr-2"></i>
                     Commander pour {pricing.total}€
                   </button>
-                  <button className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition">
+                  <button
+                    onClick={handleFreeTestClick}
+                    className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+                  >
                     <i className="fas fa-gift mr-2"></i>
                     D'abord tester avec 10 pages gratuites
                   </button>
-                  <button className="w-full bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition">
+                  <button
+                    onClick={handleExpertChatClick}
+                    className="w-full bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
+                  >
                     <i className="fas fa-comments mr-2"></i>
                     Discuter avec un expert
                   </button>

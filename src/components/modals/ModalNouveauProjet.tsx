@@ -77,9 +77,9 @@ export default function ModalNouveauProjet({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl relative"
+        className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-4xl relative mx-4"
         onClick={(e) => e.stopPropagation()}
-        style={{ minWidth: 480, maxWidth: 560 }}
+        style={{ minWidth: 640, maxWidth: 900 }}
       >
         {/* Close */}
         <button
@@ -93,13 +93,13 @@ export default function ModalNouveauProjet({
         <h2 className="text-2xl font-bold text-gray-900 mb-1">
           Nouveau projet
         </h2>
-        <p className="text-gray-700 mb-7">
+        <p className="text-gray-700 mb-6">
           <span className="font-medium">Décrivez votre projet</span> pour
           obtenir une correction sur-mesure.
         </p>
         {/* Form */}
         <form
-          className="space-y-6"
+          className="space-y-5"
           onSubmit={(e) => {
             e.preventDefault();
             // Envoi à ton backend ici
@@ -107,7 +107,7 @@ export default function ModalNouveauProjet({
           }}
         >
           {/* Top grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Titre du projet <span className="text-red-500">*</span>
@@ -157,13 +157,13 @@ export default function ModalNouveauProjet({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Pack choisi <span className="text-red-500">*</span>
             </label>
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
               {packOptions.map((pack) => (
                 <button
                   key={pack.key}
                   type="button"
                   onClick={() => setSelectedPack(pack.key)}
-                  className={`w-full text-left bg-white border transition flex flex-col md:flex-row items-center px-5 py-4 rounded-xl cursor-pointer hover:border-blue-500
+                  className={`text-left bg-white border transition flex flex-col items-center px-4 py-4 rounded-xl cursor-pointer hover:border-blue-500
                     ${
                       selectedPack === pack.key
                         ? pack.selectedColor
@@ -177,20 +177,18 @@ export default function ModalNouveauProjet({
                   `}
                   tabIndex={0}
                 >
-                  <div className="flex-1">
+                  <div className="w-full text-center">
                     <div
-                      className={`font-bold text-base text-gray-900 flex items-center gap-2`}
+                      className={`font-bold text-base text-gray-900 flex items-center justify-center gap-2 mb-1`}
                     >
                       {pack.title}
                       {pack.badge}
                     </div>
-                    <div className="text-gray-500 text-sm mb-1">
+                    <div className="text-gray-500 text-sm mb-2">
                       {pack.subtitle}
                     </div>
-                  </div>
-                  <div className="flex flex-col items-end min-w-[130px]">
                     <div
-                      className={`font-bold text-right ${
+                      className={`font-bold ${
                         selectedPack === pack.key
                           ? "text-blue-700"
                           : "text-gray-800"
@@ -198,54 +196,59 @@ export default function ModalNouveauProjet({
                     >
                       {pack.price}
                     </div>
-                    <div className="text-xs text-right mt-1">
-                      {pack.details}
-                    </div>
+                    <div className="text-xs mt-1">{pack.details}</div>
                   </div>
                 </button>
               ))}
             </div>
           </div>
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description du projet
-            </label>
-            <textarea
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
-              rows={3}
-              placeholder="Décrivez votre manuscrit, vos objectifs, instructions particulières..."
-              value={desc}
-              onChange={(e) => setDesc(e.target.value)}
-            />
-          </div>
-          {/* Fichier manuscrit */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Fichier manuscrit
-            </label>
-            <label className="w-full border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center py-7 cursor-pointer hover:bg-gray-50 transition text-gray-500 text-sm font-medium">
-              <input
-                type="file"
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    setFileName(e.target.files[0].name);
-                  }
-                }}
+          {/* Description et Fichier sur la même ligne */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description du projet
+              </label>
+              <textarea
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
+                rows={4}
+                placeholder="Décrivez votre manuscrit, vos objectifs, instructions particulières..."
+                value={desc}
+                onChange={(e) => setDesc(e.target.value)}
               />
-              <i className="fas fa-upload text-2xl mb-2"></i>
-              {fileName ? (
-                <span className="text-gray-700">{fileName}</span>
-              ) : (
-                <span>Glissez un fichier ici ou cliquez pour parcourir</span>
-              )}
-            </label>
+            </div>
+            {/* Fichier manuscrit */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Fichier manuscrit
+              </label>
+              <label className="w-full h-[120px] border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition text-gray-500 text-sm font-medium">
+                <input
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setFileName(e.target.files[0].name);
+                    }
+                  }}
+                />
+                <i className="fas fa-upload text-2xl mb-2"></i>
+                {fileName ? (
+                  <span className="text-gray-700 text-center px-2">
+                    {fileName}
+                  </span>
+                ) : (
+                  <span className="text-center px-2">
+                    Glissez un fichier ici ou cliquez pour parcourir
+                  </span>
+                )}
+              </label>
+            </div>
           </div>
           {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white font-semibold rounded-xl text-base py-3 hover:bg-blue-700 transition flex items-center justify-center gap-2 mt-2"
+            className="w-full bg-blue-600 text-white font-semibold rounded-xl text-base py-3 hover:bg-blue-700 transition flex items-center justify-center gap-2"
           >
             <i className="fas fa-paper-plane"></i>
             Créer le projet

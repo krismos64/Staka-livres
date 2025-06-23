@@ -104,9 +104,11 @@ export default function FAQ() {
               fréquentes
             </span>
           </h2>
-          <p className="text-lg text-gray-600">
-            Tout ce que vous devez savoir sur nos services
-          </p>
+          <div className="flex justify-center">
+            <p className="text-lg text-gray-600 text-center">
+              Tout ce que vous devez savoir sur nos services
+            </p>
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -154,9 +156,11 @@ export default function FAQ() {
           <h3 className="text-xl font-bold mb-4">
             ❓ Vous avez d'autres questions ?
           </h3>
-          <p className="mb-6">
-            Notre équipe est là pour vous aider à chaque étape de votre projet
-          </p>
+          <div className="flex justify-center">
+            <p className="mb-6 text-center">
+              Notre équipe est là pour vous aider à chaque étape de votre projet
+            </p>
+          </div>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button className="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition">
               <i className="fas fa-comments mr-2"></i>

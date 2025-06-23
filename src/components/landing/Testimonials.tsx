@@ -14,9 +14,11 @@ export default function Testimonials() {
               confiance
             </span>
           </h2>
-          <p className="text-lg text-gray-600">
-            Plus de 1500 auteurs nous ont fait confiance pour leurs projets
-          </p>
+          <div className="flex justify-center">
+            <p className="text-lg text-gray-600 text-center">
+              Plus de 1500 auteurs nous ont fait confiance pour leurs projets
+            </p>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 mb-12">

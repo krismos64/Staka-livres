@@ -58,6 +58,11 @@ function App() {
     setAppMode("login");
   };
 
+  // Gère l'accès à la page de connexion depuis la navbar
+  const handleLoginClick = () => {
+    setAppMode("login");
+  };
+
   // Gère le retour à la landing page
   const handleBackToLanding = () => {
     setAppMode("landing");
@@ -109,7 +114,9 @@ function App() {
   return (
     <ToastProvider>
       <div className="App">
-        {appMode === "landing" && <LandingPage onAccessApp={handleAccessApp} />}
+        {appMode === "landing" && (
+          <LandingPage onLoginClick={handleLoginClick} />
+        )}
 
         {appMode === "login" && (
           <LoginPage

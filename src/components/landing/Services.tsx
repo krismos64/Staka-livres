@@ -1,6 +1,17 @@
 import React from "react";
 
 export default function Services() {
+  const handleConsultationBooking = () => {
+    // TODO: Implémenter la logique de réservation
+    console.log("Réservation de consultation demandée");
+    // On pourrait rediriger vers un calendly, ouvrir une modal, etc.
+  };
+
+  const handleTimeSlotClick = (day: string, time: string) => {
+    console.log(`Créneau sélectionné: ${day} ${time}`);
+    // TODO: Logique de sélection de créneau
+  };
+
   return (
     <section id="services" className="py-16 bg-gray-50">
       <div className="max-w-6xl mx-auto px-6">
@@ -116,9 +127,11 @@ export default function Services() {
             <h3 className="text-2xl md:text-3xl font-bold mb-4">
               📅 Réservez votre consultation gratuite
             </h3>
-            <p className="text-lg opacity-90">
-              30 minutes d'échange avec un expert pour définir vos besoins
-            </p>
+            <div className="flex justify-center">
+              <p className="text-lg opacity-90 text-center">
+                30 minutes d'échange avec un expert pour définir vos besoins
+              </p>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 items-center">
@@ -148,26 +161,38 @@ export default function Services() {
                 Créneaux disponibles cette semaine:
               </h4>
               <div className="grid grid-cols-2 gap-3 mb-6">
-                <button className="bg-white/20 hover:bg-white/30 rounded-lg p-3 text-center transition">
+                <button
+                  onClick={() => handleTimeSlotClick("Lundi", "14h-14h30")}
+                  className="bg-white/20 hover:bg-white/30 rounded-lg p-3 text-center transition"
+                >
                   <div className="font-medium">Lundi</div>
                   <div className="text-sm">14h-14h30</div>
                 </button>
-                <button className="bg-white/20 hover:bg-white/30 rounded-lg p-3 text-center transition">
+                <button
+                  onClick={() => handleTimeSlotClick("Mardi", "10h-10h30")}
+                  className="bg-white/20 hover:bg-white/30 rounded-lg p-3 text-center transition"
+                >
                   <div className="font-medium">Mardi</div>
                   <div className="text-sm">10h-10h30</div>
                 </button>
-                <button className="bg-white/20 hover:bg-white/30 rounded-lg p-3 text-center transition">
+                <button
+                  onClick={() => handleTimeSlotClick("Mercredi", "16h-16h30")}
+                  className="bg-white/20 hover:bg-white/30 rounded-lg p-3 text-center transition"
+                >
                   <div className="font-medium">Mercredi</div>
                   <div className="text-sm">16h-16h30</div>
                 </button>
-                <button className="bg-white/20 hover:bg-white/30 rounded-lg p-3 text-center transition">
+                <button
+                  onClick={() => handleTimeSlotClick("Jeudi", "11h-11h30")}
+                  className="bg-white/20 hover:bg-white/30 rounded-lg p-3 text-center transition"
+                >
                   <div className="font-medium">Jeudi</div>
                   <div className="text-sm">11h-11h30</div>
                 </button>
               </div>
               <button
-                className="w-full bg-white text-blue-600 py-3 rounded-xl font-semibold hover:bg-gray-100 transition"
-                disabled
+                onClick={handleConsultationBooking}
+                className="w-full bg-white text-blue-600 py-3 rounded-xl font-semibold hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
               >
                 Réserver ce créneau
               </button>

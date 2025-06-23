@@ -11,9 +11,11 @@ export default function Packs() {
               pack d'édition
             </span>
           </h2>
-          <p className="text-lg text-gray-600">
-            Des solutions adaptées à chaque étape de votre projet
-          </p>
+          <div className="flex justify-center">
+            <p className="text-lg text-gray-600 text-center">
+              Des solutions adaptées à chaque étape de votre projet
+            </p>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
@@ -136,13 +138,13 @@ export default function Packs() {
           </div>
         </div>
 
-        <div className="text-center mt-12">
-          <p className="text-gray-600 mb-4">
+        <div className="flex flex-col items-center text-center mt-12">
+          <p className="text-gray-600 mb-4 text-center">
             Pas sûr de votre choix ? Testez notre expertise
           </p>
           <a
             href="#commande-gratuite"
-            className="btn-primary text-white px-8 py-4 rounded-xl font-semibold inline-flex items-center gap-3"
+            className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-8 py-4 rounded-xl font-semibold inline-flex items-center gap-3 transition"
           >
             <i className="fas fa-gift"></i>
             Correction gratuite de 10 pages

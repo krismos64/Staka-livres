@@ -36,9 +36,11 @@ export default function Contact() {
               Contactez-nous
             </span>
           </h2>
-          <p className="text-lg text-gray-600">
-            Notre équipe vous répond sous 24h
-          </p>
+          <div className="flex justify-center">
+            <p className="text-lg text-gray-600 text-center">
+              Notre équipe vous répond sous 24h
+            </p>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-12">

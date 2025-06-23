@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 
-export default function Navigation() {
+interface NavigationProps {
+  onLoginClick?: () => void;
+}
+
+export default function Navigation({ onLoginClick }: NavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isPromoBannerVisible, setIsPromoBannerVisible] = useState(true);
 
@@ -18,6 +22,12 @@ export default function Navigation() {
 
   const handleMobileLinkClick = () => {
     closeMobileMenu();
+  };
+
+  const handleLoginClick = () => {
+    if (onLoginClick) {
+      onLoginClick();
+    }
   };
 
   return (
@@ -78,9 +88,16 @@ export default function Navigation() {
             <button className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition">
               <i className="fas fa-comments mr-1"></i> Chat
             </button>
+            <button
+              onClick={handleLoginClick}
+              className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-blue-600 transition flex items-center gap-2"
+            >
+              <i className="fas fa-sign-in-alt"></i>
+              Connexion
+            </button>
             <a
               href="#contact"
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+              className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition"
             >
               Contact
             </a>
@@ -151,6 +168,15 @@ export default function Navigation() {
             </a>
             <button className="block w-full text-left py-2 hover:text-green-600 transition">
               <i className="fas fa-comments mr-2"></i>Chat en direct
+            </button>
+            <button
+              onClick={() => {
+                handleLoginClick();
+                handleMobileLinkClick();
+              }}
+              className="block w-full text-left py-2 hover:text-blue-600 transition"
+            >
+              <i className="fas fa-sign-in-alt mr-2"></i>Connexion
             </button>
             <a
               href="#contact"

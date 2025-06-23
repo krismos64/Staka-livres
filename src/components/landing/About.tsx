@@ -1,6 +1,20 @@
 import React from "react";
 
 export default function About() {
+  const handleChatClick = () => {
+    // Simulation d'ouverture du chat
+    console.log("Ouverture du chat...");
+    // Ici on pourrait intégrer un vrai système de chat
+    alert("Chat en cours d'ouverture... 💬");
+  };
+
+  const handleBookingClick = () => {
+    // Simulation d'ouverture de la modal de réservation
+    console.log("Ouverture de la modal de réservation...");
+    // Ici on pourrait intégrer un vrai système de réservation
+    alert("Système de réservation en cours d'ouverture... 📅");
+  };
+
   return (
     <section id="qui-sommes-nous" className="py-16 bg-white">
       <div className="max-w-6xl mx-auto px-6">
@@ -38,7 +52,10 @@ export default function About() {
               >
                 Tester gratuitement
               </a>
-              <button className="border-2 border-blue-600 text-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-blue-600 hover:text-white transition">
+              <button
+                onClick={handleChatClick}
+                className="border-2 border-blue-600 text-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-blue-600 hover:text-white transition"
+              >
                 Nous contacter
               </button>
             </div>
@@ -97,7 +114,10 @@ export default function About() {
                       <p className="text-gray-600">
                         Échange téléphonique de 30 min
                       </p>
-                      <button className="text-purple-600 hover:underline text-sm font-medium">
+                      <button
+                        onClick={handleBookingClick}
+                        className="text-purple-600 hover:underline text-sm font-medium"
+                      >
                         Réserver un créneau →
                       </button>
                     </div>
@@ -115,7 +135,10 @@ export default function About() {
                       Un de nos conseillers est disponible pour répondre à vos
                       questions
                     </p>
-                    <button className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition">
+                    <button
+                      onClick={handleChatClick}
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition"
+                    >
                       <i className="fas fa-comments mr-2"></i>
                       Démarrer le chat
                     </button>

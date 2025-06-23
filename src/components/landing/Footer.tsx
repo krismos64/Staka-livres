@@ -203,9 +203,11 @@ export default function Footer() {
             <h4 className="text-xl font-semibold mb-3">
               📚 Restez informé de nos actualités
             </h4>
-            <p className="text-gray-300 mb-6">
-              Conseils d'écriture, offres spéciales et nouveautés éditoriales
-            </p>
+            <div className="flex justify-center">
+              <p className="text-gray-300 mb-6 text-center">
+                Conseils d'écriture, offres spéciales et nouveautés éditoriales
+              </p>
+            </div>
             <form
               onSubmit={handleNewsletterSubmit}
               className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"

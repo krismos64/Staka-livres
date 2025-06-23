@@ -120,6 +120,13 @@ export default function FreeSample() {
 
         <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
           <form className="grid md:grid-cols-2 gap-6" onSubmit={handleSubmit}>
+            {/* CSRF Token */}
+            <input
+              type="hidden"
+              name="csrf_token"
+              value="csrf_token_placeholder"
+            />
+
             <div>
               <label
                 htmlFor="nom-gratuit"
@@ -137,6 +144,9 @@ export default function FreeSample() {
                 required
                 placeholder="Votre nom et prénom"
               />
+              <div className="invalid-feedback text-red-500 text-sm mt-1 hidden">
+                Veuillez entrer votre nom complet
+              </div>
             </div>
             <div>
               <label
@@ -155,6 +165,9 @@ export default function FreeSample() {
                 required
                 placeholder="votre@email.com"
               />
+              <div className="invalid-feedback text-red-500 text-sm mt-1 hidden">
+                Veuillez entrer une adresse email valide
+              </div>
             </div>
             <div>
               <label
@@ -242,7 +255,7 @@ export default function FreeSample() {
                   onChange={handleFileChange}
                 />
                 {isUploading && (
-                  <div className="mt-4">
+                  <div className="upload-progress mt-4">
                     <div className="bg-gray-200 rounded-full h-2">
                       <div
                         className="bg-blue-600 h-2 rounded-full transition-all duration-300"
@@ -255,12 +268,15 @@ export default function FreeSample() {
                   </div>
                 )}
               </div>
+              <div className="invalid-feedback text-red-500 text-sm mt-1 hidden">
+                Le fichier doit faire moins de 5 Mo
+              </div>
             </div>
             <div className="md:col-span-2 text-center">
               <button
                 type="submit"
                 disabled={isSubmitted}
-                className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-12 py-4 rounded-xl font-semibold text-lg inline-flex items-center gap-3 hover:from-blue-700 hover:to-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary text-white px-12 py-4 rounded-xl font-semibold text-lg inline-flex items-center gap-3"
               >
                 <i className="fas fa-paper-plane"></i>
                 {isSubmitted
