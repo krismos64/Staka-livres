@@ -1,7 +1,10 @@
 import React from "react";
+import About from "../components/landing/About";
+import Contact from "../components/landing/Contact";
 import Hero from "../components/landing/Hero";
 import Navigation from "../components/landing/Navigation";
 import Packs from "../components/landing/Packs";
+import PricingCalculator from "../components/landing/PricingCalculator";
 import Services from "../components/landing/Services";
 import Testimonials from "../components/landing/Testimonials";
 import LayoutLanding from "../components/layout/LayoutLanding";
@@ -26,6 +29,15 @@ export default function LandingPage() {
           {/* Packs Section */}
           <Packs />
 
+          {/* Pricing Calculator Section */}
+          <PricingCalculator />
+
+          {/* About Section */}
+          <About />
+
+          {/* Contact Section */}
+          <Contact />
+
           {/* Section temporaire indiquant que le reste sera découpé */}
           <section className="py-16 bg-white">
             <div className="max-w-4xl mx-auto px-6 text-center">
@@ -46,12 +58,9 @@ export default function LandingPage() {
                     <ul className="space-y-1 text-blue-700">
                       <li>• Trust Indicators</li>
                       <li>• Excellence Section</li>
-                      <li>• Pricing Calculator</li>
                       <li>• Blog</li>
                       <li>• Free Sample Form</li>
-                      <li>• About</li>
                       <li>• FAQ</li>
-                      <li>• Contact</li>
                       <li>• Footer</li>
                     </ul>
                   </div>
@@ -76,16 +85,19 @@ export default function LandingPage() {
                         • <code>Packs.tsx</code> ✅
                       </li>
                       <li>
+                        • <code>PricingCalculator.tsx</code> ✅
+                      </li>
+                      <li>
+                        • <code>About.tsx</code> ✅
+                      </li>
+                      <li>
+                        • <code>Contact.tsx</code> ✅
+                      </li>
+                      <li>
                         • <code>TrustIndicators.tsx</code>
                       </li>
                       <li>
-                        • <code>PricingCalculator.tsx</code>
-                      </li>
-                      <li>
                         • <code>Blog.tsx</code>
-                      </li>
-                      <li>
-                        • <code>ContactForm.tsx</code>
                       </li>
                       <li>
                         • <code>FAQ.tsx</code>
@@ -105,7 +117,12 @@ export default function LandingPage() {
                 consultation gratuite !<br />✅{" "}
                 <strong>Testimonials.tsx</strong> : Témoignages clients avec
                 étoiles et stats !<br />✅ <strong>Packs.tsx</strong> : 3 packs
-                d'édition avec tarifs et fonctionnalités !<br />
+                d'édition avec tarifs et fonctionnalités !<br />✅{" "}
+                <strong>PricingCalculator.tsx</strong> : Calculateur interactif
+                avec tarification dégressive !<br />✅{" "}
+                <strong>About.tsx</strong> : Présentation de l'équipe et moyens
+                de contact !<br />✅ <strong>Contact.tsx</strong> : Formulaire
+                de contact et coordonnées complètes !<br />
                 Le contenu complet de la maquette sera progressivement intégré
                 dans des composants React modulaires.
               </p>

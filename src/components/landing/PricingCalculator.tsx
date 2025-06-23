@@ -1,0 +1,307 @@
+import React, { useState } from "react";
+import { usePricing } from "./hooks/usePricing";
+
+export default function PricingCalculator() {
+  const { pages, setPages, pricing, getComparisonPrices } = usePricing(150);
+  const [selectedPreset, setSelectedPreset] = useState(150);
+
+  const comparisonPrices = getComparisonPrices();
+
+  const handlePageChange = (newPages: number) => {
+    const validPages = Math.max(1, Math.min(1000, newPages));
+    setPages(validPages);
+  };
+
+  const handlePresetClick = (presetPages: number) => {
+    setPages(presetPages);
+    setSelectedPreset(presetPages);
+  };
+
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPages = parseInt(e.target.value);
+    handlePageChange(newPages);
+  };
+
+  return (
+    <section
+      id="calculateur-prix"
+      className="py-16 bg-gradient-to-br from-green-50 to-blue-50"
+    >
+      <div className="max-w-4xl mx-auto px-6">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <span className="bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
+              Calculateur de prix
+            </span>{" "}
+            intelligent
+          </h2>
+          <p className="text-lg text-gray-600">
+            Découvrez le coût exact de votre correction avec notre tarification
+            dégressive
+          </p>
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+          {/* Pricing Rules Display */}
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-8">
+            <h3 className="text-xl font-bold mb-6 text-center">
+              🎯 Notre tarification intelligente
+            </h3>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="text-center bg-white/10 backdrop-blur rounded-2xl p-4">
+                <div className="text-3xl font-bold text-green-300">10</div>
+                <div className="text-sm">premières pages</div>
+                <div className="text-lg font-semibold mt-2">GRATUITES</div>
+              </div>
+              <div className="text-center bg-white/10 backdrop-blur rounded-2xl p-4">
+                <div className="text-3xl font-bold text-yellow-300">2€</div>
+                <div className="text-sm">pages 11 à 300</div>
+                <div className="text-lg font-semibold mt-2">par page</div>
+              </div>
+              <div className="text-center bg-white/10 backdrop-blur rounded-2xl p-4">
+                <div className="text-3xl font-bold text-orange-300">1€</div>
+                <div className="text-sm">au-delà de 300</div>
+                <div className="text-lg font-semibold mt-2">par page</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Calculator Interface */}
+          <div className="p-8">
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Input Section */}
+              <div>
+                <label
+                  htmlFor="page-count"
+                  className="block mb-3 font-semibold text-gray-700 text-lg"
+                >
+                  Nombre de pages de votre manuscrit
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    id="page-count"
+                    min="1"
+                    max="1000"
+                    value={pages}
+                    onChange={(e) =>
+                      handlePageChange(parseInt(e.target.value) || 0)
+                    }
+                    className="w-full border-3 border-blue-200 rounded-2xl p-4 text-2xl font-bold text-center focus:border-blue-500 focus:outline-none transition"
+                    placeholder="150"
+                  />
+                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-medium">
+                    pages
+                  </div>
+                </div>
+
+                {/* Page Range Slider */}
+                <div className="mt-6">
+                  <input
+                    type="range"
+                    id="page-slider"
+                    min="1"
+                    max="500"
+                    value={Math.min(pages, 500)}
+                    onChange={handleSliderChange}
+                    className="w-full h-3 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="flex justify-between text-sm text-gray-500 mt-2">
+                    <span>1 page</span>
+                    <span>500+ pages</span>
+                  </div>
+                </div>
+
+                {/* Quick Preset Buttons */}
+                <div className="mt-6">
+                  <p className="text-sm font-medium text-gray-600 mb-3">
+                    Tailles courantes :
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { pages: 50, label: "Nouvelle (50p)" },
+                      { pages: 150, label: "Roman court (150p)" },
+                      { pages: 250, label: "Roman (250p)" },
+                      { pages: 400, label: "Roman long (400p)" },
+                    ].map((preset) => (
+                      <button
+                        key={preset.pages}
+                        onClick={() => handlePresetClick(preset.pages)}
+                        className={`px-4 py-2 rounded-lg transition text-sm font-medium ${
+                          selectedPreset === preset.pages
+                            ? "bg-blue-500 text-white hover:bg-blue-600"
+                            : "bg-gray-100 hover:bg-blue-100"
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Delivery time estimation */}
+                <div className="mt-6 bg-blue-50 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <i className="fas fa-clock text-blue-600"></i>
+                    <span className="font-semibold text-blue-800">
+                      Délai de livraison estimé
+                    </span>
+                  </div>
+                  <div className="text-lg font-bold text-blue-600">
+                    {pricing.deliveryTime}
+                  </div>
+                  <div className="text-sm text-blue-600 mt-1">
+                    Correction + mise en page incluses
+                  </div>
+                </div>
+              </div>
+
+              {/* Results Section */}
+              <div>
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6">
+                  <h3 className="text-lg font-bold mb-6 text-center text-gray-800">
+                    💰 Détail de votre devis
+                  </h3>
+
+                  {/* Pricing Breakdown */}
+                  <div className="space-y-4 mb-6">
+                    <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                      <span className="text-green-600 font-medium">
+                        10 premières pages
+                      </span>
+                      <span className="font-bold text-green-600">GRATUIT</span>
+                    </div>
+                    {pricing.tier2Pages > 0 && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <span className="text-gray-700">
+                          Pages 11-{Math.min(pages, 300)} ({pricing.tier2Pages}{" "}
+                          pages)
+                        </span>
+                        <span className="font-bold">{pricing.tier2}€</span>
+                      </div>
+                    )}
+                    {pricing.tier3Pages > 0 && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                        <span className="text-gray-700">
+                          Pages 301+ ({pricing.tier3Pages} pages)
+                        </span>
+                        <span className="font-bold">{pricing.tier3}€</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Total Price */}
+                  <div className="bg-white rounded-xl p-4 text-center border-2 border-blue-200">
+                    <div className="text-sm text-gray-600 mb-1">Prix total</div>
+                    <div className="text-4xl font-bold text-blue-600">
+                      {pricing.total}€
+                    </div>
+                    <div className="text-sm text-gray-500 mt-2">
+                      Soit{" "}
+                      <span className="font-medium">
+                        {pricing.avgPricePerPage}€
+                      </span>{" "}
+                      par page en moyenne
+                    </div>
+                  </div>
+
+                  {/* Savings Display */}
+                  <div className="mt-4 text-center">
+                    {pages > 10 ? (
+                      <div className="bg-green-100 text-green-800 px-4 py-2 rounded-lg inline-block">
+                        <i className="fas fa-gift mr-2"></i>
+                        <span className="font-medium">
+                          Vous économisez {pricing.savings}€ grâce aux 10 pages
+                          gratuites !
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg inline-block">
+                        <i className="fas fa-star mr-2"></i>
+                        <span className="font-medium">
+                          Votre correction est entièrement gratuite !
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="mt-6 space-y-3">
+                  <button className="w-full btn-primary text-white py-4 rounded-xl font-semibold text-lg">
+                    <i className="fas fa-shopping-cart mr-2"></i>
+                    Commander pour {pricing.total}€
+                  </button>
+                  <button className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition">
+                    <i className="fas fa-gift mr-2"></i>
+                    D'abord tester avec 10 pages gratuites
+                  </button>
+                  <button className="w-full bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition">
+                    <i className="fas fa-comments mr-2"></i>
+                    Discuter avec un expert
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Comparison Table */}
+            <div className="mt-12 pt-8 border-t border-gray-200">
+              <h3 className="text-xl font-bold text-center mb-6">
+                📊 Comparaison avec la concurrence
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full table-auto">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="p-4 text-left font-semibold">
+                        Nombre de pages
+                      </th>
+                      <th className="p-4 text-center font-semibold text-blue-600">
+                        Staka Éditions
+                      </th>
+                      <th className="p-4 text-center font-semibold text-gray-500">
+                        Concurrent A
+                      </th>
+                      <th className="p-4 text-center font-semibold text-gray-500">
+                        Concurrent B
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-sm">
+                    {[
+                      { pages: 100, competitorA: 250, competitorB: 220 },
+                      { pages: 200, competitorA: 500, competitorB: 440 },
+                      { pages: 300, competitorA: 750, competitorB: 660 },
+                      { pages: 500, competitorA: 1250, competitorB: 1100 },
+                    ].map((row, index) => (
+                      <tr
+                        key={row.pages}
+                        className={index % 2 === 1 ? "bg-blue-50" : "border-b"}
+                      >
+                        <td className="p-4 font-medium">{row.pages} pages</td>
+                        <td className="p-4 text-center font-bold text-green-600">
+                          {
+                            comparisonPrices[
+                              row.pages as keyof typeof comparisonPrices
+                            ]
+                          }
+                          €
+                        </td>
+                        <td className="p-4 text-center text-gray-600">
+                          {row.competitorA}€
+                        </td>
+                        <td className="p-4 text-center text-gray-600">
+                          {row.competitorB}€
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
