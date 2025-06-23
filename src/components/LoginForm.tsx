@@ -17,10 +17,99 @@ interface LoginFormProps {
 const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
   // État pour gérer la visibilité du mot de passe
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  // États pour la gestion du feedback utilisateur
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>("");
+  const [fieldErrors, setFieldErrors] = useState<{
+    email?: string;
+    password?: string;
+  }>({});
 
   // Inverse l'état de visibilité du mot de passe
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
+  };
+
+  // Validation des champs
+  const validateFields = (
+    formData: FormData
+  ): { email?: string; password?: string } => {
+    const errors: { email?: string; password?: string } = {};
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    if (!email || email.trim() === "") {
+      errors.email = "L'email est requis";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = "Veuillez entrer un email valide";
+    }
+
+    if (!password || password.trim() === "") {
+      errors.password = "Le mot de passe est requis";
+    } else if (password.length < 6) {
+      errors.password = "Le mot de passe doit contenir au moins 6 caractères";
+    }
+
+    return errors;
+  };
+
+  // Simulation d'API avec gestion d'erreur
+  const simulateLogin = async (
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; message?: string }> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Simulation : échec si email n'est pas celui de démo
+        if (email === "marie.castello@example.com" && password === "demo123") {
+          resolve({ success: true });
+        } else {
+          resolve({
+            success: false,
+            message: "Email ou mot de passe invalide",
+          });
+        }
+      }, 1500); // Délai de 1.5s pour simuler la latence réseau
+    });
+  };
+
+  // Gestion de la soumission avec états loading/error
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // Reset des erreurs
+    setError("");
+    setFieldErrors({});
+
+    const formData = new FormData(e.currentTarget);
+
+    // Validation côté client
+    const validationErrors = validateFields(formData);
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors);
+      return;
+    }
+
+    // Début du chargement
+    setIsLoading(true);
+
+    try {
+      const email = formData.get("email") as string;
+      const password = formData.get("password") as string;
+
+      const result = await simulateLogin(email, password);
+
+      if (result.success) {
+        // Appel de la fonction onLogin fournie par le parent
+        onLogin(e);
+      } else {
+        setError(result.message || "Une erreur s'est produite");
+      }
+    } catch (err) {
+      setError("Erreur de connexion. Veuillez réessayer.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -28,8 +117,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
       className="bg-white rounded-2xl shadow-2xl p-8"
       id="login-form-container"
     >
-      {/* Le formulaire de connexion appelle onLogin lors de la soumission */}
-      <form id="login-form" className="space-y-6" onSubmit={onLogin}>
+      {/* Le formulaire de connexion */}
+      <form id="login-form" className="space-y-6" onSubmit={handleSubmit}>
         {/* Champ caché pour le token CSRF, comme dans l'original */}
         <input type="hidden" name="csrf_token" value="csrf_token_placeholder" />
 
@@ -50,11 +139,19 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
               id="email"
               name="email"
               required
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent transition ${
+                fieldErrors.email
+                  ? "border-red-500 focus:ring-red-500"
+                  : "border-gray-300 focus:ring-blue-500"
+              }`}
               placeholder="votre@email.com"
               defaultValue="marie.castello@example.com" // Valeur par défaut pour la démo
+              disabled={isLoading}
             />
           </div>
+          {fieldErrors.email && (
+            <p className="text-red-600 text-sm mt-1">{fieldErrors.email}</p>
+          )}
         </div>
 
         {/* Champ Mot de passe */}
@@ -75,9 +172,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
               id="password"
               name="password"
               required
-              className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:border-transparent transition ${
+                fieldErrors.password
+                  ? "border-red-500 focus:ring-red-500"
+                  : "border-gray-300 focus:ring-blue-500"
+              }`}
               placeholder="••••••••"
               defaultValue="demo123" // Valeur par défaut pour la démo
+              disabled={isLoading}
             />
             {/* Bouton pour afficher/cacher le mot de passe */}
             <button
@@ -85,6 +187,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
               onClick={togglePasswordVisibility}
               className="absolute inset-y-0 right-0 pr-3 flex items-center"
               tabIndex={-1}
+              disabled={isLoading}
             >
               <i
                 className={`fas ${
@@ -93,6 +196,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
               ></i>
             </button>
           </div>
+          {fieldErrors.password && (
+            <p className="text-red-600 text-sm mt-1">{fieldErrors.password}</p>
+          )}
         </div>
 
         {/* Options "Se souvenir de moi" et "Mot de passe oublié" */}
@@ -101,6 +207,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
             <input
               type="checkbox"
               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              disabled={isLoading}
             />
             <span className="ml-2 text-sm text-gray-600">
               Se souvenir de moi
@@ -114,11 +221,32 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
         {/* Bouton de soumission */}
         <button
           type="submit"
-          className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-600 transition duration-300 transform hover:scale-105"
+          disabled={isLoading}
+          className={`w-full py-3 px-4 rounded-xl font-semibold transition duration-300 ${
+            isLoading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600 transform hover:scale-105"
+          }`}
         >
-          <i className="fas fa-sign-in-alt mr-2"></i>
-          Se connecter
+          {isLoading ? (
+            <>
+              <i className="fas fa-spinner fa-spin mr-2"></i>
+              Connexion...
+            </>
+          ) : (
+            <>
+              <i className="fas fa-sign-in-alt mr-2"></i>
+              Se connecter
+            </>
+          )}
         </button>
+
+        {/* Message d'erreur global */}
+        {error && (
+          <div className="text-red-600 bg-red-50 rounded-xl p-2 mt-3 text-sm">
+            {error}
+          </div>
+        )}
       </form>
 
       {/* Lien pour basculer vers le formulaire d'inscription */}
@@ -129,6 +257,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
             onClick={onShowSignup}
             className="text-blue-600 hover:text-blue-500 font-medium"
             type="button"
+            disabled={isLoading}
           >
             Créer un compte
           </button>
