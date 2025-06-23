@@ -1,15 +1,24 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import DeleteProjectModal from "../components/DeleteProjectModal";
 import EditProjectModal from "../components/EditProjectModal";
 import ProjectCard from "../components/ProjectCard";
 import ProjectDetailsModal from "../components/ProjectDetailsModal";
 import RateProjectModal from "../components/RateProjectModal";
-import { showToast } from "../utils/toast";
 
 // Types
 type ProjectStatus = "Terminé" | "En correction" | "En attente";
 type ProjectPack = "Pack Intégral" | "Pack Correction" | "Pack KDP";
 type FilterType = "all" | "active" | "completed" | "pending";
+
+// Types pour les notifications
+type ToastType = "success" | "error" | "warning" | "info";
+
+interface Toast {
+  id: string;
+  type: ToastType;
+  title: string;
+  message: string;
+}
 
 export interface Project {
   id: number;
@@ -105,6 +114,40 @@ const filterConfig = [
   },
 ];
 
+// ----------- Toast Component -----------
+interface ToastComponentProps {
+  toast: Toast;
+  onClose: (id: string) => void;
+}
+
+function ToastComponent({ toast, onClose }: ToastComponentProps) {
+  const toastIcons = {
+    success: "fa-check-circle text-green-500",
+    error: "fa-times-circle text-red-500",
+    warning: "fa-exclamation-triangle text-yellow-500",
+    info: "fa-info-circle text-blue-500",
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-4 min-w-80 animate-slide-in">
+      <div className="flex items-center gap-3">
+        <i className={`fas ${toastIcons[toast.type]} text-xl`}></i>
+        <div className="flex-1">
+          <h4 className="font-medium text-gray-900">{toast.title}</h4>
+          <p className="text-sm text-gray-600">{toast.message}</p>
+        </div>
+        <button
+          onClick={() => onClose(toast.id)}
+          className="text-gray-400 hover:text-gray-600 transition"
+          aria-label="Fermer la notification"
+        >
+          <i className="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ProjectsPage({ onNewProjectClick }: ProjectsPageProps) {
   // State management for filters and modals
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
@@ -113,6 +156,26 @@ function ProjectsPage({ onNewProjectClick }: ProjectsPageProps) {
   const [isRateModalOpen, setIsRateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  // Toast management
+  const showToast = useCallback(
+    (type: ToastType, title: string, message: string) => {
+      const id = Math.random().toString(36).substr(2, 9);
+      const newToast: Toast = { id, type, title, message };
+      setToasts((prev) => [...prev, newToast]);
+
+      // Auto-suppression après 5 secondes
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, 5000);
+    },
+    []
+  );
+
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   // Filter projects based on active filter
   const filteredProjects = useMemo(() => {
@@ -200,82 +263,89 @@ function ProjectsPage({ onNewProjectClick }: ProjectsPageProps) {
       },
     };
 
-    const message = emptyMessages[filter];
+    const config = emptyMessages[filter];
 
     return (
       <div className="text-center py-16">
-        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <i className={`${message.icon} text-gray-400 text-3xl`}></i>
+        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <i className={`${config.icon} text-gray-400 text-2xl`}></i>
         </div>
         <h3 className="text-xl font-semibold text-gray-900 mb-2">
-          {message.title}
+          {config.title}
         </h3>
         <p className="text-gray-600 mb-8 max-w-md mx-auto">
-          {message.description}
+          {config.description}
         </p>
-        <button
-          onClick={onNewProjectClick}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow-sm transition"
-        >
-          <i className="fas fa-plus mr-2"></i>
-          Créer mon premier projet
-        </button>
+        {filter === "all" && (
+          <button
+            onClick={onNewProjectClick}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-xl shadow-sm transition"
+          >
+            <i className="fas fa-plus mr-2"></i>
+            Créer mon premier projet
+          </button>
+        )}
       </div>
     );
   };
 
   return (
-    <section className="p-6">
-      {/* Header - reproduced from HTML mockup */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Mes projets</h2>
-          <p className="text-gray-600">
-            Gérez tous vos projets de correction et d'édition
-          </p>
+    <section className="max-w-7xl mx-auto py-2 px-4">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Mes projets
+            </h2>
+            <p className="text-gray-600">
+              Gérez tous vos projets de correction et d'édition
+            </p>
+          </div>
+          <button
+            onClick={onNewProjectClick}
+            className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition"
+          >
+            <i className="fas fa-plus mr-2"></i>Nouveau projet
+          </button>
         </div>
-        <button
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-3 rounded-xl shadow-sm transition"
-          onClick={onNewProjectClick}
-        >
-          <i className="fas fa-plus mr-2"></i>
-          Nouveau projet
-        </button>
       </div>
 
-      {/* Dynamic Filters - with counts and active state */}
-      <div className="mb-6 flex flex-wrap gap-2">
-        {filterConfig.map((filter) => (
-          <button
-            key={filter.key}
-            onClick={() => setActiveFilter(filter.key)}
-            className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
-              activeFilter === filter.key
-                ? "bg-blue-600 text-white shadow-sm"
-                : "bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200"
-            }`}
-          >
-            {filter.label}
-            {filter.count > 0 && (
-              <span
-                className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
-                  activeFilter === filter.key
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-100 text-gray-600"
-                }`}
-              >
-                {filter.count}
-              </span>
-            )}
-          </button>
-        ))}
+      {/* Projects Filter */}
+      <div className="mb-6">
+        <div className="flex flex-wrap gap-2">
+          {filterConfig.map((filter) => (
+            <button
+              key={filter.key}
+              onClick={() => setActiveFilter(filter.key)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                activeFilter === filter.key
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+              }`}
+            >
+              {filter.label}
+              {filter.count > 0 && (
+                <span
+                  className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
+                    activeFilter === filter.key
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-200 text-gray-600"
+                  }`}
+                >
+                  {filter.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Projects Grid or Empty State */}
       {filteredProjects.length === 0 ? (
         <EmptyState filter={activeFilter} />
       ) : (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-6">
           {filteredProjects.map((project) => (
             <ProjectCard
               key={project.id}
@@ -291,20 +361,20 @@ function ProjectsPage({ onNewProjectClick }: ProjectsPageProps) {
         </div>
       )}
 
-      {/* Modals - rendered conditionally */}
-      {selectedProject && isDetailsModalOpen && (
+      {/* Modals */}
+      {selectedProject && (
         <ProjectDetailsModal
-          project={selectedProject}
           isOpen={isDetailsModalOpen}
           onClose={closeAllModals}
+          project={selectedProject}
         />
       )}
 
-      {selectedProject && isRateModalOpen && (
+      {selectedProject && (
         <RateProjectModal
-          project={selectedProject}
           isOpen={isRateModalOpen}
           onClose={closeAllModals}
+          project={selectedProject}
           onSubmit={(rating, feedback) => {
             showToast("success", "Évaluation", "Merci pour votre évaluation !");
             closeAllModals();
@@ -312,11 +382,11 @@ function ProjectsPage({ onNewProjectClick }: ProjectsPageProps) {
         />
       )}
 
-      {selectedProject && isEditModalOpen && (
+      {selectedProject && (
         <EditProjectModal
-          project={selectedProject}
           isOpen={isEditModalOpen}
           onClose={closeAllModals}
+          project={selectedProject}
           onSave={(updatedProject) => {
             showToast(
               "success",
@@ -328,11 +398,11 @@ function ProjectsPage({ onNewProjectClick }: ProjectsPageProps) {
         />
       )}
 
-      {selectedProject && isDeleteModalOpen && (
+      {selectedProject && (
         <DeleteProjectModal
-          project={selectedProject}
           isOpen={isDeleteModalOpen}
           onClose={closeAllModals}
+          project={selectedProject}
           onConfirm={() => {
             showToast(
               "success",
@@ -343,6 +413,13 @@ function ProjectsPage({ onNewProjectClick }: ProjectsPageProps) {
           }}
         />
       )}
+
+      {/* Container des toasts */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {toasts.map((toast) => (
+          <ToastComponent key={toast.id} toast={toast} onClose={removeToast} />
+        ))}
+      </div>
     </section>
   );
 }

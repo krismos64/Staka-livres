@@ -1,49 +1,209 @@
-// Type pour les différents types de toast
+// Système de notifications toast pour l'application
+
 export type ToastType = "success" | "error" | "warning" | "info";
 
-// Interface pour les données du toast
-export interface ToastData {
+export interface Toast {
+  id: string;
   type: ToastType;
   title: string;
   message: string;
   duration?: number;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
-// Fonction utilitaire pour afficher un toast
-// En production, ceci serait connecté à votre système de notification (react-hot-toast, sonner, etc.)
-export function showToast(
+// Configuration des icônes et couleurs pour chaque type
+export const toastConfig = {
+  success: {
+    icon: "fa-check-circle",
+    iconColor: "text-green-500",
+    bgColor: "bg-green-50",
+    borderColor: "border-green-200",
+    titleColor: "text-green-800",
+    messageColor: "text-green-600",
+  },
+  error: {
+    icon: "fa-times-circle",
+    iconColor: "text-red-500",
+    bgColor: "bg-red-50",
+    borderColor: "border-red-200",
+    titleColor: "text-red-800",
+    messageColor: "text-red-600",
+  },
+  warning: {
+    icon: "fa-exclamation-triangle",
+    iconColor: "text-yellow-500",
+    bgColor: "bg-yellow-50",
+    borderColor: "border-yellow-200",
+    titleColor: "text-yellow-800",
+    messageColor: "text-yellow-600",
+  },
+  info: {
+    icon: "fa-info-circle",
+    iconColor: "text-blue-500",
+    bgColor: "bg-blue-50",
+    borderColor: "border-blue-200",
+    titleColor: "text-blue-800",
+    messageColor: "text-blue-600",
+  },
+};
+
+// Générateur d'ID unique pour les toasts
+export const generateToastId = (): string => {
+  return Math.random().toString(36).substr(2, 9);
+};
+
+// Fonction utilitaire pour créer un toast
+export const createToast = (
   type: ToastType,
   title: string,
   message: string,
-  duration = 5000
-) {
-  // Pour la démo, on utilise console.log
-  // En production, remplacez par votre librairie de toast préférée
-  const emoji = {
-    success: "✅",
-    error: "❌",
-    warning: "⚠️",
-    info: "ℹ️",
+  options?: {
+    duration?: number;
+    action?: {
+      label: string;
+      onClick: () => void;
+    };
+  }
+): Toast => {
+  return {
+    id: generateToastId(),
+    type,
+    title,
+    message,
+    duration: options?.duration || 5000,
+    action: options?.action,
   };
+};
 
-  console.log(`${emoji[type]} ${title}: ${message}`);
+// Toasts prédéfinis pour les actions courantes de fichiers
+export const fileToasts = {
+  uploadSuccess: (fileName: string) =>
+    createToast(
+      "success",
+      "Fichier uploadé",
+      `${fileName} a été ajouté avec succès`
+    ),
 
-  // Simulation d'un toast visuel avec une notification browser
-  if ("Notification" in window && Notification.permission === "granted") {
-    new Notification(title, {
-      body: message,
-      icon: "/favicon.ico",
-      tag: `toast-${Date.now()}`,
-    });
-  }
+  uploadError: (fileName: string, reason: string) =>
+    createToast("error", "Erreur d'upload", `${fileName}: ${reason}`),
 
-  // TODO: Intégrer avec votre système de toast UI (ex: react-hot-toast)
-  // toast[type](message, { title, duration });
-}
+  downloadStart: (fileName: string) =>
+    createToast(
+      "info",
+      "Téléchargement",
+      `Téléchargement de ${fileName} en cours...`
+    ),
 
-// Fonction pour demander la permission des notifications
-export function requestNotificationPermission() {
-  if ("Notification" in window && Notification.permission === "default") {
-    Notification.requestPermission();
-  }
-}
+  fileDeleted: (fileName: string) =>
+    createToast("success", "Fichier supprimé", `${fileName} a été supprimé`),
+
+  fileRenamed: (newName: string) =>
+    createToast(
+      "success",
+      "Fichier renommé",
+      `Fichier renommé en "${newName}"`
+    ),
+
+  sentToCorrector: (fileName: string) =>
+    createToast(
+      "success",
+      "Envoyé au correcteur",
+      `${fileName} a été envoyé pour correction`
+    ),
+
+  alreadyProcessing: () =>
+    createToast(
+      "warning",
+      "Déjà en traitement",
+      "Ce fichier est déjà en cours de correction"
+    ),
+
+  fileTooLarge: (fileName: string, maxSize: string) =>
+    createToast(
+      "error",
+      "Fichier trop volumineux",
+      `${fileName} dépasse la limite de ${maxSize}`
+    ),
+
+  invalidFormat: (fileName: string) =>
+    createToast(
+      "error",
+      "Format non supporté",
+      `${fileName} n'est pas dans un format accepté`
+    ),
+
+  networkError: () =>
+    createToast(
+      "error",
+      "Erreur réseau",
+      "Impossible de contacter le serveur",
+      {
+        duration: 8000,
+        action: {
+          label: "Réessayer",
+          onClick: () => window.location.reload(),
+        },
+      }
+    ),
+
+  maxFilesReached: (limit: number) =>
+    createToast(
+      "warning",
+      "Limite atteinte",
+      `Vous ne pouvez pas uploader plus de ${limit} fichiers à la fois`
+    ),
+};
+
+// Hook pour gérer les toasts dans un composant React
+export const useToasts = () => {
+  const [toasts, setToasts] = React.useState<Toast[]>([]);
+
+  const addToast = React.useCallback((toast: Toast) => {
+    setToasts((prev) => [...prev, toast]);
+
+    // Auto-suppression basée sur la durée
+    if (toast.duration && toast.duration > 0) {
+      setTimeout(() => {
+        removeToast(toast.id);
+      }, toast.duration);
+    }
+  }, []);
+
+  const removeToast = React.useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const clearAllToasts = React.useCallback(() => {
+    setToasts([]);
+  }, []);
+
+  const showToast = React.useCallback(
+    (
+      type: ToastType,
+      title: string,
+      message: string,
+      options?: {
+        duration?: number;
+        action?: { label: string; onClick: () => void };
+      }
+    ) => {
+      const toast = createToast(type, title, message, options);
+      addToast(toast);
+    },
+    [addToast]
+  );
+
+  return {
+    toasts,
+    addToast,
+    removeToast,
+    clearAllToasts,
+    showToast,
+  };
+};
+
+// Import de React pour le hook
+import React from "react";
