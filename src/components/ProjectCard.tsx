@@ -1,202 +1,343 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { Project } from "../pages/ProjectsPage";
 
 /**
  * Props pour le composant ProjectCard.
  */
 interface ProjectCardProps {
-  /** Titre du projet */
-  title: string;
-  /** Description (ex: "Roman • 280 pages") */
-  description: string;
-  /** Statut du projet (ex: "Correction terminée") */
-  status: string;
-  /** Couleur de fond pour la pastille de statut (classe Tailwind) */
-  statusColor: string;
-  /** Couleur de texte pour la pastille de statut (classe Tailwind) */
-  statusTextColor: string;
-  /** Progression en pourcentage (0-100) */
-  progress: number;
-  /** Couleur de la barre de progression (classe Tailwind) */
-  progressColor: string;
-  /** Information sur la livraison (ex: "Livré le 15 Jan 2025") */
-  deliveryInfo: string;
-  /** Texte du bouton d'action (ex: "Télécharger →") */
-  actionText: string;
-  /** Fonction à appeler lors du clic sur la carte */
-  onCardClick?: () => void;
-  /** Fonction à appeler lors du clic sur le bouton d'action */
-  onActionClick?: (e: React.MouseEvent) => void;
+  /** Projet à afficher */
+  project: Project;
+  /** Fonction pour voir les détails du projet */
+  onViewDetails: () => void;
+  /** Fonction pour télécharger le projet */
+  onDownload: () => void;
+  /** Fonction pour noter le projet */
+  onRate: () => void;
+  /** Fonction pour modifier le projet */
+  onEdit: () => void;
+  /** Fonction pour supprimer le projet */
+  onDelete: () => void;
+  /** Fonction pour contacter le correcteur */
+  onContact: () => void;
 }
 
 /**
- * Carte réutilisable pour afficher les informations d'un projet.
+ * Composant carte projet avec menu contextuel et actions complètes.
+ * Reproduit fidèlement le design de la maquette HTML.
  */
 function ProjectCard({
-  title,
-  description,
-  status,
-  statusColor,
-  statusTextColor,
-  progress,
-  progressColor,
-  deliveryInfo,
-  actionText,
-  onCardClick,
-  onActionClick,
+  project,
+  onViewDetails,
+  onDownload,
+  onRate,
+  onEdit,
+  onDelete,
+  onContact,
 }: ProjectCardProps) {
-  // State pour l'animation de la progress bar
-  const [animatedProgress, setAnimatedProgress] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Animation de la progress bar au montage
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setAnimatedProgress(progress);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [progress]);
+  // Gestion du menu contextuel
+  const toggleMenu = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsMenuOpen(!isMenuOpen);
+  };
 
-  // Gère le clic sur le bouton pour ne pas déclencher le clic sur la carte
-  const handleActionClick = (e: React.MouseEvent) => {
-    if (onActionClick) {
-      e.stopPropagation();
-      onActionClick(e);
+  const closeMenu = () => {
+    setIsMenuOpen(false);
+  };
+
+  // Fermeture du menu lors du clic en dehors
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isMenuOpen) {
+        closeMenu();
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
+    }
+  }, [isMenuOpen]);
+
+  // Gestion des actions du menu avec fermeture
+  const handleMenuAction = (action: () => void) => {
+    action();
+    closeMenu();
+  };
+
+  // Vérification de sécurité pour éviter les erreurs si project est undefined
+  if (!project) {
+    return (
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        Projet non disponible
+      </div>
+    );
+  }
+
+  // Détermination des couleurs et icônes selon le statut
+  const getStatusStyles = () => {
+    switch (project.status) {
+      case "Terminé":
+        return {
+          cardBg: "bg-gradient-to-br from-blue-500 to-blue-600",
+          cardIcon: "fas fa-book",
+          progressColor: "bg-green-500",
+        };
+      case "En correction":
+        return {
+          cardBg: "bg-gradient-to-br from-green-500 to-green-600",
+          cardIcon: "fas fa-user-edit",
+          progressColor: "bg-blue-500",
+        };
+      case "En attente":
+        return {
+          cardBg: "bg-gradient-to-br from-yellow-500 to-yellow-600",
+          cardIcon: "fas fa-clock",
+          progressColor: "bg-gray-400",
+        };
+      default:
+        return {
+          cardBg: "bg-gradient-to-br from-gray-500 to-gray-600",
+          cardIcon: "fas fa-file",
+          progressColor: "bg-gray-400",
+        };
     }
   };
 
-  // Styles conditionnels pour les interactions
-  const getProgressBarColor = () => {
-    if (progress === 100) return "bg-green-500";
-    if (progress === 0) return "bg-gray-300";
-    return progressColor;
-  };
-
-  const getStatusIcon = () => {
-    if (progress === 100) return "fas fa-check-circle";
-    if (progress === 0) return "fas fa-clock";
-    return "fas fa-sync fa-spin";
-  };
+  const styles = getStatusStyles();
 
   return (
-    <div
-      className={`relative p-5 border-2 rounded-xl transition-all duration-300 cursor-pointer
-        group overflow-hidden
-        ${
-          isHovered
-            ? "border-blue-300 shadow-xl shadow-blue-100/50 -translate-y-1"
-            : "border-gray-200 shadow-sm hover:border-blue-200"
-        }
-        ${onCardClick ? "hover:shadow-lg" : ""}
-      `}
-      onClick={onCardClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Effet de brillance au survol */}
-      <div
-        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent 
-        -translate-x-full group-hover:translate-x-full transition-transform duration-1000"
-      />
-
-      {/* En-tête de la carte avec titre et statut */}
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all duration-300 group">
+      {/* Header avec titre, status et menu contextuel */}
       <div className="flex items-start justify-between mb-4">
-        <div className="flex-1 min-w-0">
-          <h4
-            className="font-semibold text-gray-900 truncate pr-2
-            group-hover:text-blue-900 transition-colors duration-200"
+        <div className="flex items-center gap-4">
+          {/* Icône du projet avec couleur dynamique */}
+          <div
+            className={`w-12 h-12 ${styles.cardBg} rounded-xl flex items-center justify-center`}
           >
-            {title}
-          </h4>
-          <p className="text-sm text-gray-600 mt-1 flex items-center">
-            <i className="fas fa-book text-xs mr-2 text-gray-400"></i>
-            {description}
-          </p>
+            <i className={`${styles.cardIcon} text-white`}></i>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-900 transition-colors">
+              {project.title}
+            </h3>
+            <p className="text-sm text-gray-600">
+              {project.type} • {project.pages} pages • Commencé le{" "}
+              {project.started}
+            </p>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
+
+        <div className="flex items-center gap-2">
+          {/* Badge de statut */}
           <span
-            className={`inline-flex items-center text-xs px-3 py-1 rounded-full font-medium
-              ${statusColor} ${statusTextColor} transition-all duration-200
-              ${isHovered ? "scale-105" : ""}`}
+            className={`text-xs px-3 py-1 rounded-full font-medium ${project.statusBadge}`}
           >
-            <i className={`${getStatusIcon()} mr-1`}></i>
-            {status}
+            {project.status}
           </span>
+
+          {/* Menu contextuel (3 dots) */}
+          <div className="relative">
+            <button
+              onClick={toggleMenu}
+              className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label="Actions du projet"
+            >
+              <i className="fas fa-ellipsis-h"></i>
+            </button>
+
+            {/* Dropdown menu */}
+            {isMenuOpen && (
+              <div className="absolute right-0 top-8 w-48 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 py-2 animate-in fade-in duration-200">
+                <button
+                  onClick={() => handleMenuAction(onViewDetails)}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
+                >
+                  <i className="fas fa-eye text-gray-400"></i>
+                  Voir les détails
+                </button>
+
+                {project.canDownload && (
+                  <button
+                    onClick={() => handleMenuAction(onDownload)}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
+                  >
+                    <i className="fas fa-download text-gray-400"></i>
+                    Télécharger
+                  </button>
+                )}
+
+                {project.status === "Terminé" && (
+                  <button
+                    onClick={() => handleMenuAction(onRate)}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
+                  >
+                    <i className="fas fa-star text-gray-400"></i>
+                    Noter le projet
+                  </button>
+                )}
+
+                {project.status !== "Terminé" &&
+                  project.corrector !== "Non assigné" && (
+                    <button
+                      onClick={() => handleMenuAction(onContact)}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
+                    >
+                      <i className="fas fa-comment text-gray-400"></i>
+                      Contacter {project.corrector}
+                    </button>
+                  )}
+
+                <hr className="my-2" />
+
+                <button
+                  onClick={() => handleMenuAction(onEdit)}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
+                >
+                  <i className="fas fa-edit text-gray-400"></i>
+                  Modifier
+                </button>
+
+                <button
+                  onClick={() => handleMenuAction(onDelete)}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                >
+                  <i className="fas fa-trash text-red-400"></i>
+                  Supprimer
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Barre de progression */}
-      <div className="mb-4">
-        <div className="flex justify-between items-center text-sm mb-2">
+      {/* Barre de progression avec animation */}
+      <div className="mb-6">
+        <div className="flex justify-between text-sm mb-2">
           <span className="text-gray-600 font-medium">Progression</span>
           <span
-            className={`font-bold transition-colors duration-200
-            ${progress === 100 ? "text-green-600" : "text-gray-900"}`}
+            className={`font-bold ${
+              project.progress === 100 ? "text-green-600" : "text-gray-900"
+            }`}
           >
-            {progress}%
+            {project.progress}%
           </span>
         </div>
-        <div className="relative">
-          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-1000 ease-out
-                ${getProgressBarColor()} relative overflow-hidden`}
-              style={{ width: `${animatedProgress}%` }}
+        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-1000 ease-out ${styles.progressColor} relative`}
+            style={{ width: `${project.progress}%` }}
+          >
+            {/* Effet de brillance sur la progress bar */}
+            {project.progress > 0 && (
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-pulse" />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Informations détaillées du projet */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div>
+          <p className="text-xs text-gray-500 mb-1">Date de début</p>
+          <p className="text-sm font-medium text-gray-900">{project.started}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500 mb-1">Date de livraison</p>
+          <p className="text-sm font-medium text-gray-900">
+            {project.delivery}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500 mb-1">Correcteur assigné</p>
+          <p className="text-sm font-medium text-gray-900">
+            {project.corrector}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500 mb-1">Pack choisi</p>
+          <p className="text-sm font-medium text-gray-900">{project.pack}</p>
+        </div>
+      </div>
+
+      {/* Actions principales - affichage conditionnel selon le statut */}
+      <div className="flex items-center gap-3">
+        {project.status === "Terminé" && project.canDownload ? (
+          <>
+            <button
+              onClick={onDownload}
+              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
             >
-              {/* Effet de brillance sur la progress bar */}
-              {progress > 0 && (
-                <div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent 
-                  via-white/30 to-transparent -translate-x-full animate-pulse"
-                />
-              )}
+              <i className="fas fa-download mr-2"></i>
+              Télécharger
+            </button>
+            {project.rating ? (
+              <button
+                onClick={onRate}
+                className="flex-1 bg-white text-gray-700 py-2 px-4 rounded-lg text-sm font-medium border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                <i className="fas fa-star mr-2 text-yellow-500"></i>
+                Noté {project.rating}/5
+              </button>
+            ) : (
+              <button
+                onClick={onRate}
+                className="flex-1 bg-white text-gray-700 py-2 px-4 rounded-lg text-sm font-medium border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                <i className="fas fa-star mr-2"></i>
+                Noter
+              </button>
+            )}
+          </>
+        ) : project.status === "En correction" ? (
+          <>
+            <button
+              onClick={onViewDetails}
+              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+            >
+              <i className="fas fa-eye mr-2"></i>
+              Voir progression
+            </button>
+            {project.corrector !== "Non assigné" && (
+              <button
+                onClick={onContact}
+                className="flex-1 bg-white text-gray-700 py-2 px-4 rounded-lg text-sm font-medium border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                <i className="fas fa-comment mr-2"></i>
+                Contacter
+              </button>
+            )}
+          </>
+        ) : (
+          // En attente
+          <>
+            <button
+              onClick={onEdit}
+              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+            >
+              <i className="fas fa-edit mr-2"></i>
+              Modifier
+            </button>
+            <button
+              onClick={onViewDetails}
+              className="flex-1 bg-white text-gray-700 py-2 px-4 rounded-lg text-sm font-medium border border-gray-200 hover:bg-gray-50 transition-colors"
+            >
+              <i className="fas fa-eye mr-2"></i>
+              Détails
+            </button>
+          </>
+        )}
+
+        {/* Badge de notification pour les projets terminés */}
+        {project.progress === 100 && (
+          <div className="relative">
+            <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center animate-bounce">
+              <i className="fas fa-check text-white text-xs"></i>
             </div>
           </div>
-          {/* Indicateur de progression pour les projets en cours */}
-          {progress > 0 && progress < 100 && (
-            <div
-              className="absolute -top-1 bg-white rounded-full w-5 h-5 shadow-sm 
-              border-2 border-current flex items-center justify-center transition-all duration-1000"
-              style={{
-                left: `calc(${animatedProgress}% - 10px)`,
-                color: progressColor.replace("bg-", "").replace("-500", ""),
-              }}
-            >
-              <div className="w-2 h-2 bg-current rounded-full animate-pulse"></div>
-            </div>
-          )}
-        </div>
+        )}
       </div>
-
-      {/* Pied de la carte avec date de livraison et action */}
-      <div className="flex items-center justify-between text-sm">
-        <div className="flex items-center text-gray-600">
-          <i className="fas fa-calendar-alt mr-2 text-gray-400"></i>
-          <span className="truncate">{deliveryInfo}</span>
-        </div>
-        <button
-          className={`font-medium transition-all duration-200 px-3 py-1 rounded-lg
-            ${
-              progress === 100
-                ? "text-green-600 hover:text-green-700 hover:bg-green-50"
-                : "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-            }
-            ${isHovered ? "translate-x-1 shadow-sm" : ""}
-          `}
-          onClick={handleActionClick}
-        >
-          {actionText}
-        </button>
-      </div>
-
-      {/* Badge de notification pour les projets terminés */}
-      {progress === 100 && (
-        <div
-          className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full 
-          flex items-center justify-center animate-bounce"
-        >
-          <i className="fas fa-check text-white text-xs"></i>
-        </div>
-      )}
     </div>
   );
 }

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { Project } from "../pages/ProjectsPage";
 import ProjectCard from "./ProjectCard";
 import RecentActivity from "./RecentActivity"; // Composant activité récente
 
 /**
  * Composant Dashboard principal.
- * Affiche l'accueil client : statistiques, projets en cours et activité récente.
+ * Affiche l'accueil client : statistiques, projets en cours et activité récente.
  */
 const Dashboard: React.FC = () => {
   // State pour gérer l'animation d'apparition
@@ -16,37 +17,52 @@ const Dashboard: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Projets en cours (exemple statique fidèle à la maquette)
-  const projects = [
+  // Projets en cours adaptés pour ProjectCard
+  const projects: Project[] = [
     {
       id: 1,
       title: "L'Écho du Temps",
-      type: "Roman • 280 pages",
-      status: "Correction terminée",
-      statusColor: "green",
+      type: "Roman",
+      pages: 280,
+      started: "5 Jan 2025",
+      delivery: "15 Jan 2025",
+      corrector: "Sarah Martin",
+      pack: "Pack Intégral",
+      status: "Terminé",
+      statusBadge: "bg-green-100 text-green-800",
       progress: 100,
-      delivery: "Livré le 15 Jan 2025",
-      download: true,
+      rating: 5,
+      canDownload: true,
+      description:
+        "Roman contemporain explorant les thèmes du temps et de la mémoire.",
     },
     {
       id: 2,
       title: "Mémoires d'une Vie",
-      type: "Biographie • 180 pages",
+      type: "Biographie",
+      pages: 180,
+      started: "10 Jan 2025",
+      delivery: "20 Jan 2025",
+      corrector: "Marc Dubois",
+      pack: "Pack Correction",
       status: "En correction",
-      statusColor: "blue",
+      statusBadge: "bg-blue-100 text-blue-800",
       progress: 65,
-      delivery: "Livraison prévue: 20 Jan 2025",
-      download: false,
+      description: "Biographie personnelle retraçant 60 années d'expériences.",
     },
     {
       id: 3,
       title: "Nouvelles du Cœur",
-      type: "Recueil • 120 pages",
+      type: "Recueil",
+      pages: 120,
+      started: "25 Jan 2025",
+      delivery: "5 Fév 2025",
+      corrector: "Non assigné",
+      pack: "Pack KDP",
       status: "En attente",
-      statusColor: "yellow",
+      statusBadge: "bg-yellow-100 text-yellow-800",
       progress: 0,
-      delivery: "Début prévu: 25 Jan 2025",
-      download: false,
+      description: "Recueil de nouvelles romantiques et émouvantes.",
     },
   ];
 
@@ -237,7 +253,9 @@ const Dashboard: React.FC = () => {
             {projects.length > 0 ? (
               <div className="space-y-4">
                 {projects.map((project, index) => {
-                  const color = getStatusColor(project.statusColor);
+                  const color = getStatusColor(
+                    project.statusBadge.split(" ")[1]
+                  );
                   return (
                     <div
                       key={project.id}
@@ -268,7 +286,9 @@ const Dashboard: React.FC = () => {
                         }
                         deliveryInfo={project.delivery}
                         actionText={
-                          project.download ? "Télécharger →" : "Voir détails →"
+                          project.canDownload
+                            ? "Télécharger →"
+                            : "Voir détails →"
                         }
                         onCardClick={() => handleProjectClick(project.id)}
                         onActionClick={(e) =>
