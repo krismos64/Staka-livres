@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ProjectCard from "../components/project/ProjectCard";
-import RecentActivity from "../components/RecentActivity"; // Composant activité récente
+import RecentActivity from "../components/project/RecentActivity"; // Composant activité récente
 import { Project } from "./ProjectsPage";
 
 /**

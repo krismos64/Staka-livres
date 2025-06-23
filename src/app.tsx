@@ -3,7 +3,7 @@ import MainLayout from "./components/layout/MainLayout";
 import { ToastProvider } from "./components/layout/ToastProvider";
 import ModalNouveauProjet from "./components/modals/ModalNouveauProjet";
 import BillingPage from "./pages/BillingPage";
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/DashboardPage";
 import FilesPage from "./pages/FilesPage";
 import HelpPage from "./pages/HelpPage";
 import LoginPage from "./pages/LoginPage";

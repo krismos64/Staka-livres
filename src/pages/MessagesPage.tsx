@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import EmptyState from "../components/EmptyState";
+import EmptyState from "../components/common/EmptyState";
 import MessageInput from "../components/forms/MessageInput";
 import ConversationList from "../components/messages/ConversationList";
 import MessageThread from "../components/messages/MessageThread";

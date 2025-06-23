@@ -6,7 +6,7 @@ import { InvoiceHistoryCard } from "../components/billing/InvoiceHistoryCard";
 import { PaymentMethodsCard } from "../components/billing/PaymentMethodsCard";
 import { PaymentModal } from "../components/billing/PaymentModal";
 import { SupportCard } from "../components/billing/SupportCard";
-import EmptyState from "../components/EmptyState";
+import EmptyState from "../components/common/EmptyState";
 import { useToasts } from "../utils/toast";
 
 // Types pour une structure de données propre

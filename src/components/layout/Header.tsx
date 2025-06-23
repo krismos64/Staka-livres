@@ -1,5 +1,5 @@
 import React from "react";
-import Notifications from "../Notifications";
+import Notifications from "../common/Notifications";
 import UserMenu from "./UserMenu";
 
 type SectionName =

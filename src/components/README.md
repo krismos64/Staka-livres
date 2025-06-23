@@ -17,16 +17,14 @@ Cette architecture suit les **bonnes pratiques SaaS** pour une codebase scalable
 src/
 ├── components/           # Composants réutilisables
 │   ├── billing/         # 💳 Composants spécifiques à la facturation
+│   ├── common/          # 🎭 Composants génériques réutilisables
 │   ├── forms/           # 📝 Formulaires réutilisables
 │   ├── layout/          # 🏛️ Composants de mise en page
 │   ├── messages/        # 💬 Composants de messagerie
 │   ├── modals/          # 🪟 Toutes les modales
-│   ├── project/         # 📚 Composants liés aux projets
-│   ├── EmptyState.tsx   # 🎭 États vides génériques
-│   ├── Notifications.tsx # 🔔 Système de notifications
-│   └── RecentActivity.tsx # ⏰ Activité récente
+│   └── project/         # 📚 Composants liés aux projets
 └── pages/               # 📄 Composants représentant des pages
-    ├── Dashboard.tsx
+    ├── DashboardPage.tsx
     ├── LoginPage.tsx
     └── ...
 ```
@@ -84,19 +82,19 @@ Toutes les modales de l'application :
 - `ProjectDetailsModal` - Détails de projet
 - `RateProjectModal` - Notation de projet
 
+### 🎭 `common/`
+
+Composants génériques réutilisables dans toute l'application :
+
+- `EmptyState` - États vides réutilisables
+- `Notifications` - Système de notifications
+
 ### 📚 `project/`
 
 Composants liés aux projets :
 
 - `ProjectCard` - Carte de projet avec toutes les actions
-
-### 🎭 Composants Génériques
-
-À la racine de `components/` :
-
-- `EmptyState` - États vides réutilisables
-- `Notifications` - Notifications système
-- `RecentActivity` - Activité récente utilisateur
+- `RecentActivity` - Activité récente des projets
 
 ## 🔄 Imports Types
 
@@ -110,7 +108,7 @@ import { useToast } from "../components/layout/ToastProvider";
 // Depuis un composant vers un autre composant
 import MessageItem from "./MessageItem"; // Même dossier
 import UserMenu from "../layout/UserMenu"; // Autre dossier
-import EmptyState from "../EmptyState"; // Racine components
+import EmptyState from "../common/EmptyState"; // Composants communs
 
 // Depuis un composant vers une page (pour les types)
 import { Project } from "../../pages/ProjectsPage";
