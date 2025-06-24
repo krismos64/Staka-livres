@@ -1,17 +1,11 @@
-version: "3.9"
-
 services:
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      target: development
+      context: .
+      dockerfile: frontend/Dockerfile
     container_name: staka_frontend
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     environment:
       - VITE_API_URL=http://localhost:3001
     depends_on:
@@ -20,15 +14,11 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
-      target: development
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: staka_backend
     ports:
       - "3001:3001"
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
     environment:
       - DATABASE_URL=mysql://root:root@db:3306/stakalivres
       - JWT_SECRET=dev_secret_key_change_in_production
@@ -50,7 +40,6 @@ services:
       - MYSQL_PASSWORD=staka
     volumes:
       - db_data:/var/lib/mysql
-      - ./backend/prisma/init.sql:/docker-entrypoint-initdb.d/init.sql
     restart: unless-stopped
 
 volumes:

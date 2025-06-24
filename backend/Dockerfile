@@ -1,18 +1,22 @@
-FROM node:18-alpine AS base
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
+FROM node:18-alpine
 
-FROM base AS development
+WORKDIR /app
+
+# Copier le package.json racine et les package.json des workspaces
+COPY package*.json ./
+COPY backend/package*.json ./backend/
+COPY shared/package*.json ./shared/
+
+# Installer les dépendances du backend (avec devDependencies pour nodemon/ts-node)
+WORKDIR /app/backend
 RUN npm ci
-COPY . .
+
+# Copier le code source
+COPY backend/ ./
+COPY shared/ ../shared/
+
+# Générer Prisma
 RUN npx prisma generate
+
 EXPOSE 3001
 CMD ["npm", "run", "dev"]
-
-FROM base AS production
-COPY . .
-RUN npm run build
-RUN npx prisma generate
-EXPOSE 3001
-CMD ["npm", "start"] 
