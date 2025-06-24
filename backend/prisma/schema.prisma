@@ -49,5 +49,9 @@ model Commande {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
+  // 🔐 Champs Stripe
+  paymentStatus   String? // "unpaid" | "paid" | "failed"
+  stripeSessionId String? // session ID Stripe Checkout
+
   @@map("commandes")
 }

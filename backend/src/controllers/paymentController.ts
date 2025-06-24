@@ -35,6 +35,15 @@ export const paymentController = {
         cancelUrl: `${process.env.FRONTEND_URL}/payment/cancel`,
       });
 
+      // Marquer la commande comme en attente de paiement
+      await prisma.commande.update({
+        where: { id: commandeId },
+        data: {
+          paymentStatus: "unpaid",
+          stripeSessionId: session.id,
+        },
+      });
+
       res.json({ sessionId: session.id, url: session.url });
     } catch (error) {
       console.error("Erreur création session paiement:", error);
@@ -64,11 +73,26 @@ export const paymentController = {
             where: { id: commandeId },
             data: {
               statut: "EN_COURS",
-              // stripeSessionId sera ajouté dans une migration ultérieure
+              paymentStatus: "paid",
+              stripeSessionId: session.id,
             },
           });
 
           console.log(`✅ Paiement confirmé pour commande ${commandeId}`);
+          break;
+
+        case "payment_intent.payment_failed":
+          const paymentIntent = event.data.object as any;
+          // Chercher la commande par stripeSessionId si disponible
+          if (paymentIntent.metadata?.commandeId) {
+            await prisma.commande.update({
+              where: { id: paymentIntent.metadata.commandeId },
+              data: { paymentStatus: "failed" },
+            });
+            console.log(
+              `❌ Paiement échoué pour commande ${paymentIntent.metadata.commandeId}`
+            );
+          }
           break;
 
         default:
