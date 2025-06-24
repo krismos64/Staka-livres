@@ -1,23 +1,19 @@
 import React, { useEffect, useState } from "react";
-import ProjectCard from "../components/project/ProjectCard";
-import RecentActivity from "../components/project/RecentActivity"; // Composant activité récente
+import ProjectDetailsModal from "../components/modals/ProjectDetailsModal";
+import RecentActivity from "../components/project/RecentActivity";
 import { Project } from "./ProjectsPage";
 
-/**
- * Composant Dashboard principal.
- * Affiche l'accueil client : statistiques, projets en cours et activité récente.
- */
 const Dashboard: React.FC = () => {
-  // State pour gérer l'animation d'apparition
   const [isVisible, setIsVisible] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Déclenche l'animation au montage
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 100);
     return () => clearTimeout(timer);
   }, []);
 
-  // Projets en cours adaptés pour ProjectCard
+  // Projets en cours adaptés selon la maquette
   const projects: Project[] = [
     {
       id: 1,
@@ -110,64 +106,116 @@ const Dashboard: React.FC = () => {
     },
   ];
 
-  // Fonction utilitaire pour générer la couleur du badge statut
-  const getStatusColor = (statusColor: string) => {
-    switch (statusColor) {
-      case "green":
-        return {
-          bg: "bg-green-100",
-          text: "text-green-800",
-          progress: "bg-green-500",
-        };
-      case "blue":
-        return {
-          bg: "bg-blue-100",
-          text: "text-blue-800",
-          progress: "bg-blue-500",
-        };
-      case "yellow":
-      default:
-        return {
-          bg: "bg-yellow-100",
-          text: "text-yellow-800",
-          progress: "bg-gray-400",
-        };
-    }
+  // Gestionnaires de modal
+  const handleProjectClick = (project: Project) => {
+    setSelectedProject(project);
+    setIsModalOpen(true);
   };
 
-  // Gestionnaires d'événements pour les projets
-  const handleProjectClick = (projectId: number) => {
-    console.log(`Clic sur projet ${projectId}`);
-    // TODO: Navigation vers la page projet
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedProject(null);
   };
 
-  const handleProjectAction = (projectId: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    console.log(`Action sur projet ${projectId}`);
-    // TODO: Téléchargement ou autre action
-  };
+  // Composant carte projet style maquette HTML exact
+  const ProjectCard = ({ project }: { project: Project }) => {
+    const getStatusColor = () => {
+      switch (project.status) {
+        case "Terminé":
+          return "bg-green-500";
+        case "En correction":
+          return "bg-blue-500";
+        case "En attente":
+          return "bg-gray-400";
+        default:
+          return "bg-gray-400";
+      }
+    };
 
-  // Composant Empty State pour les projets
-  const EmptyProjectsState = () => (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-        <i className="fas fa-folder-plus text-2xl text-gray-400"></i>
+    const getButtonText = () => {
+      switch (project.status) {
+        case "Terminé":
+          return "Télécharger →";
+        case "En correction":
+          return "Voir détails →";
+        case "En attente":
+          return "Préparer →";
+        default:
+          return "Voir détails →";
+      }
+    };
+
+    const getDeliveryText = () => {
+      switch (project.status) {
+        case "Terminé":
+          return `Livré le ${project.delivery}`;
+        case "En correction":
+          return `Livraison prévue: ${project.delivery}`;
+        case "En attente":
+          return `Début prévu: ${project.started}`;
+        default:
+          return `Livraison prévue: ${project.delivery}`;
+      }
+    };
+
+    const getStatusText = () => {
+      switch (project.status) {
+        case "Terminé":
+          return "Correction terminée";
+        case "En correction":
+          return "En correction";
+        case "En attente":
+          return "En attente";
+        default:
+          return project.status;
+      }
+    };
+
+    return (
+      <div
+        className="project-card p-4 border border-gray-200 rounded-xl hover:border-blue-200 transition cursor-pointer"
+        onClick={() => handleProjectClick(project)}
+      >
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <h4 className="font-semibold text-gray-900">{project.title}</h4>
+            <p className="text-sm text-gray-600">
+              {project.type} • {project.pages} pages
+            </p>
+          </div>
+          <span
+            className={`text-xs px-2 py-1 rounded-full ${project.statusBadge}`}
+          >
+            {getStatusText()}
+          </span>
+        </div>
+        <div className="mb-3">
+          <div className="flex justify-between text-sm mb-1">
+            <span className="text-gray-600">Progression</span>
+            <span className="text-gray-900 font-medium">
+              {project.progress}%
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className={`h-2 rounded-full progress-bar ${getStatusColor()}`}
+              style={{ width: `${project.progress}%` }}
+            />
+          </div>
+        </div>
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-gray-600">{getDeliveryText()}</span>
+          <button className="text-blue-600 hover:text-blue-700 font-medium">
+            {getButtonText()}
+          </button>
+        </div>
       </div>
-      <h4 className="text-lg font-medium text-gray-900 mb-2">
-        Aucun projet en cours
-      </h4>
-      <p className="text-gray-600 mb-4">
-        Commencez votre premier projet de correction
-      </p>
-      <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
-        Nouveau projet
-      </button>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen">
-      {/* Header d'accueil avec animation */}
+      {/* Header d'accueil */}
       <div
         className={`mb-8 transition-all duration-700 ${
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
@@ -179,21 +227,19 @@ const Dashboard: React.FC = () => {
         <p className="text-gray-600">Voici un aperçu de vos projets en cours</p>
       </div>
 
-      {/* Statistiques principales avec animation staggered */}
+      {/* Statistiques principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {stats.map((stat, index) => (
           <div
             key={stat.label}
-            className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-100 
+            className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-100
               hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer
               ${
                 isVisible
                   ? "opacity-100 translate-y-0"
                   : "opacity-0 translate-y-4"
               }`}
-            style={{
-              transitionDelay: isVisible ? `${index * 100}ms` : "0ms",
-            }}
+            style={{ transitionDelay: isVisible ? `${index * 100}ms` : "0ms" }}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -203,8 +249,7 @@ const Dashboard: React.FC = () => {
                 <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
               </div>
               <div
-                className={`w-12 h-12 ${stat.iconBg} rounded-xl flex items-center justify-center
-                  transition-transform duration-300 hover:scale-110`}
+                className={`w-12 h-12 ${stat.iconBg} rounded-xl flex items-center justify-center transition-transform duration-300 hover:scale-110`}
               >
                 <i className={stat.icon}></i>
               </div>
@@ -222,78 +267,44 @@ const Dashboard: React.FC = () => {
         ))}
       </div>
 
-      {/* Grille principale avec deux colonnes */}
+      {/* Contenu principal avec deux colonnes */}
       <div className="grid lg:grid-cols-2 gap-8">
-        {/* Projets en cours */}
+        {/* Projets en cours - Style exact de la maquette */}
         <div
-          className={`bg-white rounded-2xl shadow-sm border border-gray-100
-            transition-all duration-700 hover:shadow-lg
-            ${
-              isVisible
-                ? "opacity-100 translate-x-0"
-                : "opacity-0 -translate-x-8"
-            }`}
+          className={`bg-white rounded-2xl shadow-sm border border-gray-100 transition-all duration-700 hover:shadow-lg ${
+            isVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-8"
+          }`}
           style={{ transitionDelay: isVisible ? "400ms" : "0ms" }}
         >
-          <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Projets en cours
-              <span className="ml-2 text-sm font-normal text-gray-500">
-                ({projects.length})
-              </span>
-            </h3>
-            <button
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium
-              transition-colors duration-200 hover:underline"
-            >
-              Voir tout →
-            </button>
+          <div className="p-6 border-b border-gray-100">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Projets en cours
+              </h3>
+              <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                Voir tout →
+              </button>
+            </div>
           </div>
-          <div className="p-6">
-            {projects.length > 0 ? (
-              <div className="space-y-4">
-                {projects.map((project, index) => {
-                  const color = getStatusColor(
-                    project.statusBadge.split(" ")[1]
-                  );
-                  return (
-                    <div
-                      key={project.id}
-                      className={`transition-all duration-500 ${
-                        isVisible
-                          ? "opacity-100 translate-x-0"
-                          : "opacity-0 translate-x-4"
-                      }`}
-                      style={{
-                        transitionDelay: isVisible
-                          ? `${600 + index * 150}ms`
-                          : "0ms",
-                      }}
-                    >
-                      <ProjectCard
-                        project={project}
-                        onViewDetails={() => handleProjectClick(project.id)}
-                        onDownload={() =>
-                          console.log("Download project", project.id)
-                        }
-                        onRate={() => console.log("Rate project", project.id)}
-                        onEdit={() => console.log("Edit project", project.id)}
-                        onDelete={() =>
-                          console.log("Delete project", project.id)
-                        }
-                        onContact={() =>
-                          console.log("Contact corrector", project.id)
-                        }
-                      />
-                    </div>
-                  );
-                })}
+          <div className="p-6 space-y-4">
+            {projects.map((project, index) => (
+              <div
+                key={project.id}
+                className={`transition-all duration-500 ${
+                  isVisible
+                    ? "opacity-100 translate-x-0"
+                    : "opacity-0 translate-x-4"
+                }`}
+                style={{
+                  transitionDelay: isVisible ? `${600 + index * 150}ms` : "0ms",
+                }}
+              >
+                <ProjectCard project={project} />
               </div>
-            ) : (
-              <EmptyProjectsState />
-            )}
+            ))}
           </div>
         </div>
+
         {/* Activité récente */}
         <div
           className={`transition-all duration-700 ${
@@ -304,6 +315,15 @@ const Dashboard: React.FC = () => {
           <RecentActivity />
         </div>
       </div>
+
+      {/* Modal de détails de projet */}
+      {selectedProject && (
+        <ProjectDetailsModal
+          project={selectedProject}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+        />
+      )}
     </div>
   );
 };

@@ -130,42 +130,16 @@ export default function BillingPage() {
 
   // Handlers pour les actions principales
   const handlePayInvoice = async (invoice: Invoice) => {
-    try {
-      setIsProcessingPayment(true);
-      setShowPaymentModal(true);
-
-      // Simulation d'appel Stripe - remplacer par vraie intégration
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      showToast(
-        "success",
-        "Paiement réussi",
-        `Facture ${invoice.id} payée avec succès`
-      );
-      setShowPaymentModal(false);
-    } catch (error) {
-      showToast(
-        "error",
-        "Erreur de paiement",
-        "Une erreur est survenue lors du paiement"
-      );
-    } finally {
-      setIsProcessingPayment(false);
-    }
+    setIsProcessingPayment(true);
+    setShowPaymentModal(true);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    showToast("success", "Paiement réussi", `Facture ${invoice.id} payée`);
+    setShowPaymentModal(false);
+    setIsProcessingPayment(false);
   };
 
   const handleDownloadInvoice = async (invoiceId: string) => {
-    try {
-      // Simulation de téléchargement - remplacer par vraie API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      showToast(
-        "success",
-        "Téléchargement",
-        `Facture ${invoiceId} téléchargée`
-      );
-    } catch (error) {
-      showToast("error", "Erreur", "Impossible de télécharger la facture");
-    }
+    showToast("success", "Téléchargement", `Facture ${invoiceId} téléchargée`);
   };
 
   const handleShowInvoiceDetails = (invoice: Invoice) => {
@@ -173,21 +147,12 @@ export default function BillingPage() {
   };
 
   const handleAddPaymentMethod = () => {
-    // Simulation d'ajout de carte - intégrer Stripe Elements
-    showToast(
-      "info",
-      "Nouveau moyen de paiement",
-      "Redirection vers le formulaire sécurisé..."
-    );
+    showToast("info", "Nouveau moyen de paiement", "Redirection...");
   };
 
   const handleRemovePaymentMethod = (paymentMethodId: string) => {
     setPaymentMethods((prev) => prev.filter((pm) => pm.id !== paymentMethodId));
-    showToast(
-      "success",
-      "Carte supprimée",
-      "Moyen de paiement retiré avec succès"
-    );
+    showToast("success", "Carte supprimée", "Moyen de paiement retiré");
   };
 
   const handleContactSupport = () => {
@@ -199,99 +164,80 @@ export default function BillingPage() {
 
   if (!hasInvoices) {
     return (
-      <section className="max-w-7xl mx-auto py-2 px-4">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Facturation</h2>
-          <p className="text-gray-600">
-            Gérez vos factures et moyens de paiement
-          </p>
-        </div>
-
-        <EmptyState
-          icon="fas fa-receipt"
-          title="Aucune facture"
-          description="Vous n'avez pas encore de factures. Créez votre premier projet pour commencer."
-          action={{
-            label: "Créer un projet",
-            onClick: () =>
-              showToast(
-                "info",
-                "Nouveau projet",
-                "Redirection vers la création..."
-              ),
-          }}
-        />
-      </section>
+      <EmptyState
+        title="Aucune facture"
+        description="Vos factures apparaîtront ici dès que vous aurez un projet."
+        icon="fas fa-file-invoice-dollar"
+        action={{
+          label: "Voir mes projets",
+          onClick: () => showToast("info", "Navigation", "Vers projets..."),
+        }}
+      />
     );
   }
 
   return (
-    <>
-      <section className="max-w-7xl mx-auto py-2 px-4">
-        {/* Header avec animation d'entrée */}
-        <div className="mb-8 animate-fade-in">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Facturation</h2>
-          <p className="text-gray-600">
-            Gérez vos factures et moyens de paiement
-          </p>
-        </div>
+    <div className="animate-in fade-in duration-300">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Facturation</h2>
+        <p className="text-gray-600">
+          Gérez vos factures et moyens de paiement
+        </p>
+      </div>
 
-        {/* Grille responsive : layout principal */}
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Colonne principale : factures */}
-          <div className="lg:col-span-2 space-y-6">
-            {currentInvoice && (
-              <CurrentInvoiceCard
-                invoice={currentInvoice}
-                onPay={handlePayInvoice}
-                onDownload={handleDownloadInvoice}
-                onShowDetails={handleShowInvoiceDetails}
-                isProcessing={isProcessingPayment}
-              />
-            )}
-
-            <InvoiceHistoryCard
-              invoices={invoiceHistory}
-              onShowDetails={handleShowInvoiceDetails}
+      <div className="grid lg:grid-cols-3 gap-8 items-start">
+        {/* Colonne principale (2/3) */}
+        <div className="lg:col-span-2 space-y-6">
+          {currentInvoice && (
+            <CurrentInvoiceCard
+              invoice={currentInvoice}
+              onPay={handlePayInvoice}
               onDownload={handleDownloadInvoice}
+              onShowDetails={handleShowInvoiceDetails}
+              isProcessing={isProcessingPayment}
             />
-          </div>
+          )}
 
-          {/* Sidebar : moyens de paiement et infos */}
-          <div className="space-y-6">
-            <PaymentMethodsCard
-              paymentMethods={paymentMethods}
-              onAdd={handleAddPaymentMethod}
-              onRemove={handleRemovePaymentMethod}
-            />
-
-            <AnnualSummaryCard stats={annualStats} />
-
-            <SupportCard onContact={handleContactSupport} />
-          </div>
+          <InvoiceHistoryCard
+            invoices={invoiceHistory}
+            onShowDetails={handleShowInvoiceDetails}
+            onDownload={handleDownloadInvoice}
+          />
         </div>
-      </section>
 
-      {/* Modales avec gestion d'état centralisée */}
+        {/* Colonne latérale (1/3) */}
+        <div className="space-y-6">
+          <PaymentMethodsCard
+            paymentMethods={paymentMethods}
+            onAdd={handleAddPaymentMethod}
+            onRemove={handleRemovePaymentMethod}
+          />
+
+          <AnnualSummaryCard stats={annualStats} />
+
+          <SupportCard onContact={handleContactSupport} />
+        </div>
+      </div>
+
       {selectedInvoice && (
         <InvoiceDetailsModal
           invoice={selectedInvoice}
           isOpen={!!selectedInvoice}
           onClose={() => setSelectedInvoice(null)}
-          onPay={handlePayInvoice}
           onDownload={handleDownloadInvoice}
+          onPay={handlePayInvoice}
         />
       )}
 
-      {showPaymentModal && (
+      {currentInvoice && (
         <PaymentModal
           isOpen={showPaymentModal}
           onClose={() => setShowPaymentModal(false)}
-          invoice={currentInvoice!}
-          paymentMethods={paymentMethods}
           isProcessing={isProcessingPayment}
+          invoice={currentInvoice}
+          paymentMethods={paymentMethods}
         />
       )}
-    </>
+    </div>
   );
 }

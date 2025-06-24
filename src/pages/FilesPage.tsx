@@ -839,10 +839,10 @@ function FilePreviewModal({ file, isOpen, onClose }: FilePreviewModalProps) {
 // ----------- FilesPage Component (Principal) -----------
 export default function FilesPage() {
   const [files, setFiles] = useState<FileItem[]>(mockFiles);
-  const [isUploading, setIsUploading] = useState(false);
-  const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [isUploadModalOpen, setUploadModalOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [fileToPreview, setFileToPreview] = useState<FileItem | null>(null);
 
   // Fonction pour afficher des notifications
   const showToast = useCallback(
@@ -991,7 +991,7 @@ export default function FilesPage() {
   );
 
   const handlePreview = useCallback((file: FileItem) => {
-    setPreviewFile(file);
+    setFileToPreview(file);
   }, []);
 
   const handleRename = useCallback(
@@ -1042,87 +1042,67 @@ export default function FilesPage() {
     [showToast]
   );
 
-  // Ouvrir la modal d'upload
-  const openUploadModal = useCallback(() => {
-    setShowUploadModal(true);
-  }, []);
-
-  // Fermer la modal d'upload
-  const closeUploadModal = useCallback(() => {
-    setShowUploadModal(false);
-  }, []);
-
   return (
-    <section className="max-w-7xl mx-auto py-2 px-4">
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Mes fichiers
-          </h2>
-          <p className="text-gray-600">
-            Gérez tous vos documents et manuscrits ({files.length} fichier
-            {files.length > 1 ? "s" : ""})
-          </p>
-        </div>
-        <button
-          onClick={openUploadModal}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow-sm transition text-base"
-          disabled={isUploading}
-        >
-          <i className="fas fa-cloud-upload-alt mr-2"></i>
-          Uploader un fichier
-        </button>
-      </div>
-
-      {/* Contenu principal */}
-      {files.length === 0 ? (
-        <EmptyState onUpload={openUploadModal} />
-      ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* FileCards existants */}
-          {files.map((file) => (
-            <FileCard
-              key={file.id}
-              file={file}
-              onDownload={handleDownload}
-              onDelete={handleDelete}
-              onPreview={handlePreview}
-              onRename={handleRename}
-              onSendToCorrector={handleSendToCorrector}
-            />
-          ))}
-
-          {/* Zone d'upload */}
-          <FileUploader
-            onFileUpload={handleFileUpload}
-            isUploading={isUploading}
-            onOpenUploadModal={openUploadModal}
-          />
-        </div>
-      )}
-
-      {/* Modal d'upload */}
-      <FileUploadModal
-        isOpen={showUploadModal}
-        onClose={closeUploadModal}
-        onUpload={handleFileUpload}
-        isUploading={isUploading}
-      />
-
-      {/* Modal d'aperçu */}
-      <FilePreviewModal
-        file={previewFile}
-        isOpen={!!previewFile}
-        onClose={() => setPreviewFile(null)}
-      />
-
-      {/* Container des toasts */}
-      <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div className="animate-in fade-in duration-300">
+      {/* Toast container */}
+      <div className="fixed top-6 right-6 z-50 space-y-3">
         {toasts.map((toast) => (
           <ToastComponent key={toast.id} toast={toast} onClose={removeToast} />
         ))}
       </div>
-    </section>
+
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Mes fichiers
+            </h2>
+            <p className="text-gray-600">
+              Gérez tous vos documents et manuscrits ({files.length} fichiers)
+            </p>
+          </div>
+          <button
+            onClick={() => setUploadModalOpen(true)}
+            className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition flex items-center gap-2"
+          >
+            <i className="fas fa-cloud-upload-alt"></i>Uploader un fichier
+          </button>
+        </div>
+      </div>
+
+      {/* Files Grid */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {files.map((file) => (
+          <FileCard
+            key={file.id}
+            file={file}
+            onDownload={handleDownload}
+            onDelete={handleDelete}
+            onPreview={handlePreview}
+            onRename={handleRename}
+            onSendToCorrector={handleSendToCorrector}
+          />
+        ))}
+        <FileUploader
+          onFileUpload={handleFileUpload}
+          isUploading={isUploading}
+          onOpenUploadModal={() => setUploadModalOpen(true)}
+        />
+      </div>
+
+      {/* Modals */}
+      <FileUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        onUpload={handleFileUpload}
+        isUploading={isUploading}
+      />
+      <FilePreviewModal
+        file={fileToPreview}
+        isOpen={!!fileToPreview}
+        onClose={() => setFileToPreview(null)}
+      />
+    </div>
   );
 }

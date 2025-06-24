@@ -91,7 +91,7 @@ export default function SettingsPage() {
   // --- UI ---
   return (
     <>
-      <section className="max-w-6xl mx-auto py-8 px-4">
+      <section className="py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Paramètres</h2>
