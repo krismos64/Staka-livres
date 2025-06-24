@@ -1,36 +1,57 @@
 version: "3.9"
 
 services:
-  app:
+  frontend:
     build:
-      context: .
+      context: ./frontend
       dockerfile: Dockerfile
-    container_name: staka_react_app
+      target: development
+    container_name: staka_frontend
     ports:
-      - "3100:3000"
+      - "3000:3000"
     volumes:
-      - .:/app
+      - ./frontend:/app
       - /app/node_modules
     environment:
-      - NODE_ENV=development
-      - CHOKIDAR_USEPOLLING=true
-      - WATCHPACK_POLLING=true
+      - VITE_API_URL=http://localhost:3001
+    depends_on:
+      - backend
     restart: unless-stopped
-    command: npm run dev
 
-  # Si vous souhaitez ajouter une base de données plus tard,
-  # décommentez la section ci-dessous :
-  #
-  # db:
-  #   image: mysql:8
-  #   container_name: staka_db
-  #   restart: always
-  #   ports:
-  #     - "3306:3306"
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: root
-  #     MYSQL_DATABASE: stakalivres
-  #   volumes:
-  #     - db_data:/var/lib/mysql
-# volumes:
-#   db_data:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: staka_backend
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      - DATABASE_URL=mysql://root:root@db:3306/stakalivres
+      - JWT_SECRET=dev_secret_key_change_in_production
+      - NODE_ENV=development
+      - FRONTEND_URL=http://localhost:3000
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: mysql:8
+    container_name: staka_db
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=stakalivres
+      - MYSQL_USER=staka
+      - MYSQL_PASSWORD=staka
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./backend/prisma/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+
+volumes:
+  db_data:
