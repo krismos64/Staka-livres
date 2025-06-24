@@ -5,6 +5,7 @@ import helmet from "helmet";
 import adminRoutes from "./routes/admin";
 import authRoutes from "./routes/auth";
 import commandesRoutes from "./routes/commandes";
+import paymentsRoutes from "./routes/payments";
 
 // Configuration de l'environnement
 dotenv.config();
@@ -38,6 +39,9 @@ app.use("/auth", authRoutes);
 // Routes commandes (côté client)
 app.use("/commandes", commandesRoutes);
 
+// Routes paiements
+app.use("/payments", paymentsRoutes);
+
 // Routes admin (protégées)
 app.use("/admin", adminRoutes);
 
@@ -58,6 +62,12 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`   POST /commandes - Créer une commande`);
   console.log(`   GET /commandes - Mes commandes`);
   console.log(`   GET /commandes/:id - Détail d'une commande`);
+  console.log(`💳 Routes paiements:`);
+  console.log(
+    `   POST /payments/create-checkout-session - Créer session paiement`
+  );
+  console.log(`   GET /payments/status/:sessionId - Statut paiement`);
+  console.log(`   POST /payments/webhook - Webhook Stripe`);
   console.log(`👑 Routes admin disponibles:`);
   console.log(`   GET /admin/test - Test admin (ADMIN uniquement)`);
   console.log(

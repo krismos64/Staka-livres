@@ -22,11 +22,8 @@ services:
     container_name: staka_backend
     ports:
       - "3001:3001"
-    environment:
-      - DATABASE_URL=mysql://root:root@db:3306/stakalivres
-      - JWT_SECRET=dev_secret_key_change_in_production
-      - NODE_ENV=development
-      - FRONTEND_URL=http://localhost:3000
+    env_file:
+      - ./backend/.env
     volumes:
       - ./backend:/app/backend
       - ./shared:/app/shared

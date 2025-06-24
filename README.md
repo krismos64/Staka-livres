@@ -48,6 +48,7 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 - **Routes admin utilisateurs** : GET /admin/users, GET /admin/user/:id
 - **Routes admin commandes** : GET /admin/commandes, PATCH /admin/commande/:id
 - **Routes client commandes** : POST /commandes, GET /commandes
+- **Routes de paiement Stripe** : POST /payments/create-checkout-session, GET /payments/status, POST /payments/webhook
 - **Middleware de rôles** avec RequireAdmin
 - **Gestion d'erreurs** centralisée avec logs
 - **Données de fallback** en cas d'indisponibilité DB
@@ -75,17 +76,20 @@ Staka-livres/
 │   │   │   ├── authController.ts      # Authentification
 │   │   │   ├── adminController.ts     # Administration
 │   │   │   ├── commandeController.ts  # Gestion commandes admin
-│   │   │   └── commandeClientController.ts # Commandes client
+│   │   │   ├── commandeClientController.ts # Commandes client
+│   │   │   └── paymentController.ts   # Paiements Stripe
 │   │   ├── routes/         # Routes Express
 │   │   │   ├── auth.ts     # Routes authentification
 │   │   │   ├── admin.ts    # Routes administration
-│   │   │   └── commandes.ts # Routes commandes
+│   │   │   ├── commandes.ts # Routes commandes
+│   │   │   └── payments.ts # Routes paiements Stripe
 │   │   ├── middleware/     # Middlewares Express
 │   │   │   ├── auth.ts     # Middleware JWT
 │   │   │   └── requireRole.ts # Middleware rôles
 │   │   ├── utils/          # Utilitaires
 │   │   │   └── token.ts    # Gestion tokens JWT
 │   │   ├── services/       # Logique métier
+│   │   │   └── stripeService.ts    # Service Stripe
 │   │   ├── config/         # Configuration
 │   │   └── types/          # Types TypeScript
 │   ├── prisma/
@@ -165,6 +169,7 @@ Staka-livres/
 - **winston** : Logging avancé
 - **nodemon** : Rechargement automatique en dev
 - **ts-node** : Exécution TypeScript directe
+- **Stripe** : Plateforme de paiement sécurisée
 
 ### 🎨 **Frontend (React)**
 
@@ -188,6 +193,7 @@ Staka-livres/
 - **Docker Compose** : Orchestration multi-services avec volumes
 - **npm workspaces** : Gestion monorepo
 - **Nginx** : Serveur web (frontend en prod)
+- **ngrok** : Tunnel sécurisé pour webhooks Stripe en développement
 
 ---
 
@@ -198,6 +204,8 @@ Staka-livres/
 - **Node.js** 18+ et npm 9+
 - **Docker** et Docker Compose (recommandé)
 - **Git** pour le clonage du repository
+- **Compte Stripe** pour les paiements (gratuit)
+- **ngrok** pour les webhooks en développement
 
 ### 🚀 **Installation avec Docker (Recommandée)**
 
@@ -245,7 +253,21 @@ Email: user@example.com
 Mot de passe: user123
 ```
 
-#### **6. Arrêt des Services**
+#### **6. Configuration Stripe (Optionnelle)**
+
+```bash
+# Installer ngrok pour les webhooks
+brew install ngrok
+
+# Créer un compte sur https://dashboard.ngrok.com/signup
+# Récupérer ton authtoken et le configurer :
+ngrok config add-authtoken TON_TOKEN_ICI
+
+# Exposer le backend pour les webhooks
+ngrok http 3001
+```
+
+#### **7. Arrêt des Services**
 
 ```bash
 # Arrêter les conteneurs
@@ -325,6 +347,24 @@ GET /commandes/:id
 Headers: Authorization: Bearer <user_token>
 ```
 
+### 💳 **Paiements Stripe (Role: USER)**
+
+```bash
+# Créer une session de paiement
+POST /payments/create-checkout-session
+Headers: Authorization: Bearer <user_token>
+Body: { commandeId: "uuid", priceId: "price_1234..." }
+
+# Vérifier le statut d'un paiement
+GET /payments/status/:sessionId
+Headers: Authorization: Bearer <user_token>
+
+# Webhook Stripe (appelé automatiquement par Stripe)
+POST /payments/webhook
+Headers: stripe-signature: <signature>
+Body: <stripe_event_data>
+```
+
 ---
 
 ## 🗄️ Configuration Base de Données
@@ -357,6 +397,8 @@ JWT_SECRET="dev_secret_key_change_in_production"
 NODE_ENV="development"
 FRONTEND_URL="http://localhost:3000"
 PORT=3001
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
 ```
 
 ### 🎨 **Variables d'Environnement Frontend**
@@ -526,6 +568,16 @@ curl -X GET http://localhost:3001/auth/me \
 # Test route admin (remplacer <admin_token>)
 curl -X GET http://localhost:3001/admin/users/stats \
   -H "Authorization: Bearer <admin_token>"
+
+# Test création session de paiement (remplacer <user_token>)
+curl -X POST http://localhost:3001/payments/create-checkout-session \
+  -H "Authorization: Bearer <user_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"commandeId":"commande-uuid","priceId":"price_1234..."}'
+
+# Test statut paiement
+curl -X GET http://localhost:3001/payments/status/cs_test_1234 \
+  -H "Authorization: Bearer <user_token>"
 ```
 
 ### ❌ **Erreurs Fréquentes et Solutions**
@@ -570,6 +622,110 @@ docker-compose ps
 docker-compose restart db
 ```
 
+#### **5. Erreurs Stripe en développement**
+
+**Problème** : Webhook Stripe non accessible
+
+```bash
+# Solution : Vérifier que ngrok est actif
+ngrok http 3001
+# Copier l'URL publique dans le dashboard Stripe
+# Ex: https://1234-abcd.ngrok.io/payments/webhook
+```
+
+---
+
+## 💳 Configuration Stripe Complète
+
+### 🔧 **Installation et Setup**
+
+#### **1. Compte Stripe**
+
+1. Créer un compte sur [stripe.com](https://dashboard.stripe.com/register)
+2. Récupérer les clés API dans **Développeurs > Clés API**
+   - **Clé publique** : `pk_test_...` (pour le frontend)
+   - **Clé secrète** : `sk_test_...` (pour le backend)
+
+#### **2. Configuration Webhooks**
+
+1. Aller dans **Développeurs > Webhooks**
+2. **Ajouter un endpoint** avec ton URL ngrok :
+   ```
+   https://1234-abcd.ngrok.io/payments/webhook
+   ```
+3. **Événements à écouter** :
+   - `checkout.session.completed`
+   - `payment_intent.succeeded`
+   - `payment_intent.payment_failed`
+4. Copier la **clé de signature webhook** : `whsec_...`
+
+#### **3. Variables d'Environnement Stripe**
+
+```env
+# backend/.env
+STRIPE_SECRET_KEY="sk_test_votre_cle_secrete_ici"
+STRIPE_WEBHOOK_SECRET="whsec_votre_signature_webhook_ici"
+```
+
+### 🚀 **Utilisation API Stripe**
+
+#### **Créer des Produits Stripe**
+
+```bash
+# Via Dashboard Stripe : Produits > Ajouter un produit
+# Ou via API :
+curl https://api.stripe.com/v1/products \
+  -u sk_test_... \
+  -d name="Correction Manuscrit"
+
+curl https://api.stripe.com/v1/prices \
+  -u sk_test_... \
+  -d product=prod_... \
+  -d unit_amount=5000 \
+  -d currency=eur
+```
+
+#### **Workflow de Paiement**
+
+1. **Créer session** : `POST /payments/create-checkout-session`
+2. **Rediriger client** vers `session.url`
+3. **Stripe traite** le paiement
+4. **Webhook confirmé** : commande passée à "EN_COURS"
+5. **Client redirigé** vers page de succès
+
+### 🧪 **Tests Stripe**
+
+#### **Cartes de Test**
+
+```bash
+# Succès
+4242 4242 4242 4242
+
+# Échec
+4000 0000 0000 0002
+
+# 3D Secure
+4000 0027 6000 3184
+```
+
+#### **Test Complet**
+
+```bash
+# 1. Créer une commande
+POST /commandes
+Body: { titre: "Mon Livre", description: "Roman" }
+
+# 2. Créer session paiement
+POST /payments/create-checkout-session
+Body: { commandeId: "uuid", priceId: "price_..." }
+
+# 3. Vérifier statut
+GET /payments/status/cs_test_...
+
+# 4. Simuler webhook (optionnel)
+stripe listen --forward-to localhost:3001/payments/webhook
+```
+
 ---
 
 ## 📊 Métriques du Projet Actualisées
@@ -580,8 +736,9 @@ docker-compose restart db
 - **Workspaces** : 3 packages npm (frontend, backend, shared)
 - **Lignes de code** : ~8,000 lignes TypeScript/React
 - **Composants** : 60+ composants React réutilisables
-- **API Endpoints** : 15+ endpoints REST avec sécurité JWT
+- **API Endpoints** : 20+ endpoints REST avec sécurité JWT + Stripe
 - **Tables DB** : User, Commande avec relations
+- **Paiements** : Intégration Stripe complète avec webhooks
 
 ### ⚡ **Performance et Sécurité**
 
@@ -600,6 +757,7 @@ docker-compose restart db
 - **Dashboard** : Statistiques temps réel avec fallback
 - **Responsive Design** : Mobile-first avec Tailwind CSS
 - **Data Validation** : Frontend + Backend avec TypeScript
+- **Paiements Stripe** : Sessions, webhooks et gestion des statuts
 
 ---
 
@@ -651,9 +809,10 @@ npm run build && echo "✅ Build successful"
 - **Upload de Fichiers** : Multer + stockage sécurisé pour manuscrits
 - **Messagerie Temps Réel** : WebSockets avec Socket.io
 - **Notifications** : Email + notifications push
-- **Paiements** : Intégration Stripe pour commandes
 - **Workflow Commandes** : Assignation correcteurs + suivi
 - **Reporting Avancé** : Graphiques et export PDF
+- **Frontend Stripe** : Composants React pour checkout
+- **Abonnements** : Plans récurrents avec Stripe Subscriptions
 
 ### 📦 **Améliorations Techniques**
 
@@ -682,9 +841,10 @@ npm run build && echo "✅ Build successful"
 - **✅ Authentification JWT** : Inscription/Connexion sécurisée
 - **✅ Gestion des rôles** : USER/ADMIN avec protection routes
 - **✅ Espace admin moderne** : Dashboard + gestion utilisateurs/commandes
-- **✅ API REST complète** : 15+ endpoints avec middleware sécurité
+- **✅ API REST complète** : 20+ endpoints avec middleware sécurité
 - **✅ Base de données** : Modèles Prisma avec relations
 - **✅ Interface responsive** : Design moderne mobile-first
+- **✅ Paiements Stripe** : API complète avec webhooks et sessions
 
 ### 🎯 **Architecture Technique Validée**
 
@@ -694,4 +854,4 @@ npm run build && echo "✅ Build successful"
 - **✅ Hot Reload** : Développement rapide Vite + nodemon
 - **✅ Security** : JWT + bcrypt + validation + CORS
 
-Cette base solide est prête pour l'ajout des fonctionnalités métier avancées (upload fichiers, messagerie, paiements) et le déploiement en production avec une architecture scalable et maintenir.
+Cette base solide avec **Stripe intégré** est prête pour l'ajout des fonctionnalités métier avancées (upload fichiers, messagerie, abonnements) et le déploiement en production avec une architecture scalable et maintenir.
