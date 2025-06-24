@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface NavigationProps {
   onLoginClick?: () => void;
@@ -6,22 +6,19 @@ interface NavigationProps {
 
 export default function Navigation({ onLoginClick }: NavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isPromoBannerVisible, setIsPromoBannerVisible] = useState(true);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [showPromo, setShowPromo] = useState(true);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
-
-  const closePromoBanner = () => {
-    setIsPromoBannerVisible(false);
-  };
-
-  const handleMobileLinkClick = () => {
-    closeMobileMenu();
   };
 
   const handleLoginClick = () => {
@@ -30,197 +27,174 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
     }
   };
 
+  const navLinks = [
+    { href: "#services", text: "Services" },
+    { href: "#packs", text: "Packs" },
+    { href: "#temoignages", text: "Témoignages" },
+    { href: "#blog", text: "Blog" },
+    { href: "#qui-sommes-nous", text: "À propos" },
+    { href: "#faq", text: "FAQ" },
+  ];
+
   return (
     <>
-      {/* Skip to content for accessibility */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded z-50"
-      >
-        Aller au contenu principal
-      </a>
-
-      {/* Promo Banner */}
-      {isPromoBannerVisible && (
-        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white text-center py-2 text-sm">
-          🎉 <strong>Offre limitée:</strong> 10 pages gratuites + 20% de
-          réduction sur votre première commande !
-          <button
-            onClick={closePromoBanner}
-            className="ml-4 text-green-200 hover:text-white"
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      {/* Navigation Bar */}
-      <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-sm shadow-sm z-50 transition-all duration-300">
-        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <i className="fas fa-book-open text-blue-600 text-xl"></i>
-            <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
-              Staka Éditions
-            </span>
-          </div>
-          <div className="hidden md:flex items-center gap-6 text-sm">
-            <a href="#services" className="hover:text-blue-600 transition">
-              Services
-            </a>
-            <a href="#packs" className="hover:text-blue-600 transition">
-              Packs
-            </a>
-            <a href="#temoignages" className="hover:text-blue-600 transition">
-              Témoignages
-            </a>
-            <a href="#blog" className="hover:text-blue-600 transition">
-              Blog
-            </a>
-            <a
-              href="#qui-sommes-nous"
-              className="hover:text-blue-600 transition"
-            >
-              À propos
-            </a>
-            <a href="#faq" className="hover:text-blue-600 transition">
-              FAQ
-            </a>
-            <button className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition">
-              <i className="fas fa-comments mr-1"></i> Chat
-            </button>
-            <button
-              onClick={handleLoginClick}
-              className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-blue-600 transition flex items-center gap-2"
-            >
-              <i className="fas fa-sign-in-alt"></i>
-              Connexion
-            </button>
-            <a
-              href="#contact"
-              className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition"
-            >
-              Contact
-            </a>
-          </div>
-          <button className="md:hidden" onClick={toggleMobileMenu}>
-            <i className="fas fa-bars text-xl"></i>
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile Menu */}
-      <div
-        className={`fixed inset-0 bg-white z-40 transition-transform duration-300 md:hidden ${
-          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+      <header
+        className={`sticky top-0 z-40 transition-all duration-300 ${
+          isScrolled ? "bg-white/95 backdrop-blur-sm shadow-md" : "bg-white"
         }`}
       >
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-8">
-            <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
-              Menu
-            </span>
-            <button onClick={closeMobileMenu}>
-              <i className="fas fa-times text-xl"></i>
-            </button>
-          </div>
-          <div className="space-y-4">
-            <a
-              href="#services"
-              className="block py-2 hover:text-blue-600 transition"
-              onClick={handleMobileLinkClick}
-            >
-              Services
-            </a>
-            <a
-              href="#packs"
-              className="block py-2 hover:text-blue-600 transition"
-              onClick={handleMobileLinkClick}
-            >
-              Packs
-            </a>
-            <a
-              href="#temoignages"
-              className="block py-2 hover:text-blue-600 transition"
-              onClick={handleMobileLinkClick}
-            >
-              Témoignages
-            </a>
-            <a
-              href="#blog"
-              className="block py-2 hover:text-blue-600 transition"
-              onClick={handleMobileLinkClick}
-            >
-              Blog
-            </a>
-            <a
-              href="#qui-sommes-nous"
-              className="block py-2 hover:text-blue-600 transition"
-              onClick={handleMobileLinkClick}
-            >
-              À propos
-            </a>
-            <a
-              href="#faq"
-              className="block py-2 hover:text-blue-600 transition"
-              onClick={handleMobileLinkClick}
-            >
-              FAQ
-            </a>
-            <button className="block w-full text-left py-2 hover:text-green-600 transition">
-              <i className="fas fa-comments mr-2"></i>Chat en direct
-            </button>
-            <button
-              onClick={() => {
-                handleLoginClick();
-                handleMobileLinkClick();
-              }}
-              className="block w-full text-left py-2 hover:text-blue-600 transition"
-            >
-              <i className="fas fa-sign-in-alt mr-2"></i>Connexion
-            </button>
-            <a
-              href="#contact"
-              className="block py-2 hover:text-blue-600 transition"
-              onClick={handleMobileLinkClick}
-            >
-              Contact
-            </a>
-          </div>
-        </div>
-      </div>
+        {/* Navigation Bar */}
+        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            {/* Logo */}
+            <div className="flex-shrink-0">
+              <a href="#" className="flex items-center gap-2">
+                <i className="fas fa-book-open text-blue-600 text-2xl"></i>
+                <span className="font-bold text-xl text-blue-600">
+                  Staka Éditions
+                </span>
+              </a>
+            </div>
 
-      {/* Sticky CTA Bar */}
-      <div
-        id="sticky-cta"
-        className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-blue-600 to-blue-500 text-white p-4 shadow-lg z-40 transform translate-y-full transition-transform duration-300"
-      >
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <i className="fas fa-gift text-yellow-300 text-xl"></i>
-            <div>
-              <div className="font-semibold">10 pages gratuites</div>
-              <div className="text-sm opacity-90">
-                Testez notre expertise sans engagement
-              </div>
+            {/* Desktop Links */}
+            <div className="hidden lg:flex items-center space-x-8">
+              {navLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
+                >
+                  {link.text}
+                </a>
+              ))}
+            </div>
+
+            {/* Desktop CTA */}
+            <div className="hidden lg:flex items-center gap-4">
+              <a
+                href="#chat"
+                className="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold text-sm hover:bg-green-600 transition-all shadow-sm flex items-center gap-2"
+              >
+                <i className="fas fa-comments"></i>
+                Chat
+              </a>
+              <a
+                href="#contact"
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold text-sm hover:bg-blue-700 transition-all shadow-sm"
+              >
+                Contact
+              </a>
+              <button
+                onClick={handleLoginClick}
+                className="text-sm font-medium text-gray-700 bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Connexion
+              </button>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <div className="lg:hidden">
+              <button
+                onClick={toggleMobileMenu}
+                className="p-2 rounded-md text-gray-500 hover:text-gray-800 hover:bg-gray-100 focus:outline-none"
+                aria-label="Menu"
+              >
+                <i className="fas fa-bars text-2xl"></i>
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+        </nav>
+
+        {/* Promo Banner */}
+        {showPromo && (
+          <div className="bg-gradient-to-r from-green-500 to-green-600 text-white text-center py-2.5 text-sm font-medium relative">
+            🎉 <span className="hidden sm:inline">Offre limitée :</span> 10
+            pages gratuites + 20% de réduction !
             <button
-              onClick={() =>
-                document
-                  .getElementById("sticky-cta")!
-                  .classList.add("translate-y-full")
-              }
-              className="text-blue-200 hover:text-white"
+              onClick={() => setShowPromo(false)}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-green-200 transition-colors"
+              aria-label="Fermer la bannière promotionnelle"
             >
               <i className="fas fa-times"></i>
             </button>
-            <a
-              href="#commande-gratuite"
-              className="bg-white text-blue-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition"
-            >
-              Commencer
+          </div>
+        )}
+      </header>
+
+      {/* Mobile Menu Overlay */}
+      <div
+        className={`fixed inset-0 z-50 bg-white transform transition-transform duration-300 ease-in-out lg:hidden ${
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex flex-col h-full">
+          <div className="flex items-center justify-between p-4">
+            <a href="#" className="flex items-center gap-2">
+              <i className="fas fa-book-open text-blue-600 text-2xl"></i>
+              <span className="font-bold text-xl text-blue-600">
+                Staka Éditions
+              </span>
             </a>
+            <button
+              onClick={toggleMobileMenu}
+              className="p-2 text-gray-500 hover:text-gray-800"
+              aria-label="Fermer le menu"
+            >
+              <i className="fas fa-times text-2xl"></i>
+            </button>
+          </div>
+
+          {/* Promo Banner in Mobile Menu */}
+          {showPromo && (
+            <div className="bg-gradient-to-r from-green-500 to-green-600 text-white text-center py-2.5 text-sm font-medium relative">
+              🎉 10 pages gratuites + 20% de réduction !
+              <button
+                onClick={() => setShowPromo(false)}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-green-200 transition-colors"
+                aria-label="Fermer la bannière promotionnelle"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+          )}
+
+          <nav className="flex-grow flex flex-col items-center justify-center text-center space-y-6">
+            {navLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={toggleMobileMenu}
+                className="text-2xl font-medium text-gray-700 hover:text-blue-600"
+              >
+                {link.text}
+              </a>
+            ))}
+          </nav>
+
+          <div className="p-6 border-t border-gray-100 space-y-3">
+            <a
+              href="#chat"
+              onClick={toggleMobileMenu}
+              className="flex items-center justify-center w-full text-center bg-green-500 text-white px-5 py-3 rounded-lg font-semibold text-base hover:bg-green-600 transition-all shadow-sm"
+            >
+              <i className="fas fa-comments mr-2"></i>Chat
+            </a>
+            <a
+              href="#contact"
+              onClick={toggleMobileMenu}
+              className="block w-full text-center bg-blue-600 text-white px-5 py-3 rounded-lg font-semibold text-base hover:bg-blue-700 transition-all shadow-sm"
+            >
+              Contact
+            </a>
+            <button
+              onClick={() => {
+                handleLoginClick();
+                toggleMobileMenu();
+              }}
+              className="w-full text-center text-base font-medium text-gray-700 bg-gray-100 px-4 py-3 rounded-lg hover:bg-gray-200"
+            >
+              Connexion
+            </button>
           </div>
         </div>
       </div>

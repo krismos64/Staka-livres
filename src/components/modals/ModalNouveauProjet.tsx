@@ -73,17 +73,16 @@ export default function ModalNouveauProjet({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-4xl relative mx-4"
+        className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-4xl relative max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
-        style={{ minWidth: 640, maxWidth: 900 }}
       >
         {/* Close */}
         <button
-          className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 text-2xl"
+          className="absolute top-4 right-4 md:top-6 md:right-6 text-gray-400 hover:text-gray-600 text-2xl z-10"
           onClick={onClose}
           aria-label="Fermer"
         >
@@ -107,7 +106,7 @@ export default function ModalNouveauProjet({
           }}
         >
           {/* Top grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Titre du projet <span className="text-red-500">*</span>
@@ -157,7 +156,7 @@ export default function ModalNouveauProjet({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Pack choisi <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
               {packOptions.map((pack) => (
                 <button
                   key={pack.key}
@@ -203,7 +202,7 @@ export default function ModalNouveauProjet({
             </div>
           </div>
           {/* Description et Fichier sur la même ligne */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Description */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

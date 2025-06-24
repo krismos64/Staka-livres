@@ -27,13 +27,13 @@ export default function Services() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl hover:transform hover:scale-105 transition-all duration-300">
-            <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl hover:transform hover:-translate-y-2 transition-all duration-300 flex flex-col">
+            <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 flex-shrink-0">
               <i className="fas fa-spell-check text-blue-600 text-2xl"></i>
             </div>
             <h3 className="font-bold text-xl mb-4">Correction complète</h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 mb-6 flex-grow">
               Orthographe, grammaire, syntaxe, style et cohérence narrative par
               nos correcteurs expérimentés.
             </p>
@@ -58,12 +58,12 @@ export default function Services() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl hover:transform hover:scale-105 transition-all duration-300">
-            <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mb-6">
+          <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl hover:transform hover:-translate-y-2 transition-all duration-300 flex flex-col">
+            <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mb-6 flex-shrink-0">
               <i className="fas fa-palette text-purple-600 text-2xl"></i>
             </div>
             <h3 className="font-bold text-xl mb-4">Design professionnel</h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 mb-6 flex-grow">
               Mise en page soignée et conception de couverture qui captent
               l'attention des lecteurs.
             </p>
@@ -88,14 +88,14 @@ export default function Services() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl hover:transform hover:scale-105 transition-all duration-300">
-            <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-6">
+          <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl hover:transform hover:-translate-y-2 transition-all duration-300 flex flex-col">
+            <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-6 flex-shrink-0">
               <i className="fas fa-rocket text-green-600 text-2xl"></i>
             </div>
             <h3 className="font-bold text-xl mb-4">
               Accompagnement publication
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 mb-6 flex-grow">
               Support complet pour l'autoédition et la diffusion sur les
               plateformes numériques.
             </p>
@@ -128,15 +128,18 @@ export default function Services() {
               📅 Réservez votre consultation gratuite
             </h3>
             <div className="flex justify-center">
-              <p className="text-lg opacity-90 text-center">
+              <p className="text-lg opacity-90 text-center max-w-2xl mx-auto">
                 30 minutes d'échange avec un expert pour définir vos besoins
               </p>
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div>
-              <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            <div className="space-y-4">
+              <h4 className="font-bold text-xl mb-4 text-center lg:text-left">
+                Ce que vous obtiendrez :
+              </h4>
+              <div className="grid sm:grid-cols-2 gap-4">
                 <div className="flex items-center gap-3">
                   <i className="fas fa-phone text-green-300"></i>
                   <span>Appel téléphonique personnalisé</span>
@@ -160,7 +163,7 @@ export default function Services() {
               <h4 className="font-bold text-lg mb-4">
                 Créneaux disponibles cette semaine:
               </h4>
-              <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-3 mb-6">
                 <button
                   onClick={() => handleTimeSlotClick("Lundi", "14h-14h30")}
                   className="bg-white/20 hover:bg-white/30 rounded-lg p-3 text-center transition"

@@ -16,14 +16,29 @@ interface HeaderProps {
   pageTitle: string;
   onSectionChange: (section: SectionName) => void;
   onLogout: () => void;
+  onToggleSidebar: () => void;
 }
 
-function Header({ pageTitle, onSectionChange, onLogout }: HeaderProps) {
+function Header({
+  pageTitle,
+  onSectionChange,
+  onLogout,
+  onToggleSidebar,
+}: HeaderProps) {
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200">
+    <nav className="bg-white shadow-sm border-b border-gray-200 lg:flex-none">
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <div className="flex items-center gap-4">
+            {/* Hamburger Menu - Mobile */}
+            <button
+              onClick={onToggleSidebar}
+              className="lg:hidden text-gray-500 hover:text-gray-900 focus:outline-none"
+              aria-controls="sidebar"
+              aria-expanded="false" // This should be managed by state
+            >
+              <i className="fas fa-bars text-xl"></i>
+            </button>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg flex items-center justify-center">
                 <i className="fas fa-book-open text-white text-sm"></i>

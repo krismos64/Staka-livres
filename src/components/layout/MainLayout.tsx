@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode, useState } from "react";
 import Header from "./Header"; // On importe le vrai Header
 import Sidebar from "./Sidebar"; // On importe le vrai Sidebar
 
@@ -30,22 +30,35 @@ function MainLayout({
   activeSection,
   onNewProjectClick,
 }: MainLayoutProps) {
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
+
   return (
-    <div>
-      <Header
-        pageTitle={pageTitle}
+    <div className="min-h-screen bg-gray-50">
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        activeSection={activeSection}
         onSectionChange={onSectionChange}
-        onLogout={onLogout}
+        onNewProjectClick={onNewProjectClick}
       />
-      <div className="flex">
-        {/* Sidebar seulement si la maquette la prévoit */}
-        <Sidebar
-          activeSection={activeSection}
+
+      <div className="lg:pl-72">
+        <Header
+          pageTitle={pageTitle}
           onSectionChange={onSectionChange}
-          onNewProjectClick={onNewProjectClick}
+          onLogout={onLogout}
+          onToggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
         />
-        <main className="flex-1 p-6">{children}</main>
+        <main className="p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
+
+      {/* Overlay pour le mode mobile */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black opacity-50 z-30 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
     </div>
   );
 }

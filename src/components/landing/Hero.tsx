@@ -25,7 +25,7 @@ export default function Hero() {
                 4.9/5 • 127 avis clients
               </span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-6 leading-tight">
               Transformez votre
               <span className="text-yellow-300"> manuscrit</span> en livre
               professionnel
@@ -52,7 +52,7 @@ export default function Hero() {
             </div>
 
             {/* Trust indicators */}
-            <div className="flex flex-wrap items-center gap-6 mt-8 text-sm opacity-80">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-8 text-sm opacity-80">
               <div className="flex items-center gap-2">
                 <i className="fas fa-shield-alt text-green-300"></i>
                 <span>100% français</span>
@@ -68,12 +68,15 @@ export default function Hero() {
             </div>
           </div>
           <div
-            className="animate-fade-in-up hidden md:block"
+            className="animate-fade-in-up mt-12 md:mt-0"
             style={{ animationDelay: "0.2s" }}
           >
             <div className="relative">
               <div className="absolute inset-0 bg-white/10 rounded-3xl transform rotate-6"></div>
-              <div className="relative bg-white/20 backdrop-blur rounded-3xl p-8">
+              <div className="relative bg-white/20 backdrop-blur rounded-3xl p-6 sm:p-8">
+                <h3 className="text-lg font-bold mb-4 text-center sm:text-left">
+                  Nos packs incluent :
+                </h3>
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <i className="fas fa-check-circle text-green-300"></i>

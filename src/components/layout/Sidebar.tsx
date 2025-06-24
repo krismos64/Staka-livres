@@ -14,21 +14,35 @@ interface SidebarProps {
   activeSection: SectionName;
   onSectionChange: (section: SectionName) => void;
   onNewProjectClick: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 function Sidebar({
   activeSection,
   onSectionChange,
   onNewProjectClick,
+  isOpen,
+  onClose,
 }: SidebarProps) {
+  const handleNavigation = (section: SectionName) => {
+    onSectionChange(section);
+    onClose(); // Ferme la sidebar après la navigation sur mobile
+  };
+
   return (
-    <aside className="w-72 bg-white min-h-screen px-0 pt-10 border-r border-gray-200">
+    <aside
+      id="sidebar"
+      className={`fixed inset-y-0 left-0 z-40 w-72 bg-white min-h-screen px-0 pt-10 border-r border-gray-200 transform lg:translate-x-0 transition-transform duration-300 ease-in-out ${
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
+    >
       <nav>
         <ul className="space-y-2 px-0">
           {/* Tableau de bord */}
           <li>
             <button
-              onClick={() => onSectionChange("dashboard")}
+              onClick={() => handleNavigation("dashboard")}
               className={`w-full flex items-center px-8 py-3 rounded-2xl text-base font-medium transition
                 ${
                   activeSection === "dashboard"
@@ -43,7 +57,7 @@ function Sidebar({
           {/* Mes projets */}
           <li>
             <button
-              onClick={() => onSectionChange("projects")}
+              onClick={() => handleNavigation("projects")}
               className={`w-full flex items-center px-8 py-3 rounded-2xl text-base font-medium transition
                 ${
                   activeSection === "projects"
@@ -63,7 +77,7 @@ function Sidebar({
           {/* Messages */}
           <li>
             <button
-              onClick={() => onSectionChange("messages")}
+              onClick={() => handleNavigation("messages")}
               className={`w-full flex items-center px-8 py-3 rounded-2xl text-base font-medium transition relative
                 ${
                   activeSection === "messages"
@@ -82,7 +96,7 @@ function Sidebar({
           {/* Mes fichiers */}
           <li>
             <button
-              onClick={() => onSectionChange("files")}
+              onClick={() => handleNavigation("files")}
               className={`w-full flex items-center px-8 py-3 rounded-2xl text-base font-medium transition
                 ${
                   activeSection === "files"
@@ -97,7 +111,7 @@ function Sidebar({
           {/* Facturation */}
           <li>
             <button
-              onClick={() => onSectionChange("billing")}
+              onClick={() => handleNavigation("billing")}
               className={`w-full flex items-center px-8 py-3 rounded-2xl text-base font-medium transition
                 ${
                   activeSection === "billing"
@@ -112,7 +126,7 @@ function Sidebar({
           {/* Aide & Support */}
           <li>
             <button
-              onClick={() => onSectionChange("help")}
+              onClick={() => handleNavigation("help")}
               className={`w-full flex items-center px-8 py-3 rounded-2xl text-base font-medium transition
                 ${
                   activeSection === "help"
@@ -140,7 +154,7 @@ function Sidebar({
             </button>
             <button
               className="w-full bg-white text-gray-700 py-3 px-4 rounded-xl text-base border border-gray-200 hover:bg-gray-50 transition flex items-center justify-center gap-2"
-              onClick={() => onSectionChange("messages")}
+              onClick={() => handleNavigation("messages")}
             >
               <i className="fas fa-envelope"></i>
               Contacter l'équipe
