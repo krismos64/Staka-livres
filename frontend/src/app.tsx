@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import AdminLayout, { AdminSection } from "./components/admin/AdminLayout";
 import MainLayout from "./components/layout/MainLayout";
 import { ToastProvider } from "./components/layout/ToastProvider";
 import ModalNouveauProjet from "./components/modals/ModalNouveauProjet";
+import { AuthProvider, RequireAdmin, useAuth } from "./contexts/AuthContext";
 import BillingPage from "./pages/BillingPage";
 import Dashboard from "./pages/DashboardPage";
 import FilesPage from "./pages/FilesPage";
@@ -12,6 +14,10 @@ import MessagesPage from "./pages/MessagesPage";
 import ProfilPage from "./pages/ProfilPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import SettingsPage from "./pages/SettingsPage";
+import SignupPage from "./pages/SignupPage";
+import AdminCommandes from "./pages/admin/AdminCommandes";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUtilisateurs from "./pages/admin/AdminUtilisateurs";
 
 import "./styles/global.css";
 
@@ -25,32 +31,66 @@ type SectionName =
   | "profile"
   | "settings";
 
-type AppMode = "landing" | "login" | "app";
+type AppMode = "landing" | "login" | "signup" | "app" | "admin";
 
-// Composant principal de l'application
-function App() {
+// Composant interne qui utilise useAuth
+const AppContent: React.FC = () => {
+  const { user, login, logout, isLoading } = useAuth();
+
   // Mode de l'application : landing page par défaut
   const [appMode, setAppMode] = useState<AppMode>("landing");
-  // État pour la connexion
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  // Section active
+
+  // Section active pour l'app normale
   const [currentSection, setCurrentSection] =
     useState<SectionName>("dashboard");
+
+  // Section active pour l'admin
+  const [adminSection, setAdminSection] = useState<AdminSection>("dashboard");
+
   // État pour le modal nouveau projet
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
 
-  // Gère la connexion
-  const handleLogin = (e: React.FormEvent) => {
+  // Détecter automatiquement le mode admin si utilisateur connecté est admin
+  React.useEffect(() => {
+    if (user) {
+      if (user.role === "ADMIN" && appMode === "login") {
+        setAppMode("admin");
+      } else if (user.role === "USER" && appMode === "login") {
+        setAppMode("app");
+      }
+    }
+  }, [user, appMode]);
+
+  // Gère la connexion avec l'API réelle
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoggedIn(true);
-    setAppMode("app");
+    const formData = new FormData(e.target as HTMLFormElement);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    console.log("[App.tsx] Lancement de handleLogin...");
+    const loggedInUser = await login({ email, password });
+    console.log("[App.tsx] Utilisateur reçu après login:", loggedInUser);
+
+    if (loggedInUser) {
+      if (loggedInUser.role === "ADMIN") {
+        console.log("[App.tsx] Utilisateur est ADMIN, passage en mode 'admin'");
+        setAppMode("admin");
+      } else {
+        console.log("[App.tsx] Utilisateur est USER, passage en mode 'app'");
+        setAppMode("app");
+      }
+    } else {
+      console.log("[App.tsx] Échec de la connexion, loggedInUser est null.");
+    }
   };
 
   // Gère la déconnexion
   const handleLogout = () => {
-    setIsLoggedIn(false);
+    logout();
     setCurrentSection("dashboard");
-    setAppMode("landing"); // Retour à la landing page
+    setAdminSection("dashboard");
+    setAppMode("landing");
   };
 
   // Gère l'accès à l'application depuis la landing page
@@ -66,6 +106,28 @@ function App() {
   // Gère le retour à la landing page
   const handleBackToLanding = () => {
     setAppMode("landing");
+  };
+
+  // Gère l'accès à la page d'inscription
+  const handleGoToSignup = () => {
+    setAppMode("signup");
+  };
+
+  // Gère le retour à la page de connexion depuis l'inscription
+  const handleBackToLogin = () => {
+    setAppMode("login");
+  };
+
+  // Gère le passage en mode admin
+  const handleGoToAdmin = () => {
+    if (user?.role === "ADMIN") {
+      setAppMode("admin");
+    }
+  };
+
+  // Gère le retour à l'app normale
+  const handleBackToApp = () => {
+    setAppMode("app");
   };
 
   // Mapping titre => section
@@ -111,39 +173,89 @@ function App() {
     }
   };
 
-  return (
-    <ToastProvider>
-      <div className="App">
-        {appMode === "landing" && (
-          <LandingPage onLoginClick={handleLoginClick} />
-        )}
+  // Rendu dynamique de la section admin
+  const renderAdminSection = () => {
+    switch (adminSection) {
+      case "dashboard":
+        return <AdminDashboard />;
+      case "utilisateurs":
+        return <AdminUtilisateurs />;
+      case "commandes":
+        return <AdminCommandes />;
+      default:
+        return <div>Section admin inconnue: {adminSection}</div>;
+    }
+  };
 
-        {appMode === "login" && (
-          <LoginPage
-            onLogin={handleLogin}
-            onBackToLanding={handleBackToLanding}
-          />
-        )}
-
-        {appMode === "app" && isLoggedIn && (
-          <>
-            <MainLayout
-              pageTitle={getPageTitle()}
-              onSectionChange={setCurrentSection}
-              onLogout={handleLogout}
-              activeSection={currentSection}
-              onNewProjectClick={() => setShowNewProjectModal(true)}
-            >
-              {renderSection()}
-            </MainLayout>
-            <ModalNouveauProjet
-              open={showNewProjectModal}
-              onClose={() => setShowNewProjectModal(false)}
-            />
-          </>
-        )}
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
-    </ToastProvider>
+    );
+  }
+
+  return (
+    <div className="App">
+      {appMode === "landing" && <LandingPage onLoginClick={handleLoginClick} />}
+
+      {appMode === "login" && (
+        <LoginPage
+          onLogin={handleLogin}
+          onBackToLanding={handleBackToLanding}
+          onGoToSignup={handleGoToSignup}
+        />
+      )}
+
+      {appMode === "signup" && (
+        <SignupPage
+          onBackToLogin={handleBackToLogin}
+          onBackToLanding={handleBackToLanding}
+        />
+      )}
+
+      {appMode === "app" && user && (
+        <>
+          <MainLayout
+            pageTitle={getPageTitle()}
+            onSectionChange={setCurrentSection}
+            onLogout={handleLogout}
+            activeSection={currentSection}
+            onNewProjectClick={() => setShowNewProjectModal(true)}
+            onGoToAdmin={handleGoToAdmin}
+          >
+            {renderSection()}
+          </MainLayout>
+          <ModalNouveauProjet
+            open={showNewProjectModal}
+            onClose={() => setShowNewProjectModal(false)}
+          />
+        </>
+      )}
+
+      {appMode === "admin" && user && user.role === "ADMIN" && (
+        <RequireAdmin>
+          <AdminLayout
+            activeSection={adminSection}
+            onSectionChange={setAdminSection}
+            onLogout={handleLogout}
+          >
+            {renderAdminSection()}
+          </AdminLayout>
+        </RequireAdmin>
+      )}
+    </div>
+  );
+};
+
+// Composant principal de l'application avec providers
+function App() {
+  return (
+    <AuthProvider>
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
+    </AuthProvider>
   );
 }
 

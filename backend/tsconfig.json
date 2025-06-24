@@ -20,6 +20,6 @@
       "@shared/*": ["../shared/*"]
     }
   },
-  "include": ["src/**/*", "tests/**/*", "../shared/types"],
+  "include": ["src/**/*", "tests/**/*"],
   "exclude": ["node_modules", "dist"]
 }

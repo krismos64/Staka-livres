@@ -1,4 +1,4 @@
-// Types communs entre frontend et backend
+// Types communs copiés localement pour éviter les problèmes d'import
 
 export enum Role {
   USER = "USER",

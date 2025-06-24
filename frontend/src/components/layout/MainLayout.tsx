@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from "react";
+import { ReactNode, useState } from "react";
 import Header from "./Header"; // On importe le vrai Header
 import Sidebar from "./Sidebar"; // On importe le vrai Sidebar
 
@@ -20,6 +20,7 @@ interface MainLayoutProps {
   children: ReactNode;
   activeSection: SectionName; // Ajout pour la Sidebar
   onNewProjectClick: () => void;
+  onGoToAdmin?: () => void;
 }
 
 function MainLayout({
@@ -29,6 +30,7 @@ function MainLayout({
   children,
   activeSection,
   onNewProjectClick,
+  onGoToAdmin,
 }: MainLayoutProps) {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
@@ -48,6 +50,7 @@ function MainLayout({
           onSectionChange={onSectionChange}
           onLogout={onLogout}
           onToggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
+          onGoToAdmin={onGoToAdmin}
         />
         <main className="p-4 sm:p-6 lg:p-8">{children}</main>
       </div>

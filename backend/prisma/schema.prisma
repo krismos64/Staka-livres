@@ -7,10 +7,47 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
+enum StatutCommande {
+  EN_ATTENTE
+  EN_COURS
+  TERMINE
+  ANNULEE
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
+  prenom    String
+  nom       String
   email     String   @unique
-  password  String
+  password  String // mot de passe hashé
+  role      Role     @default(USER)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Relations
+  commandes Commande[]
+
+  @@map("users")
+}
+
+model Commande {
+  id             String         @id @default(uuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  titre          String
+  description    String?
+  fichierUrl     String?
+  statut         StatutCommande @default(EN_ATTENTE)
+  noteClient     String? // Note du client (bonus)
+  noteCorrecteur String? // Note du correcteur (bonus)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@map("commandes")
 }

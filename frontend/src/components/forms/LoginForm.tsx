@@ -5,7 +5,7 @@ import React, { useState } from "react";
  */
 interface LoginFormProps {
   /** Fonction pour afficher le formulaire d'inscription */
-  onShowSignup: () => void;
+  onShowSignup?: () => void;
   /** Fonction pour gérer la soumission du formulaire de connexion */
   onLogin: (e: React.FormEvent<HTMLFormElement>) => void;
 }
@@ -53,27 +53,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
     return errors;
   };
 
-  // Simulation d'API avec gestion d'erreur
-  const simulateLogin = async (
-    email: string,
-    password: string
-  ): Promise<{ success: boolean; message?: string }> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // Simulation : échec si email n'est pas celui de démo
-        if (email === "marie.castello@example.com" && password === "demo123") {
-          resolve({ success: true });
-        } else {
-          resolve({
-            success: false,
-            message: "Email ou mot de passe invalide",
-          });
-        }
-      }, 1500); // Délai de 1.5s pour simuler la latence réseau
-    });
-  };
-
-  // Gestion de la soumission avec états loading/error
+  // Gestion de la soumission avec validation côté client
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -94,17 +74,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
     setIsLoading(true);
 
     try {
-      const email = formData.get("email") as string;
-      const password = formData.get("password") as string;
-
-      const result = await simulateLogin(email, password);
-
-      if (result.success) {
-        // Appel de la fonction onLogin fournie par le parent
-        onLogin(e);
-      } else {
-        setError(result.message || "Une erreur s'est produite");
-      }
+      // Appel de la fonction onLogin fournie par le parent
+      await onLogin(e);
     } catch (err) {
       setError("Erreur de connexion. Veuillez réessayer.");
     } finally {
@@ -138,6 +109,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
               type="email"
               id="email"
               name="email"
+              autoComplete="email"
               required
               className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent transition ${
                 fieldErrors.email
@@ -145,7 +117,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
                   : "border-gray-300 focus:ring-blue-500"
               }`}
               placeholder="votre@email.com"
-              defaultValue="marie.castello@example.com" // Valeur par défaut pour la démo
+              defaultValue="admin@staka-editions.com" // Compte admin de test
               disabled={isLoading}
             />
           </div>
@@ -171,6 +143,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
               type={isPasswordVisible ? "text" : "password"}
               id="password"
               name="password"
+              autoComplete="current-password"
               required
               className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:border-transparent transition ${
                 fieldErrors.password
@@ -178,7 +151,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
                   : "border-gray-300 focus:ring-blue-500"
               }`}
               placeholder="••••••••"
-              defaultValue="demo123" // Valeur par défaut pour la démo
+              defaultValue="admin123" // Mot de passe admin de test
               disabled={isLoading}
             />
             {/* Bouton pour afficher/cacher le mot de passe */}
@@ -250,31 +223,31 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
       </form>
 
       {/* Lien pour basculer vers le formulaire d'inscription */}
-      <div className="mt-6 text-center">
-        <p className="text-sm text-gray-600">
-          Pas encore de compte ?{" "}
-          <button
-            onClick={onShowSignup}
-            className="text-blue-600 hover:text-blue-500 font-medium"
-            type="button"
-            disabled={isLoading}
-          >
-            Créer un compte
-          </button>
-        </p>
-      </div>
+      {onShowSignup && (
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            Pas encore de compte ?{" "}
+            <button
+              onClick={onShowSignup}
+              className="text-blue-600 hover:text-blue-500 font-medium"
+              type="button"
+              disabled={isLoading}
+            >
+              Créer un compte
+            </button>
+          </p>
+        </div>
+      )}
 
-      {/* Boîte d'information pour le compte de démo */}
+      {/* Boîte d'information pour les comptes de test */}
       <div className="mt-6 p-4 bg-blue-50 rounded-xl">
-        <h4 className="font-semibold text-blue-800 mb-2">
-          🎭 Compte de démonstration
-        </h4>
-        <div className="text-sm text-blue-700 space-y-1">
+        <h4 className="font-semibold text-blue-800 mb-2">🔑 Comptes de test</h4>
+        <div className="text-sm text-blue-700 space-y-2">
           <div>
-            <strong>Email:</strong> marie.castello@example.com
+            <strong>Admin:</strong> admin@staka-editions.com / admin123
           </div>
           <div>
-            <strong>Mot de passe:</strong> demo123
+            <strong>User:</strong> user@example.com / user123
           </div>
         </div>
       </div>

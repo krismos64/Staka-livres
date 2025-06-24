@@ -128,12 +128,6 @@ function SignupForm({ onShowLogin }: SignupFormProps) {
       className="bg-white rounded-2xl shadow-2xl p-8"
       id="signup-form-container"
     >
-      {/* Titre du formulaire */}
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Créer un compte</h2>
-        <p className="text-gray-500">Rejoignez notre communauté d'auteurs</p>
-      </div>
-
       {/* Le formulaire d'inscription */}
       <form id="signup-form" className="space-y-6" onSubmit={handleSignup}>
         <input type="hidden" name="csrf_token" value="csrf_token_placeholder" />
@@ -295,7 +289,7 @@ function SignupForm({ onShowLogin }: SignupFormProps) {
           className={`w-full py-3 px-4 rounded-xl font-semibold transition duration-300 ${
             isLoading
               ? "bg-gray-400 cursor-not-allowed"
-              : "bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600 transform hover:scale-105"
+              : "bg-gradient-to-r from-green-600 to-green-500 text-white hover:from-green-700 hover:to-green-600 transform hover:scale-105"
           }`}
         >
           {isLoading ? (
@@ -304,7 +298,10 @@ function SignupForm({ onShowLogin }: SignupFormProps) {
               Création en cours...
             </>
           ) : (
-            "Créer mon compte"
+            <>
+              <i className="fas fa-user-plus mr-2"></i>
+              Créer mon compte
+            </>
           )}
         </button>
 

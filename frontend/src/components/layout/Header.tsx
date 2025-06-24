@@ -1,4 +1,3 @@
-import React from "react";
 import Notifications from "../common/Notifications";
 import UserMenu from "./UserMenu";
 
@@ -17,6 +16,7 @@ interface HeaderProps {
   onSectionChange: (section: SectionName) => void;
   onLogout: () => void;
   onToggleSidebar: () => void;
+  onGoToAdmin?: () => void;
 }
 
 function Header({
@@ -24,6 +24,7 @@ function Header({
   onSectionChange,
   onLogout,
   onToggleSidebar,
+  onGoToAdmin,
 }: HeaderProps) {
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200 lg:flex-none">
@@ -57,7 +58,11 @@ function Header({
           </div>
           <div className="flex items-center gap-4">
             <Notifications />
-            <UserMenu onSectionChange={onSectionChange} onLogout={onLogout} />
+            <UserMenu
+              onSectionChange={onSectionChange}
+              onLogout={onLogout}
+              onGoToAdmin={onGoToAdmin}
+            />
           </div>
         </div>
       </div>

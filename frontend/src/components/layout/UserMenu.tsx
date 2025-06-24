@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
 
 type SectionName = "profile" | "settings" | "billing";
 
@@ -10,6 +11,8 @@ interface UserMenuProps {
   onSectionChange: (section: SectionName) => void;
   /** Fonction pour gérer la déconnexion de l'utilisateur */
   onLogout: () => void;
+  /** Fonction pour aller au panel admin (optionnel) */
+  onGoToAdmin?: () => void;
 }
 
 /**
@@ -17,10 +20,14 @@ interface UserMenuProps {
  * Affiche l'avatar, le nom, et des liens vers le profil, les paramètres,
  * et la déconnexion.
  */
-function UserMenu({ onSectionChange, onLogout }: UserMenuProps) {
+function UserMenu({ onSectionChange, onLogout, onGoToAdmin }: UserMenuProps) {
   // État pour contrôler la visibilité du menu déroulant
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { user, isAdmin } = useAuth();
+
+  const displayName = user ? `${user.prenom} ${user.nom}` : "Marie Castello";
+  const displayInitials = user ? `${user.prenom[0]}${user.nom[0]}` : "MC";
 
   /**
    * Hook pour fermer le menu si l'utilisateur clique en dehors.
@@ -67,11 +74,15 @@ function UserMenu({ onSectionChange, onLogout }: UserMenuProps) {
         aria-expanded={isOpen}
       >
         <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-          <span className="text-white text-sm font-semibold">MC</span>
+          <span className="text-white text-sm font-semibold">
+            {displayInitials}
+          </span>
         </div>
         <div className="hidden md:block text-left">
-          <p className="text-sm font-medium text-gray-900">Marie Castello</p>
-          <p className="text-xs text-gray-500">Auteure</p>
+          <p className="text-sm font-medium text-gray-900">{displayName}</p>
+          <p className="text-xs text-gray-500">
+            {user?.role === "ADMIN" ? "Administrateur" : "Utilisateur"}
+          </p>
         </div>
         <i className="fas fa-chevron-down text-gray-400 text-xs"></i>
       </button>
@@ -101,6 +112,21 @@ function UserMenu({ onSectionChange, onLogout }: UserMenuProps) {
               <i className="fas fa-credit-card w-4 text-center"></i>
               <span>Facturation</span>
             </button>
+            {isAdmin() && onGoToAdmin && (
+              <>
+                <hr className="my-2" />
+                <button
+                  onClick={() => {
+                    onGoToAdmin();
+                    setIsOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-purple-600 hover:bg-purple-50 transition flex items-center gap-2"
+                >
+                  <i className="fas fa-shield-alt w-4 text-center"></i>
+                  <span>Panel Admin</span>
+                </button>
+              </>
+            )}
             <hr className="my-2" />
             <button
               onClick={handleLogoutClick}
