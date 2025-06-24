@@ -16,7 +16,10 @@ export default function About() {
   };
 
   return (
-    <section id="qui-sommes-nous" className="py-16 bg-white">
+    <section
+      id="qui-sommes-nous"
+      className="py-16 bg-white relative overflow-hidden"
+    >
       <div className="max-w-6xl mx-auto px-6">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
@@ -48,7 +51,7 @@ export default function About() {
             <div className="flex gap-4">
               <a
                 href="#commande-gratuite"
-                className="btn-primary text-white px-6 py-3 rounded-xl font-semibold"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
               >
                 Tester gratuitement
               </a>
@@ -60,89 +63,89 @@ export default function About() {
               </button>
             </div>
           </div>
-          <div>
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl transform rotate-3"></div>
-              <div className="relative bg-white rounded-3xl p-8 shadow-xl">
-                <h3 className="text-xl font-bold mb-6 text-center">
-                  🌟 Pourquoi nous choisir ?
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                      <i className="fas fa-phone text-green-600"></i>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-1">Téléphone</h4>
-                      <a
-                        href="tel:+33615078152"
-                        className="text-green-600 hover:underline"
-                      >
-                        06 15 07 81 52
-                      </a>
-                      <p className="text-sm text-gray-500">Lun-Ven 9h-18h</p>
-                    </div>
+          <div className="relative">
+            {/* Fond coloré étendu */}
+            <div className="absolute -inset-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-3xl transform rotate-1"></div>
+            <div className="absolute -inset-6 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl transform rotate-2"></div>
+            <div className="relative bg-white rounded-3xl p-8 shadow-xl border border-gray-100">
+              <h3 className="text-xl font-bold mb-6 text-center">
+                🌟 Pourquoi nous choisir ?
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <i className="fas fa-phone text-green-600"></i>
                   </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                      <i className="fab fa-whatsapp text-green-600"></i>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-1">WhatsApp</h4>
-                      <a
-                        href="https://wa.me/33615078152?text=Bonjour,%20j'aimerais%20des%20informations%20sur%20vos%20services%20de%20correction%20de%20manuscrit"
-                        target="_blank"
-                        className="text-green-600 hover:underline"
-                      >
-                        06 15 07 81 52
-                      </a>
-                      <p className="text-sm text-gray-500">
-                        Chat direct instantané
-                      </p>
-                    </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Téléphone</h4>
+                    <a
+                      href="tel:+33615078152"
+                      className="text-green-600 hover:underline"
+                    >
+                      06 15 07 81 52
+                    </a>
+                    <p className="text-sm text-gray-500">Lun-Ven 9h-18h</p>
                   </div>
+                </div>
 
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                      <i className="fas fa-calendar text-purple-600"></i>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-1">
-                        Consultation gratuite
-                      </h4>
-                      <p className="text-gray-600">
-                        Échange téléphonique de 30 min
-                      </p>
-                      <button
-                        onClick={handleBookingClick}
-                        className="text-purple-600 hover:underline text-sm font-medium"
-                      >
-                        Réserver un créneau →
-                      </button>
-                    </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <i className="fab fa-whatsapp text-green-600"></i>
                   </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">WhatsApp</h4>
+                    <a
+                      href="https://wa.me/33615078152?text=Bonjour,%20j'aimerais%20des%20informations%20sur%20vos%20services%20de%20correction%20de%20manuscrit"
+                      target="_blank"
+                      className="text-green-600 hover:underline"
+                    >
+                      06 15 07 81 52
+                    </a>
+                    <p className="text-sm text-gray-500">
+                      Chat direct instantané
+                    </p>
+                  </div>
+                </div>
 
-                  {/* Live chat status */}
-                  <div className="bg-gradient-to-r from-green-100 to-blue-100 rounded-xl p-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="font-semibold text-green-800">
-                        Expert en ligne
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-700 mb-3">
-                      Un de nos conseillers est disponible pour répondre à vos
-                      questions
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <i className="fas fa-calendar text-purple-600"></i>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">
+                      Consultation gratuite
+                    </h4>
+                    <p className="text-gray-600">
+                      Échange téléphonique de 30 min
                     </p>
                     <button
-                      onClick={handleChatClick}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition"
+                      onClick={handleBookingClick}
+                      className="text-purple-600 hover:underline text-sm font-medium"
                     >
-                      <i className="fas fa-comments mr-2"></i>
-                      Démarrer le chat
+                      Réserver un créneau →
                     </button>
                   </div>
+                </div>
+
+                {/* Live chat status */}
+                <div className="bg-gradient-to-r from-green-100 to-blue-100 rounded-xl p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="font-semibold text-green-800">
+                      Expert en ligne
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-3">
+                    Un de nos conseillers est disponible pour répondre à vos
+                    questions
+                  </p>
+                  <button
+                    onClick={handleChatClick}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition"
+                  >
+                    <i className="fas fa-comments mr-2"></i>
+                    Démarrer le chat
+                  </button>
                 </div>
               </div>
             </div>

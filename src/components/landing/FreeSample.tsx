@@ -90,7 +90,7 @@ export default function FreeSample() {
       id="commande-gratuite"
       className="py-16 bg-gradient-to-r from-green-50 to-blue-50"
     >
-      <div className="max-w-4xl mx-auto px-6">
+      <div className="max-w-5xl mx-auto px-6">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             <span className="bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
@@ -98,7 +98,7 @@ export default function FreeSample() {
             </span>{" "}
             gratuitement
           </h2>
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
             Découvrez la qualité de notre travail avec 10 pages corrigées sans
             engagement
           </p>
@@ -237,15 +237,17 @@ export default function FreeSample() {
                 className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 transition cursor-pointer"
                 onClick={triggerFileInput}
               >
-                <i className="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-4"></i>
-                <p className="text-gray-600 mb-2">
-                  {formData.fichier
-                    ? formData.fichier.name
-                    : "Glissez votre fichier ici ou cliquez pour parcourir"}
-                </p>
-                <p className="text-sm text-gray-500">
-                  Formats acceptés : .doc, .docx, .pdf (Max 5 Mo)
-                </p>
+                <div className="flex flex-col items-center">
+                  <i className="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-4"></i>
+                  <p className="text-gray-600 mb-2">
+                    {formData.fichier
+                      ? formData.fichier.name
+                      : "Glissez votre fichier ici ou cliquez pour parcourir"}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Formats acceptés : .doc, .docx, .pdf (Max 5 Mo)
+                  </p>
+                </div>
                 <input
                   type="file"
                   id="fichier"
@@ -272,20 +274,22 @@ export default function FreeSample() {
                 Le fichier doit faire moins de 5 Mo
               </div>
             </div>
-            <div className="md:col-span-2 text-center">
-              <button
-                type="submit"
-                disabled={isSubmitted}
-                className="btn-primary text-white px-12 py-4 rounded-xl font-semibold text-lg inline-flex items-center gap-3"
-              >
-                <i className="fas fa-paper-plane"></i>
-                {isSubmitted
-                  ? "Envoi en cours..."
-                  : "Recevoir ma correction gratuite"}
-              </button>
-              <p className="text-sm text-gray-500 mt-4">
-                Réponse sous 48h • Sans engagement • Confidentiel
-              </p>
+            <div className="md:col-span-2 mt-6">
+              <div className="flex flex-col items-center">
+                <button
+                  type="submit"
+                  disabled={isSubmitted}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-semibold text-lg inline-flex items-center gap-3 transition-colors disabled:opacity-50"
+                >
+                  <i className="fas fa-paper-plane"></i>
+                  {isSubmitted
+                    ? "Envoi en cours..."
+                    : "Recevoir ma correction gratuite"}
+                </button>
+                <p className="text-sm text-gray-500 mt-4">
+                  Réponse sous 48h • Sans engagement • Confidentiel
+                </p>
+              </div>
             </div>
           </form>
         </div>
