@@ -1,3 +1,4 @@
+import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
@@ -6,6 +7,7 @@ import adminRoutes from "./routes/admin";
 import authRoutes from "./routes/auth";
 import commandesRoutes from "./routes/commandes";
 import paymentsRoutes from "./routes/payments";
+import webhookRoutes from "./routes/payments/webhook";
 
 // Configuration de l'environnement
 dotenv.config();
@@ -21,6 +23,15 @@ app.use(
     credentials: true,
   })
 );
+
+// Body parser raw pour les webhooks Stripe (AVANT express.json())
+app.use(
+  "/payments/webhook",
+  bodyParser.raw({ type: "application/json" }),
+  webhookRoutes
+);
+
+// Body parser standard pour les autres routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -39,7 +50,7 @@ app.use("/auth", authRoutes);
 // Routes commandes (côté client)
 app.use("/commandes", commandesRoutes);
 
-// Routes paiements
+// Routes paiements (sans webhook qui est déjà géré ci-dessus)
 app.use("/payments", paymentsRoutes);
 
 // Routes admin (protégées)
@@ -67,7 +78,7 @@ app.listen(PORT, "0.0.0.0", () => {
     `   POST /payments/create-checkout-session - Créer session paiement`
   );
   console.log(`   GET /payments/status/:sessionId - Statut paiement`);
-  console.log(`   POST /payments/webhook - Webhook Stripe`);
+  console.log(`   POST /payments/webhook - Webhook Stripe (nouveau)`);
   console.log(`👑 Routes admin disponibles:`);
   console.log(`   GET /admin/test - Test admin (ADMIN uniquement)`);
   console.log(

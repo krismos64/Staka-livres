@@ -289,6 +289,117 @@ Authorization: Bearer token
 POST /payments/webhook
 Stripe-Signature: t=...
 Content-Type: application/json
+
+# Response: 200
+{
+  "received": true,
+  "eventType": "checkout.session.completed"
+}
+```
+
+## 🎯 **Webhook Stripe - Nouveau Système**
+
+### Configuration
+
+Le nouveau système de webhook Stripe est implémenté avec une architecture modulaire et robuste :
+
+````typescript
+// Routeur séparé : src/routes/payments/webhook.ts
+// Body parser raw configuré dans server.ts AVANT express.json()
+app.use(
+  "/payments/webhook",
+  bodyParser.raw({ type: "application/json" }),
+  webhookRoutes
+);
+
+## 🧾 **Système de Facturation Automatique**
+
+### Modèle Prisma Invoice
+```prisma
+model Invoice {
+  id         String   @id @default(uuid())
+  commande   Commande @relation(fields: [commandeId], references: [id])
+  commandeId String
+  amount     Int      // Montant en centimes
+  pdfUrl     String   // URL du PDF sur S3
+  createdAt  DateTime @default(now())
+}
+````
+
+### Service InvoiceService
+
+- **`generateInvoicePDF()`** : Génère un PDF professionnel avec PDFKit
+- **`uploadInvoicePdf()`** : Upload sur AWS S3 avec gestion d'erreurs
+- **`processInvoiceForCommande()`** : Processus complet de facturation
+
+### MailerService
+
+- **SendGrid** intégré pour l'envoi d'emails
+- Templates HTML responsives
+- Gestion des erreurs et fallback
+
+````
+
+### Événements Gérés
+
+#### **checkout.session.completed**
+
+- Met à jour `paymentStatus: "paid"`
+- Change le statut de commande vers `EN_COURS`
+- Log détaillé avec informations client
+
+#### **payment_intent.payment_failed**
+
+- Met à jour `paymentStatus: "failed"`
+- Log des raisons d'échec
+
+#### **invoice.payment_succeeded** (préparé)
+
+- Structure prête pour factures récurrentes
+
+#### **Événements non gérés**
+
+- Logging automatique pour analytics
+- Structure extensible pour nouveaux événements
+
+### Sécurité
+
+- **Vérification signature** via `stripeService.constructEvent()`
+- **Validation session ID** : correspondance avec `stripeSessionId` en base
+- **Gestion d'erreurs** complète avec logging détaillé
+- **Body parser raw** uniquement pour `/payments/webhook`
+
+### Tests
+
+```bash
+# Tests d'intégration webhook
+npm test -- webhook.test.ts
+
+# Tests couverts :
+# - ✅ checkout.session.completed success
+# - ✅ payment_intent.payment_failed
+# - ✅ Signature invalide (400)
+# - ✅ Commande non trouvée (404)
+# - ✅ Événements non gérés
+# - ✅ Erreurs base de données
+````
+
+### Tests avec Stripe CLI
+
+```bash
+# Installation Stripe CLI
+brew install stripe/stripe-cli/stripe
+
+# Login et configuration
+stripe login
+stripe listen --forward-to localhost:3001/payments/webhook
+
+# Simulation d'événements
+stripe trigger checkout.session.completed
+stripe trigger payment_intent.payment_failed
+
+# Monitoring en temps réel
+stripe logs tail
 ```
 
 ### Routes admin (`/admin`)

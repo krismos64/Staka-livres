@@ -7,9 +7,56 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String     @id @default(uuid())
+  prenom    String
+  nom       String
+  email     String     @unique
+  password  String
+  role      Role       @default(USER)
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  commandes Commande[]
+
+  @@map("users")
+}
+
+model Commande {
+  id              String         @id @default(uuid())
+  userId          String
+  titre           String
+  description     String?
+  fichierUrl      String?
+  statut          StatutCommande @default(EN_ATTENTE)
+  noteClient      String?
+  noteCorrecteur  String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  paymentStatus   String?
+  stripeSessionId String?
+  amount          Int? // Montant en centimes
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices        Invoice[] // Relation vers les factures
+
+  @@index([userId], map: "commandes_userId_fkey")
+  @@map("commandes")
+}
+
 enum Role {
   USER
   ADMIN
+}
+
+model Invoice {
+  id         String   @id @default(uuid())
+  commande   Commande @relation(fields: [commandeId], references: [id], onDelete: Cascade)
+  commandeId String
+  amount     Int // Montant en centimes
+  pdfUrl     String // URL du PDF sur S3
+  createdAt  DateTime @default(now())
+
+  @@map("invoices")
 }
 
 enum StatutCommande {
@@ -17,41 +64,4 @@ enum StatutCommande {
   EN_COURS
   TERMINE
   ANNULEE
-}
-
-model User {
-  id        String   @id @default(uuid())
-  prenom    String
-  nom       String
-  email     String   @unique
-  password  String // mot de passe hashé
-  role      Role     @default(USER)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  commandes Commande[]
-
-  @@map("users")
-}
-
-model Commande {
-  id             String         @id @default(uuid())
-  userId         String
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  titre          String
-  description    String?
-  fichierUrl     String?
-  statut         StatutCommande @default(EN_ATTENTE)
-  noteClient     String? // Note du client (bonus)
-  noteCorrecteur String? // Note du correcteur (bonus)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-
-  // 🔐 Champs Stripe
-  paymentStatus   String? // "unpaid" | "paid" | "failed"
-  stripeSessionId String? // session ID Stripe Checkout
-
-  @@map("commandes")
 }
