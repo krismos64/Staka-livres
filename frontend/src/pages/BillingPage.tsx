@@ -6,10 +6,10 @@ import { InvoiceHistoryCard } from "../components/billing/InvoiceHistoryCard";
 import { PaymentMethodsCard } from "../components/billing/PaymentMethodsCard";
 import { SupportCard } from "../components/billing/SupportCard";
 import EmptyState from "../components/common/EmptyState";
+import { useInvoice, useInvoices } from "../hooks/useInvoices";
 import {
   buildApiUrl,
   downloadInvoice,
-  fetchInvoices,
   getAuthHeaders,
   InvoiceAPI,
 } from "../utils/api";
@@ -101,21 +101,33 @@ function mapInvoiceApiToInvoice(invoiceApi: InvoiceAPI): Invoice {
 }
 
 export default function BillingPage() {
-  // États pour les données dynamiques
+  // États pour les données dynamiques avec React Query
+  const [page, setPage] = useState(1);
   const [currentInvoice, setCurrentInvoice] = useState<Invoice | null>(null);
   const [invoiceHistory, setInvoiceHistory] = useState<Invoice[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
   // Données statiques et modales
   const [paymentMethods] = useState<PaymentMethod[]>(mockPaymentMethods);
   const [annualStats] = useState<AnnualStats>(mockAnnualStats);
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(
+    null
+  );
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
   const { showToast } = useToasts();
+
+  // Hooks React Query pour les factures
+  const {
+    data: invoicesData,
+    isLoading,
+    error,
+    isFetching,
+  } = useInvoices(page, 20);
+
+  // Hook pour les détails de la facture sélectionnée
+  const { data: selectedInvoiceDetail } = useInvoice(selectedInvoiceId || "");
 
   // Gère la redirection lorsque l'URL est prête
   useEffect(() => {
@@ -146,60 +158,50 @@ export default function BillingPage() {
     }
   }, [showToast]);
 
-  // Fetch des factures depuis la nouvelle API au chargement
+  // Traitement des données React Query
   useEffect(() => {
-    const loadInvoices = async () => {
-      setIsLoading(true);
-      try {
-        console.log("🔍 [BillingPage] Chargement des factures depuis l'API...");
+    if (invoicesData?.invoices) {
+      console.log(
+        "✅ [BillingPage] Données factures reçues via React Query:",
+        invoicesData
+      );
 
-        const response = await fetchInvoices(page, 20); // Récupère 20 factures
+      const transformedInvoices = invoicesData.invoices.map(
+        mapInvoiceApiToInvoice
+      );
 
-        console.log("✅ [BillingPage] Données factures reçues:", response);
+      // Séparer les factures pending des payées
+      const pendingInvoices = transformedInvoices.filter(
+        (inv) => inv.status === "pending"
+      );
+      const paidInvoices = transformedInvoices.filter(
+        (inv) => inv.status === "paid"
+      );
 
-        if (response.invoices && response.invoices.length > 0) {
-          const transformedInvoices = response.invoices.map(
-            mapInvoiceApiToInvoice
-          );
-
-          // Séparer les factures pending des payées
-          const pendingInvoices = transformedInvoices.filter(
-            (inv) => inv.status === "pending"
-          );
-          const paidInvoices = transformedInvoices.filter(
-            (inv) => inv.status === "paid"
-          );
-
-          if (pendingInvoices.length > 0) {
-            setCurrentInvoice(pendingInvoices[0]); // Première facture non payée
-          }
-
-          setInvoiceHistory(paidInvoices);
-          setHasMore(response.pagination.hasNextPage);
-        } else {
-          console.log("ℹ️ [BillingPage] Aucune facture trouvée");
-          setCurrentInvoice(null);
-          setInvoiceHistory([]);
-        }
-      } catch (error) {
-        console.error(
-          "❌ [BillingPage] Erreur lors du chargement des factures:",
-          error
-        );
-        showToast(
-          "error",
-          "Erreur",
-          error instanceof Error
-            ? error.message
-            : "Impossible de charger vos factures."
-        );
-      } finally {
-        setIsLoading(false);
+      if (pendingInvoices.length > 0) {
+        setCurrentInvoice(pendingInvoices[0]); // Première facture non payée
+      } else {
+        setCurrentInvoice(null);
       }
-    };
 
-    loadInvoices();
-  }, [page, showToast]);
+      setInvoiceHistory(paidInvoices);
+      setHasMore(invoicesData.pagination.hasNextPage);
+    }
+  }, [invoicesData]);
+
+  // Gestion des erreurs React Query
+  useEffect(() => {
+    if (error) {
+      console.error("❌ [BillingPage] Erreur React Query:", error);
+      showToast(
+        "error",
+        "Erreur",
+        error instanceof Error
+          ? error.message
+          : "Impossible de charger vos factures."
+      );
+    }
+  }, [error, showToast]);
 
   // Handlers pour les actions principales
   const handlePayInvoice = async (invoice: Invoice) => {
@@ -296,7 +298,11 @@ export default function BillingPage() {
   };
 
   const handleShowInvoiceDetails = (invoice: Invoice) => {
-    setSelectedInvoice(invoice);
+    setSelectedInvoiceId(invoice.id);
+  };
+
+  const handleCloseInvoiceDetails = () => {
+    setSelectedInvoiceId(null);
   };
 
   const handleAddPaymentMethod = () => {
@@ -323,20 +329,30 @@ export default function BillingPage() {
     );
   };
 
+  const handleLoadMore = () => {
+    if (hasMore && !isFetching) {
+      setPage((prev) => prev + 1);
+    }
+  };
+
   // Affichage de chargement
-  if (isLoading) {
+  if (isLoading || isFetching) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Chargement de vos factures...</p>
+          <p className="text-gray-600">
+            {isLoading
+              ? "Chargement de vos factures..."
+              : "Chargement de plus de factures..."}
+          </p>
         </div>
       </div>
     );
   }
 
   // Affichage état vide
-  if (!currentInvoice && invoiceHistory.length === 0) {
+  if (!currentInvoice && invoiceHistory.length === 0 && !isLoading) {
     return (
       <div className="space-y-8">
         {/* Stats annuelles et support */}
@@ -402,12 +418,25 @@ export default function BillingPage() {
         onRemove={handleRemovePaymentMethod}
       />
 
+      {/* Bouton charger plus si nécessaire */}
+      {hasMore && (
+        <div className="flex justify-center">
+          <button
+            onClick={handleLoadMore}
+            disabled={isFetching}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isFetching ? "Chargement..." : "Charger plus de factures"}
+          </button>
+        </div>
+      )}
+
       {/* Modal des détails de facture */}
-      {selectedInvoice && (
+      {selectedInvoiceId && selectedInvoiceDetail && (
         <InvoiceDetailsModal
-          invoice={selectedInvoice}
-          isOpen={!!selectedInvoice}
-          onClose={() => setSelectedInvoice(null)}
+          invoice={mapInvoiceApiToInvoice(selectedInvoiceDetail)}
+          isOpen={!!selectedInvoiceId}
+          onClose={handleCloseInvoiceDetails}
           onDownload={handleDownloadInvoice}
           onPay={handlePayInvoice}
         />

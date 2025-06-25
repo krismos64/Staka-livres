@@ -9,7 +9,6 @@
     "lint": "eslint . --ext js,jsx,ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.81.2",
     "@types/react-dropzone": "^4.2.2",
     "@types/react-router-dom": "^5.3.3",
     "framer-motion": "^12.18.1",

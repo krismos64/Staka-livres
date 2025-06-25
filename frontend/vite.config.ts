@@ -10,6 +10,10 @@ export default defineConfig({
       "@shared": path.resolve(__dirname, "../shared/dist"),
     },
   },
+  optimizeDeps: {
+    include: ["react-query"],
+    force: true, // Force la re-optimisation des dépendances
+  },
   server: {
     host: "0.0.0.0",
     port: 3000,

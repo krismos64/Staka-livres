@@ -187,11 +187,11 @@ Ce dossier contient tous les composants et la logique pour la gestion des factur
 
 ## 📋 Vue d'ensemble
 
-Le système de facturation a été migré des mocks vers une intégration API complète avec le backend `/invoices`.
+Le système de facturation utilise **React Query v3** pour une intégration API complète avec le backend `/invoices`.
 
 ### Composants principaux
 
-- **`BillingPage.tsx`** : Page principale orchestrant l'affichage des factures
+- **`BillingPage.tsx`** : Page principale orchestrant l'affichage des factures avec React Query
 - **`CurrentInvoiceCard.tsx`** : Affichage de la facture en cours (non payée)
 - **`InvoiceHistoryCard.tsx`** : Historique des factures payées
 - **`InvoiceDetailsModal.tsx`** : Modal de détails d'une facture
@@ -200,11 +200,35 @@ Le système de facturation a été migré des mocks vers une intégration API co
 - **`PaymentModal.tsx`** : Modal de paiement Stripe
 - **`SupportCard.tsx`** : Assistance et support client
 
-## 🔌 Intégration API Factures (NOUVEAU)
+## 🔌 Intégration API avec React Query
+
+### Configuration React Query
+
+```typescript
+// main.tsx
+import { QueryClient, QueryClientProvider } from "react-query";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <QueryClientProvider client={queryClient}>
+    <App />
+  </QueryClientProvider>
+);
+```
 
 ### Endpoints utilisés
 
-L'application utilise maintenant les vrais endpoints du backend :
+L'application utilise les vrais endpoints du backend :
 
 ```typescript
 // Liste paginée des factures
@@ -250,12 +274,12 @@ export async function fetchInvoice(id: string): Promise<InvoiceAPI>;
 export async function downloadInvoice(id: string): Promise<Blob>;
 ```
 
-### Hook React Query
+### Hooks React Query
 
-Fichier `src/hooks/useInvoices.ts` (prêt pour intégration future) :
+Fichier `src/hooks/useInvoices.ts` :
 
 ```typescript
-// Hook pour la liste des factures avec cache
+// Hook pour la liste des factures avec cache et pagination
 export function useInvoices(page = 1, limit = 10);
 
 // Hook pour une facture spécifique
@@ -268,11 +292,112 @@ export function useInvalidateInvoices();
 export function usePrefetchInvoice();
 ```
 
+## 🔄 Refactoring BillingPage avec React Query
+
+### Avant (Fetch manuel)
+
+```typescript
+const [isLoading, setIsLoading] = useState(true);
+
+useEffect(() => {
+  const loadInvoices = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetchInvoices(page, 20);
+      // Traitement manuel des données...
+    } catch (error) {
+      // Gestion d'erreur manuelle...
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  loadInvoices();
+}, [page]);
+```
+
+### Après (React Query)
+
+```typescript
+const {
+  data: invoicesData,
+  isLoading,
+  error,
+  isFetching,
+} = useInvoices(page, 20);
+
+const { data: selectedInvoiceDetail } = useInvoice(selectedInvoiceId || "");
+
+// Traitement automatique via useEffect
+useEffect(() => {
+  if (invoicesData?.invoices) {
+    const transformedInvoices = invoicesData.invoices.map(
+      mapInvoiceApiToInvoice
+    );
+    // Séparation et mise à jour des états...
+  }
+}, [invoicesData]);
+```
+
+## 🎯 Avantages de React Query
+
+### Cache intelligent
+
+- **Données fraîches** pendant 5 minutes
+- **Cache persistant** pendant 10 minutes
+- **Invalidation automatique** après mutations
+- **Background refetch** transparent
+
+### États de chargement
+
+```typescript
+const { data, isLoading, error, isFetching } = useInvoices(page, 20);
+
+// isLoading : premier chargement
+// isFetching : rechargement en arrière-plan
+// error : gestion d'erreur automatique
+// data : données typées disponibles
+```
+
+### Optimisations UX
+
+- **keepPreviousData: true** : garde les données pendant la pagination
+- **Retry automatique** : 2 tentatives en cas d'échec
+- **Prefetch** : précharge les détails au hover
+- **Invalidation** : rafraîchit après paiement
+
+## 📥 Téléchargement de factures
+
+### Implémentation avec gestion d'erreurs
+
+```typescript
+const handleDownloadInvoice = async (invoiceId: string) => {
+  try {
+    showToast("info", "Téléchargement...", "Préparation de votre facture PDF");
+
+    const blob = await downloadInvoice(invoiceId);
+
+    // Créer une URL pour le blob et déclencher le téléchargement
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `facture-${invoiceId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showToast("success", "Téléchargé !", "Votre facture PDF a été téléchargée");
+  } catch (error) {
+    showToast("error", "Erreur téléchargement", error.message);
+  }
+};
+```
+
 ## 🔄 Transformation des données
 
 ### Mapping API vers UI
 
-La fonction `mapInvoiceApiToInvoice()` dans `BillingPage.tsx` transforme les données de l'API backend vers le format attendu par l'interface :
+La fonction `mapInvoiceApiToInvoice()` dans `BillingPage.tsx` transforme les données :
 
 ```typescript
 // Données API → Données UI
@@ -289,46 +414,39 @@ Invoice {
 }
 ```
 
-## 📥 Téléchargement de factures
+## 🎮 Gestion des états
 
-### Implémentation
-
-Le téléchargement de factures utilise l'API `/invoices/:id/download` avec :
-
-1. **Authentification JWT** obligatoire
-2. **Streaming Blob** pour gérer les gros fichiers
-3. **Téléchargement automatique** via `URL.createObjectURL()`
-4. **Gestion d'erreurs** avec toasts informatifs
+### Loading States
 
 ```typescript
-const handleDownloadInvoice = async (invoiceId: string) => {
-  try {
-    const blob = await downloadInvoice(invoiceId);
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `facture-${invoiceId}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
-  } catch (error) {
-    showToast("error", "Erreur téléchargement", error.message);
-  }
-};
+// Chargement initial
+if (isLoading) {
+  return <div>Chargement de vos factures...</div>;
+}
+
+// Chargement pagination
+if (isFetching && !isLoading) {
+  return <div>Chargement de plus de factures...</div>;
+}
 ```
 
-## 🎯 États de l'application
+### Error States
 
-### Gestion du loading
+```typescript
+useEffect(() => {
+  if (error) {
+    showToast("error", "Erreur", error.message);
+  }
+}, [error, showToast]);
+```
 
-- **Spinner** pendant le chargement des factures
-- **Skeleton UI** pour les transitions fluides
-- **Pagination** avec `keepPreviousData` (React Query)
+### Empty States
 
-### États vides
-
-- **Aucune facture** : Affichage EmptyState avec CTA vers commandes
-- **Erreur API** : Toast d'erreur avec message explicite
-- **Connexion requise** : Redirection automatique vers login
+```typescript
+if (!currentInvoice && invoiceHistory.length === 0 && !isLoading) {
+  return <EmptyState title="Aucune facture disponible" />;
+}
+```
 
 ## 🔧 Configuration Docker
 
@@ -336,7 +454,7 @@ const handleDownloadInvoice = async (invoiceId: string) => {
 
 ```bash
 # Installer les dépendances
-docker exec -it staka_frontend npm install
+docker exec -it staka_frontend npm install react-query@3.39.3
 
 # Démarrer le serveur de dev avec hot reload
 docker exec -it staka_frontend npm run dev
@@ -354,13 +472,15 @@ const API_BASE_URL = "http://localhost:3001";
 
 ## 🧪 Tests et validation
 
-### Tests manuels
+### Tests manuels avec React Query
 
 1. **Navigation** vers `/billing`
-2. **Chargement** des factures depuis l'API
-3. **Téléchargement** d'une facture PDF
-4. **Pagination** si plus de 10 factures
-5. **Gestion d'erreurs** (token expiré, réseau, etc.)
+2. **Premier chargement** : vérifier `isLoading = true`
+3. **Cache en action** : naviguer/revenir, pas de nouveau loading
+4. **Pagination** : cliquer "Charger plus" → `isFetching = true`
+5. **Détails facture** : cliquer sur une facture → `useInvoice` déclenché
+6. **Téléchargement** d'une facture PDF
+7. **Gestion d'erreurs** (token expiré, réseau, etc.)
 
 ### Tests avec données
 
@@ -368,60 +488,98 @@ const API_BASE_URL = "http://localhost:3001";
 # Backend doit être lancé avec des factures en base
 docker exec -it staka_backend npm run db:seed
 
-# Puis tester l'interface
+# Puis tester l'interface avec React Query DevTools (optionnel)
+docker exec -it staka_frontend npm install @tanstack/react-query-devtools
+
+# Tester l'API directement
 curl -H "Authorization: Bearer YOUR_TOKEN" \
      "http://localhost:3001/invoices"
 ```
 
-## 🚀 Performance et UX
+## 🚀 Performance et UX avec React Query
 
-### Optimisations
+### Optimisations automatiques
 
-- **Cache React Query** : 5 minutes de fraîcheur
-- **Pagination** : Garde les données précédentes
-- **Préchargement** : Hover sur facture = prefetch détails
-- **Debounce** : Évite les appels API répétés
+- **Cache intelligent** : 5 minutes de fraîcheur, 10 minutes de persistance
+- **Background refetch** : données mises à jour sans bloquer l'UI
+- **Deduplication** : évite les appels API doublons
+- **Retry automatique** : resilience en cas d'erreur réseau
 
-### Expérience utilisateur
+### Expérience utilisateur améliorée
 
-- **Feedback immédiat** : Toasts pour toutes les actions
-- **États de chargement** : Spinners et disabled states
-- **Accessibilité** : ARIA labels et navigation clavier
-- **Responsive** : Adapté mobile et desktop
+- **Chargement instant** : cache display immédiat
+- **Transitions fluides** : `keepPreviousData` pour la pagination
+- **Feedback granulaire** : distinction `isLoading` vs `isFetching`
+- **Error recovery** : retry automatique + toasts informatifs
 
-## 🔮 Améliorations futures
+## 🔮 Fonctionnalités React Query avancées
 
-### Fonctionnalités prévues
+### Mutations (prochaines versions)
 
-1. **React Query** complet (cache, mutations, synchronisation)
-2. **Pagination infinie** pour l'historique
-3. **Recherche et filtres** (date, montant, statut)
-4. **Export batch** de plusieurs factures
-5. **Notifications en temps réel** pour nouvelles factures
+```typescript
+const mutation = useMutation(downloadInvoice, {
+  onSuccess: () => {
+    showToast("success", "Téléchargé !");
+  },
+  onError: (error) => {
+    showToast("error", "Erreur", error.message);
+  },
+});
+```
 
-### Intégrations
+### Invalidation intelligente
 
-1. **Socket.io** pour les mises à jour temps réel
-2. **Service Worker** pour le cache offline
-3. **Analytics** pour le suivi des téléchargements
-4. **Impression** directe des factures
+```typescript
+const invalidateInvoices = useInvalidateInvoices();
+
+// Après un paiement réussi
+const handlePaymentSuccess = () => {
+  invalidateInvoices(); // Recharge automatiquement les factures
+};
+```
+
+### React Query DevTools
+
+```typescript
+import { ReactQueryDevtools } from "react-query/devtools";
+
+function App() {
+  return (
+    <>
+      <YourApp />
+      <ReactQueryDevtools initialIsOpen={false} />
+    </>
+  );
+}
+```
 
 ---
 
-## 🐛 Dépannage
+## 🐛 Dépannage React Query
 
 ### Erreurs communes
 
-**"Token invalide"** : Vérifier localStorage.auth_token
-**"Facture non trouvée"** : Vérifier l'ID et la propriété
-**"Erreur téléchargement"** : Vérifier la connexion réseau
+**"Cannot read property 'invoices'"** : Vérifier le type `InvoicesResponse`
+**"Query not enabled"** : Vérifier la condition `enabled: !!id`
+**"Cache not invalidating"** : Utiliser `useInvalidateInvoices()` après mutations
 
-### Debug
+### Debug React Query
 
 ```javascript
 // Dans la console du navigateur
-localStorage.getItem("auth_token"); // Vérifier token
-fetch("/api/invoices"); // Tester API directement
+window.__REACT_QUERY_CLIENT__; // Accéder au client
+queryClient.getQueryCache(); // Voir le cache
+queryClient.invalidateQueries(["invoices"]); // Forcer l'invalidation
 ```
 
-Cette intégration remplace complètement les mocks et offre une expérience de facturation robuste et sécurisée ! 🎉
+### Logs de développement
+
+```typescript
+const { data, isLoading, error } = useInvoices(page, 20);
+
+useEffect(() => {
+  console.log("🔍 React Query State:", { data, isLoading, error });
+}, [data, isLoading, error]);
+```
+
+Cette refactorisation avec React Query offre une expérience de facturation **robuste, performante et maintenir** ! 🎉
