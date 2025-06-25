@@ -109,6 +109,94 @@ Template HTML responsive avec :
 - Lien de téléchargement sécurisé
 - Design professionnel
 
+## 🌐 **API Endpoints pour Factures**
+
+### Routes disponibles
+
+Le système expose trois endpoints REST pour consulter et télécharger les factures générées :
+
+#### 📋 `GET /invoices` - Liste des factures
+
+```http
+GET /invoices?page=1&limit=10
+Authorization: Bearer JWT_TOKEN
+
+Response: 200
+{
+  "invoices": [
+    {
+      "id": "invoice-123",
+      "amount": 59900,
+      "amountFormatted": "599.00 €",
+      "createdAt": "2024-01-15T10:30:00Z",
+      "pdfUrl": "https://s3.amazonaws.com/bucket/invoice.pdf",
+      "commande": {
+        "id": "cmd-456",
+        "titre": "Correction Mémoire",
+        "statut": "TERMINE"
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 5,
+    "totalPages": 1,
+    "hasNextPage": false,
+    "hasPreviousPage": false
+  }
+}
+```
+
+#### 📄 `GET /invoices/:id` - Détails d'une facture
+
+```http
+GET /invoices/invoice-123
+Authorization: Bearer JWT_TOKEN
+
+Response: 200
+{
+  "id": "invoice-123",
+  "amount": 59900,
+  "amountFormatted": "599.00 €",
+  "commande": {
+    "titre": "Correction Mémoire",
+    "description": "Détails complets...",
+    "user": {
+      "prenom": "Jean",
+      "nom": "Dupont"
+    }
+  }
+}
+```
+
+#### 📥 `GET /invoices/:id/download` - Téléchargement PDF
+
+```http
+GET /invoices/invoice-123/download
+Authorization: Bearer JWT_TOKEN
+
+Response: 200 (PDF stream)
+Content-Type: application/pdf
+Content-Disposition: attachment; filename="facture-XXX.pdf"
+```
+
+### Sécurité des endpoints
+
+- **Authentification JWT** : Token Bearer obligatoire
+- **Contrôle d'accès** : Utilisateur ne voit que ses factures
+- **Validation des paramètres** : Pagination sécurisée (max 50/page)
+- **Streaming sécurisé** : Téléchargement direct depuis S3 ou fallback URL
+
+### Codes d'erreur
+
+| Code  | Description                                   |
+| ----- | --------------------------------------------- |
+| `401` | Token JWT manquant ou invalide                |
+| `403` | Accès refusé (facture d'un autre utilisateur) |
+| `404` | Facture non trouvée                           |
+| `500` | Erreur serveur (base de données, S3)          |
+
 ## 🧪 **Tests**
 
 ### Exécution des tests
@@ -119,15 +207,53 @@ npm test -- tests/unit/invoiceService.test.ts
 
 # Tests d'intégration webhook + facturation
 npm test -- tests/unit/webhookWithInvoice.test.ts
+
+# Tests des endpoints REST (NOUVEAU)
+npm test -- tests/unit/invoiceRoutes.test.ts
 ```
 
 ### Couverture des tests
+
+#### Service de facturation
 
 - ✅ Génération PDF avec données valides
 - ✅ Upload S3 et gestion d'erreurs
 - ✅ Envoi d'emails avec templates
 - ✅ Intégration webhook complète
 - ✅ Gestion des erreurs sans bloquer webhook
+
+#### Endpoints REST (Nouveaux)
+
+- ✅ **Liste paginée** : Pagination, limite, tri chronologique
+- ✅ **Détails facture** : Données complètes, contrôle d'accès
+- ✅ **Téléchargement** : Streaming S3, fallback URL, headers corrects
+- ✅ **Authentification** : JWT validation, erreurs 401/403
+- ✅ **Sécurité** : Isolation des données utilisateur
+- ✅ **Robustesse** : Gestion d'erreurs base de données et S3
+
+#### Résultats des tests routes
+
+```
+✓ 15/15 tests passés - Invoice Routes Tests
+  GET /invoices
+    ✓ Liste avec pagination (57ms)
+    ✓ Pagination correcte (8ms)
+    ✓ Limite max 50 par page (8ms)
+    ✓ 401 sans authentification (2ms)
+    ✓ Gestion erreurs DB (28ms)
+
+  GET /invoices/:id
+    ✓ Détails complets (7ms)
+    ✓ 404 facture inexistante (6ms)
+    ✓ 403 accès non autorisé (5ms)
+
+  GET /invoices/:id/download
+    ✓ Téléchargement valide (9ms)
+    ✓ Redirection sans S3 (7ms)
+    ✓ 404 facture inexistante (5ms)
+    ✓ 403 accès non autorisé (10ms)
+    ✓ Fallback erreur S3 (9ms)
+```
 
 ## 🚀 **Déploiement**
 

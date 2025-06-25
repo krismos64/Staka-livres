@@ -338,6 +338,93 @@ model Invoice {
 - Templates HTML responsives
 - Gestion des erreurs et fallback
 
+### Routes factures (`/invoices`) - **NOUVEAU**
+
+Routes pour consulter et télécharger les factures générées automatiquement :
+
+```http
+# Liste paginée des factures de l'utilisateur
+GET /invoices?page=1&limit=10
+Authorization: Bearer token
+
+# Response: 200
+{
+  "invoices": [
+    {
+      "id": "invoice-123",
+      "amount": 59900,
+      "amountFormatted": "599.00 €",
+      "createdAt": "2024-01-15T10:30:00Z",
+      "pdfUrl": "https://s3.amazonaws.com/bucket/invoice.pdf",
+      "commande": {
+        "id": "cmd-456",
+        "titre": "Correction Mémoire",
+        "statut": "TERMINE",
+        "createdAt": "2024-01-14T15:00:00Z"
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 5,
+    "totalPages": 1,
+    "hasNextPage": false,
+    "hasPreviousPage": false
+  }
+}
+
+# Détails d'une facture spécifique
+GET /invoices/:id
+Authorization: Bearer token
+
+# Response: 200
+{
+  "id": "invoice-123",
+  "amount": 59900,
+  "amountFormatted": "599.00 €",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "pdfUrl": "https://s3.amazonaws.com/bucket/invoice.pdf",
+  "commande": {
+    "id": "cmd-456",
+    "titre": "Correction Mémoire",
+    "description": "Correction complète d'un mémoire de master",
+    "statut": "TERMINE",
+    "createdAt": "2024-01-14T15:00:00Z",
+    "updatedAt": "2024-01-15T09:00:00Z",
+    "user": {
+      "prenom": "Jean",
+      "nom": "Dupont",
+      "email": "jean.dupont@example.com"
+    }
+  }
+}
+
+# Téléchargement sécurisé du PDF de facture
+GET /invoices/:id/download
+Authorization: Bearer token
+
+# Response: 200 (streaming PDF)
+# Headers:
+# Content-Type: application/pdf
+# Content-Disposition: attachment; filename="facture-Correction-Memoire-ce-123.pdf"
+# Cache-Control: private, no-cache
+
+# Erreurs possibles :
+# 401 - Token JWT manquant ou invalide
+# 403 - Accès non autorisé (facture n'appartient pas à l'utilisateur)
+# 404 - Facture non trouvée
+# 500 - Erreur serveur (base de données ou S3)
+```
+
+#### Caractéristiques techniques
+
+- **Pagination** : Limite de 50 factures par page maximum
+- **Sécurité** : Vérification que la facture appartient à l'utilisateur connecté
+- **Téléchargement** : Streaming direct depuis S3 ou fallback redirection URL
+- **Format montant** : En centimes (base) et formaté avec devise (affichage)
+- **Tri** : Les factures les plus récentes en premier
+
 ````
 
 ### Événements Gérés

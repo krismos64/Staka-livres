@@ -6,6 +6,7 @@ import helmet from "helmet";
 import adminRoutes from "./routes/admin";
 import authRoutes from "./routes/auth";
 import commandesRoutes from "./routes/commandes";
+import invoiceRoutes from "./routes/invoice";
 import paymentsRoutes from "./routes/payments";
 import webhookRoutes from "./routes/payments/webhook";
 
@@ -56,6 +57,9 @@ app.use("/payments", paymentsRoutes);
 // Routes admin (protégées)
 app.use("/admin", adminRoutes);
 
+// Routes factures (côté client)
+app.use("/invoices", invoiceRoutes);
+
 // Gestionnaire d'erreur 404
 app.use("*", (req, res) => {
   res.status(404).json({ error: "Route non trouvée" });
@@ -79,6 +83,14 @@ app.listen(PORT, "0.0.0.0", () => {
   );
   console.log(`   GET /payments/status/:sessionId - Statut paiement`);
   console.log(`   POST /payments/webhook - Webhook Stripe (nouveau)`);
+  console.log(`🧾 Routes factures:`);
+  console.log(`   GET /invoices - Liste des factures (USER authentifié)`);
+  console.log(
+    `   GET /invoices/:id - Détails d'une facture (USER authentifié)`
+  );
+  console.log(
+    `   GET /invoices/:id/download - Télécharger PDF facture (USER authentifié)`
+  );
   console.log(`👑 Routes admin disponibles:`);
   console.log(`   GET /admin/test - Test admin (ADMIN uniquement)`);
   console.log(
