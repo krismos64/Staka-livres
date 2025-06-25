@@ -9,7 +9,7 @@ COPY shared/package*.json ./shared/
 
 # Installer les dépendances du backend (avec devDependencies pour nodemon/ts-node)
 WORKDIR /app/backend
-RUN npm ci
+RUN npm install
 
 # Copier le code source
 COPY backend/ ./

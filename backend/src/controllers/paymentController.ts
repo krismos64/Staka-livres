@@ -31,8 +31,8 @@ export const paymentController = {
         priceId,
         userId,
         commandeId,
-        successUrl: `${process.env.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: `${process.env.FRONTEND_URL}/payment/cancel`,
+        successUrl: `${process.env.FRONTEND_URL}?payment=success`,
+        cancelUrl: `${process.env.FRONTEND_URL}?payment=cancel`,
       });
 
       // Marquer la commande comme en attente de paiement

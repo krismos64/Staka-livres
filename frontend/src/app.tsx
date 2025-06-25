@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import AdminLayout, { AdminSection } from "./components/admin/AdminLayout";
 import MainLayout from "./components/layout/MainLayout";
 import { ToastProvider } from "./components/layout/ToastProvider";
@@ -50,16 +50,43 @@ const AppContent: React.FC = () => {
   // État pour le modal nouveau projet
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
 
-  // Détecter automatiquement le mode admin si utilisateur connecté est admin
-  React.useEffect(() => {
+  // Gère la redirection automatique au chargement de l'app
+  useEffect(() => {
+    // Attend que la vérification de l'authentification soit terminée
+    if (isLoading) {
+      return;
+    }
+
+    const paymentStatus = localStorage.getItem("paymentStatus");
+
     if (user) {
-      if (user.role === "ADMIN" && appMode === "login") {
-        setAppMode("admin");
-      } else if (user.role === "USER" && appMode === "login") {
-        setAppMode("app");
+      // Si l'utilisateur est connecté, on passe en mode app
+      setAppMode(user.role === "ADMIN" ? "admin" : "app");
+
+      if (paymentStatus) {
+        // Si on revient d'un paiement, on va directement à la facturation
+        setCurrentSection("billing");
       }
     }
-  }, [user, appMode]);
+    // Si pas d'utilisateur, on reste sur la landing page (comportement par défaut)
+  }, [isLoading, user]);
+
+  // Gère la redirection APRÈS avoir cliqué sur le bouton de paiement
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get("payment");
+
+    if (paymentStatus === "success" || paymentStatus === "cancel") {
+      // Stocker le statut dans localStorage pour qu'il survive au rechargement
+      localStorage.setItem("paymentStatus", paymentStatus);
+      // Recharger l'app à la racine pour avoir un état propre
+      window.location.href = window.location.pathname;
+    }
+  }, []);
+
+  const handleSignupSuccess = () => {
+    setAppMode("app");
+  };
 
   // Gère la connexion avec l'API réelle
   const handleLogin = async (e: React.FormEvent) => {
@@ -211,6 +238,7 @@ const AppContent: React.FC = () => {
         <SignupPage
           onBackToLogin={handleBackToLogin}
           onBackToLanding={handleBackToLanding}
+          onSignupSuccess={handleSignupSuccess}
         />
       )}
 

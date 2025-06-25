@@ -167,10 +167,7 @@ export const me = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    res.status(200).json({
-      message: "Informations utilisateur récupérées",
-      user,
-    });
+    res.status(200).json(user);
   } catch (error) {
     console.error("Erreur lors de la récupération des infos:", error);
     res.status(500).json({ error: "Erreur interne du serveur" });

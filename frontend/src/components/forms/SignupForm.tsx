@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import { useToasts } from "../../utils/toast";
 
 /**
  * Props pour le composant SignupForm.
@@ -6,6 +8,7 @@ import React, { useState } from "react";
 interface SignupFormProps {
   /** Fonction pour ré-afficher le formulaire de connexion */
   onShowLogin: () => void;
+  onSignupSuccess: () => void;
 }
 
 /**
@@ -22,11 +25,26 @@ interface FieldErrors {
 /**
  * Composant pour le formulaire d'inscription.
  */
-function SignupForm({ onShowLogin }: SignupFormProps) {
-  // États pour la gestion du feedback utilisateur
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string>("");
+export default function SignupForm({
+  onShowLogin,
+  onSignupSuccess,
+}: SignupFormProps) {
+  const [formData, setFormData] = useState({
+    prenom: "",
+    nom: "",
+    email: "",
+    password: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { register } = useAuth();
+  const { showToast } = useToasts();
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
   // Validation des champs
   const validateFields = (formData: FormData): FieldErrors => {
@@ -90,7 +108,7 @@ function SignupForm({ onShowLogin }: SignupFormProps) {
     e.preventDefault();
 
     // Reset des erreurs
-    setError("");
+    setError(null);
     setFieldErrors({});
 
     const formData = new FormData(e.currentTarget);
@@ -103,7 +121,7 @@ function SignupForm({ onShowLogin }: SignupFormProps) {
     }
 
     // Début du chargement
-    setIsLoading(true);
+    setLoading(true);
 
     try {
       const email = formData.get("email") as string;
@@ -111,15 +129,19 @@ function SignupForm({ onShowLogin }: SignupFormProps) {
       const result = await simulateSignup(email);
 
       if (result.success) {
-        alert("Inscription réussie ! Vous pouvez maintenant vous connecter.");
-        onShowLogin(); // Retour au formulaire de connexion
+        showToast(
+          "success",
+          "Inscription réussie !",
+          "Vous allez être redirigé vers votre espace client."
+        );
+        onSignupSuccess();
       } else {
         setError(result.message || "Une erreur s'est produite");
       }
     } catch (err) {
       setError("Erreur lors de l'inscription. Veuillez réessayer.");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -152,7 +174,8 @@ function SignupForm({ onShowLogin }: SignupFormProps) {
                   : "border-gray-300 focus:ring-blue-500"
               }`}
               placeholder="Marie"
-              disabled={isLoading}
+              disabled={loading}
+              onChange={handleChange}
             />
             {fieldErrors.first_name && (
               <p className="text-red-600 text-sm mt-1">
@@ -178,7 +201,8 @@ function SignupForm({ onShowLogin }: SignupFormProps) {
                   : "border-gray-300 focus:ring-blue-500"
               }`}
               placeholder="Castello"
-              disabled={isLoading}
+              disabled={loading}
+              onChange={handleChange}
             />
             {fieldErrors.last_name && (
               <p className="text-red-600 text-sm mt-1">
@@ -207,7 +231,8 @@ function SignupForm({ onShowLogin }: SignupFormProps) {
                 : "border-gray-300 focus:ring-blue-500"
             }`}
             placeholder="votre@email.com"
-            disabled={isLoading}
+            disabled={loading}
+            onChange={handleChange}
           />
           {fieldErrors.email && (
             <p className="text-red-600 text-sm mt-1">{fieldErrors.email}</p>
@@ -233,7 +258,8 @@ function SignupForm({ onShowLogin }: SignupFormProps) {
                 : "border-gray-300 focus:ring-blue-500"
             }`}
             placeholder="••••••••"
-            disabled={isLoading}
+            disabled={loading}
+            onChange={handleChange}
           />
           {fieldErrors.password && (
             <p className="text-red-600 text-sm mt-1">{fieldErrors.password}</p>
@@ -254,7 +280,8 @@ function SignupForm({ onShowLogin }: SignupFormProps) {
             name="phone"
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
             placeholder="06 12 34 56 78"
-            disabled={isLoading}
+            disabled={loading}
+            onChange={handleChange}
           />
         </div>
 
@@ -268,7 +295,7 @@ function SignupForm({ onShowLogin }: SignupFormProps) {
               className={`rounded text-blue-600 focus:ring-blue-500 ${
                 fieldErrors.terms ? "border-red-500" : "border-gray-300"
               }`}
-              disabled={isLoading}
+              disabled={loading}
             />
             <span className="ml-2 text-sm text-gray-600">
               J'accepte les{" "}
@@ -285,14 +312,14 @@ function SignupForm({ onShowLogin }: SignupFormProps) {
         {/* Bouton de soumission */}
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={loading}
           className={`w-full py-3 px-4 rounded-xl font-semibold transition duration-300 ${
-            isLoading
+            loading
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-gradient-to-r from-green-600 to-green-500 text-white hover:from-green-700 hover:to-green-600 transform hover:scale-105"
           }`}
         >
-          {isLoading ? (
+          {loading ? (
             <>
               <i className="fas fa-spinner fa-spin mr-2"></i>
               Création en cours...
@@ -321,7 +348,7 @@ function SignupForm({ onShowLogin }: SignupFormProps) {
             onClick={onShowLogin}
             className="text-blue-600 hover:text-blue-500 font-medium"
             type="button"
-            disabled={isLoading}
+            disabled={loading}
           >
             Se connecter
           </button>
@@ -330,5 +357,3 @@ function SignupForm({ onShowLogin }: SignupFormProps) {
     </div>
   );
 }
-
-export default SignupForm;

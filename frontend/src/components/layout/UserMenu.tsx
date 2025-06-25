@@ -26,8 +26,11 @@ function UserMenu({ onSectionChange, onLogout, onGoToAdmin }: UserMenuProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { user, isAdmin } = useAuth();
 
-  const displayName = user ? `${user.prenom} ${user.nom}` : "Marie Castello";
-  const displayInitials = user ? `${user.prenom[0]}${user.nom[0]}` : "MC";
+  const displayName = user
+    ? `${user.prenom || "Prénom"} ${user.nom || "Nom"}`
+    : "Marie Castello";
+  const displayInitials =
+    user && user.prenom && user.nom ? `${user.prenom[0]}${user.nom[0]}` : "MC";
 
   /**
    * Hook pour fermer le menu si l'utilisateur clique en dehors.

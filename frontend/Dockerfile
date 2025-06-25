@@ -9,7 +9,7 @@ COPY shared/package*.json ./shared/
 
 # Installer les dépendances du frontend
 WORKDIR /app/frontend
-RUN npm ci
+RUN npm install
 
 # Copier le code source
 COPY frontend/ ./

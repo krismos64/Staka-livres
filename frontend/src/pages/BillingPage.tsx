@@ -1,15 +1,15 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnnualSummaryCard } from "../components/billing/AnnualSummaryCard";
 import { CurrentInvoiceCard } from "../components/billing/CurrentInvoiceCard";
 import { InvoiceDetailsModal } from "../components/billing/InvoiceDetailsModal";
 import { InvoiceHistoryCard } from "../components/billing/InvoiceHistoryCard";
 import { PaymentMethodsCard } from "../components/billing/PaymentMethodsCard";
-import { PaymentModal } from "../components/billing/PaymentModal";
 import { SupportCard } from "../components/billing/SupportCard";
 import EmptyState from "../components/common/EmptyState";
+import { buildApiUrl, getAuthHeaders, stripeConfig } from "../utils/api";
 import { useToasts } from "../utils/toast";
 
-// Types pour une structure de données propre
+// Types des données (gardés pour la structure de la page)
 export interface Invoice {
   id: string;
   projectName: string;
@@ -44,55 +44,7 @@ export interface AnnualStats {
   vipMessage: string;
 }
 
-// Données mock - prêtes pour remplacer par appels API
-const mockCurrentInvoice: Invoice = {
-  id: "2025-002",
-  projectName: "Mémoires d'une Vie",
-  items: [
-    {
-      name: 'Correction "Mémoires d\'une Vie"',
-      description: "Pack Correction • 180 pages",
-      amount: "360€",
-    },
-    {
-      name: "Option urgence",
-      description: "Livraison en 7 jours",
-      amount: "108€",
-    },
-  ],
-  total: "468€",
-  status: "pending",
-  date: "18 Jan 2025",
-  dueDate: "25 Jan 2025",
-};
-
-const mockInvoiceHistory: Invoice[] = [
-  {
-    id: "2025-001",
-    projectName: "L'Écho du Temps",
-    items: [],
-    total: "560€",
-    status: "paid",
-    date: "15 Jan 2025",
-  },
-  {
-    id: "2024-087",
-    projectName: "Romance d'Automne",
-    items: [],
-    total: "420€",
-    status: "paid",
-    date: "28 Déc 2024",
-  },
-  {
-    id: "2024-078",
-    projectName: "Première Neige",
-    items: [],
-    total: "390€",
-    status: "paid",
-    date: "15 Déc 2024",
-  },
-];
-
+// Données mock pour les éléments non dynamiques pour l'instant
 const mockPaymentMethods: PaymentMethod[] = [
   {
     id: "pm_1",
@@ -113,29 +65,203 @@ const mockAnnualStats: AnnualStats = {
   vipMessage: "Statut VIP atteint ! Réduction de 5% sur tous vos projets.",
 };
 
-export default function BillingPage() {
-  // États pour la gestion des modales et données
-  const [currentInvoice] = useState<Invoice | null>(mockCurrentInvoice);
-  const [invoiceHistory] = useState<Invoice[]>(mockInvoiceHistory);
-  const [paymentMethods, setPaymentMethods] =
-    useState<PaymentMethod[]>(mockPaymentMethods);
-  const [annualStats] = useState<AnnualStats>(mockAnnualStats);
+// Helper pour transformer une Commande API en Invoice UI
+function mapCommandeToInvoice(commande: any): Invoice {
+  const isPending =
+    commande.paymentStatus === "unpaid" || commande.statut === "EN_ATTENTE";
 
-  // États des modales
+  return {
+    id: commande.id,
+    projectName: commande.titre,
+    items: [
+      {
+        name: `Correction "${commande.titre}"`,
+        description: commande.description || "Service de correction standard",
+        amount: "360€",
+      },
+      {
+        name: "Option Urgence (Exemple)",
+        description: "Exemple de ligne de facture",
+        amount: "108€",
+      },
+    ],
+    total: "468€", // Le total est un exemple, car non présent dans l'API Commande
+    status: isPending ? "pending" : "paid",
+    date: new Date(commande.createdAt).toLocaleDateString("fr-FR", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }),
+    dueDate: isPending
+      ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString(
+          "fr-FR"
+        )
+      : undefined,
+  };
+}
+
+export default function BillingPage() {
+  // États pour les données dynamiques
+  const [currentInvoice, setCurrentInvoice] = useState<Invoice | null>(null);
+  const [invoiceHistory, setInvoiceHistory] = useState<Invoice[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Données statiques et modales
+  const [paymentMethods] = useState<PaymentMethod[]>(mockPaymentMethods);
+  const [annualStats] = useState<AnnualStats>(mockAnnualStats);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
   const { showToast } = useToasts();
 
+  // Gère la redirection lorsque l'URL est prête
+  useEffect(() => {
+    if (redirectUrl) {
+      window.location.href = redirectUrl;
+    }
+  }, [redirectUrl]);
+
+  // Détecter le retour de paiement et afficher un message
+  useEffect(() => {
+    // Lire le statut depuis localStorage
+    const paymentStatus = localStorage.getItem("paymentStatus");
+
+    if (paymentStatus === "success") {
+      showToast(
+        "success",
+        "Paiement réussi !",
+        "Votre commande a été confirmée et sera traitée dans les plus brefs délais."
+      );
+      localStorage.removeItem("paymentStatus");
+    } else if (paymentStatus === "cancel") {
+      showToast(
+        "info",
+        "Paiement annulé",
+        "Votre paiement a été annulé. Vous pouvez réessayer à tout moment."
+      );
+      localStorage.removeItem("paymentStatus");
+    }
+  }, [showToast]);
+
+  // Fetch des factures depuis l'API au chargement
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(buildApiUrl("/commandes"), {
+          headers: getAuthHeaders(),
+        });
+
+        if (!response.ok) {
+          throw new Error("Erreur lors de la récupération des factures");
+        }
+
+        const data = await response.json();
+        const commandes = data.commandes || [];
+
+        const unpaidInvoices = commandes
+          .filter(
+            (c: any) =>
+              c.paymentStatus === "unpaid" || c.statut === "EN_ATTENTE"
+          )
+          .map(mapCommandeToInvoice);
+
+        const paidInvoices = commandes
+          .filter(
+            (c: any) =>
+              c.paymentStatus !== "unpaid" && c.statut !== "EN_ATTENTE"
+          )
+          .map(mapCommandeToInvoice);
+
+        if (unpaidInvoices.length > 0) {
+          setCurrentInvoice(unpaidInvoices[0]); // Affiche la première facture non payée
+        }
+
+        setInvoiceHistory(paidInvoices);
+      } catch (error) {
+        console.error("Erreur API Factures:", error);
+        showToast("error", "Erreur", "Impossible de charger vos factures.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchInvoices();
+  }, [showToast]);
+
   // Handlers pour les actions principales
   const handlePayInvoice = async (invoice: Invoice) => {
-    setIsProcessingPayment(true);
-    setShowPaymentModal(true);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    showToast("success", "Paiement réussi", `Facture ${invoice.id} payée`);
-    setShowPaymentModal(false);
-    setIsProcessingPayment(false);
+    console.log("🔥 handlePayInvoice appelé avec:", invoice);
+
+    try {
+      setIsProcessingPayment(true);
+      const token = localStorage.getItem("auth_token");
+
+      console.log("🔑 Token disponible:", !!token, token ? "Oui" : "Non");
+
+      if (!token) {
+        console.error("❌ Pas de token trouvé");
+        showToast(
+          "error",
+          "Erreur",
+          "Vous devez être connecté pour effectuer un paiement"
+        );
+        return;
+      }
+
+      console.log(
+        "📡 Appel API vers:",
+        buildApiUrl("/payments/create-checkout-session")
+      );
+      console.log("📦 Données envoyées:", {
+        commandeId: invoice.id,
+        priceId: stripeConfig.priceIds.correction_standard,
+      });
+
+      // Utiliser l'API centralisée
+      const response = await fetch(
+        buildApiUrl("/payments/create-checkout-session"),
+        {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            commandeId: invoice.id,
+            priceId: stripeConfig.priceIds.correction_standard, // Utilise la config centralisée
+          }),
+        }
+      );
+
+      console.log("📨 Réponse API status:", response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("❌ Erreur API:", errorData);
+        throw new Error(
+          errorData.error || "Erreur lors de la création de la session Stripe"
+        );
+      }
+
+      const data = await response.json();
+      console.log("✅ Données reçues:", data);
+
+      if (data.url) {
+        console.log("🚀 Redirection vers:", data.url);
+        // Redirection vers Stripe Checkout
+        setRedirectUrl(data.url);
+      } else {
+        console.error("❌ Pas d'URL dans la réponse");
+        showToast("error", "Erreur", "URL de paiement introuvable");
+      }
+    } catch (err) {
+      console.error("❌ Erreur Stripe complète:", err);
+      const message =
+        err instanceof Error ? err.message : "Impossible d'initier le paiement";
+      showToast("error", "Paiement échoué", message);
+    } finally {
+      setIsProcessingPayment(false);
+      console.log("🏁 handlePayInvoice terminé");
+    }
   };
 
   const handleDownloadInvoice = async (invoiceId: string) => {
@@ -151,8 +277,7 @@ export default function BillingPage() {
   };
 
   const handleRemovePaymentMethod = (paymentMethodId: string) => {
-    setPaymentMethods((prev) => prev.filter((pm) => pm.id !== paymentMethodId));
-    showToast("success", "Carte supprimée", "Moyen de paiement retiré");
+    // Implementation needed
   };
 
   const handleContactSupport = () => {
@@ -226,16 +351,6 @@ export default function BillingPage() {
           onClose={() => setSelectedInvoice(null)}
           onDownload={handleDownloadInvoice}
           onPay={handlePayInvoice}
-        />
-      )}
-
-      {currentInvoice && (
-        <PaymentModal
-          isOpen={showPaymentModal}
-          onClose={() => setShowPaymentModal(false)}
-          isProcessing={isProcessingPayment}
-          invoice={currentInvoice}
-          paymentMethods={paymentMethods}
         />
       )}
     </div>

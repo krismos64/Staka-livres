@@ -3,13 +3,18 @@ import SignupForm from "../components/forms/SignupForm";
 interface SignupPageProps {
   onBackToLogin: () => void;
   onBackToLanding?: () => void;
+  onSignupSuccess: () => void;
 }
 
 /**
  * Page d'inscription.
  * Utilise le composant SignupForm avec un layout centré plein écran.
  */
-function SignupPage({ onBackToLogin, onBackToLanding }: SignupPageProps) {
+function SignupPage({
+  onBackToLogin,
+  onBackToLanding,
+  onSignupSuccess,
+}: SignupPageProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 p-4">
       <div className="max-w-md w-full">
@@ -31,7 +36,10 @@ function SignupPage({ onBackToLogin, onBackToLanding }: SignupPageProps) {
         </div>
 
         {/* Formulaire d'inscription */}
-        <SignupForm onShowLogin={onBackToLogin} />
+        <SignupForm
+          onBackToLogin={onBackToLogin}
+          onSignupSuccess={onSignupSuccess}
+        />
       </div>
     </div>
   );
