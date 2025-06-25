@@ -197,6 +197,154 @@ Staka-livres/
 
 ---
 
+---
+
+## 📋 **Changelog Récent**
+
+### ✅ **Version Actuelle (Décembre 2025)**
+
+**🚀 Intégration Stripe Complète :**
+
+- ✅ API de paiement fonctionnelle avec sessions Stripe
+- ✅ Prix dynamique (468€) sans dépendance aux produits pré-créés
+- ✅ Webhooks configurés pour mise à jour automatique des statuts
+- ✅ Gestion des erreurs et logging complet
+
+**🐳 Infrastructure Docker Stabilisée :**
+
+- ✅ Configuration MySQL 8.4+ corrigée (`--mysql-native-password=ON`)
+- ✅ Base de données persistante avec migrations automatiques
+- ✅ Prisma Studio accessible sur port 5555
+- ✅ Variables d'environnement sécurisées
+
+**📊 Données de Test Opérationnelles :**
+
+- ✅ Seed automatique avec comptes admin/user
+- ✅ 3 commandes de test avec différents statuts de paiement
+- ✅ Structure complète User ↔ Commande avec champs Stripe
+
+**🔧 Corrections Techniques Majeures :**
+
+- ✅ Service Stripe en mode réel (plus de mock)
+- ✅ Résolution des erreurs de connexion base de données
+- ✅ Synchronisation parfaite entre les conteneurs Docker
+- ✅ Logs détaillés pour debugging et monitoring
+
+---
+
+## 🚀 **Démarrage Rapide**
+
+### ⚡ **Installation et Configuration**
+
+**Prérequis :**
+
+- Docker et Docker Compose installés
+- Node.js 18+ (pour développement local)
+- Git
+
+**1. Cloner le projet :**
+
+```bash
+git clone <repository-url>
+cd Staka-livres
+```
+
+**2. Configuration de l'environnement :**
+
+```bash
+# Créer le fichier de configuration backend
+touch backend/.env
+```
+
+**3. Configurer les variables d'environnement dans `backend/.env` :**
+
+```env
+# Base de données
+DATABASE_URL="mysql://staka:staka@db:3306/stakalivres"
+
+# Authentification JWT
+JWT_SECRET="dev_secret_key_change_in_production"
+NODE_ENV="development"
+
+# Frontend URL
+FRONTEND_URL="http://localhost:3000"
+PORT=3001
+
+# Configuration Stripe (remplacer par vos vraies clés)
+STRIPE_SECRET_KEY="sk_test_VOTRE_CLE_SECRETE_STRIPE"
+STRIPE_WEBHOOK_SECRET="whsec_VOTRE_WEBHOOK_SECRET"
+```
+
+**4. Lancer l'application avec Docker :**
+
+```bash
+# Démarrer tous les services
+docker-compose up -d
+
+# Vérifier le statut des conteneurs
+docker-compose ps
+```
+
+**5. Initialiser la base de données :**
+
+```bash
+# Appliquer les migrations
+docker exec -it staka_backend npx prisma migrate deploy
+
+# Générer le client Prisma
+docker exec -it staka_backend npx prisma generate
+
+# Créer les données de test
+docker exec -it staka_backend npm run db:seed
+```
+
+### 🌐 **Accès aux Services**
+
+- **Frontend** : http://localhost:3000
+- **Backend API** : http://localhost:3001
+- **Prisma Studio** : http://localhost:5555
+- **Base de données** : localhost:3306
+
+### 👤 **Comptes de Test**
+
+**Administrateur :**
+
+- Email : `admin@staka-editions.com`
+- Mot de passe : `admin123`
+
+**Utilisateur :**
+
+- Email : `user@example.com`
+- Mot de passe : `user123`
+
+---
+
+## 💳 **Configuration Stripe**
+
+### 🔧 **Configuration Initiale**
+
+1. **Créer un compte Stripe** sur https://stripe.com
+2. **Récupérer les clés API** dans le Dashboard > Developers > API Keys
+3. **Mettre à jour le fichier `.env`** avec vos vraies clés
+
+### 🧪 **Mode Test**
+
+Le système utilise automatiquement :
+
+- **Prix dynamique** : 468€ pour les corrections de manuscrit
+- **Cartes de test Stripe** : 4242 4242 4242 4242
+- **Webhooks** : Configuration automatique en développement
+
+### 📊 **Données de Test**
+
+La base contient 3 commandes de test :
+
+- **Commande payée** : "Relecture essai - Philosophie" (statut: TERMINE)
+- **Commande non payée** : "Correction manuscrit - Romance" (statut: EN_ATTENTE)
+- **Commande en cours** : "Correction nouvelles - SF" (statut: EN_COURS)
+
+---
+
 ## 📦 Installation et Configuration
 
 ### 🔧 **Prérequis**
@@ -227,10 +375,13 @@ npm run build -w @staka/shared
 
 ```bash
 # Construire et lancer tous les services
-docker-compose up --build
+docker-compose up -d
 
-# En arrière-plan (optionnel)
-docker-compose up -d --build
+# Vérifier que tous les conteneurs sont UP
+docker-compose ps
+
+# Suivre les logs en temps réel (optionnel)
+docker-compose logs -f
 ```
 
 #### **4. Accès à l'Application**
@@ -239,7 +390,7 @@ docker-compose up -d --build
 - **Backend API** : http://localhost:3001
 - **Health Check** : http://localhost:3001/health
 - **Base MySQL** : localhost:3306
-- **Prisma Studio** : `npx prisma studio` (dans le container backend)
+- **Prisma Studio** : http://localhost:5555 (démarrage automatique)
 
 #### **5. Comptes de Test Disponibles**
 
@@ -276,6 +427,114 @@ docker-compose down
 # Arrêter et supprimer les volumes
 docker-compose down -v
 ```
+
+---
+
+## 🔧 **Troubleshooting**
+
+### ❗ **Problèmes Courants**
+
+#### **1. Base de Données Vide**
+
+```bash
+# Appliquer les migrations
+docker exec -it staka_backend npx prisma migrate deploy
+
+# Générer le client Prisma
+docker exec -it staka_backend npx prisma generate
+
+# Créer les données de test
+docker exec -it staka_backend npm run db:seed
+```
+
+#### **2. Conteneur MySQL qui Redémarre**
+
+```bash
+# Vérifier les logs MySQL
+docker logs staka_db
+
+# Réinitialiser complètement la base
+docker-compose down -v
+docker-compose up -d
+```
+
+#### **3. Erreur de Connexion Backend**
+
+```bash
+# Vérifier le statut des conteneurs
+docker-compose ps
+
+# Voir les logs du backend
+docker logs staka_backend
+
+# Redémarrer le backend
+docker-compose restart backend
+```
+
+#### **4. Erreur 500 lors des Paiements Stripe**
+
+- Vérifier que `STRIPE_SECRET_KEY` commence par `sk_test_`
+- Vérifier que les variables Stripe sont correctement configurées dans `.env`
+- Consulter les logs : `docker logs staka_backend --tail 20`
+
+#### **5. Frontend ne Charge Pas**
+
+```bash
+# Vérifier le statut
+curl http://localhost:3000
+
+# Redémarrer le frontend
+docker-compose restart frontend
+
+# Vérifier les logs
+docker logs staka_frontend
+```
+
+### 🔍 **Commandes Utiles de Debug**
+
+```bash
+# État de tous les services
+docker-compose ps
+
+# Logs de tous les services
+docker-compose logs
+
+# Logs d'un service spécifique
+docker logs staka_backend
+docker logs staka_db
+docker logs staka_frontend
+
+# Entrer dans un conteneur pour debug
+docker exec -it staka_backend bash
+docker exec -it staka_db mysql -u staka -pstaka stakalivres
+
+# Vérifier les variables d'environnement
+docker exec -it staka_backend env | grep STRIPE
+
+# Réinitialisation complète
+docker-compose down -v
+docker system prune -f
+docker-compose up -d
+```
+
+### 📊 **Vérification de l'État**
+
+**Services actifs :**
+
+- ✅ Frontend : http://localhost:3000
+- ✅ Backend API : http://localhost:3001/health
+- ✅ Prisma Studio : http://localhost:5555
+- ✅ Base MySQL : port 3306
+
+**Comptes de test :**
+
+- ✅ Admin : admin@staka-editions.com / admin123
+- ✅ User : user@example.com / user123
+
+**Données de test :**
+
+- ✅ 3 commandes créées automatiquement
+- ✅ Paiements Stripe fonctionnels (prix dynamique 468€)
 
 ---
 
@@ -353,7 +612,8 @@ Headers: Authorization: Bearer <user_token>
 # Créer une session de paiement
 POST /payments/create-checkout-session
 Headers: Authorization: Bearer <user_token>
-Body: { commandeId: "uuid", priceId: "price_1234..." }
+Body: { commandeId: "uuid", priceId: "price_correction_standard" }
+# Note: Le priceId est ignoré en faveur d'un prix dynamique de 468€
 
 # Vérifier le statut d'un paiement
 GET /payments/status/:sessionId

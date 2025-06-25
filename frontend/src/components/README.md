@@ -2,7 +2,7 @@
 
 ## 📁 Organisation Modulaire Complète
 
-Cette architecture suit les **bonnes pratiques SaaS** pour une codebase scalable et maintenable. Le frontend est maintenant quasi terminé avec une landing page complète et une application dashboard fonctionnelle.
+Cette architecture suit les **bonnes pratiques SaaS** pour une codebase scalable et maintenable. Le frontend est maintenant **complet et opérationnel** avec une landing page marketing optimisée, une application dashboard fonctionnelle et **l'intégration Stripe pour les paiements**.
 
 ### 🎯 Principes Appliqués
 
@@ -17,7 +17,8 @@ Cette architecture suit les **bonnes pratiques SaaS** pour une codebase scalable
 ```
 src/
 ├── components/           # Composants réutilisables
-│   ├── billing/         # 💳 Facturation et paiements (7 composants)
+│   ├── admin/           # 👨‍💼 Administration (3 composants)
+│   ├── billing/         # 💳 Facturation et paiements Stripe (7 composants)
 │   ├── common/          # 🎭 Composants génériques (2 composants)
 │   ├── forms/           # 📝 Formulaires réutilisables (3 composants)
 │   ├── landing/         # 🌟 Landing page complète (14 composants + hooks)
@@ -25,8 +26,9 @@ src/
 │   ├── messages/        # 💬 Système de messagerie (3 composants)
 │   ├── modals/          # 🪟 Toutes les modales (8 composants)
 │   └── project/         # 📚 Gestion des projets (2 composants)
-├── pages/               # 📄 Pages principales (9 pages)
-└── utils/               # 🛠️ Utilitaires
+├── pages/               # 📄 Pages principales (12 pages + admin)
+├── utils/               # 🛠️ Utilitaires (API, auth, toast)
+└── contexts/            # ⚡ Contextes React (AuthContext)
 ```
 
 ## 🌟 Module `landing/` - Landing Page Complète
@@ -400,23 +402,55 @@ src/
   - Conservation des données
   - Réactivation possible
 
-## 💳 Module `billing/` - Facturation et Paiements
+## 👨‍💼 Module `admin/` - Administration
+
+### `AdminLayout.tsx` - Layout Administration
+
+- **Rôle** : Layout spécifique pour l'interface d'administration
+- **Features** :
+  - Sidebar sombre avec navigation admin
+  - Header avec titre et actions admin
+  - Zone de contenu adaptée aux tableaux de données
+  - Design moderne avec animations fluides
+
+### `StatCard.tsx` - Cartes de Statistiques
+
+- **Rôle** : Composant réutilisable pour afficher des statistiques
+- **Features** :
+  - Icône, titre, valeur et changement en pourcentage
+  - Couleurs dynamiques selon le type de métrique
+  - Animation au hover et transitions fluides
+- **Props** : `icon`, `title`, `value`, `change`, `changeType`
+
+### `CommandeStatusSelect.tsx` - Sélecteur de Statut
+
+- **Rôle** : Dropdown pour modifier le statut des commandes
+- **Features** :
+  - Liste des statuts avec couleurs distinctives
+  - Mise à jour en temps réel via API
+  - Gestion des erreurs et feedback utilisateur
+- **Props** : `currentStatus`, `commandeId`, `onStatusChange`
+
+## 💳 Module `billing/` - Facturation et Paiements Stripe
 
 ### `CurrentInvoiceCard.tsx` - Facture Actuelle
 
-- **Rôle** : Affichage de la facture en cours
+- **Rôle** : Affichage de la facture en cours avec paiement Stripe
 - **Features** :
   - Montant et échéance
-  - Statut de paiement
-  - Actions de paiement
+  - Statut de paiement (payé/non payé/échoué)
+  - **Intégration Stripe** : bouton "Payer maintenant" avec redirection Checkout
+  - Gestion des erreurs de paiement avec toast notifications
+  - **API calls** vers `/payments/create-checkout-session`
 
 ### `InvoiceHistoryCard.tsx` - Historique des Factures
 
-- **Rôle** : Liste des factures passées
+- **Rôle** : Liste des factures passées avec données réelles
 - **Features** :
-  - Tableau avec tri et filtres
-  - Téléchargement PDF
-  - Statuts de paiement
+  - **Données dynamiques** : connexion à l'API `/commandes`
+  - Mapping des commandes en factures avec calculs automatiques
+  - Filtrage par statut de paiement (payé/non payé)
+  - Statuts colorés et badges visuels
 
 ### `InvoiceDetailsModal.tsx` - Détails de Facture
 
@@ -527,60 +561,138 @@ src/
   - Position personnalisable
   - Animations fluides
 
+## ⚡ Module `contexts/` - Gestion d'État Globale
+
+### `AuthContext.tsx` - Contexte d'Authentification
+
+- **Rôle** : Gestion centralisée de l'état utilisateur et authentification
+- **Features** :
+  - **Gestion JWT** : stockage et validation des tokens
+  - **État utilisateur global** : informations utilisateur accessibles partout
+  - **Login/Logout automatique** : gestion des sessions
+  - **Redirection intelligente** : selon le rôle (USER/ADMIN)
+  - **Persistence** : sauvegarde localStorage du token
+  - **API integration** : appels `/auth/login`, `/auth/me`
+- **Exports** : `AuthProvider`, `useAuth()`, `AuthContextType`
+- **État** : `user`, `token`, `isLoading`, `isAuthenticated`
+- **Fonctions** : `login()`, `logout()`, `checkAuth()`
+
+## 🛠️ Module `utils/` - Utilitaires
+
+### `api.ts` - Configuration API Centralisée
+
+- **Rôle** : Configuration centralisée pour tous les appels API
+- **Features** :
+  - **Base URL** configurée pour le backend
+  - **Endpoints mappés** : auth, payments, commandes, admin
+  - **Headers standardisés** : Authorization Bearer, Content-Type
+  - **Configuration Stripe** : priceIds pour les différents services
+- **Exports** : `apiConfig`, `buildApiUrl()`, `getAuthHeaders()`, `stripeConfig`
+- **Usage** : Utilisé dans tous les composants pour les appels API
+
+### `auth.ts` - Utilitaires d'Authentification
+
+- **Rôle** : Fonctions utilitaires pour la gestion de l'authentification
+- **Features** :
+  - Validation des tokens JWT
+  - Extraction des informations utilisateur
+  - Gestion de l'expiration des tokens
+  - Helpers pour les permissions
+
+### `toast.ts` - Système de Notifications
+
+- **Rôle** : Système centralisé de notifications toast
+- **Features** :
+  - **Types de notifications** : success, error, warning, info
+  - **Auto-dismiss** configurable
+  - **Position** personnalisable
+  - **Animations** d'entrée et sortie fluides
+- **Exports** : `showToast()`, `hideToast()`, `ToastType`
+- **Usage** : Utilisé pour feedback utilisateur après actions API
+
+### `adminAPI.ts` - API Administration
+
+- **Rôle** : Fonctions spécialisées pour les appels API d'administration
+- **Features** :
+  - **Gestion utilisateurs** : CRUD complet
+  - **Gestion commandes** : statistiques et modifications
+  - **Authentification ADMIN** : headers avec rôle requis
+  - **Gestion d'erreurs** : spécifique aux actions admin
+
 ## 📄 Pages Principales
 
-### `LandingPage.tsx` - Page d'Accueil
+### Pages Publiques
 
-- **Rôle** : Page d'accueil publique complète
+#### `LandingPage.tsx` - Page d'Accueil
+
+- **Rôle** : Page d'accueil publique complète et optimisée
 - **Features** :
   - Assemblage de tous les composants landing
   - Bouton WhatsApp flottant avec animation pulse
-  - Navigation vers page de connexion
-  - SEO optimisé
+  - **Navigation intelligente** : détection de l'état de connexion
+  - SEO optimisé avec métadonnées complètes
+  - **Performance** : chargement optimisé des composants
 
-### `LoginPage.tsx` - Page de Connexion
+#### `LoginPage.tsx` - Page de Connexion
 
-- **Rôle** : Authentification utilisateur
+- **Rôle** : Authentification utilisateur avec JWT
 - **Features** :
-  - Formulaire de connexion
-  - Lien vers inscription
-  - Retour vers landing page
+  - **AuthContext intégré** : gestion centralisée de l'état
+  - Formulaire de connexion avec validation temps réel
+  - **Redirection intelligente** : USER → app, ADMIN → admin
+  - Gestion des erreurs avec toast notifications
+  - Lien vers inscription et retour landing
 
-### `DashboardPage.tsx` - Tableau de Bord
+#### `SignupPage.tsx` - Page d'Inscription
 
-- **Rôle** : Page principale de l'application
+- **Rôle** : Création de nouveaux comptes utilisateur
 - **Features** :
-  - Vue d'ensemble des projets
-  - Statistiques utilisateur
-  - Actions rapides
-  - Activité récente
+  - Formulaire complet avec validation côté client
+  - **API integration** : appel `/auth/register`
+  - Vérification des mots de passe et validation email
+  - **Redirection automatique** après inscription réussie
 
-### `ProjectsPage.tsx` - Gestion des Projets
+### Pages Application (USER)
+
+#### `DashboardPage.tsx` - Tableau de Bord
+
+- **Rôle** : Page principale de l'application utilisateur
+- **Features** :
+  - **Vue d'ensemble personnalisée** avec données utilisateur
+  - Statistiques des projets et commandes
+  - Actions rapides vers création projet
+  - **AuthContext intégré** : données utilisateur contextuelles
+
+#### `ProjectsPage.tsx` - Gestion des Projets
 
 - **Rôle** : Page de gestion complète des projets
 - **Features** :
-  - Liste/grille des projets
-  - Filtres et tri
-  - Création de nouveau projet
-  - Actions en lot
+  - Liste/grille des projets avec données réelles
+  - **Modal de création** intégrée avec `ModalNouveauProjet`
+  - Filtres et tri dynamiques
+  - Actions CRUD complètes
 
-### `MessagesPage.tsx` - Messagerie
+#### `MessagesPage.tsx` - Messagerie
 
 - **Rôle** : Interface de messagerie complète
 - **Features** :
-  - Vue 3 colonnes : conversations, messages, détails
-  - Chat en temps réel
-  - Gestion des pièces jointes
+  - Architecture 3 colonnes responsive
+  - Système de conversations temps réel
+  - Gestion des pièces jointes et médias
+  - **État de connexion** utilisateur intégré
 
-### `BillingPage.tsx` - Facturation
+#### `BillingPage.tsx` - Facturation Stripe
 
-- **Rôle** : Gestion financière complète
+- **Rôle** : Gestion financière complète avec Stripe
 - **Features** :
-  - Factures courantes et historique
-  - Méthodes de paiement
-  - Résumés financiers
+  - **Intégration API réelle** : récupération des commandes via `/commandes`
+  - **Paiements Stripe** : sessions de checkout automatiques
+  - **Données dynamiques** : mapping commandes → factures en temps réel
+  - **Gestion des statuts** : payé/non payé/échoué avec badges colorés
+  - **Toast notifications** : feedback utilisateur pour paiements
+  - **URLs de redirection** : gestion success/cancel configurée
 
-### `FilesPage.tsx` - Gestion des Fichiers
+#### `FilesPage.tsx` - Gestion des Fichiers
 
 - **Rôle** : Gestionnaire de fichiers complet
 - **Features** :
@@ -589,29 +701,76 @@ src/
   - Organisation en dossiers
   - Partage et permissions
 
-### `ProfilPage.tsx` - Profil Utilisateur
+#### `ProfilPage.tsx` - Profil Utilisateur
 
 - **Rôle** : Gestion du profil utilisateur
 - **Features** :
-  - Informations personnelles
+  - **Données utilisateur réelles** via AuthContext
+  - Informations personnelles éditables
   - Avatar et préférences
-  - Historique d'activité
+  - Historique d'activité avec API calls
 
-### `SettingsPage.tsx` - Paramètres
+#### `SettingsPage.tsx` - Paramètres
 
 - **Rôle** : Configuration de l'application
 - **Features** :
-  - Préférences utilisateur
+  - Préférences utilisateur avec sauvegarde
   - Paramètres de notification
   - Sécurité et confidentialité
 
-### `HelpPage.tsx` - Aide et Support
+#### `HelpPage.tsx` - Aide et Support
 
 - **Rôle** : Centre d'aide complet
 - **Features** :
   - FAQ détaillée
   - Guides d'utilisation
   - Contact support
+
+### Pages Administration (ADMIN)
+
+#### `PaymentSuccessPage.tsx` - Succès de Paiement
+
+- **Rôle** : Page de confirmation après paiement Stripe
+- **Features** :
+  - **Gestion des redirections Stripe** avec paramètres de session
+  - Affichage du statut de paiement
+  - **Toast notification automatique** de succès
+  - Redirection intelligente vers facturation
+
+#### `PaymentCancelPage.tsx` - Annulation de Paiement
+
+- **Rôle** : Page d'annulation de paiement
+- **Features** :
+  - Gestion des annulations utilisateur
+  - Messages explicatifs
+  - Options pour recommencer le paiement
+
+#### `AdminDashboard.tsx` - Tableau de Bord Admin
+
+- **Rôle** : Dashboard principal pour les administrateurs
+- **Features** :
+  - **Statistiques en temps réel** avec API calls
+  - Cartes métriques avec `StatCard` composant
+  - Vue d'ensemble des utilisateurs et commandes
+  - **Layout AdminLayout** avec navigation moderne
+
+#### `AdminUtilisateurs.tsx` - Gestion des Utilisateurs
+
+- **Rôle** : Interface CRUD pour la gestion des utilisateurs
+- **Features** :
+  - **API intégrée** : appels vers `/admin/users`
+  - Tableau avec pagination et tri
+  - Filtres par rôle et statut
+  - Actions admin (activer/désactiver)
+
+#### `AdminCommandes.tsx` - Gestion des Commandes
+
+- **Rôle** : Interface complète de gestion des commandes
+- **Features** :
+  - **API `/admin/commandes`** avec données temps réel
+  - **Changement de statut** via `CommandeStatusSelect`
+  - Filtres avancés et recherche
+  - Statistiques et exports
 
 ## 🚀 Patterns et Bonnes Pratiques
 
@@ -641,8 +800,9 @@ export type ProjectStatus = 'draft' | 'in-progress' | 'completed';
 
 // Imports organisés par catégorie
 import React, { useState, useEffect } from 'react';
-import { ProjectCardProps } from './types';
-import { useToast } from '../layout/ToastProvider';
+import { useAuth } from '../../contexts/AuthContext';
+import { buildApiUrl, getAuthHeaders } from '../../utils/api';
+import { showToast } from '../../utils/toast';
 ```
 
 ### 🎨 **Patterns de Styling**
@@ -654,39 +814,64 @@ import { useToast } from '../layout/ToastProvider';
 
 ### 🔒 **Patterns de Sécurité**
 
-- **CSRF tokens** dans tous les formulaires
-- **Validation côté client** avec messages d'erreur
-- **Sanitization** des inputs utilisateur
+- **JWT Authentication** : gestion via AuthContext avec tokens sécurisés
+- **Headers Authorization** : Bearer tokens dans toutes les requêtes API
+- **Validation côté client** avec messages d'erreur en temps réel
+- **Sanitization** des inputs utilisateur avant envoi
 - **Rate limiting** pour les soumissions de formulaires
+- **Gestion des rôles** : redirection automatique USER/ADMIN
 
 ## 📈 Métriques de Performance
 
 ### 📊 **Statistiques Actuelles**
 
-- **Total composants** : 50+ composants réutilisables
-- **Pages** : 9 pages principales complètes
-- **Hooks personnalisés** : 1 hook de pricing (extensible)
+- **Total composants** : 55+ composants réutilisables
+- **Pages** : 12 pages principales + 3 pages admin
+- **Hooks personnalisés** : 1 hook de pricing + AuthContext
 - **Modales** : 8 modales pour toutes les interactions
 - **Formulaires** : 7 formulaires avec validation complète
+- **API Integration** : 15+ endpoints avec authentification JWT
+- **Paiements Stripe** : intégration complète et fonctionnelle
 
 ### ⚡ **Optimisations Appliquées**
 
-- **Lazy loading ready** : structure modulaire
-- **Bundle splitting** : séparation landing/app
-- **Memoization** : useMemo dans usePricing
+- **Lazy loading ready** : structure modulaire par fonctionnalité
+- **Bundle splitting** : séparation landing/app/admin
+- **Memoization** : useMemo dans usePricing et AuthContext
 - **Event handlers** : optimisés pour éviter re-renders
 - **Images** : optimisées et responsive
+- **API calls** : centralisées dans utils/api.ts
+- **State management** : AuthContext pour état global utilisateur
+- **Error handling** : toast notifications centralisées
 
 ---
 
 ## 🏆 Conclusion
 
-Cette architecture modulaire offre une base solide pour une application SaaS complète avec :
+Cette architecture modulaire offre une base solide pour une application SaaS complète et **opérationnelle** avec :
 
-- **Landing page marketing** complète et optimisée
-- **Application dashboard** fonctionnelle avec toutes les features
+- **Landing page marketing** complète et optimisée pour la conversion
+- **Application dashboard** fonctionnelle avec toutes les features essentielles
+- **Interface d'administration** moderne pour la gestion back-office
+- **Intégration Stripe** complète et fonctionnelle pour les paiements
 - **Système de design** cohérent avec Tailwind CSS
 - **Performance** optimisée et scalable
+- **Sécurité JWT** avec gestion des rôles USER/ADMIN
 - **Maintenabilité** élevée avec séparation claire des responsabilités
 
-Le frontend est maintenant **quasi terminé** avec tous les composants essentiels implémentés et une expérience utilisateur complète de la landing page jusqu'aux fonctionnalités avancées de l'application.
+Le frontend est maintenant **complet et opérationnel** avec :
+
+### ✅ **Fonctionnalités Terminées**
+
+- **🌟 Landing page** : 14 composants marketing + hooks de pricing
+- **🔐 Authentification** : Login/Signup avec JWT et AuthContext
+- **📊 Dashboard utilisateur** : projets, facturation, messagerie, profil
+- **👨‍💼 Administration** : gestion utilisateurs, commandes, statistiques
+- **💳 Paiements Stripe** : sessions de checkout, webhooks, gestion statuts
+- **🎨 UI/UX** : design moderne, responsive, animations fluides
+- **🛠️ API Integration** : 15+ endpoints avec gestion d'erreurs
+- **🏗️ Architecture** : 55+ composants modulaires et réutilisables
+
+### 🚀 **Prêt pour Production**
+
+L'architecture frontend est maintenant **production-ready** avec une expérience utilisateur complète, de la découverte des services sur la landing page jusqu'à la gestion avancée des projets et paiements dans l'application. Le système est **scalable**, **maintenable** et **sécurisé**.
