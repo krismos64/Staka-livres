@@ -180,3 +180,248 @@ Cette page de facturation suit les principes de **design progressif** :
 4. **Mobile-friendly** : pensé responsive dès la conception
 
 La structure modulaire permet une **évolution incrémentale** : chaque composant peut être amélioré indépendamment sans casser l'ensemble.
+
+# Système de Facturation Frontend
+
+Ce dossier contient tous les composants et la logique pour la gestion des factures côté client.
+
+## 📋 Vue d'ensemble
+
+Le système de facturation a été migré des mocks vers une intégration API complète avec le backend `/invoices`.
+
+### Composants principaux
+
+- **`BillingPage.tsx`** : Page principale orchestrant l'affichage des factures
+- **`CurrentInvoiceCard.tsx`** : Affichage de la facture en cours (non payée)
+- **`InvoiceHistoryCard.tsx`** : Historique des factures payées
+- **`InvoiceDetailsModal.tsx`** : Modal de détails d'une facture
+- **`AnnualSummaryCard.tsx`** : Résumé annuel des dépenses
+- **`PaymentMethodsCard.tsx`** : Gestion des moyens de paiement
+- **`PaymentModal.tsx`** : Modal de paiement Stripe
+- **`SupportCard.tsx`** : Assistance et support client
+
+## 🔌 Intégration API Factures (NOUVEAU)
+
+### Endpoints utilisés
+
+L'application utilise maintenant les vrais endpoints du backend :
+
+```typescript
+// Liste paginée des factures
+GET /invoices?page=1&limit=10
+Authorization: Bearer JWT_TOKEN
+
+// Détails d'une facture
+GET /invoices/:id
+Authorization: Bearer JWT_TOKEN
+
+// Téléchargement PDF sécurisé
+GET /invoices/:id/download
+Authorization: Bearer JWT_TOKEN
+```
+
+### Services API
+
+Fichier `src/utils/api.ts` enrichi avec :
+
+```typescript
+// Types de données API
+export interface InvoiceAPI {
+  id: string;
+  amount: number;
+  amountFormatted: string;
+  createdAt: string;
+  pdfUrl: string;
+  commande: {
+    id: string;
+    titre: string;
+    statut: string;
+    createdAt: string;
+    description?: string;
+  };
+}
+
+// Fonctions d'appel API
+export async function fetchInvoices(
+  page = 1,
+  limit = 10
+): Promise<InvoicesResponse>;
+export async function fetchInvoice(id: string): Promise<InvoiceAPI>;
+export async function downloadInvoice(id: string): Promise<Blob>;
+```
+
+### Hook React Query
+
+Fichier `src/hooks/useInvoices.ts` (prêt pour intégration future) :
+
+```typescript
+// Hook pour la liste des factures avec cache
+export function useInvoices(page = 1, limit = 10);
+
+// Hook pour une facture spécifique
+export function useInvoice(id: string);
+
+// Hook pour invalider le cache (après paiement)
+export function useInvalidateInvoices();
+
+// Hook pour précharger une facture (optimisation UX)
+export function usePrefetchInvoice();
+```
+
+## 🔄 Transformation des données
+
+### Mapping API vers UI
+
+La fonction `mapInvoiceApiToInvoice()` dans `BillingPage.tsx` transforme les données de l'API backend vers le format attendu par l'interface :
+
+```typescript
+// Données API → Données UI
+InvoiceAPI {
+  amount: 59900,                    // centimes
+  amountFormatted: "599.00 €",     // formaté
+  commande: { statut: "TERMINE" }  // backend
+}
+↓
+Invoice {
+  total: "599.00 €",               // formaté
+  status: "paid",                   // UI
+  items: [...],                     // restructuré
+}
+```
+
+## 📥 Téléchargement de factures
+
+### Implémentation
+
+Le téléchargement de factures utilise l'API `/invoices/:id/download` avec :
+
+1. **Authentification JWT** obligatoire
+2. **Streaming Blob** pour gérer les gros fichiers
+3. **Téléchargement automatique** via `URL.createObjectURL()`
+4. **Gestion d'erreurs** avec toasts informatifs
+
+```typescript
+const handleDownloadInvoice = async (invoiceId: string) => {
+  try {
+    const blob = await downloadInvoice(invoiceId);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `facture-${invoiceId}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    showToast("error", "Erreur téléchargement", error.message);
+  }
+};
+```
+
+## 🎯 États de l'application
+
+### Gestion du loading
+
+- **Spinner** pendant le chargement des factures
+- **Skeleton UI** pour les transitions fluides
+- **Pagination** avec `keepPreviousData` (React Query)
+
+### États vides
+
+- **Aucune facture** : Affichage EmptyState avec CTA vers commandes
+- **Erreur API** : Toast d'erreur avec message explicite
+- **Connexion requise** : Redirection automatique vers login
+
+## 🔧 Configuration Docker
+
+### Développement
+
+```bash
+# Installer les dépendances
+docker exec -it staka_frontend npm install
+
+# Démarrer le serveur de dev avec hot reload
+docker exec -it staka_frontend npm run dev
+
+# Accès : http://localhost:3000/billing
+```
+
+### Variables d'environnement
+
+Le frontend se connecte automatiquement au backend via :
+
+```typescript
+const API_BASE_URL = "http://localhost:3001";
+```
+
+## 🧪 Tests et validation
+
+### Tests manuels
+
+1. **Navigation** vers `/billing`
+2. **Chargement** des factures depuis l'API
+3. **Téléchargement** d'une facture PDF
+4. **Pagination** si plus de 10 factures
+5. **Gestion d'erreurs** (token expiré, réseau, etc.)
+
+### Tests avec données
+
+```bash
+# Backend doit être lancé avec des factures en base
+docker exec -it staka_backend npm run db:seed
+
+# Puis tester l'interface
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+     "http://localhost:3001/invoices"
+```
+
+## 🚀 Performance et UX
+
+### Optimisations
+
+- **Cache React Query** : 5 minutes de fraîcheur
+- **Pagination** : Garde les données précédentes
+- **Préchargement** : Hover sur facture = prefetch détails
+- **Debounce** : Évite les appels API répétés
+
+### Expérience utilisateur
+
+- **Feedback immédiat** : Toasts pour toutes les actions
+- **États de chargement** : Spinners et disabled states
+- **Accessibilité** : ARIA labels et navigation clavier
+- **Responsive** : Adapté mobile et desktop
+
+## 🔮 Améliorations futures
+
+### Fonctionnalités prévues
+
+1. **React Query** complet (cache, mutations, synchronisation)
+2. **Pagination infinie** pour l'historique
+3. **Recherche et filtres** (date, montant, statut)
+4. **Export batch** de plusieurs factures
+5. **Notifications en temps réel** pour nouvelles factures
+
+### Intégrations
+
+1. **Socket.io** pour les mises à jour temps réel
+2. **Service Worker** pour le cache offline
+3. **Analytics** pour le suivi des téléchargements
+4. **Impression** directe des factures
+
+---
+
+## 🐛 Dépannage
+
+### Erreurs communes
+
+**"Token invalide"** : Vérifier localStorage.auth_token
+**"Facture non trouvée"** : Vérifier l'ID et la propriété
+**"Erreur téléchargement"** : Vérifier la connexion réseau
+
+### Debug
+
+```javascript
+// Dans la console du navigateur
+localStorage.getItem("auth_token"); // Vérifier token
+fetch("/api/invoices"); // Tester API directement
+```
+
+Cette intégration remplace complètement les mocks et offre une expérience de facturation robuste et sécurisée ! 🎉

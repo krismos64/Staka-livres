@@ -6,10 +6,16 @@ import { InvoiceHistoryCard } from "../components/billing/InvoiceHistoryCard";
 import { PaymentMethodsCard } from "../components/billing/PaymentMethodsCard";
 import { SupportCard } from "../components/billing/SupportCard";
 import EmptyState from "../components/common/EmptyState";
-import { buildApiUrl, getAuthHeaders, stripeConfig } from "../utils/api";
+import {
+  buildApiUrl,
+  downloadInvoice,
+  fetchInvoices,
+  getAuthHeaders,
+  InvoiceAPI,
+} from "../utils/api";
 import { useToasts } from "../utils/toast";
 
-// Types des données (gardés pour la structure de la page)
+// Types des données (adaptés pour l'API)
 export interface Invoice {
   id: string;
   projectName: string;
@@ -65,29 +71,23 @@ const mockAnnualStats: AnnualStats = {
   vipMessage: "Statut VIP atteint ! Réduction de 5% sur tous vos projets.",
 };
 
-// Helper pour transformer une Commande API en Invoice UI
-function mapCommandeToInvoice(commande: any): Invoice {
-  const isPending =
-    commande.paymentStatus === "unpaid" || commande.statut === "EN_ATTENTE";
+// Helper pour transformer une InvoiceAPI en Invoice UI
+function mapInvoiceApiToInvoice(invoiceApi: InvoiceAPI): Invoice {
+  const isPending = invoiceApi.commande.statut === "EN_ATTENTE";
 
   return {
-    id: commande.id,
-    projectName: commande.titre,
+    id: invoiceApi.id,
+    projectName: invoiceApi.commande.titre,
     items: [
       {
-        name: `Correction "${commande.titre}"`,
-        description: commande.description || "Service de correction standard",
-        amount: "360€",
-      },
-      {
-        name: "Option Urgence (Exemple)",
-        description: "Exemple de ligne de facture",
-        amount: "108€",
+        name: `Correction "${invoiceApi.commande.titre}"`,
+        description: invoiceApi.commande.description || "Service de correction",
+        amount: invoiceApi.amountFormatted,
       },
     ],
-    total: "468€", // Le total est un exemple, car non présent dans l'API Commande
+    total: invoiceApi.amountFormatted,
     status: isPending ? "pending" : "paid",
-    date: new Date(commande.createdAt).toLocaleDateString("fr-FR", {
+    date: new Date(invoiceApi.createdAt).toLocaleDateString("fr-FR", {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -105,6 +105,8 @@ export default function BillingPage() {
   const [currentInvoice, setCurrentInvoice] = useState<Invoice | null>(null);
   const [invoiceHistory, setInvoiceHistory] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   // Données statiques et modales
   const [paymentMethods] = useState<PaymentMethod[]>(mockPaymentMethods);
@@ -144,51 +146,60 @@ export default function BillingPage() {
     }
   }, [showToast]);
 
-  // Fetch des factures depuis l'API au chargement
+  // Fetch des factures depuis la nouvelle API au chargement
   useEffect(() => {
-    const fetchInvoices = async () => {
+    const loadInvoices = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(buildApiUrl("/commandes"), {
-          headers: getAuthHeaders(),
-        });
+        console.log("🔍 [BillingPage] Chargement des factures depuis l'API...");
 
-        if (!response.ok) {
-          throw new Error("Erreur lors de la récupération des factures");
+        const response = await fetchInvoices(page, 20); // Récupère 20 factures
+
+        console.log("✅ [BillingPage] Données factures reçues:", response);
+
+        if (response.invoices && response.invoices.length > 0) {
+          const transformedInvoices = response.invoices.map(
+            mapInvoiceApiToInvoice
+          );
+
+          // Séparer les factures pending des payées
+          const pendingInvoices = transformedInvoices.filter(
+            (inv) => inv.status === "pending"
+          );
+          const paidInvoices = transformedInvoices.filter(
+            (inv) => inv.status === "paid"
+          );
+
+          if (pendingInvoices.length > 0) {
+            setCurrentInvoice(pendingInvoices[0]); // Première facture non payée
+          }
+
+          setInvoiceHistory(paidInvoices);
+          setHasMore(response.pagination.hasNextPage);
+        } else {
+          console.log("ℹ️ [BillingPage] Aucune facture trouvée");
+          setCurrentInvoice(null);
+          setInvoiceHistory([]);
         }
-
-        const data = await response.json();
-        const commandes = data.commandes || [];
-
-        const unpaidInvoices = commandes
-          .filter(
-            (c: any) =>
-              c.paymentStatus === "unpaid" || c.statut === "EN_ATTENTE"
-          )
-          .map(mapCommandeToInvoice);
-
-        const paidInvoices = commandes
-          .filter(
-            (c: any) =>
-              c.paymentStatus !== "unpaid" && c.statut !== "EN_ATTENTE"
-          )
-          .map(mapCommandeToInvoice);
-
-        if (unpaidInvoices.length > 0) {
-          setCurrentInvoice(unpaidInvoices[0]); // Affiche la première facture non payée
-        }
-
-        setInvoiceHistory(paidInvoices);
       } catch (error) {
-        console.error("Erreur API Factures:", error);
-        showToast("error", "Erreur", "Impossible de charger vos factures.");
+        console.error(
+          "❌ [BillingPage] Erreur lors du chargement des factures:",
+          error
+        );
+        showToast(
+          "error",
+          "Erreur",
+          error instanceof Error
+            ? error.message
+            : "Impossible de charger vos factures."
+        );
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchInvoices();
-  }, [showToast]);
+    loadInvoices();
+  }, [page, showToast]);
 
   // Handlers pour les actions principales
   const handlePayInvoice = async (invoice: Invoice) => {
@@ -198,74 +209,90 @@ export default function BillingPage() {
       setIsProcessingPayment(true);
       const token = localStorage.getItem("auth_token");
 
-      console.log("🔑 Token disponible:", !!token, token ? "Oui" : "Non");
-
       if (!token) {
-        console.error("❌ Pas de token trouvé");
-        showToast(
-          "error",
-          "Erreur",
-          "Vous devez être connecté pour effectuer un paiement"
-        );
+        showToast("error", "Erreur", "Vous devez être connecté pour payer.");
         return;
       }
 
-      console.log(
-        "📡 Appel API vers:",
-        buildApiUrl("/payments/create-checkout-session")
-      );
-      console.log("📦 Données envoyées:", {
-        commandeId: invoice.id,
-        priceId: stripeConfig.priceIds.correction_standard,
-      });
-
-      // Utiliser l'API centralisée
+      // Récupérer l'ID de la commande correspondante pour créer la session Stripe
+      // Pour l'instant, on utilise l'ID de la facture car on n'a pas l'ID de commande
       const response = await fetch(
         buildApiUrl("/payments/create-checkout-session"),
         {
           method: "POST",
           headers: getAuthHeaders(),
           body: JSON.stringify({
-            commandeId: invoice.id,
-            priceId: stripeConfig.priceIds.correction_standard, // Utilise la config centralisée
+            commandeId: invoice.id, // À adapter selon l'API
           }),
         }
       );
 
-      console.log("📨 Réponse API status:", response.status);
-
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("❌ Erreur API:", errorData);
         throw new Error(
-          errorData.error || "Erreur lors de la création de la session Stripe"
+          errorData.error || "Erreur lors de la création du paiement"
         );
       }
 
       const data = await response.json();
-      console.log("✅ Données reçues:", data);
+      console.log("✅ Session Stripe créée:", data);
 
       if (data.url) {
-        console.log("🚀 Redirection vers:", data.url);
-        // Redirection vers Stripe Checkout
         setRedirectUrl(data.url);
       } else {
-        console.error("❌ Pas d'URL dans la réponse");
-        showToast("error", "Erreur", "URL de paiement introuvable");
+        throw new Error("URL de paiement non reçue");
       }
-    } catch (err) {
-      console.error("❌ Erreur Stripe complète:", err);
-      const message =
-        err instanceof Error ? err.message : "Impossible d'initier le paiement";
-      showToast("error", "Paiement échoué", message);
+    } catch (error) {
+      console.error("❌ Erreur lors du paiement:", error);
+      showToast(
+        "error",
+        "Erreur de paiement",
+        error instanceof Error ? error.message : "Une erreur est survenue"
+      );
     } finally {
       setIsProcessingPayment(false);
-      console.log("🏁 handlePayInvoice terminé");
     }
   };
 
+  // Handler pour télécharger une facture PDF
   const handleDownloadInvoice = async (invoiceId: string) => {
-    showToast("success", "Téléchargement", `Facture ${invoiceId} téléchargée`);
+    console.log("📥 [BillingPage] Téléchargement facture:", invoiceId);
+
+    try {
+      showToast(
+        "info",
+        "Téléchargement...",
+        "Préparation de votre facture PDF"
+      );
+
+      const blob = await downloadInvoice(invoiceId);
+
+      // Créer une URL pour le blob et déclencher le téléchargement
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `facture-${invoiceId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      console.log("✅ [BillingPage] Facture téléchargée avec succès");
+      showToast(
+        "success",
+        "Téléchargé !",
+        "Votre facture PDF a été téléchargée"
+      );
+    } catch (error) {
+      console.error("❌ [BillingPage] Erreur téléchargement:", error);
+      showToast(
+        "error",
+        "Erreur de téléchargement",
+        error instanceof Error
+          ? error.message
+          : "Impossible de télécharger la facture"
+      );
+    }
   };
 
   const handleShowInvoiceDetails = (invoice: Invoice) => {
@@ -273,77 +300,109 @@ export default function BillingPage() {
   };
 
   const handleAddPaymentMethod = () => {
-    showToast("info", "Nouveau moyen de paiement", "Redirection...");
+    showToast(
+      "info",
+      "Fonctionnalité à venir",
+      "L'ajout de moyens de paiement sera bientôt disponible."
+    );
   };
 
   const handleRemovePaymentMethod = (paymentMethodId: string) => {
-    // Implementation needed
+    showToast(
+      "info",
+      "Fonctionnalité à venir",
+      "La suppression de moyens de paiement sera bientôt disponible."
+    );
   };
 
   const handleContactSupport = () => {
-    showToast("info", "Support", "Redirection vers la messagerie...");
+    showToast(
+      "info",
+      "Support",
+      "Vous pouvez nous contacter à support@staka-editions.com"
+    );
   };
 
-  // Rendu conditionnel : empty state si pas de factures
-  const hasInvoices = currentInvoice || invoiceHistory.length > 0;
-
-  if (!hasInvoices) {
+  // Affichage de chargement
+  if (isLoading) {
     return (
-      <EmptyState
-        title="Aucune facture"
-        description="Vos factures apparaîtront ici dès que vous aurez un projet."
-        icon="fas fa-file-invoice-dollar"
-        action={{
-          label: "Voir mes projets",
-          onClick: () => showToast("info", "Navigation", "Vers projets..."),
-        }}
-      />
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement de vos factures...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Affichage état vide
+  if (!currentInvoice && invoiceHistory.length === 0) {
+    return (
+      <div className="space-y-8">
+        {/* Stats annuelles et support */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <AnnualSummaryCard stats={annualStats} />
+          <SupportCard onContact={handleContactSupport} />
+        </div>
+
+        {/* Moyens de paiement */}
+        <PaymentMethodsCard
+          paymentMethods={paymentMethods}
+          onAdd={handleAddPaymentMethod}
+          onRemove={handleRemovePaymentMethod}
+        />
+
+        {/* État vide pour les factures */}
+        <EmptyState
+          icon="fas fa-file-invoice-dollar"
+          title="Aucune facture disponible"
+          description="Vous n'avez pas encore de factures. Créez votre première commande pour commencer !"
+          action={{
+            label: "Créer une commande",
+            onClick: () => (window.location.href = "/projects"),
+          }}
+        />
+      </div>
     );
   }
 
   return (
-    <div className="animate-in fade-in duration-300">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Facturation</h2>
-        <p className="text-gray-600">
-          Gérez vos factures et moyens de paiement
-        </p>
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-8 items-start">
-        {/* Colonne principale (2/3) */}
-        <div className="lg:col-span-2 space-y-6">
-          {currentInvoice && (
-            <CurrentInvoiceCard
-              invoice={currentInvoice}
-              onPay={handlePayInvoice}
-              onDownload={handleDownloadInvoice}
-              onShowDetails={handleShowInvoiceDetails}
-              isProcessing={isProcessingPayment}
-            />
-          )}
-
-          <InvoiceHistoryCard
-            invoices={invoiceHistory}
+    <div className="space-y-8">
+      {/* Grille des cartes principales */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Facture courante */}
+        {currentInvoice && (
+          <CurrentInvoiceCard
+            invoice={currentInvoice}
+            onPay={handlePayInvoice}
             onShowDetails={handleShowInvoiceDetails}
             onDownload={handleDownloadInvoice}
+            isProcessing={isProcessingPayment}
           />
-        </div>
+        )}
 
-        {/* Colonne latérale (1/3) */}
-        <div className="space-y-6">
-          <PaymentMethodsCard
-            paymentMethods={paymentMethods}
-            onAdd={handleAddPaymentMethod}
-            onRemove={handleRemovePaymentMethod}
-          />
-
-          <AnnualSummaryCard stats={annualStats} />
-
-          <SupportCard onContact={handleContactSupport} />
-        </div>
+        {/* Historique des factures */}
+        <InvoiceHistoryCard
+          invoices={invoiceHistory}
+          onShowDetails={handleShowInvoiceDetails}
+          onDownload={handleDownloadInvoice}
+        />
       </div>
 
+      {/* Grille des cartes secondaires */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <AnnualSummaryCard stats={annualStats} />
+        <SupportCard onContact={handleContactSupport} />
+      </div>
+
+      {/* Moyens de paiement */}
+      <PaymentMethodsCard
+        paymentMethods={paymentMethods}
+        onAdd={handleAddPaymentMethod}
+        onRemove={handleRemovePaymentMethod}
+      />
+
+      {/* Modal des détails de facture */}
       {selectedInvoice && (
         <InvoiceDetailsModal
           invoice={selectedInvoice}

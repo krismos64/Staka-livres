@@ -19,6 +19,11 @@ export const apiConfig = {
       create: "/commandes",
       get: "/commandes",
     },
+    invoices: {
+      list: "/invoices",
+      detail: "/invoices",
+      download: "/invoices",
+    },
   },
 };
 
@@ -44,3 +49,101 @@ export const stripeConfig = {
     correction_premium: "price_1122334455", // À remplacer par le vrai ID Stripe
   },
 };
+
+// Types pour les factures
+export interface InvoiceAPI {
+  id: string;
+  amount: number;
+  amountFormatted: string;
+  createdAt: string;
+  pdfUrl: string;
+  commande: {
+    id: string;
+    titre: string;
+    statut: string;
+    createdAt: string;
+    description?: string;
+    user?: {
+      prenom: string;
+      nom: string;
+      email: string;
+    };
+  };
+}
+
+export interface InvoicesResponse {
+  invoices: InvoiceAPI[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+}
+
+// API Helpers pour les factures
+export async function fetchInvoices(
+  page = 1,
+  limit = 10
+): Promise<InvoicesResponse> {
+  const response = await fetch(
+    buildApiUrl(
+      `${apiConfig.endpoints.invoices.list}?page=${page}&limit=${limit}`
+    ),
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.error || `HTTP ${response.status}: ${response.statusText}`
+    );
+  }
+
+  return response.json();
+}
+
+export async function fetchInvoice(id: string): Promise<InvoiceAPI> {
+  const response = await fetch(
+    buildApiUrl(`${apiConfig.endpoints.invoices.detail}/${id}`),
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.error || `HTTP ${response.status}: ${response.statusText}`
+    );
+  }
+
+  return response.json();
+}
+
+export async function downloadInvoice(id: string): Promise<Blob> {
+  const response = await fetch(
+    buildApiUrl(`${apiConfig.endpoints.invoices.download}/${id}/download`),
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.error || `HTTP ${response.status}: ${response.statusText}`
+    );
+  }
+
+  return response.blob();
+}
