@@ -402,34 +402,43 @@ src/
   - Conservation des données
   - Réactivation possible
 
-## 👨‍💼 Module `admin/` - Administration
+## 👨‍💼 Module `admin/` - Administration Complète
 
-### `AdminLayout.tsx` - Layout Administration
+### `AdminLayout.tsx` - Layout Administration Moderne
 
-- **Rôle** : Layout spécifique pour l'interface d'administration
+- **Rôle** : Layout spécifique pour l'interface d'administration complète
 - **Features** :
-  - Sidebar sombre avec navigation admin
-  - Header avec titre et actions admin
-  - Zone de contenu adaptée aux tableaux de données
-  - Design moderne avec animations fluides
+  - **Sidebar sombre** avec navigation vers 9 sections admin
+  - **Header dynamique** avec titre et actions admin
+  - **Zone de contenu** adaptée aux tableaux et interfaces de gestion
+  - **Design moderne** avec animations fluides et transitions
+  - **Navigation fluide** entre Dashboard, Utilisateurs, Commandes, Factures, FAQ, Tarifs, Pages, Statistiques, Logs
+  - **Responsive design** avec collapse sidebar mobile
 
-### `StatCard.tsx` - Cartes de Statistiques
+### `StatCard.tsx` - Cartes de Statistiques Interactives
 
-- **Rôle** : Composant réutilisable pour afficher des statistiques
+- **Rôle** : Composant réutilisable pour afficher des KPIs et métriques
 - **Features** :
-  - Icône, titre, valeur et changement en pourcentage
-  - Couleurs dynamiques selon le type de métrique
-  - Animation au hover et transitions fluides
+  - **Icône colorée**, titre, valeur et changement en pourcentage
+  - **Couleurs dynamiques** selon le type de métrique (success/warning/danger)
+  - **Animation au hover** et transitions fluides
+  - **Format des nombres** avec séparateurs de milliers
+  - **Indicateurs de tendance** avec flèches et couleurs
 - **Props** : `icon`, `title`, `value`, `change`, `changeType`
+- **Usage** : AdminDashboard, AdminStatistiques, toutes les pages avec KPIs
 
-### `CommandeStatusSelect.tsx` - Sélecteur de Statut
+### `CommandeStatusSelect.tsx` - Sélecteur de Statut Avancé
 
-- **Rôle** : Dropdown pour modifier le statut des commandes
+- **Rôle** : Dropdown intelligent pour modifier le statut des commandes
 - **Features** :
-  - Liste des statuts avec couleurs distinctives
-  - Mise à jour en temps réel via API
-  - Gestion des erreurs et feedback utilisateur
-- **Props** : `currentStatus`, `commandeId`, `onStatusChange`
+  - **Liste des statuts** avec couleurs distinctives et icônes
+  - **Mise à jour optimiste** avec fallback en cas d'erreur
+  - **Validation côté client** des transitions de statut autorisées
+  - **Loading states** pendant les requêtes API
+  - **Toast notifications** pour feedback utilisateur
+  - **Gestion des permissions** selon le rôle admin
+- **Props** : `currentStatus`, `commandeId`, `onStatusChange`, `disabled`
+- **Integration** : AdminCommandes avec API ready
 
 ## 💳 Module `billing/` - Facturation et Paiements Stripe
 
@@ -543,23 +552,63 @@ src/
 
 ## 🎭 Module `common/` - Composants Génériques
 
+### `LoadingSpinner.tsx` - Spinner de Chargement
+
+- **Rôle** : Composant de chargement universel pour toute l'application
+- **Features** :
+  - **Tailles configurables** : sm (16px), md (24px), lg (32px)
+  - **Couleurs personnalisables** : blue (défaut), gray, white
+  - **Animation CSS smooth** avec rotation continue
+  - **Props TypeScript strictes** avec validation
+- **Props** : `size?: 'sm' | 'md' | 'lg'`, `color?: 'blue' | 'gray' | 'white'`
+- **Usage** : AdminLayout, pages avec loading states, boutons disabled
+
+### `Modal.tsx` - Modal Universelle
+
+- **Rôle** : Composant modal réutilisable avec gestion complète des interactions
+- **Features** :
+  - **Overlay sombre** avec click-outside pour fermer
+  - **Gestion Escape** : fermeture au clavier
+  - **Tailles configurables** : sm, md, lg, xl, full
+  - **Animation d'entrée/sortie** fluide avec transitions CSS
+  - **Accessibility** : focus management et aria-labels
+  - **Portal rendering** : rendu hors du DOM parent
+- **Props** : `isOpen`, `onClose`, `title?`, `size?`, `children`
+- **Usage** : Base pour toutes les modales admin et applicatives
+
+### `ConfirmationModal.tsx` - Modal de Confirmation
+
+- **Rôle** : Modal spécialisée pour confirmations d'actions critiques
+- **Features** :
+  - **Types prédéfinis** : danger (rouge), warning (orange), info (bleu)
+  - **Actions configurables** : Confirmer/Annuler avec callbacks
+  - **Loading states** : disabled pendant l'action
+  - **Messages personnalisés** : titre, description, texte boutons
+  - **Icônes contextuelles** : selon le type de confirmation
+- **Props** : `isOpen`, `onClose`, `onConfirm`, `type`, `title`, `message`, `confirmText?`, `isLoading?`
+- **Usage** : Suppression utilisateurs, factures, confirmation actions admin
+
 ### `EmptyState.tsx` - États Vides
 
-- **Rôle** : Composant réutilisable pour états vides
+- **Rôle** : Composant réutilisable pour états vides avec call-to-action
 - **Features** :
-  - Icône et message personnalisables
-  - Bouton d'action optionnel
-  - Design cohérent dans toute l'app
+  - **Icône et message** personnalisables
+  - **Bouton d'action** optionnel avec callback
+  - **Design cohérent** dans toute l'app
+  - **Messages contextuels** selon la section
 - **Props** : `icon`, `title`, `description`, `actionText`, `onAction`
+- **Usage** : Listes vides admin, tableaux sans données
 
 ### `Notifications.tsx` - Système de Notifications
 
-- **Rôle** : Composant de notifications globales
+- **Rôle** : Composant de notifications globales toast
 - **Features** :
-  - Types multiples : success, error, warning, info
-  - Auto-dismiss configurable
-  - Position personnalisable
-  - Animations fluides
+  - **Types multiples** : success, error, warning, info
+  - **Auto-dismiss** configurable avec timer
+  - **Position personnalisable** : top-right par défaut
+  - **Animations fluides** : slide-in/out
+  - **Stack de notifications** : plusieurs simultanées
+- **Integration** : ToastProvider et utils/toast.ts
 
 ## ⚡ Module `contexts/` - Gestion d'État Globale
 
@@ -825,12 +874,15 @@ import { showToast } from '../../utils/toast';
 
 ### 📊 **Statistiques Actuelles**
 
-- **Total composants** : 55+ composants réutilisables
-- **Pages** : 12 pages principales + 3 pages admin
-- **Hooks personnalisés** : 1 hook de pricing + AuthContext
+- **Total composants** : 70+ composants réutilisables
+- **Pages** : 12 pages principales + **9 pages admin complètes**
+- **Admin complet** : Dashboard, Utilisateurs, Commandes, Factures, FAQ, Tarifs, Pages, Statistiques, Logs
+- **Composants communs** : LoadingSpinner, Modal, ConfirmationModal avec props TypeScript
+- **Hooks personnalisés** : 1 hook de pricing + AuthContext + hooks React Query
 - **Modales** : 8 modales pour toutes les interactions
 - **Formulaires** : 7 formulaires avec validation complète
-- **API Integration** : 15+ endpoints avec authentification JWT
+- **Mock data** : Données réalistes pour toutes les entités admin
+- **API Integration** : 15+ endpoints avec authentification JWT + structure admin API-ready
 - **Paiements Stripe** : intégration complète et fonctionnelle
 
 ### ⚡ **Optimisations Appliquées**
@@ -874,4 +926,4 @@ Le frontend est maintenant **complet et opérationnel** avec :
 
 ### 🚀 **Prêt pour Production**
 
-L'architecture frontend est maintenant **production-ready** avec une expérience utilisateur complète, de la découverte des services sur la landing page jusqu'à la gestion avancée des projets et paiements dans l'application. Le système est **scalable**, **maintenable** et **sécurisé**.
+L'architecture frontend est maintenant **production-ready** avec une expérience utilisateur complète, de la découverte des services sur la landing page jusqu'à la gestion avancée des projets et paiements dans l'application, plus un **espace d'administration complet** avec 9 interfaces fonctionnelles. Le système est **scalable**, **maintenable** et **sécurisé**, prêt pour l'intégration API backend.

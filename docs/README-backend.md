@@ -489,33 +489,58 @@ stripe trigger payment_intent.payment_failed
 stripe logs tail
 ```
 
-### Routes admin (`/admin`)
+### Routes admin (`/admin`) - **PRÊTES POUR INTÉGRATION**
 
 ```http
-# Statistiques générales
+# Statistiques générales (pour AdminDashboard)
 GET /admin/stats
 Authorization: Bearer admin_token
+# → KPIs: utilisateurs, commandes, revenus
 
-# Liste des utilisateurs
-GET /admin/users
+# Gestion utilisateurs (pour AdminUtilisateurs)
+GET /admin/users?page=1&limit=10&search=email
 Authorization: Bearer admin_token
+PATCH /admin/user/:id/activate
+PATCH /admin/user/:id/deactivate
+DELETE /admin/user/:id
 
-# Détail utilisateur
-GET /admin/user/:id
+# Gestion commandes (pour AdminCommandes)
+GET /admin/commandes?page=1&statut=EN_ATTENTE
 Authorization: Bearer admin_token
+PATCH /admin/commande/:id/status
+Body: { "statut": "EN_COURS" }
 
-# Liste des commandes
-GET /admin/commandes
-Authorization: Bearer admin_token
+# Gestion factures (pour AdminFactures)
+GET /admin/invoices?page=1&statut=paid
+POST /admin/invoice/:id/reminder
+DELETE /admin/invoice/:id
 
-# Mettre à jour statut commande
-PATCH /admin/commande/:id
-Authorization: Bearer admin_token
-Content-Type: application/json
+# Gestion FAQ (pour AdminFAQ)
+GET /admin/faq
+POST /admin/faq
+PATCH /admin/faq/:id
+DELETE /admin/faq/:id
+PATCH /admin/faq/:id/reorder
 
-{
-  "statut": "EN_COURS"
-}
+# Gestion tarifs (pour AdminTarifs)
+GET /admin/tarifs
+POST /admin/tarif
+PATCH /admin/tarif/:id/activate
+DELETE /admin/tarif/:id
+
+# Gestion pages (pour AdminPages)
+GET /admin/pages
+POST /admin/page
+PATCH /admin/page/:id/publish
+DELETE /admin/page/:id
+
+# Statistiques avancées (pour AdminStatistiques)
+GET /admin/analytics/revenue
+GET /admin/analytics/users
+GET /admin/analytics/projects
+
+# Logs système (pour AdminLogs)
+GET /admin/logs?type=AUTH&date=2025-01
 ```
 
 ## 💳 Intégration Stripe
@@ -897,4 +922,105 @@ chore: maintenance
 
 ---
 
+## 🎯 **Intégration Espace Admin - Prochaines Étapes**
+
+### 🔧 **Routes Admin à Implémenter (9 modules)**
+
+L'espace admin frontend est maintenant **complet avec mock data**. Voici les endpoints backend à développer pour chaque page :
+
+#### **1. AdminDashboard** - Tableau de Bord
+
+```typescript
+GET /admin/stats
+→ { totalUsers, activeUsers, totalCommandes, revenue, monthlyGrowth }
+```
+
+#### **2. AdminUtilisateurs** - Gestion Utilisateurs
+
+```typescript
+GET /admin/users?page=1&limit=10&search=email&role=USER
+PATCH /admin/user/:id/activate
+PATCH /admin/user/:id/role { role: "ADMIN" }
+DELETE /admin/user/:id
+```
+
+#### **3. AdminCommandes** - Gestion Commandes
+
+```typescript
+GET /admin/commandes?page=1&statut=EN_ATTENTE&sortBy=createdAt
+PATCH /admin/commande/:id/status { statut: "EN_COURS" }
+GET /admin/commande/:id/details
+```
+
+#### **4. AdminFactures** - Interface Facturation
+
+```typescript
+GET /admin/invoices?page=1&statut=paid&search=client
+POST /admin/invoice/:id/reminder
+GET /admin/invoice/:id/download
+DELETE /admin/invoice/:id
+```
+
+#### **5. AdminFAQ** - Base de Connaissance
+
+```typescript
+GET /admin/faq?category=GENERAL&visible=true
+POST /admin/faq { question, answer, category, order }
+PATCH /admin/faq/:id/reorder { newOrder: 5 }
+DELETE /admin/faq/:id
+```
+
+#### **6. AdminTarifs** - Configuration Prix
+
+```typescript
+GET /admin/tarifs?service=CORRECTION&active=true
+POST /admin/tarif { service, price, description, features }
+PATCH /admin/tarif/:id/activate
+DELETE /admin/tarif/:id
+```
+
+#### **7. AdminPages** - CMS Pages Statiques
+
+```typescript
+GET /admin/pages?statut=PUBLIEE&search=titre
+POST /admin/page { titre, contenu, slug, description }
+PATCH /admin/page/:id/publish { statut: "PUBLIEE" }
+GET /admin/page/:id/preview
+```
+
+#### **8. AdminStatistiques** - Analytics Avancées
+
+```typescript
+GET /admin/analytics/revenue?period=month
+GET /admin/analytics/users/growth
+GET /admin/analytics/projects/completion
+GET /admin/analytics/top-clients?limit=10
+```
+
+#### **9. AdminLogs** - Audit et Sécurité
+
+```typescript
+GET /admin/logs?type=AUTH&userId=uuid&date=2025-01
+GET /admin/logs/export?format=csv&period=week
+```
+
+### 🎯 **Frontend Prêt pour Intégration**
+
+- ✅ **Mock services configurés** : `adminAPI.ts` avec structure complète
+- ✅ **Types TypeScript** : Interfaces pour toutes les entités dans `shared.ts`
+- ✅ **UI Components** : 9 pages admin avec états loading/error/empty
+- ✅ **Architecture modulaire** : Services facilement remplaçables par vrais appels API
+
+### 🔄 **Plan d'Intégration**
+
+1. **Créer les contrôleurs** : `adminFacturesController.ts`, `adminFAQController.ts`, etc.
+2. **Ajouter les routes** : Extension du fichier `admin.ts` existant
+3. **Implémenter la logique métier** : CRUD avec validation et sécurité
+4. **Remplacer les mock services** frontend par vrais appels API
+5. **Tests d'intégration** : Validation du fonctionnement complet
+
+---
+
 **Backend Staka Livres** - API REST moderne pour plateforme de correction de livres
+
+**✨ Espace admin frontend complet - Prêt pour intégration API**

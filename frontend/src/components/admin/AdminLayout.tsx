@@ -1,7 +1,16 @@
 import React, { ReactNode, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 
-export type AdminSection = "dashboard" | "utilisateurs" | "commandes";
+export type AdminSection =
+  | "dashboard"
+  | "utilisateurs"
+  | "commandes"
+  | "factures"
+  | "faq"
+  | "tarifs"
+  | "pages"
+  | "statistiques"
+  | "logs";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -56,6 +65,36 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
       label: "Commandes",
       icon: "fas fa-file-invoice-dollar",
     },
+    {
+      id: "factures" as AdminSection,
+      label: "Factures",
+      icon: "fas fa-receipt",
+    },
+    {
+      id: "statistiques" as AdminSection,
+      label: "Statistiques",
+      icon: "fas fa-chart-line",
+    },
+    {
+      id: "faq" as AdminSection,
+      label: "FAQ",
+      icon: "fas fa-question-circle",
+    },
+    {
+      id: "tarifs" as AdminSection,
+      label: "Tarifs",
+      icon: "fas fa-euro-sign",
+    },
+    {
+      id: "pages" as AdminSection,
+      label: "Pages statiques",
+      icon: "fas fa-file-alt",
+    },
+    {
+      id: "logs" as AdminSection,
+      label: "Logs & Audit",
+      icon: "fas fa-history",
+    },
   ];
 
   const getPageTitle = (): string => {
@@ -64,7 +103,29 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
         dashboard: "Dashboard Admin",
         utilisateurs: "Gestion des utilisateurs",
         commandes: "Gestion des commandes",
+        factures: "Gestion des factures",
+        faq: "Gestion de la FAQ",
+        tarifs: "Gestion des tarifs",
+        pages: "Pages statiques",
+        statistiques: "Statistiques avancées",
+        logs: "Logs & Audit",
       }[activeSection] || "Administration"
+    );
+  };
+
+  const getPageDescription = (): string => {
+    return (
+      {
+        dashboard: "Tableau de bord et aperçu général",
+        utilisateurs: "Gérer les comptes et permissions",
+        commandes: "Suivi des corrections et projets",
+        factures: "Gestion de la facturation et paiements",
+        faq: "Questions fréquentes et réponses",
+        tarifs: "Configuration des prix et services",
+        pages: "Contenu éditorial et pages marketing",
+        statistiques: "Analyses et rapports détaillés",
+        logs: "Historique des actions et audit de sécurité",
+      }[activeSection] || "Panel d'administration"
     );
   };
 
@@ -88,11 +149,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6">
+          <nav className="flex-1 px-4 py-6 overflow-y-auto">
             <p className="px-4 mb-3 text-xs uppercase text-gray-400 tracking-wider">
-              Menu
+              Navigation
             </p>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {sidebarItems.map((item) => (
                 <SidebarLink
                   key={item.id}
@@ -151,9 +212,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
               >
                 <i className="fas fa-bars text-xl"></i>
               </button>
-              <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
-                {getPageTitle()}
-              </h1>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
+                  {getPageTitle()}
+                </h1>
+                <p className="text-sm text-gray-500 mt-1">
+                  {getPageDescription()}
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-4">
               <button className="relative p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-colors">

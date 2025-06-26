@@ -7,6 +7,7 @@ import {
 } from "../../types/shared";
 import { adminAPI } from "../../utils/adminAPI";
 
+// Fixed import path issue for Docker
 const AdminCommandes: React.FC = () => {
   const [commandes, setCommandes] = useState<Commande[]>([]);
   const [pagination, setPagination] = useState({

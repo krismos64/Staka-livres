@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { useAuth } from "../../contexts/AuthContext";
 import { PaginatedResponse, Role, User } from "../../types/shared";
 import { adminAPI } from "../../utils/adminAPI";
 
 const AdminUtilisateurs: React.FC = () => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -10,7 +13,7 @@ const AdminUtilisateurs: React.FC = () => {
     total: 0,
     totalPages: 0,
   });
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
@@ -20,7 +23,7 @@ const AdminUtilisateurs: React.FC = () => {
 
   const loadUsers = async () => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       setError(null);
 
       const response: PaginatedResponse<User> = await adminAPI.getUsers(
@@ -39,7 +42,7 @@ const AdminUtilisateurs: React.FC = () => {
           : "Erreur de chargement des utilisateurs";
       setError(errorMessage);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -98,10 +101,18 @@ const AdminUtilisateurs: React.FC = () => {
     );
   };
 
-  if (isLoading && users.length === 0) {
+  if (loading && users.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="p-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Gestion des utilisateurs
+          </h1>
+          <p className="text-gray-600">Gérer les comptes et permissions</p>
+        </div>
+        <div className="flex justify-center items-center h-64">
+          <LoadingSpinner size="lg" />
+        </div>
       </div>
     );
   }
