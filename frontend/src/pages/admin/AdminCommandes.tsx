@@ -1,89 +1,180 @@
 import React, { useEffect, useState } from "react";
 import CommandeStatusSelect from "../../components/admin/CommandeStatusSelect";
-import {
-  Commande,
-  PaginatedResponse,
-  StatutCommande,
-} from "../../types/shared";
+import ConfirmationModal from "../../components/common/ConfirmationModal";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import Modal from "../../components/common/Modal";
+import { Commande, StatutCommande } from "../../types/shared";
 import { adminAPI } from "../../utils/adminAPI";
+import { useToasts } from "../../utils/toast";
 
-// Fixed import path issue for Docker
+type StatutFilter = StatutCommande | "TOUS";
+
 const AdminCommandes: React.FC = () => {
   const [commandes, setCommandes] = useState<Commande[]>([]);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 0,
-  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedStatus, setSelectedStatus] = useState<StatutCommande | "">("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statutFilter, setStatutFilter] = useState<StatutFilter>("TOUS");
   const [selectedCommande, setSelectedCommande] = useState<Commande | null>(
     null
   );
-  const [isUpdating, setIsUpdating] = useState<string | null>(null);
+  const [showCommandeModal, setShowCommandeModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [commandeToDelete, setCommandeToDelete] = useState<Commande | null>(
+    null
+  );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isOperationLoading, setIsOperationLoading] = useState(false);
+  const { showToast } = useToasts();
 
-  useEffect(() => {
-    loadCommandes();
-  }, [pagination.page, selectedStatus]);
-
-  const loadCommandes = async () => {
+  const loadCommandes = async (
+    page = 1,
+    search = "",
+    statut?: StatutCommande
+  ) => {
     try {
-      setIsLoading(true);
+      setIsLoading(page === 1);
       setError(null);
 
-      const response: PaginatedResponse<Commande> = await adminAPI.getCommandes(
-        pagination.page,
-        pagination.limit,
-        selectedStatus || undefined
+      const searchParam = search.trim() || undefined;
+
+      const response = await adminAPI.getCommandes(
+        page,
+        10,
+        statut,
+        searchParam
       );
 
       setCommandes(response.data || []);
-      setPagination(response.pagination);
+      setTotalPages(response.pagination?.totalPages || 1);
+
+      if (page === 1) {
+        showToast(
+          "success",
+          "Données chargées",
+          "Liste des commandes mise à jour"
+        );
+      }
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
           : "Erreur de chargement des commandes";
       setError(errorMessage);
+      showToast("error", "Erreur", errorMessage);
+      console.error("Erreur chargement commandes:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleStatusChange = async (
-    commandeId: string,
-    newStatus: StatutCommande
-  ) => {
-    try {
-      setIsUpdating(commandeId);
-      await adminAPI.updateCommande(commandeId, { statut: newStatus });
+  useEffect(() => {
+    const statutParam = statutFilter === "TOUS" ? undefined : statutFilter;
+    loadCommandes(1, searchQuery, statutParam);
+    setCurrentPage(1);
+  }, [searchQuery, statutFilter]);
 
-      // Mettre à jour la commande dans la liste
-      setCommandes((prev) =>
-        prev.map((cmd) =>
-          cmd.id === commandeId ? { ...cmd, statut: newStatus } : cmd
-        )
-      );
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handleStatutFilterChange = (statut: StatutFilter) => {
+    setStatutFilter(statut);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    const statutParam = statutFilter === "TOUS" ? undefined : statutFilter;
+    loadCommandes(page, searchQuery, statutParam);
+  };
+
+  const handleViewCommande = async (commandeId: string) => {
+    try {
+      setIsOperationLoading(true);
+      const commande = await adminAPI.getCommandeById(commandeId);
+      setSelectedCommande(commande);
+      setShowCommandeModal(true);
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Erreur de mise à jour";
-      alert(errorMessage);
+        err instanceof Error
+          ? err.message
+          : "Erreur de récupération de la commande";
+      showToast("error", "Erreur", errorMessage);
     } finally {
-      setIsUpdating(null);
+      setIsOperationLoading(false);
     }
   };
 
-  const handleViewDetails = async (commandeId: string) => {
+  const handleUpdateStatut = async (
+    commande: Commande,
+    newStatut: StatutCommande,
+    noteCorrecteur?: string
+  ) => {
     try {
-      const commande = await adminAPI.getCommandeById(commandeId);
-      setSelectedCommande(commande);
+      setIsOperationLoading(true);
+
+      await adminAPI.updateCommande(commande.id, {
+        statut: newStatut,
+        noteCorrecteur: noteCorrecteur || commande.noteCorrecteur,
+      });
+
+      showToast(
+        "success",
+        "Statut modifié",
+        `Commande "${commande.titre}" mise à jour vers ${newStatut}`
+      );
+
+      // Recharger la page courante
+      const statutParam = statutFilter === "TOUS" ? undefined : statutFilter;
+      await loadCommandes(currentPage, searchQuery, statutParam);
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Erreur de chargement du détail";
-      alert(errorMessage);
+        err instanceof Error ? err.message : "Erreur de mise à jour du statut";
+      showToast("error", "Erreur", errorMessage);
+    } finally {
+      setIsOperationLoading(false);
     }
+  };
+
+  const handleDeleteCommande = (commande: Commande) => {
+    setCommandeToDelete(commande);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteCommande = async () => {
+    if (!commandeToDelete) return;
+
+    try {
+      setIsOperationLoading(true);
+
+      await adminAPI.deleteCommande(commandeToDelete.id);
+      showToast(
+        "success",
+        "Commande supprimée",
+        `"${commandeToDelete.titre}" a été supprimée`
+      );
+
+      setShowDeleteModal(false);
+      setCommandeToDelete(null);
+
+      // Recharger la page courante
+      const statutParam = statutFilter === "TOUS" ? undefined : statutFilter;
+      await loadCommandes(currentPage, searchQuery, statutParam);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Erreur de suppression de la commande";
+      showToast("error", "Erreur", errorMessage);
+    } finally {
+      setIsOperationLoading(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    const statutParam = statutFilter === "TOUS" ? undefined : statutFilter;
+    loadCommandes(currentPage, searchQuery, statutParam);
   };
 
   const formatDate = (dateString: string) => {
@@ -96,40 +187,58 @@ const AdminCommandes: React.FC = () => {
     });
   };
 
-  const getStatusIcon = (status: StatutCommande) => {
-    switch (status) {
+  const getStatutBadgeColor = (statut: StatutCommande) => {
+    switch (statut) {
       case StatutCommande.EN_ATTENTE:
-        return "fas fa-clock text-yellow-500";
+        return "bg-yellow-100 text-yellow-800";
       case StatutCommande.EN_COURS:
-        return "fas fa-spinner text-blue-500";
+        return "bg-blue-100 text-blue-800";
       case StatutCommande.TERMINE:
-        return "fas fa-check-circle text-green-500";
+        return "bg-green-100 text-green-800";
       case StatutCommande.ANNULEE:
-        return "fas fa-times-circle text-red-500";
+        return "bg-red-100 text-red-800";
       default:
-        return "fas fa-question-circle text-gray-500";
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStatutLabel = (statut: StatutCommande) => {
+    switch (statut) {
+      case StatutCommande.EN_ATTENTE:
+        return "En attente";
+      case StatutCommande.EN_COURS:
+        return "En cours";
+      case StatutCommande.TERMINE:
+        return "Terminé";
+      case StatutCommande.ANNULEE:
+        return "Annulée";
+      default:
+        return statut;
     }
   };
 
   if (isLoading && commandes.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <LoadingSpinner size="lg" />
+        <span className="ml-3 text-gray-600">Chargement des commandes...</span>
       </div>
     );
   }
 
   if (error && commandes.length === 0) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-        <div className="flex items-center gap-2">
-          <i className="fas fa-exclamation-triangle text-red-600"></i>
-          <h3 className="font-medium text-red-800">Erreur de chargement</h3>
+      <div className="text-center py-12">
+        <div className="text-red-600 mb-4">
+          <i className="fas fa-file-alt text-5xl"></i>
         </div>
-        <p className="text-red-700 mt-1">{error}</p>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          Erreur de chargement
+        </h3>
+        <p className="text-gray-600 mb-4">{error}</p>
         <button
-          onClick={loadCommandes}
-          className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          onClick={handleRefresh}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           Réessayer
         </button>
@@ -139,49 +248,71 @@ const AdminCommandes: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header et filtres */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Header */}
+      <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             Gestion des Commandes
           </h1>
           <p className="text-gray-600">
-            {pagination.total} commande{pagination.total > 1 ? "s" : ""} au
-            total
+            Gérez les commandes et suivez leur progression
           </p>
         </div>
+        <button
+          onClick={handleRefresh}
+          disabled={isLoading}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400"
+        >
+          {isLoading ? (
+            <LoadingSpinner size="sm" color="white" />
+          ) : (
+            "Actualiser"
+          )}
+        </button>
+      </div>
 
-        <div className="flex items-center gap-4">
-          <select
-            value={selectedStatus}
-            onChange={(e) => {
-              setSelectedStatus(e.target.value as StatutCommande | "");
-              setPagination((prev) => ({ ...prev, page: 1 }));
-            }}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Tous les statuts</option>
-            <option value={StatutCommande.EN_ATTENTE}>En Attente</option>
-            <option value={StatutCommande.EN_COURS}>En Cours</option>
-            <option value={StatutCommande.TERMINE}>Terminé</option>
-            <option value={StatutCommande.ANNULEE}>Annulé</option>
-          </select>
+      {/* Filtres et recherche */}
+      <div className="bg-white p-4 rounded-lg shadow-sm">
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Recherche */}
+          <div className="flex-1">
+            <div className="relative">
+              <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <input
+                type="text"
+                placeholder="Rechercher par titre, description ou client..."
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
 
-          <button
-            onClick={loadCommandes}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <i className="fas fa-sync-alt"></i>
-            Actualiser
-          </button>
+          {/* Filtre par statut */}
+          <div className="flex items-center gap-2">
+            <i className="fas fa-filter text-gray-400"></i>
+            <select
+              value={statutFilter}
+              onChange={(e) =>
+                handleStatutFilterChange(e.target.value as StatutFilter)
+              }
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="TOUS">Tous les statuts</option>
+              <option value={StatutCommande.EN_ATTENTE}>En attente</option>
+              <option value={StatutCommande.EN_COURS}>En cours</option>
+              <option value={StatutCommande.TERMINE}>Terminé</option>
+              <option value={StatutCommande.ANNULEE}>Annulée</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Table des commandes */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      {/* Tableau des commandes */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Commande
@@ -193,60 +324,95 @@ const AdminCommandes: React.FC = () => {
                   Statut
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
+                  Créée le
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Modifiée le
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-200">
               {commandes.map((commande) => (
                 <tr key={commande.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
+                      <div className="text-sm font-medium text-gray-900">
                         {commande.titre}
-                      </p>
+                      </div>
                       {commande.description && (
-                        <p className="text-sm text-gray-500 truncate max-w-xs">
+                        <div className="text-sm text-gray-500 truncate max-w-xs">
                           {commande.description}
-                        </p>
+                        </div>
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {commande.user?.prenom} {commande.user?.nom}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {commande.user?.email}
-                      </p>
-                    </div>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {commande.user ? (
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {commande.user.prenom} {commande.user.nom}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {commande.user.email}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-400">
+                        Client inconnu
+                      </span>
+                    )}
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <i className={getStatusIcon(commande.statut)}></i>
-                      <CommandeStatusSelect
-                        currentStatus={commande.statut}
-                        onStatusChange={(status) =>
-                          handleStatusChange(commande.id, status)
-                        }
-                        disabled={isUpdating === commande.id}
-                      />
-                    </div>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatutBadgeColor(
+                        commande.statut
+                      )}`}
+                    >
+                      {getStatutLabel(commande.statut)}
+                    </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatDate(commande.createdAt)}
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => handleViewDetails(commande.id)}
-                      className="text-blue-600 hover:text-blue-800 font-medium text-sm"
-                    >
-                      Voir détail
-                    </button>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatDate(commande.updatedAt)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex items-center justify-end space-x-2">
+                      {/* Voir détails */}
+                      <button
+                        onClick={() => handleViewCommande(commande.id)}
+                        disabled={isOperationLoading}
+                        className="text-blue-600 hover:text-blue-900 transition-colors"
+                        title="Voir les détails"
+                      >
+                        <i className="fas fa-eye"></i>
+                      </button>
+
+                      {/* Changer le statut */}
+                      <div className="relative">
+                        <CommandeStatusSelect
+                          currentStatus={commande.statut}
+                          onStatusChange={(newStatut) =>
+                            handleUpdateStatut(commande, newStatut)
+                          }
+                          disabled={isOperationLoading}
+                        />
+                      </div>
+
+                      {/* Supprimer */}
+                      <button
+                        onClick={() => handleDeleteCommande(commande)}
+                        disabled={isOperationLoading}
+                        className="text-red-600 hover:text-red-900 transition-colors"
+                        title="Supprimer"
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -254,100 +420,150 @@ const AdminCommandes: React.FC = () => {
           </table>
         </div>
 
-        {/* Pagination */}
-        {pagination.totalPages > 1 && (
-          <div className="px-6 py-3 border-t border-gray-200 flex items-center justify-between">
-            <div className="text-sm text-gray-700">
-              Page {pagination.page} sur {pagination.totalPages}
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() =>
-                  setPagination((prev) => ({ ...prev, page: prev.page - 1 }))
-                }
-                disabled={pagination.page <= 1}
-                className="px-3 py-1 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-              >
-                Précédent
-              </button>
-              <button
-                onClick={() =>
-                  setPagination((prev) => ({ ...prev, page: prev.page + 1 }))
-                }
-                disabled={pagination.page >= pagination.totalPages}
-                className="px-3 py-1 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-              >
-                Suivant
-              </button>
-            </div>
+        {/* État vide */}
+        {commandes.length === 0 && !isLoading && (
+          <div className="text-center py-12">
+            <i className="fas fa-file-alt text-gray-400 text-4xl mb-4"></i>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Aucune commande trouvée
+            </h3>
+            <p className="text-gray-500">
+              {searchQuery || statutFilter !== "TOUS"
+                ? "Essayez de modifier vos filtres de recherche"
+                : "Il n'y a pas encore de commandes dans le système"}
+            </p>
           </div>
         )}
       </div>
 
-      {/* Modal détail commande */}
-      {selectedCommande && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Détail de la commande
-                </h3>
-                <button
-                  onClick={() => setSelectedCommande(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <i className="fas fa-times"></i>
-                </button>
-              </div>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between bg-white px-4 py-3 rounded-lg shadow-sm">
+          <div className="text-sm text-gray-700">
+            Page {currentPage} sur {totalPages}
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage <= 1 || isLoading}
+              className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Précédent
+            </button>
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages || isLoading}
+              className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Suivant
+            </button>
+          </div>
+        </div>
+      )}
 
-              <div className="space-y-4">
+      {/* Modal détails commande */}
+      <Modal
+        isOpen={showCommandeModal}
+        onClose={() => setShowCommandeModal(false)}
+        title="Détails de la commande"
+        size="lg"
+      >
+        {selectedCommande && (
+          <div className="space-y-6">
+            {/* Informations générales */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Informations générales
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
                     Titre
                   </label>
-                  <p className="text-gray-900">{selectedCommande.titre}</p>
-                </div>
-
-                {selectedCommande.description && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Description
-                    </label>
-                    <p className="text-gray-900">
-                      {selectedCommande.description}
-                    </p>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Client
-                  </label>
-                  <p className="text-gray-900">
-                    {selectedCommande.user?.prenom} {selectedCommande.user?.nom}{" "}
-                    ({selectedCommande.user?.email})
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedCommande.titre}
                   </p>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
                     Statut
                   </label>
-                  <div className="flex items-center gap-2">
-                    <i className={getStatusIcon(selectedCommande.statut)}></i>
-                    <span className="text-gray-900">
-                      {selectedCommande.statut}
-                    </span>
+                  <span
+                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatutBadgeColor(
+                      selectedCommande.statut
+                    )}`}
+                  >
+                    {getStatutLabel(selectedCommande.statut)}
+                  </span>
+                </div>
+              </div>
+
+              {selectedCommande.description && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Description
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">
+                    {selectedCommande.description}
+                  </p>
+                </div>
+              )}
+
+              {selectedCommande.fichierUrl && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Fichier
+                  </label>
+                  <a
+                    href={selectedCommande.fichierUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 text-sm text-blue-600 hover:text-blue-900"
+                  >
+                    <i className="fas fa-file-download mr-1"></i>
+                    Télécharger le fichier
+                  </a>
+                </div>
+              )}
+            </div>
+
+            {/* Informations client */}
+            {selectedCommande.user && (
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  Client
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Nom complet
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {selectedCommande.user.prenom} {selectedCommande.user.nom}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Email
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {selectedCommande.user.email}
+                    </p>
                   </div>
                 </div>
+              </div>
+            )}
 
+            {/* Notes */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Notes</h3>
+              <div className="space-y-4">
                 {selectedCommande.noteClient && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
                       Note du client
                     </label>
-                    <p className="text-gray-900">
+                    <p className="mt-1 text-sm text-gray-900 whitespace-pre-wrap bg-gray-50 p-3 rounded-md">
                       {selectedCommande.noteClient}
                     </p>
                   </div>
@@ -355,38 +571,59 @@ const AdminCommandes: React.FC = () => {
 
                 {selectedCommande.noteCorrecteur && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
                       Note du correcteur
                     </label>
-                    <p className="text-gray-900">
+                    <p className="mt-1 text-sm text-gray-900 whitespace-pre-wrap bg-blue-50 p-3 rounded-md">
                       {selectedCommande.noteCorrecteur}
                     </p>
                   </div>
                 )}
+              </div>
+            </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Créée le
-                    </label>
-                    <p className="text-gray-900">
-                      {formatDate(selectedCommande.createdAt)}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Mise à jour
-                    </label>
-                    <p className="text-gray-900">
-                      {formatDate(selectedCommande.updatedAt)}
-                    </p>
-                  </div>
+            {/* Dates */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Historique
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Créée le
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {formatDate(selectedCommande.createdAt)}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Dernière modification
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {formatDate(selectedCommande.updatedAt)}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
+
+      {/* Modal de confirmation de suppression */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDeleteCommande}
+        title="Confirmer la suppression"
+        message={
+          commandeToDelete
+            ? `Êtes-vous sûr de vouloir supprimer la commande "${commandeToDelete.titre}" ? Cette action est irréversible.`
+            : ""
+        }
+        type="danger"
+        isLoading={isOperationLoading}
+      />
     </div>
   );
 };
