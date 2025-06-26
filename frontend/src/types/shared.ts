@@ -216,3 +216,141 @@ export interface PingResponse {
   pong: boolean;
   timestamp: string;
 }
+
+// ===============================
+// TYPES MESSAGERIE ADMIN
+// ===============================
+
+export enum StatutConversation {
+  ACTIVE = "ACTIVE",
+  EN_ATTENTE = "EN_ATTENTE",
+  RESOLUE = "RESOLUE",
+  FERMEE = "FERMEE",
+  ARCHIVEE = "ARCHIVEE",
+}
+
+export enum TypeMessage {
+  TEXT = "TEXT",
+  FILE = "FILE",
+  IMAGE = "IMAGE",
+  SYSTEM = "SYSTEM",
+  ADMIN_NOTE = "ADMIN_NOTE",
+}
+
+export enum PrioriteConversation {
+  FAIBLE = "FAIBLE",
+  NORMALE = "NORMALE",
+  HAUTE = "HAUTE",
+  CRITIQUE = "CRITIQUE",
+}
+
+export interface MessageFile {
+  id: string;
+  name: string;
+  url: string;
+  size: number;
+  type: string;
+  uploadedAt: string;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  contenu: string;
+  type: TypeMessage;
+  files?: MessageFile[];
+  auteur: {
+    id: string;
+    prenom: string;
+    nom: string;
+    role: Role;
+    avatar?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+  isRead: boolean;
+  metadata?: {
+    isAdminNote?: boolean;
+    isSystemMessage?: boolean;
+    actionType?: string;
+  };
+}
+
+export interface ConversationTag {
+  id: string;
+  nom: string;
+  couleur: string;
+  description?: string;
+}
+
+export interface Conversation {
+  id: string;
+  titre: string;
+  statut: StatutConversation;
+  priorite: PrioriteConversation;
+  commande?: {
+    id: string;
+    titre: string;
+    statut: StatutCommande;
+  };
+  participants: {
+    client: {
+      id: string;
+      prenom: string;
+      nom: string;
+      email: string;
+      avatar?: string;
+    };
+    correcteur?: {
+      id: string;
+      prenom: string;
+      nom: string;
+      email: string;
+      avatar?: string;
+    };
+  };
+  tags: ConversationTag[];
+  messages: Message[];
+  messageCount: number;
+  unreadCount: number;
+  lastMessage?: Message;
+  createdAt: string;
+  updatedAt: string;
+  closedAt?: string;
+  closedBy?: {
+    id: string;
+    prenom: string;
+    nom: string;
+    role: Role;
+  };
+  metadata?: {
+    isRgpdCompliant?: boolean;
+    hasUrgentMessages?: boolean;
+    estimatedResponseTime?: number;
+  };
+}
+
+export interface ConversationStats {
+  total: number;
+  actives: number;
+  enAttente: number;
+  resolues: number;
+  fermees: number;
+  archivees: number;
+  tempsReponseMoyen: number; // en minutes
+  tauxResolution: number; // pourcentage
+}
+
+export interface CreateMessageRequest {
+  contenu: string;
+  type: TypeMessage;
+  files?: File[];
+  isAdminNote?: boolean;
+}
+
+export interface UpdateConversationRequest {
+  statut?: StatutConversation;
+  priorite?: PrioriteConversation;
+  tags?: string[];
+  titre?: string;
+}

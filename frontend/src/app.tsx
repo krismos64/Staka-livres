@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import AdminLayout, { AdminSection } from "./components/admin/AdminLayout";
+import { DemoModeProvider } from "./components/admin/DemoModeProvider";
 import MainLayout from "./components/layout/MainLayout";
 import { ToastProvider } from "./components/layout/ToastProvider";
 import ModalNouveauProjet from "./components/modals/ModalNouveauProjet";
@@ -23,6 +24,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminFactures from "./pages/admin/AdminFactures";
 import AdminFAQ from "./pages/admin/AdminFAQ";
 import AdminLogs from "./pages/admin/AdminLogs";
+import AdminMessagerie from "./pages/admin/AdminMessagerie";
 import AdminPages from "./pages/admin/AdminPages";
 import AdminStatistiques from "./pages/admin/AdminStatistiques";
 import AdminTarifs from "./pages/admin/AdminTarifs";
@@ -276,6 +278,8 @@ const AppContent: React.FC = () => {
         return <AdminStatistiques />;
       case "logs":
         return <AdminLogs />;
+      case "messagerie":
+        return <AdminMessagerie />;
       default:
         return <div>Section admin inconnue: {adminSection}</div>;
     }
@@ -359,7 +363,9 @@ function App() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <AppContent />
+        <DemoModeProvider>
+          <AppContent />
+        </DemoModeProvider>
       </ToastProvider>
     </AuthProvider>
   );

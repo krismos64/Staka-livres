@@ -1,23 +1,32 @@
 import {
   Commande,
   CommandeStats,
+  Conversation,
+  ConversationStats,
+  ConversationTag,
+  CreateMessageRequest,
   Facture,
   FactureStats,
   FAQ,
   LogEntry,
+  Message,
   PageStatique,
   PaginatedResponse,
+  PrioriteConversation,
   Role,
   StatistiquesAvancees,
   StatutCommande,
+  StatutConversation,
   StatutFacture,
   StatutPage,
   Tarif,
   TypeLog,
+  UpdateConversationRequest,
   User,
   UserStats,
 } from "../types/shared";
 import { tokenUtils } from "./auth";
+import { MockDataService } from "./mockData";
 
 const API_BASE_URL =
   (import.meta as any).env?.VITE_API_URL || "http://localhost:3001";
@@ -27,7 +36,28 @@ interface UpdateCommandeRequest {
   noteCorrecteur?: string;
 }
 
+interface CreateCommandeRequest {
+  titre: string;
+  description?: string;
+  userId: string;
+}
+
+interface UpdateFactureRequest {
+  statut: StatutFacture;
+}
+
+interface CreateUserRequest {
+  prenom: string;
+  nom: string;
+  email: string;
+  password: string;
+  role: Role;
+}
+
 interface UpdateUserRequest {
+  prenom?: string;
+  nom?: string;
+  email?: string;
   role?: Role;
   isActive?: boolean;
 }
@@ -52,6 +82,7 @@ interface CreateTarifRequest {
   nom: string;
   description: string;
   prix: number;
+  prixFormate: string;
   typeService: string;
   dureeEstimee?: string;
   actif: boolean;
@@ -62,6 +93,7 @@ interface UpdateTarifRequest {
   nom?: string;
   description?: string;
   prix?: number;
+  prixFormate?: string;
   typeService?: string;
   dureeEstimee?: string;
   actif?: boolean;
@@ -84,7 +116,45 @@ interface UpdatePageRequest {
   statut?: StatutPage;
 }
 
-export const adminAPI = {
+// Service adaptatif qui détecte le mode démo
+class AdaptiveAdminAPI {
+  // Vérifier si le mode démo est activé
+  private isDemoMode(): boolean {
+    return MockDataService.isDemoMode();
+  }
+
+  // Simule les actions CRUD en mode démo (sans effet réel)
+  private async simulateAction(action: string, duration = 300): Promise<void> {
+    if (this.isDemoMode()) {
+      console.log(`[DEMO MODE] Simulation de l'action: ${action}`);
+      await new Promise((resolve) => setTimeout(resolve, duration));
+      return;
+    }
+  }
+
+  // Wrapper pour les appels API réels
+  private async realApiCall<T>(
+    url: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    const authHeaders = tokenUtils.getAuthHeader();
+    const response = await fetch(`${API_BASE_URL}${url}`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders,
+      },
+      ...options,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || `Erreur API: ${response.status}`);
+    }
+
+    return data.data || data;
+  }
+
   // ===============================
   // DASHBOARD & STATS GÉNÉRALES
   // ===============================
@@ -93,62 +163,12 @@ export const adminAPI = {
     commandeStats: CommandeStats;
     factureStats: FactureStats;
   }> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/stats`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de récupération des stats");
+    if (this.isDemoMode()) {
+      return MockDataService.getDashboardStats();
     }
 
-    return data.data;
-  },
-
-  async getUserStats(): Promise<UserStats> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/users/stats`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message || "Erreur de récupération des stats utilisateurs"
-      );
-    }
-
-    return data.data;
-  },
-
-  async getCommandeStats(): Promise<CommandeStats> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/commandes/stats`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message || "Erreur de récupération des stats commandes"
-      );
-    }
-
-    return data.data;
-  },
+    return this.realApiCall("/admin/stats");
+  }
 
   // ===============================
   // GESTION UTILISATEURS
@@ -159,7 +179,10 @@ export const adminAPI = {
     search?: string,
     role?: Role
   ): Promise<PaginatedResponse<User>> {
-    const authHeaders = tokenUtils.getAuthHeader();
+    if (this.isDemoMode()) {
+      return MockDataService.getUsers(page, limit, search, role);
+    }
+
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -168,120 +191,65 @@ export const adminAPI = {
     if (search) params.append("search", search);
     if (role) params.append("role", role);
 
-    const response = await fetch(`${API_BASE_URL}/admin/users?${params}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message || "Erreur de récupération des utilisateurs"
-      );
-    }
-
-    return data;
-  },
+    return this.realApiCall(`/admin/users?${params}`);
+  }
 
   async getUserById(id: string): Promise<User> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/user/${id}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
+    if (this.isDemoMode()) {
+      const users = await MockDataService.getUsers(1, 100);
+      const user = users.data?.find((u) => u.id === id);
+      if (!user) throw new Error("Utilisateur non trouvé");
+      return user;
+    }
+
+    return this.realApiCall(`/admin/user/${id}`);
+  }
+
+  async createUser(userData: CreateUserRequest): Promise<User> {
+    if (this.isDemoMode()) {
+      await this.simulateAction("createUser", 400);
+      return {
+        id: `user-demo-${Date.now()}`,
+        ...userData,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    return this.realApiCall("/admin/user", {
+      method: "POST",
+      body: JSON.stringify(userData),
     });
+  }
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message || "Erreur de récupération de l'utilisateur"
-      );
+  async updateUser(id: string, userData: UpdateUserRequest): Promise<User> {
+    if (this.isDemoMode()) {
+      await this.simulateAction("updateUser", 300);
+      const currentUser = await this.getUserById(id);
+      return {
+        ...currentUser,
+        ...userData,
+        updatedAt: new Date().toISOString(),
+      };
     }
 
-    return data.data;
-  },
-
-  async updateUser(id: string, updates: UpdateUserRequest): Promise<User> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/user/${id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-      body: JSON.stringify(updates),
+    return this.realApiCall(`/admin/user/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(userData),
     });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de mise à jour utilisateur");
-    }
-
-    return data.data;
-  },
-
-  async activateUser(id: string): Promise<User> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/user/${id}/activate`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur d'activation utilisateur");
-    }
-
-    return data.data;
-  },
-
-  async deactivateUser(id: string): Promise<User> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(
-      `${API_BASE_URL}/admin/user/${id}/deactivate`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeaders,
-        },
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de désactivation utilisateur");
-    }
-
-    return data.data;
-  },
+  }
 
   async deleteUser(id: string): Promise<void> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/user/${id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || "Erreur de suppression utilisateur");
+    if (this.isDemoMode()) {
+      await this.simulateAction("deleteUser", 500);
+      return;
     }
-  },
+
+    await this.realApiCall(`/admin/user/${id}`, {
+      method: "DELETE",
+    });
+  }
 
   // ===============================
   // GESTION COMMANDES
@@ -292,7 +260,10 @@ export const adminAPI = {
     statut?: StatutCommande,
     search?: string
   ): Promise<PaginatedResponse<Commande>> {
-    const authHeaders = tokenUtils.getAuthHeader();
+    if (this.isDemoMode()) {
+      return MockDataService.getCommandes(page, limit, statut, search);
+    }
+
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -301,101 +272,79 @@ export const adminAPI = {
     if (statut) params.append("statut", statut);
     if (search) params.append("search", search);
 
-    const response = await fetch(`${API_BASE_URL}/admin/commandes?${params}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de récupération des commandes");
-    }
-
-    return data;
-  },
+    return this.realApiCall(`/admin/commandes?${params}`);
+  }
 
   async getCommandeById(id: string): Promise<Commande> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/commande/${id}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de récupération de la commande");
+    if (this.isDemoMode()) {
+      const commandes = await MockDataService.getCommandes(1, 100);
+      const commande = commandes.data?.find((c) => c.id === id);
+      if (!commande) throw new Error("Commande non trouvée");
+      return commande;
     }
 
-    return data.data;
-  },
+    return this.realApiCall(`/admin/commande/${id}`);
+  }
+
+  async createCommande(commandeData: CreateCommandeRequest): Promise<Commande> {
+    if (this.isDemoMode()) {
+      await this.simulateAction("createCommande", 400);
+      return {
+        id: `cmd-demo-${Date.now()}`,
+        ...commandeData,
+        statut: StatutCommande.EN_ATTENTE,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    return this.realApiCall("/admin/commande", {
+      method: "POST",
+      body: JSON.stringify(commandeData),
+    });
+  }
 
   async updateCommande(
     id: string,
-    updates: UpdateCommandeRequest
+    updateData: UpdateCommandeRequest
   ): Promise<Commande> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/commande/${id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-      body: JSON.stringify(updates),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de mise à jour de la commande");
+    if (this.isDemoMode()) {
+      await this.simulateAction("updateCommande", 300);
+      const currentCommande = await this.getCommandeById(id);
+      return {
+        ...currentCommande,
+        ...updateData,
+        updatedAt: new Date().toISOString(),
+      };
     }
 
-    return data.data;
-  },
+    return this.realApiCall(`/admin/commande/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(updateData),
+    });
+  }
 
   async deleteCommande(id: string): Promise<void> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/commande/${id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || "Erreur de suppression de la commande");
+    if (this.isDemoMode()) {
+      await this.simulateAction("deleteCommande", 500);
+      return;
     }
-  },
+
+    await this.realApiCall(`/admin/commande/${id}`, {
+      method: "DELETE",
+    });
+  }
 
   // ===============================
   // GESTION FACTURES
   // ===============================
   async getFactureStats(): Promise<FactureStats> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/invoices/stats`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message || "Erreur de récupération des stats factures"
-      );
+    if (this.isDemoMode()) {
+      return MockDataService.getFactureStats();
     }
 
-    return data.data;
-  },
+    return this.realApiCall("/admin/invoices/stats");
+  }
 
   async getFactures(
     page = 1,
@@ -403,7 +352,10 @@ export const adminAPI = {
     statut?: StatutFacture,
     search?: string
   ): Promise<PaginatedResponse<Facture>> {
-    const authHeaders = tokenUtils.getAuthHeader();
+    if (this.isDemoMode()) {
+      return MockDataService.getFactures(page, limit, statut, search);
+    }
+
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -412,620 +364,524 @@ export const adminAPI = {
     if (statut) params.append("statut", statut);
     if (search) params.append("search", search);
 
-    const response = await fetch(`${API_BASE_URL}/admin/invoices?${params}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de récupération des factures");
-    }
-
-    return data;
-  },
+    return this.realApiCall(`/admin/invoices?${params}`);
+  }
 
   async getFactureById(id: string): Promise<Facture> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/invoice/${id}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
+    if (this.isDemoMode()) {
+      return MockDataService.getFactureById(id);
+    }
+
+    return this.realApiCall(`/admin/invoice/${id}`);
+  }
+
+  async updateFacture(
+    id: string,
+    updateData: UpdateFactureRequest
+  ): Promise<Facture> {
+    if (this.isDemoMode()) {
+      await this.simulateAction("updateFacture", 300);
+      const currentFacture = await this.getFactureById(id);
+      return {
+        ...currentFacture,
+        ...updateData,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    return this.realApiCall(`/admin/invoice/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(updateData),
     });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de récupération de la facture");
-    }
-
-    return data.data;
-  },
-
-  async downloadFacture(id: string): Promise<Blob> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(
-      `${API_BASE_URL}/admin/invoice/${id}/download`,
-      {
-        headers: {
-          ...authHeaders,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || "Erreur de téléchargement de la facture");
-    }
-
-    return response.blob();
-  },
-
-  async sendFactureReminder(id: string): Promise<void> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(
-      `${API_BASE_URL}/admin/invoice/${id}/reminder`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeaders,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || "Erreur d'envoi de rappel");
-    }
-  },
+  }
 
   async deleteFacture(id: string): Promise<void> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/invoice/${id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || "Erreur de suppression de la facture");
+    if (this.isDemoMode()) {
+      await this.simulateAction("deleteFacture", 500);
+      return;
     }
-  },
+
+    await this.realApiCall(`/admin/invoice/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  async sendFactureReminder(id: string): Promise<void> {
+    if (this.isDemoMode()) {
+      await this.simulateAction("sendFactureReminder", 600);
+      return;
+    }
+
+    await this.realApiCall(`/admin/invoice/${id}/reminder`, {
+      method: "POST",
+    });
+  }
 
   // ===============================
   // GESTION FAQ
   // ===============================
-  async getFAQ(categorie?: string, visible?: boolean): Promise<FAQ[]> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const params = new URLSearchParams();
-
-    if (categorie) params.append("categorie", categorie);
-    if (visible !== undefined) params.append("visible", visible.toString());
-
-    const response = await fetch(`${API_BASE_URL}/admin/faq?${params}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de récupération des FAQ");
+  async getFAQ(
+    page = 1,
+    limit = 10,
+    search?: string,
+    visible?: boolean
+  ): Promise<FAQ[]> {
+    if (this.isDemoMode()) {
+      // Retour direct du tableau pour compatibilité avec les pages admin existantes
+      const response = await MockDataService.getFAQ(
+        page,
+        limit,
+        search,
+        visible
+      );
+      return response.data || [];
     }
 
-    return data.data;
-  },
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
 
-  async createFAQ(faq: CreateFAQRequest): Promise<FAQ> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/faq`, {
+    if (search) params.append("search", search);
+    if (typeof visible === "boolean")
+      params.append("visible", visible.toString());
+
+    // Pour l'API réelle, on assume qu'elle retourne directement le tableau pour cette interface
+    return this.realApiCall(`/admin/faq?${params}`);
+  }
+
+  async getFAQById(id: string): Promise<FAQ> {
+    if (this.isDemoMode()) {
+      const faqs = await MockDataService.getFAQ(1, 100);
+      const faq = faqs.data?.find((f) => f.id === id);
+      if (!faq) throw new Error("FAQ non trouvée");
+      return faq;
+    }
+
+    return this.realApiCall(`/admin/faq/${id}`);
+  }
+
+  async createFAQ(faqData: CreateFAQRequest): Promise<FAQ> {
+    if (this.isDemoMode()) {
+      await this.simulateAction("createFAQ", 400);
+      return {
+        id: `faq-demo-${Date.now()}`,
+        ...faqData,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    return this.realApiCall("/admin/faq", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-      body: JSON.stringify(faq),
+      body: JSON.stringify(faqData),
     });
+  }
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de création de la FAQ");
+  async updateFAQ(id: string, faqData: UpdateFAQRequest): Promise<FAQ> {
+    if (this.isDemoMode()) {
+      await this.simulateAction("updateFAQ", 300);
+      const currentFAQ = await this.getFAQById(id);
+      return { ...currentFAQ, ...faqData, updatedAt: new Date().toISOString() };
     }
 
-    return data.data;
-  },
-
-  async updateFAQ(id: string, updates: UpdateFAQRequest): Promise<FAQ> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/faq/${id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-      body: JSON.stringify(updates),
+    return this.realApiCall(`/admin/faq/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(faqData),
     });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de mise à jour de la FAQ");
-    }
-
-    return data.data;
-  },
-
-  async reorderFAQ(id: string, newOrder: number): Promise<FAQ> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/faq/${id}/reorder`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-      body: JSON.stringify({ ordre: newOrder }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de réorganisation de la FAQ");
-    }
-
-    return data.data;
-  },
+  }
 
   async deleteFAQ(id: string): Promise<void> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/faq/${id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || "Erreur de suppression de la FAQ");
+    if (this.isDemoMode()) {
+      await this.simulateAction("deleteFAQ", 500);
+      return;
     }
-  },
+
+    await this.realApiCall(`/admin/faq/${id}`, {
+      method: "DELETE",
+    });
+  }
 
   // ===============================
   // GESTION TARIFS
   // ===============================
-  async getTarifs(service?: string, actif?: boolean): Promise<Tarif[]> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const params = new URLSearchParams();
-
-    if (service) params.append("service", service);
-    if (actif !== undefined) params.append("actif", actif.toString());
-
-    const response = await fetch(`${API_BASE_URL}/admin/tarifs?${params}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de récupération des tarifs");
+  async getTarifs(
+    page = 1,
+    limit = 10,
+    search?: string,
+    actif?: boolean
+  ): Promise<Tarif[]> {
+    if (this.isDemoMode()) {
+      // Retour direct du tableau pour compatibilité avec les pages admin existantes
+      const response = await MockDataService.getTarifs(
+        page,
+        limit,
+        search,
+        actif
+      );
+      return response.data || [];
     }
 
-    return data.data;
-  },
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
 
-  async createTarif(tarif: CreateTarifRequest): Promise<Tarif> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/tarif`, {
+    if (search) params.append("search", search);
+    if (typeof actif === "boolean") params.append("actif", actif.toString());
+
+    // Pour l'API réelle, on assume qu'elle retourne directement le tableau pour cette interface
+    return this.realApiCall(`/admin/tarifs?${params}`);
+  }
+
+  async getTarifById(id: string): Promise<Tarif> {
+    if (this.isDemoMode()) {
+      const tarifs = await MockDataService.getTarifs(1, 100);
+      const tarif = tarifs.data?.find((t) => t.id === id);
+      if (!tarif) throw new Error("Tarif non trouvé");
+      return tarif;
+    }
+
+    return this.realApiCall(`/admin/tarif/${id}`);
+  }
+
+  async createTarif(tarifData: CreateTarifRequest): Promise<Tarif> {
+    if (this.isDemoMode()) {
+      await this.simulateAction("createTarif", 400);
+      return {
+        id: `tarif-demo-${Date.now()}`,
+        ...tarifData,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    return this.realApiCall("/admin/tarif", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-      body: JSON.stringify(tarif),
+      body: JSON.stringify(tarifData),
     });
+  }
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de création du tarif");
+  async updateTarif(id: string, tarifData: UpdateTarifRequest): Promise<Tarif> {
+    if (this.isDemoMode()) {
+      await this.simulateAction("updateTarif", 300);
+      const currentTarif = await this.getTarifById(id);
+      return {
+        ...currentTarif,
+        ...tarifData,
+        updatedAt: new Date().toISOString(),
+      };
     }
 
-    return data.data;
-  },
-
-  async updateTarif(id: string, updates: UpdateTarifRequest): Promise<Tarif> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/tarif/${id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-      body: JSON.stringify(updates),
+    return this.realApiCall(`/admin/tarif/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(tarifData),
     });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de mise à jour du tarif");
-    }
-
-    return data.data;
-  },
-
-  async activateTarif(id: string): Promise<Tarif> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/tarif/${id}/activate`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur d'activation du tarif");
-    }
-
-    return data.data;
-  },
-
-  async deactivateTarif(id: string): Promise<Tarif> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(
-      `${API_BASE_URL}/admin/tarif/${id}/deactivate`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeaders,
-        },
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de désactivation du tarif");
-    }
-
-    return data.data;
-  },
+  }
 
   async deleteTarif(id: string): Promise<void> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/tarif/${id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || "Erreur de suppression du tarif");
+    if (this.isDemoMode()) {
+      await this.simulateAction("deleteTarif", 500);
+      return;
     }
-  },
+
+    await this.realApiCall(`/admin/tarif/${id}`, {
+      method: "DELETE",
+    });
+  }
 
   // ===============================
   // GESTION PAGES STATIQUES
   // ===============================
   async getPages(
-    statut?: StatutPage,
-    search?: string
-  ): Promise<PageStatique[]> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const params = new URLSearchParams();
-
-    if (statut) params.append("statut", statut);
-    if (search) params.append("search", search);
-
-    const response = await fetch(`${API_BASE_URL}/admin/pages?${params}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de récupération des pages");
-    }
-
-    return data.data;
-  },
-
-  async getPageById(id: string): Promise<PageStatique> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/page/${id}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de récupération de la page");
-    }
-
-    return data.data;
-  },
-
-  async createPage(page: CreatePageRequest): Promise<PageStatique> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/page`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-      body: JSON.stringify(page),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de création de la page");
-    }
-
-    return data.data;
-  },
-
-  async updatePage(
-    id: string,
-    updates: UpdatePageRequest
-  ): Promise<PageStatique> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/page/${id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-      body: JSON.stringify(updates),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de mise à jour de la page");
-    }
-
-    return data.data;
-  },
-
-  async publishPage(id: string): Promise<PageStatique> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/page/${id}/publish`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de publication de la page");
-    }
-
-    return data.data;
-  },
-
-  async unpublishPage(id: string): Promise<PageStatique> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/page/${id}/unpublish`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de dépublication de la page");
-    }
-
-    return data.data;
-  },
-
-  async deletePage(id: string): Promise<void> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/page/${id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || "Erreur de suppression de la page");
-    }
-  },
-
-  // ===============================
-  // STATISTIQUES AVANCÉES
-  // ===============================
-  async getStatistiquesAvancees(): Promise<StatistiquesAvancees> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(`${API_BASE_URL}/admin/analytics`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de récupération des analytics");
-    }
-
-    return data.data;
-  },
-
-  async getRevenueAnalytics(period = "month"): Promise<any> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(
-      `${API_BASE_URL}/admin/analytics/revenue?period=${period}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeaders,
-        },
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message || "Erreur de récupération des analytics revenus"
-      );
-    }
-
-    return data.data;
-  },
-
-  async getUsersAnalytics(period = "month"): Promise<any> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(
-      `${API_BASE_URL}/admin/analytics/users?period=${period}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeaders,
-        },
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message || "Erreur de récupération des analytics utilisateurs"
-      );
-    }
-
-    return data.data;
-  },
-
-  async getProjectsAnalytics(period = "month"): Promise<any> {
-    const authHeaders = tokenUtils.getAuthHeader();
-    const response = await fetch(
-      `${API_BASE_URL}/admin/analytics/projects?period=${period}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeaders,
-        },
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message || "Erreur de récupération des analytics projets"
-      );
-    }
-
-    return data.data;
-  },
-
-  // ===============================
-  // LOGS SYSTÈME
-  // ===============================
-  async getLogs(
     page = 1,
     limit = 10,
-    type?: TypeLog,
-    userId?: string,
-    startDate?: string,
-    endDate?: string
-  ): Promise<PaginatedResponse<LogEntry>> {
-    const authHeaders = tokenUtils.getAuthHeader();
+    search?: string,
+    statut?: StatutPage
+  ): Promise<PageStatique[]> {
+    if (this.isDemoMode()) {
+      // Retour direct du tableau pour compatibilité avec les pages admin existantes
+      const response = await MockDataService.getPages(
+        page,
+        limit,
+        search,
+        statut
+      );
+      return response.data || [];
+    }
+
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
     });
 
-    if (type) params.append("type", type);
-    if (userId) params.append("userId", userId);
-    if (startDate) params.append("startDate", startDate);
-    if (endDate) params.append("endDate", endDate);
+    if (search) params.append("search", search);
+    if (statut) params.append("statut", statut);
 
-    const response = await fetch(`${API_BASE_URL}/admin/logs?${params}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-    });
+    // Pour l'API réelle, on assume qu'elle retourne directement le tableau pour cette interface
+    return this.realApiCall(`/admin/pages?${params}`);
+  }
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur de récupération des logs");
+  async getPageById(id: string): Promise<PageStatique> {
+    if (this.isDemoMode()) {
+      const pages = await MockDataService.getPages(1, 100);
+      const page = pages.data?.find((p) => p.id === id);
+      if (!page) throw new Error("Page non trouvée");
+      return page;
     }
 
-    return data;
-  },
+    return this.realApiCall(`/admin/page/${id}`);
+  }
 
-  async exportLogs(
-    format = "csv",
-    type?: TypeLog,
-    startDate?: string,
-    endDate?: string
-  ): Promise<Blob> {
-    const authHeaders = tokenUtils.getAuthHeader();
+  async createPage(pageData: CreatePageRequest): Promise<PageStatique> {
+    if (this.isDemoMode()) {
+      await this.simulateAction("createPage", 400);
+      return {
+        id: `page-demo-${Date.now()}`,
+        ...pageData,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    return this.realApiCall("/admin/page", {
+      method: "POST",
+      body: JSON.stringify(pageData),
+    });
+  }
+
+  async updatePage(
+    id: string,
+    pageData: UpdatePageRequest
+  ): Promise<PageStatique> {
+    if (this.isDemoMode()) {
+      await this.simulateAction("updatePage", 300);
+      const currentPage = await this.getPageById(id);
+      return {
+        ...currentPage,
+        ...pageData,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    return this.realApiCall(`/admin/page/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(pageData),
+    });
+  }
+
+  async deletePage(id: string): Promise<void> {
+    if (this.isDemoMode()) {
+      await this.simulateAction("deletePage", 500);
+      return;
+    }
+
+    await this.realApiCall(`/admin/page/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // ===============================
+  // GESTION LOGS
+  // ===============================
+  async getLogs(
+    page = 1,
+    limit = 10,
+    search?: string,
+    type?: TypeLog
+  ): Promise<PaginatedResponse<LogEntry>> {
+    if (this.isDemoMode()) {
+      return MockDataService.getLogs(page, limit, search, type);
+    }
+
     const params = new URLSearchParams({
-      format,
+      page: page.toString(),
+      limit: limit.toString(),
     });
 
+    if (search) params.append("search", search);
     if (type) params.append("type", type);
-    if (startDate) params.append("startDate", startDate);
-    if (endDate) params.append("endDate", endDate);
+
+    return this.realApiCall(`/admin/logs?${params}`);
+  }
+
+  // ===============================
+  // STATISTIQUES AVANCÉES
+  // ===============================
+  async getStatistiquesAvancees(): Promise<StatistiquesAvancees> {
+    if (this.isDemoMode()) {
+      return MockDataService.getStatistiquesAvancees();
+    }
+
+    return this.realApiCall("/admin/stats/advanced");
+  }
+
+  // ===============================
+  // ACTIONS DÉMO
+  // ===============================
+  async refreshDemoData(): Promise<{ success: boolean; message: string }> {
+    if (this.isDemoMode()) {
+      return MockDataService.refreshDemoData();
+    }
+
+    throw new Error("Action disponible uniquement en mode démo");
+  }
+
+  async resetDemoData(): Promise<{ success: boolean; message: string }> {
+    if (this.isDemoMode()) {
+      return MockDataService.resetDemoData();
+    }
+
+    throw new Error("Action disponible uniquement en mode démo");
+  }
+
+  // ===============================
+  // GESTION MESSAGERIE
+  // ===============================
+  async getConversations(
+    page = 1,
+    limit = 10,
+    search?: string,
+    statut?: StatutConversation,
+    priorite?: PrioriteConversation,
+    userId?: string
+  ): Promise<Conversation[]> {
+    if (this.isDemoMode()) {
+      // Service mockData pour messagerie
+      const MockMessageService = (await import("./mockMessageData"))
+        .MockMessageService;
+      const response = await MockMessageService.getConversations(
+        page,
+        limit,
+        search,
+        statut,
+        priorite,
+        userId
+      );
+      return (response.data || []) as Conversation[];
+    }
+
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+
+    if (search) params.append("search", search);
+    if (statut) params.append("statut", statut);
+    if (priorite) params.append("priorite", priorite);
+    if (userId) params.append("userId", userId);
+
+    return this.realApiCall(`/admin/conversations?${params}`);
+  }
+
+  async getConversationById(id: string): Promise<Conversation> {
+    if (this.isDemoMode()) {
+      const MockMessageService = (await import("./mockMessageData"))
+        .MockMessageService;
+      return MockMessageService.getConversationById(id);
+    }
+
+    return this.realApiCall(`/admin/conversations/${id}`);
+  }
+
+  async getConversationStats(): Promise<ConversationStats> {
+    if (this.isDemoMode()) {
+      const MockMessageService = (await import("./mockMessageData"))
+        .MockMessageService;
+      return MockMessageService.getConversationStats();
+    }
+
+    return this.realApiCall(`/admin/conversations/stats`);
+  }
+
+  async createMessage(
+    conversationId: string,
+    messageData: CreateMessageRequest
+  ): Promise<Message> {
+    if (this.isDemoMode()) {
+      const MockMessageService = (await import("./mockMessageData"))
+        .MockMessageService;
+      return MockMessageService.createMessage(conversationId, messageData);
+    }
+
+    return this.realApiCall(`/admin/conversations/${conversationId}/messages`, {
+      method: "POST",
+      body: JSON.stringify(messageData),
+    });
+  }
+
+  async updateConversation(
+    id: string,
+    updateData: UpdateConversationRequest
+  ): Promise<Conversation> {
+    if (this.isDemoMode()) {
+      const MockMessageService = (await import("./mockMessageData"))
+        .MockMessageService;
+      return MockMessageService.updateConversation(id, updateData);
+    }
+
+    return this.realApiCall(`/admin/conversations/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(updateData),
+    });
+  }
+
+  async deleteConversation(id: string): Promise<void> {
+    if (this.isDemoMode()) {
+      const MockMessageService = (await import("./mockMessageData"))
+        .MockMessageService;
+      return MockMessageService.deleteConversation(id);
+    }
+
+    return this.realApiCall(`/admin/conversations/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  async exportConversations(format: "csv" | "json" = "csv"): Promise<Blob> {
+    if (this.isDemoMode()) {
+      const MockMessageService = (await import("./mockMessageData"))
+        .MockMessageService;
+      return MockMessageService.exportConversations(format);
+    }
 
     const response = await fetch(
-      `${API_BASE_URL}/admin/logs/export?${params}`,
+      `${API_BASE_URL}/admin/conversations/export?format=${format}`,
       {
         headers: {
-          ...authHeaders,
+          Authorization: `Bearer ${tokenUtils.get()}`,
+          "Content-Type": "application/json",
         },
       }
     );
 
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || "Erreur d'export des logs");
+      throw new Error(`Export failed: ${response.statusText}`);
     }
 
     return response.blob();
-  },
-};
+  }
+
+  async getConversationTags(): Promise<ConversationTag[]> {
+    if (this.isDemoMode()) {
+      const MockMessageService = (await import("./mockMessageData"))
+        .MockMessageService;
+      return MockMessageService.getConversationTags();
+    }
+
+    return this.realApiCall(`/admin/conversations/tags`);
+  }
+
+  async getUnreadConversationsCount(): Promise<number> {
+    if (this.isDemoMode()) {
+      const MockMessageService = (await import("./mockMessageData"))
+        .MockMessageService;
+      return MockMessageService.getUnreadConversationsCount();
+    }
+
+    return this.realApiCall(`/admin/conversations/unread-count`);
+  }
+}
+
+// Export de l'instance du service adaptatif
+export const adminAPI = new AdaptiveAdminAPI();
