@@ -120,3 +120,6 @@ app.listen(PORT, "0.0.0.0", () => {
     `   GET /admin/commandes/stats - Statistiques commandes (ADMIN uniquement)`
   );
 });
+
+// Export pour les tests
+export default app;

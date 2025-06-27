@@ -67,9 +67,11 @@ describe("Invoice Endpoints Integration Tests", () => {
     const testInvoice = await prisma.invoice.create({
       data: {
         commandeId: testCommandeId,
+        number: "FACT-2024-001",
         amount: 59900,
         pdfUrl:
           "https://test-bucket.s3.amazonaws.com/invoices/test-invoice.pdf",
+        status: "GENERATED",
       },
     });
     testInvoiceId = testInvoice.id;
@@ -232,9 +234,11 @@ describe("Invoice Endpoints Integration Tests", () => {
       const otherInvoice = await prisma.invoice.create({
         data: {
           commandeId: otherCommande.id,
+          number: "FACT-2024-002",
           amount: 29900,
           pdfUrl:
             "https://test-bucket.s3.amazonaws.com/invoices/other-invoice.pdf",
+          status: "GENERATED",
         },
       });
 
@@ -313,9 +317,11 @@ describe("Invoice Endpoints Integration Tests", () => {
       const otherInvoice = await prisma.invoice.create({
         data: {
           commandeId: otherCommande.id,
+          number: "FACT-2024-003",
           amount: 19900,
           pdfUrl:
             "https://test-bucket.s3.amazonaws.com/invoices/other-invoice2.pdf",
+          status: "GENERATED",
         },
       });
 

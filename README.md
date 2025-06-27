@@ -71,14 +71,22 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 - **Gestion d'erreurs** centralisée avec logs
 - **Données de fallback** en cas d'indisponibilité DB
 
-### 🗄️ **Modèles de Données Avancés**
+### 🗄️ **Base de Données Complète (10 Modèles)**
 
-- **Modèle User** : UUID, rôles, statut actif, horodatage
-- **Modèle Commande** : statuts, notes client/correcteur, relations
-- **Modèle Invoice** : facturation automatique avec PDF et Stripe
-- **Énumérations** : Role (USER/ADMIN), StatutCommande (EN_ATTENTE/EN_COURS/TERMINE/ANNULEE)
-- **Relations** : User-Commande-Invoice avec cascade delete
-- **Migrations** : 20250624124656_add_user_authentication, 20250624201851_add_stripe_fields
+- **User** : UUID, rôles, statut actif, avatar, contacts
+- **Commande** : statuts, priorités, échéances, notes client/correcteur
+- **Message** : messagerie unifiée (projet + support) avec threading
+- **SupportRequest** : tickets de support avec SLA et assignation
+- **File** : système de fichiers avec types, permissions, sécurité
+- **Invoice** : facturation automatique avec numérotation et PDF
+- **PaymentMethod** : moyens de paiement Stripe avec chiffrement
+- **Notification** : système de notifications avec types et priorités
+- **Page** : CMS pour contenu éditorial avec SEO
+- **MessageAttachment** : pièces jointes messages avec relations
+
+**Relations RGPD** : Cascade DELETE, contraintes FK, soft delete  
+**Performance** : Index optimisés, requêtes type-safe Prisma  
+**Documentation** : Guide complet dans `docs/Base-de-donnees-guide.md`
 
 ---
 
@@ -241,7 +249,15 @@ Staka-livres/
 
 ## 📋 **Changelog Récent**
 
-### ✅ **Version Actuelle (Janvier 2025)**
+### ✅ **Version Actuelle (Juin 2025)**
+
+**🗄️ Base de Données Complète Opérationnelle :**
+
+- ✅ **10 modèles de données complets** : User, Commande, File, Message, SupportRequest, PaymentMethod, Invoice, Notification, Page, MessageAttachment
+- ✅ **Schéma Prisma robuste** : Relations RGPD, contraintes FK, index performance
+- ✅ **Migrations corrigées** : Déploiement automatique sans erreurs
+- ✅ **Support Request Integration** : Messagerie unifiée projet + support
+- ✅ **Documentation complète** : Guide détaillé dans `docs/Base-de-donnees-guide.md`
 
 **🎯 Espace Admin Complet Finalisé :**
 
@@ -284,6 +300,14 @@ Staka-livres/
 - ✅ Prisma Studio accessible sur port 5555
 - ✅ Variables d'environnement sécurisées
 
+**🔧 Corrections Techniques Majeures :**
+
+- ✅ **Champ Invoice.number** : Correction erreur TypeScript sur facturation
+- ✅ **Colonne supportRequestId** : Ajoutée avec index et contraintes FK
+- ✅ **Export server.ts** : Ajout export default pour compatibilité tests
+- ✅ **Migrations nettoyées** : Suppression dossiers vides causant échecs
+- ✅ **Troubleshooting complet** : Guide résolution 8 problèmes courants
+
 **🚀 Intégration Stripe Complète :**
 
 - ✅ API de paiement fonctionnelle avec sessions Stripe
@@ -296,6 +320,7 @@ Staka-livres/
 - ✅ Seed automatique avec comptes admin/user
 - ✅ 3 commandes de test avec différents statuts de paiement
 - ✅ Structure complète User ↔ Commande ↔ Invoice avec champs Stripe
+- ✅ **Prisma Studio** : Interface d'administration sur http://localhost:5555
 
 ---
 
@@ -384,6 +409,16 @@ docker exec -it staka_backend npm run db:seed
 - Email : `user@example.com`
 - Mot de passe : `user123`
 
+### 🗄️ **Interface d'Administration Base de Données**
+
+**Prisma Studio** : http://localhost:5555
+
+- **Navigation** : Parcourir tous les modèles (User, Commande, Message, SupportRequest, etc.)
+- **Visualisation** : Voir les données avec relations
+- **Édition** : Modifier/Créer/Supprimer des enregistrements
+- **Export** : Exporter les données au format JSON
+- **Guide complet** : Consulter `docs/Base-de-donnees-guide.md`
+
 ### 💳 **Test du Système de Facturation**
 
 1. **Se connecter** avec un compte utilisateur
@@ -424,63 +459,75 @@ La base contient 3 commandes de test :
 
 ### ❗ **Problèmes Courants et Solutions**
 
-#### **1. Erreur 504 "Outdated Optimize Dep"**
+#### **1. Erreur "Property 'number' is missing" sur Invoice**
 
 ```bash
-# Solution appliquée : Configuration Vite optimisée
-# frontend/vite.config.ts inclut maintenant :
-optimizeDeps: {
-  include: ["react-query"],
-  force: true,
-}
-
-# Si le problème persiste :
-docker exec -it staka_frontend rm -rf /app/node_modules/.vite
-docker restart staka_frontend
+# Problème : Champ number manquant dans création facture
+# Solution : Vérifier que toutes les créations d'Invoice incluent :
+const invoice = await prisma.invoice.create({
+  data: {
+    commandeId,
+    number: `FACT-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`,
+    amount: 59900,
+    pdfUrl,
+    status: "GENERATED",
+    issuedAt: new Date(),
+  },
+});
 ```
 
-#### **2. Page Blanche après Installation React Query**
+#### **2. Erreur "Column supportRequestId does not exist"**
 
 ```bash
-# Vérifier que React Query est bien installé
-docker exec -it staka_frontend npm list react-query
+# Solution : Ajouter la colonne manuellement
+docker exec -it staka_db mysql -u staka -pstaka stakalivres -e "ALTER TABLE messages ADD COLUMN supportRequestId VARCHAR(191) NULL;"
 
-# Nettoyer le cache et redémarrer
-docker exec -it staka_frontend rm -rf /app/node_modules/.vite /app/dist
-docker restart staka_frontend
-```
+# Créer l'index et la contrainte
+docker exec -it staka_db mysql -u staka -pstaka stakalivres -e "CREATE INDEX messages_supportRequestId_idx ON messages(supportRequestId); ALTER TABLE messages ADD CONSTRAINT messages_supportRequestId_fkey FOREIGN KEY (supportRequestId) REFERENCES support_requests(id) ON DELETE SET NULL;"
 
-#### **3. Base de Données Vide**
-
-```bash
-# Appliquer les migrations
-docker exec -it staka_backend npx prisma migrate deploy
-
-# Générer le client Prisma
+# Régénérer le client Prisma
 docker exec -it staka_backend npx prisma generate
-
-# Créer les données de test
-docker exec -it staka_backend npm run db:seed
 ```
 
-#### **4. Conteneur MySQL qui Redémarre**
+#### **3. Erreur "Could not find migration file"**
 
 ```bash
-# Vérifier les logs MySQL
-docker logs staka_db
+# Solution : Supprimer les dossiers de migration vides
+rm -rf backend/prisma/migrations/[dossier-vide]
 
-# Réinitialiser complètement la base
-docker-compose down -v
-docker-compose up -d
+# Redéployer les migrations
+docker exec -it staka_backend npx prisma migrate deploy
 ```
 
-#### **5. React Query ne Cache pas**
+#### **4. Backend qui crash au démarrage**
+
+```bash
+# Diagnostic : Vérifier les logs
+docker logs staka_backend --tail 50
+
+# Solutions communes :
+docker exec -it staka_backend npx prisma generate
+docker-compose restart backend
+```
+
+#### **5. Erreur de connexion "ERR_CONNECTION_RESET"**
+
+```bash
+# Vérifications :
+curl -X GET http://localhost:3001/health
+docker exec -it staka_backend netstat -tlnp | grep 3001
+docker exec -it staka_backend env | grep -E "PORT|DATABASE_URL"
+```
+
+#### **6. React Query ne Cache pas**
 
 ```bash
 # Vérifier dans la console navigateur :
 window.__REACT_QUERY_CLIENT__
 # Si undefined, vérifier que QueryClientProvider est bien configuré dans main.tsx
 ```
+
+**📚 Guide Complet** : Consulter `docs/Base-de-donnees-guide.md` section Troubleshooting pour 8 problèmes supplémentaires avec solutions détaillées.
 
 ### 🔍 **Commandes Utiles de Debug**
 
@@ -1030,14 +1077,16 @@ Body: { commandeId: "uuid", priceId: "price_..." }
 
 - **Services** : 3 services Docker (frontend, backend, db)
 - **Workspaces** : 3 packages npm (frontend, backend, shared)
-- **Lignes de code** : ~9,500 lignes TypeScript/React
+- **Lignes de code** : ~12,000 lignes TypeScript/React
 - **Composants** : 70+ composants React réutilisables
 - **Pages admin** : 9 interfaces complètes avec mock data
 - **API Endpoints** : 25+ endpoints REST avec sécurité JWT + Stripe
 - **Hooks React Query** : 4 hooks spécialisés pour facturation
-- **Tables DB** : User, Commande, Invoice avec relations
+- **Tables DB** : 10 modèles complets avec relations RGPD
 - **Paiements** : Intégration Stripe complète avec webhooks
 - **Architecture API-ready** : Mock services facilement remplaçables
+- **Prisma Studio** : Interface d'administration base de données
+- **Documentation** : Guide complet base de données (32KB)
 
 ### ⚡ **Performance et Sécurité avec React Query**
 
@@ -1175,4 +1224,16 @@ npm run build && echo "✅ Build successful"
 - **✅ Retry automatique** : 2 tentatives avec gestion d'erreurs
 - **✅ Téléchargement PDF** : Blob API avec trigger automatique
 
-Cette base solide avec **React Query intégré** et **Stripe fonctionnel** est prête pour l'ajout des fonctionnalités métier avancées (mutations, upload fichiers, messagerie temps réel, abonnements) et le déploiement en production avec une architecture scalable et maintenable.
+Cette base solide avec **React Query intégré**, **Stripe fonctionnel** et **base de données complète (10 modèles)** est prête pour l'ajout des fonctionnalités métier avancées (mutations, upload fichiers, messagerie temps réel, abonnements) et le déploiement en production avec une architecture scalable et maintenable.
+
+## 📚 **Documentation Complète**
+
+- **README.md** : Guide général du projet (ce fichier)
+- **docs/Base-de-donnees-guide.md** : Guide ultra détaillé de la base de données (32KB)
+  - 10 modèles documentés avec exemples
+  - Prisma Studio et commandes Docker
+  - Troubleshooting 8 problèmes courants
+  - Métriques et optimisations
+  - Checklist de vérification complète
+
+Consulter la documentation spécialisée selon vos besoins de développement ou d'administration.

@@ -211,11 +211,17 @@ export class InvoiceService {
       const pdfUrl = await this.uploadInvoicePdf(pdfBuffer, commande.id);
 
       // 3. Créer l'enregistrement en base
+      const invoiceNumber = `FACT-${new Date().getFullYear()}-${Date.now()
+        .toString()
+        .slice(-6)}`;
       const invoice = await prisma.invoice.create({
         data: {
           commandeId: commande.id,
+          number: invoiceNumber,
           amount: commande.amount!,
           pdfUrl,
+          status: "GENERATED",
+          issuedAt: new Date(),
         },
       });
 

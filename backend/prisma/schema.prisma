@@ -7,61 +7,404 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// Utilisateurs du système (clients et administrateurs)
 model User {
-  id        String     @id @default(uuid())
-  prenom    String
-  nom       String
-  email     String     @unique
-  password  String
-  role      Role       @default(USER)
-  isActive  Boolean    @default(true)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  commandes Commande[]
+  id                      String           @id @default(uuid())
+  prenom                  String           @db.VarChar(100)
+  nom                     String           @db.VarChar(100)
+  email                   String           @unique @db.VarChar(255)
+  password                String           @db.VarChar(255)
+  role                    Role             @default(USER)
+  isActive                Boolean          @default(true)
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+  adresse                 String?          @db.Text
+  avatar                  String?          @db.VarChar(500)
+  telephone               String?          @db.VarChar(20)
+  commandes               Commande[]
+  files                   File[]           @relation("FileOwner")
+  receivedMessages        Message[]        @relation("MessageReceiver")
+  sentMessages            Message[]        @relation("MessageSender")
+  notifications           Notification[]
+  paymentMethods          PaymentMethod[]
+  assignedSupportRequests SupportRequest[] @relation("SupportAssignee")
+  supportRequests         SupportRequest[]
 
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
   @@map("users")
 }
 
+/// Commandes/Projets de correction de manuscrits
 model Commande {
   id              String         @id @default(uuid())
   userId          String
-  titre           String
-  description     String?
-  fichierUrl      String?
+  titre           String         @db.VarChar(255)
+  description     String?        @db.Text
+  fichierUrl      String?        @db.VarChar(500)
   statut          StatutCommande @default(EN_ATTENTE)
-  noteClient      String?
-  noteCorrecteur  String?
+  noteClient      String?        @db.Text
+  noteCorrecteur  String?        @db.Text
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
-  paymentStatus   String?
-  stripeSessionId String?
-  amount          Int? // Montant en centimes
+  paymentStatus   String?        @db.VarChar(50)
+  stripeSessionId String?        @db.VarChar(255)
+  amount          Int?
+  dateEcheance    DateTime?
+  dateFinition    DateTime?
+  priorite        Priorite       @default(NORMALE)
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  invoices        Invoice[] // Relation vers les factures
+  files           File[]         @relation("CommandeFiles")
+  invoices        Invoice[]
+  messages        Message[]      @relation("CommandeMessages")
 
-  @@index([userId], map: "commandes_userId_fkey")
+  @@index([userId])
+  @@index([statut])
+  @@index([priorite])
+  @@index([createdAt])
   @@map("commandes")
 }
 
-enum Role {
-  USER
-  ADMIN
+/// Fichiers attachés aux projets, messages, etc.
+model File {
+  id                 String              @id @default(uuid())
+  filename           String              @db.VarChar(255)
+  storedName         String              @db.VarChar(255)
+  mimeType           String              @db.VarChar(100)
+  size               Int
+  url                String              @db.VarChar(500)
+  type               FileType            @default(DOCUMENT)
+  uploadedById       String
+  commandeId         String?
+  description        String?             @db.Text
+  isPublic           Boolean             @default(false)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  commande           Commande?           @relation("CommandeFiles", fields: [commandeId], references: [id], onDelete: Cascade)
+  uploadedBy         User                @relation("FileOwner", fields: [uploadedById], references: [id], onDelete: Cascade)
+  messageAttachments MessageAttachment[]
+
+  @@index([uploadedById])
+  @@index([commandeId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("files")
 }
 
-model Invoice {
-  id         String   @id @default(uuid())
-  commande   Commande @relation(fields: [commandeId], references: [id], onDelete: Cascade)
-  commandeId String
-  amount     Int // Montant en centimes
-  pdfUrl     String // URL du PDF sur S3
-  createdAt  DateTime @default(now())
+/// Messages entre utilisateurs (clients <-> admins <-> correcteurs)
+/// Un message peut être lié à :
+/// - Une commande spécifique (conversation projet)
+/// - Un ticket de support (conversation support)
+/// - Aucun contexte spécifique (message général)
+model Message {
+  id               String        @id @default(uuid())
+  senderId         String
+  receiverId       String?
+  commandeId       String?
+  supportRequestId String?
+  subject          String?       @db.VarChar(255)
+  content          String        @db.Text
+  type             MessageType   @default(USER_MESSAGE)
+  statut           MessageStatut @default(ENVOYE)
+  isRead           Boolean       @default(false)
+  isArchived       Boolean       @default(false)
+  isPinned         Boolean       @default(false)
+  parentId         String?
+  threadId         String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
+  attachments    MessageAttachment[]
+  commande       Commande?           @relation("CommandeMessages", fields: [commandeId], references: [id], onDelete: Cascade)
+  supportRequest SupportRequest?     @relation("SupportMessages", fields: [supportRequestId], references: [id], onDelete: SetNull)
+  parent         Message?            @relation("MessageThread", fields: [parentId], references: [id])
+  replies        Message[]           @relation("MessageThread")
+  receiver       User?               @relation("MessageReceiver", fields: [receiverId], references: [id])
+  sender         User                @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([commandeId])
+  @@index([supportRequestId])
+  @@index([type])
+  @@index([statut])
+  @@index([parentId])
+  @@index([threadId])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+/// Table de liaison Message <-> File (pièces jointes)
+model MessageAttachment {
+  id        String  @id @default(uuid())
+  messageId String
+  fileId    String
+  file      File    @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, fileId])
+  @@index([messageId])
+  @@index([fileId])
+  @@map("message_attachments")
+}
+
+/// Tickets de support client avec messagerie intégrée
+model SupportRequest {
+  id              String               @id @default(uuid())
+  userId          String
+  title           String               @db.VarChar(255)
+  description     String               @db.Text
+  category        SupportCategory      @default(GENERAL)
+  priority        SupportPriority      @default(NORMALE)
+  status          SupportRequestStatus @default(OUVERT)
+  assignedToId    String?
+  source          String?              @db.VarChar(100)
+  tags            String?              @db.Text
+  firstResponseAt DateTime?
+  resolvedAt      DateTime?
+  closedAt        DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  assignedTo User?     @relation("SupportAssignee", fields: [assignedToId], references: [id])
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages   Message[] @relation("SupportMessages")
+
+  @@index([userId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([priority])
+  @@index([category])
+  @@index([createdAt])
+  @@map("support_requests")
+}
+
+/// Moyens de paiement Stripe des utilisateurs
+model PaymentMethod {
+  id                    String   @id @default(uuid())
+  userId                String
+  stripePaymentMethodId String   @unique @db.VarChar(255)
+  brand                 String   @db.VarChar(50)
+  last4                 String   @db.VarChar(4)
+  expMonth              Int
+  expYear               Int
+  isDefault             Boolean  @default(false)
+  isActive              Boolean  @default(true)
+  fingerprint           String?  @db.VarChar(255)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([stripePaymentMethodId])
+  @@index([isDefault])
+  @@map("payment_methods")
+}
+
+/// Factures générées automatiquement
+model Invoice {
+  id         String        @id @default(uuid())
+  commandeId String
+  number     String        @unique @db.VarChar(50)
+  amount     Int
+  taxAmount  Int           @default(0)
+  pdfUrl     String        @db.VarChar(500)
+  status     InvoiceStatus @default(GENERATED)
+  issuedAt   DateTime?
+  dueAt      DateTime?
+  paidAt     DateTime?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  commande   Commande      @relation(fields: [commandeId], references: [id], onDelete: Cascade)
+
+  @@index([commandeId])
+  @@index([status])
+  @@index([number])
+  @@index([createdAt])
   @@map("invoices")
 }
 
+/// Notifications utilisateur
+model Notification {
+  id        String               @id @default(uuid())
+  userId    String
+  title     String               @db.VarChar(255)
+  message   String               @db.Text
+  type      NotificationType     @default(INFO)
+  priority  NotificationPriority @default(NORMALE)
+  data      String?              @db.Text
+  actionUrl String?              @db.VarChar(500)
+  isRead    Boolean              @default(false)
+  isDeleted Boolean              @default(false)
+  readAt    DateTime?
+  expiresAt DateTime?
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([isRead])
+  @@index([isDeleted])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+/// Pages de contenu éditorial (FAQ, CGV, etc.)
+model Page {
+  id              String     @id @default(uuid())
+  title           String     @db.VarChar(255)
+  slug            String     @unique @db.VarChar(255)
+  content         String     @db.LongText
+  excerpt         String?    @db.Text
+  type            PageType   @default(PAGE)
+  status          PageStatus @default(DRAFT)
+  metaTitle       String?    @db.VarChar(255)
+  metaDescription String?    @db.Text
+  metaKeywords    String?    @db.Text
+  category        String?    @db.VarChar(100)
+  tags            String?    @db.Text
+  sortOrder       Int        @default(0)
+  isPublic        Boolean    @default(true)
+  requireAuth     Boolean    @default(false)
+  publishedAt     DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([slug])
+  @@index([type])
+  @@index([status])
+  @@index([category])
+  @@index([isPublic])
+  @@index([publishedAt])
+  @@map("pages")
+}
+
+/// Énumération des rôles utilisateur
+enum Role {
+  USER
+  ADMIN
+  CORRECTOR
+}
+
+/// Statuts des commandes
 enum StatutCommande {
   EN_ATTENTE
   EN_COURS
   TERMINE
   ANNULEE
+  SUSPENDUE
+}
+
+/// Priorités des commandes
+enum Priorite {
+  FAIBLE
+  NORMALE
+  HAUTE
+  URGENTE
+}
+
+/// Types de fichiers
+enum FileType {
+  DOCUMENT
+  IMAGE
+  AUDIO
+  VIDEO
+  ARCHIVE
+  OTHER
+}
+
+/// Types de messages
+enum MessageType {
+  USER_MESSAGE
+  SYSTEM_MESSAGE
+  NOTIFICATION
+  SUPPORT_MESSAGE
+  ADMIN_MESSAGE
+}
+
+/// Statuts des messages
+enum MessageStatut {
+  BROUILLON
+  ENVOYE
+  DELIVRE
+  LU
+  ARCHIVE
+}
+
+/// Catégories de tickets de support
+enum SupportCategory {
+  GENERAL
+  TECHNIQUE
+  FACTURATION
+  COMMANDE
+  COMPTE
+  AUTRE
+}
+
+/// Priorités des tickets de support
+enum SupportPriority {
+  FAIBLE
+  NORMALE
+  HAUTE
+  URGENTE
+  CRITIQUE
+}
+
+/// Statuts des tickets de support
+enum SupportRequestStatus {
+  OUVERT
+  EN_COURS
+  EN_ATTENTE
+  RESOLU
+  FERME
+  ANNULE
+}
+
+/// Statuts des factures
+enum InvoiceStatus {
+  GENERATED
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+/// Types de notifications
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+  PAYMENT
+  ORDER
+  MESSAGE
+  SYSTEM
+}
+
+/// Priorités des notifications
+enum NotificationPriority {
+  FAIBLE
+  NORMALE
+  HAUTE
+  URGENTE
+}
+
+/// Types de pages
+enum PageType {
+  PAGE
+  FAQ
+  BLOG
+  LEGAL
+  HELP
+  LANDING
+}
+
+/// Statuts de publication des pages
+enum PageStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  SCHEDULED
 }
