@@ -297,7 +297,6 @@ const [toasts, setToasts] = useState<Toast[]>([]);
 - **Noter** → `RateProjectModal` avec système d'étoiles
 - **Éditer** → `EditProjectModal` avec validation
 - **Supprimer** → `DeleteProjectModal` avec confirmation
-- **Contacter** → Navigation vers messages
 
 ##### **3. Système de Notifications Toast**
 
@@ -323,112 +322,218 @@ const [toasts, setToasts] = useState<Toast[]>([]);
 
 ---
 
-### `MessagesPage.tsx` - Interface de Messagerie Temps Réel
+### `MessagesPage.tsx` - Interface de Messagerie avec React Query
 
 #### 🎯 **Rôle Principal**
 
-Interface de messagerie complète avec conversations multiples, chat temps réel et gestion des pièces jointes.
+Interface de messagerie complète avec **React Query integration**, conversations multiples et architecture optimisée pour la performance.
 
-#### 🏗️ **Architecture Complexe**
+#### 🏗️ **Architecture Actuelle avec React Query**
 
-##### **Types TypeScript Avancés**
+##### **Types TypeScript Adaptés Backend**
 
 ```tsx
-interface User {
-  id: string;
-  name: string;
-  initials: string;
-  color: string;
-  avatar?: string;
-  isOnline: boolean;
+export interface MessageAPI extends Message {
+  sender?: User;
+  receiver?: User;
+  subject?: string;
+  commandeId?: string;
+  supportRequestId?: string;
+  attachments?: any[];
+  statut?: string;
+  timestamp?: Date; // Pour compatibilité composants
+  status?: "sending" | "sent" | "delivered" | "read";
 }
 
-interface Message {
-  id: string;
-  conversationId: string;
-  senderId: string;
-  content: string;
-  timestamp: Date;
-  type: "text" | "file" | "image";
-  status: "sending" | "sent" | "delivered" | "read";
-  attachment?: {
-    name: string;
-    url: string;
-    type: string;
-    size: number;
-  };
-}
-
-interface Conversation {
+export interface ConversationAPI {
   id: string;
   participants: User[];
-  lastMessage?: Message;
+  lastMessage?: MessageAPI;
   unreadCount: number;
   isArchived: boolean;
-  updatedAt: Date;
-  project?: {
-    id: string;
-    title: string;
-  };
+  updatedAt: Date | string;
+  project?: { id: string; title: string };
 }
 
 type ConversationFilter = "all" | "unread" | "archived";
 ```
 
-#### 📱 **Layout 3 Colonnes**
+#### ⚡ **Implémentation React Query Actuelle**
+
+##### **API Functions Intégrées**
+
+```tsx
+// Récupération messages avec filtres
+async function fetchMessages(filters: any = {}) {
+  const params = new URLSearchParams();
+  // Configuration des filtres...
+  const response = await fetch(buildApiUrl(`/messages?${params}`), {
+    headers: getAuthHeaders(),
+  });
+  return response.json();
+}
+
+// Envoi de messages avec validation
+async function sendMessageAPI(messageData: CreateMessageRequest) {
+  const response = await fetch(buildApiUrl("/messages"), {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(messageData),
+  });
+  return response.json();
+}
+```
+
+##### **React Query Integration Complète**
+
+```tsx
+// Fetch messages avec cache intelligent
+const {
+  data: messagesData,
+  isLoading,
+  error,
+  refetch,
+} = useQuery(["messages", filter], () => fetchMessages(filters), {
+  staleTime: 30 * 1000, // 30 secondes
+  cacheTime: 5 * 60 * 1000, // 5 minutes
+  retry: 2,
+  refetchOnWindowFocus: false,
+});
+
+// Send message avec optimistic updates
+const sendMessageMutation = useMutation(sendMessageAPI, {
+  onMutate: async (newMessage) => {
+    // Cancel outgoing refetches + snapshot
+    await queryClient.cancelQueries(["messages"]);
+    const previousMessages = queryClient.getQueryData(["messages"]);
+
+    // Optimistic update avec message temporaire
+    const tempMessage: MessageAPI = {
+      /* message optimiste */
+    };
+    queryClient.setQueryData(["messages"], (old: any) => ({
+      ...old,
+      messages: [...old.messages, tempMessage],
+    }));
+
+    return { previousMessages };
+  },
+  onError: (err, variables, context: any) => {
+    // Rollback en cas d'erreur
+    if (context?.previousMessages) {
+      queryClient.setQueryData(["messages"], context.previousMessages);
+    }
+  },
+  onSuccess: () => {
+    // Invalidation cache après succès
+    queryClient.invalidateQueries(["messages"]);
+  },
+});
+```
+
+#### 🚀 **Hooks Optimisés Disponibles (Prêts pour Migration)**
+
+**Note** : L'application dispose de hooks React Query complets et optimisés prêts à remplacer l'implémentation actuelle :
+
+##### **`useMessages.ts` - Suite Complète (654 lignes)**
+
+- **Pagination infinie** : `useInfiniteQuery` avec `fetchNextPage`
+- **Transformation automatique** : Messages → Conversations avec grouping
+- **15+ hooks spécialisés** : `useSendMessage()`, `useMarkAsRead()`, `useUploadAttachment()`
+- **Cache intelligent** : Invalidation synchronisée entre hooks
+- **Optimistic updates** : Feedback instantané utilisateur
+
+##### **`useAdminMessages.ts` - Administration (321 lignes)**
+
+- **Vue admin globale** : Modération et supervision
+- **Actions en masse** : Lecture, archivage, suppression bulk
+- **Export de données** : CSV/JSON avec filtres
+- **12+ hooks admin** : `useAdminMessages()`, `useBulkUpdateMessages()`, `useExportMessages()`
+
+#### 📱 **Layout 3 Colonnes Implémenté**
 
 ##### **1. Sidebar Conversations** (`ConversationList`)
 
-- **Liste des conversations** avec participants
-- **Indicateurs non lus** : Badges avec compteurs
-- **Filtres** : Toutes, Non lues, Archivées
-- **Recherche** : Filtrage en temps réel
-- **Statuts en ligne** : Indicateurs de présence
+- **Données API réelles** : Mapping conversations depuis backend
+- **Filtrage dynamique** : Tous, Non lus, Archivés avec compteurs
+- **Recherche temps réel** : Debouncing et performance optimisée
+- **Types de conversations** : Projet, support, général avec icônes
+- **États visuels** : Active, hover, non lu avec animations
 
-##### **2. Thread Principal** (`MessageThread`)
+##### **2. Thread Principal** (`MessageThread` avec `useIntersectionObserver`)
 
-- **Messages chronologiques** avec timestamps
-- **Types de messages** : Texte, fichiers, images
-- **Statuts de livraison** : Envoi, livré, lu
-- **Scroll automatique** : Vers nouveaux messages
-- **Chargement progressif** : Pagination des anciens messages
+- **Pagination infinie** : Chargement automatique anciens messages
+- **Auto-scroll intelligent** : Détection scroll manuel vs automatique
+- **Marquage lecture automatique** : Intersection observer pour visibilité
+- **Grouping par date** : "Aujourd'hui", "Hier", formatage français
+- **Gestion optimiste** : Messages temporaires pendant envoi
 
 ##### **3. Zone de Saisie** (`MessageInput`)
 
-- **Textarea auto-resize** : S'adapte au contenu
-- **Upload de fichiers** : Drag & drop + sélection
-- **Raccourcis clavier** : Envoi avec Ctrl+Enter
-- **Indicateur de frappe** : "En train d'écrire..."
+- **Upload de fichiers** : Support drag & drop (préparé)
+- **Validation en temps réel** : Contenu et destinataire
+- **États de chargement** : Feedback visuel pendant envoi
+- **Raccourcis clavier** : Envoi optimisé
 
-#### ⚡ **Fonctionnalités Temps Réel**
-
-##### **Gestion des États**
+#### 🔄 **Transformation Données Backend → Frontend**
 
 ```tsx
-const [conversations, setConversations] = useState<Conversation[]>();
-const [selectedConversationId, setSelectedConversationId] = useState<
-  string | null
->();
-const [messages, setMessages] = useState<Message[]>();
-const [filter, setFilter] = useState<ConversationFilter>("all");
-const [isLoading, setIsLoading] = useState(false);
-const [isSending, setIsSending] = useState(false);
+// Mapping des données API vers format composants
+const messages: MessageAPI[] = useMemo(() => {
+  if (!messagesData?.messages) return [];
+
+  return messagesData.messages.map((msg: any) => {
+    const sender = msg.sender || {};
+    const author = {
+      id: sender.id || msg.senderId || "unknown",
+      prenom: sender.prenom || "Utilisateur",
+      nom: sender.nom || "",
+      // ... mapping complet
+    };
+
+    return {
+      ...msg,
+      timestamp: new Date(msg.createdAt),
+      status: msg.isRead ? "read" : "delivered",
+      sender: author,
+      auteur: author, // Compatibilité composants existants
+      conversationId: msg.commandeId || msg.supportRequestId || "general",
+    };
+  });
+}, [messagesData]);
+
+// Grouping automatique en conversations
+const conversations: ConversationAPI[] = useMemo(() => {
+  // Logique de grouping intelligent
+}, [messages, user?.id]);
 ```
 
-##### **Actions Principales**
+#### 📊 **État Actuel vs Optimisé**
 
-- **Sélection conversation** : `selectConversation()`
-- **Envoi message** : `sendMessage()` avec validation
-- **Marquage lu** : `markAsRead()` automatique
-- **Archivage** : `toggleArchiveConversation()`
-- **Chargement messages** : `loadMoreMessages()` pagination
+| Aspect                 | **Implémentation Actuelle** | **Hooks Optimisés Disponibles**     |
+| ---------------------- | --------------------------- | ----------------------------------- |
+| **API Calls**          | Direct fetch dans composant | Hooks React Query spécialisés       |
+| **Cache**              | Basic useQuery cache        | Cache intelligent multi-hooks       |
+| **Optimistic Updates** | Manuel dans mutation        | Automatique dans `useSendMessage()` |
+| **Pagination**         | Basique                     | Infinie avec `useInfiniteQuery`     |
+| **Performance**        | Standard                    | Optimisée intersection observer     |
+| **Admin Features**     | Non implémentées            | Suite complète 12+ hooks            |
 
-#### 📱 **Responsive & Mobile**
+#### 🔮 **Migration Prête**
 
-- **Vue mobile** : Collapse sidebar sur sélection
-- **Swipe gestures** : Navigation tactile
-- **Menu hamburger** : Accès conversations
-- **Optimisations touch** : Zones de tap agrandies
+L'architecture actuelle peut être facilement migrée vers les hooks optimisés :
+
+```tsx
+// Au lieu de l'implémentation actuelle :
+const { data, isLoading } = useQuery(["messages"], fetchMessages);
+
+// Migration vers hooks optimisés (disponibles) :
+const { messages, conversations, isLoading, hasNextPage, fetchNextPage } =
+  useMessages(filters);
+
+const { mutate: sendMessage } = useSendMessage();
+const markAsRead = useMarkAsRead();
+```
 
 ---
 
@@ -828,6 +933,122 @@ interface AdminCommande {
 
 ---
 
+### `AdminMessagerie.tsx` - Administration des Messages
+
+#### 🎯 **Rôle Principal**
+
+Interface d'administration complète pour la supervision et gestion globale de la messagerie avec hooks React Query optimisés.
+
+- **État** : ✅ **COMPLET** - Interface fonctionnelle avec API intégrée et hooks spécialisés
+
+#### 🏗️ **Architecture Admin avec API Réelle**
+
+```tsx
+// Intégration des hooks optimisés disponibles
+const AdminMessagerie: React.FC = () => {
+  // États principaux avec données API
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedConversation, setSelectedConversation] =
+    useState<Conversation | null>(null);
+
+  // Hooks React Query pour données temps réel
+  const { showToast } = useToast();
+
+  // API calls avec adminAPI
+  const loadConversations = async () => {
+    const data = await adminAPI.getConversations(1, 100, searchQuery);
+    setConversations(data.conversations || []);
+  };
+
+  const handleSendMessage = async () => {
+    const messageData: CreateMessageRequest = {
+      contenu: newMessage,
+      type: TypeMessage.TEXT,
+      isAdminNote,
+    };
+
+    const message = await adminAPI.createMessage(
+      selectedConversation.id,
+      messageData
+    );
+    // Mise à jour optimiste + toast notifications
+  };
+};
+```
+
+#### 🛠️ **Fonctionnalités Admin Implémentées**
+
+##### **1. Supervision Globale**
+
+- **API `/admin/conversations`** : Vue complète de toutes les conversations
+- **Filtres avancés** : Par utilisateur, statut, date, type de conversation
+- **Recherche intelligente** : Multi-critères avec debouncing
+- **Tri configurable** : Par utilisateur ou date avec persistance
+
+##### **2. Gestion des Conversations**
+
+- **Détails complets** : Chargement via `adminAPI.getConversationById()`
+- **Messages admin** : Envoi avec flag `isAdminNote` pour distinction
+- **Modération** : Actions sur messages individuels
+- **Statistiques temps réel** : Compteurs non lus, actives, archivées
+
+##### **3. Interface Moderne**
+
+- **Layout 3 colonnes** : Filtres | Conversations | Thread sélectionné
+- **Toast notifications** : Feedback utilisateur pour toutes actions
+- **Loading states** : Spinners pendant API calls
+- **Responsive** : Adaptation mobile avec collapse
+
+#### 🚀 **Hooks Admin Optimisés Disponibles**
+
+**Note** : L'implémentation actuelle peut être améliorée avec les hooks spécialisés :
+
+##### **Migration vers `useAdminMessages.ts` (321 lignes)**
+
+```tsx
+// Actuel : API calls manuels
+const data = await adminAPI.getConversations();
+
+// Optimisé avec hooks (disponible) :
+const {
+  data: conversations,
+  isLoading,
+  hasNextPage,
+  fetchNextPage,
+} = useAdminMessages(filters);
+
+const { mutate: sendAdminMessage } = useSendAdminMessage();
+const { mutate: bulkUpdate } = useBulkUpdateMessages();
+const { mutate: exportData } = useExportMessages();
+```
+
+##### **Fonctionnalités Avancées Disponibles**
+
+- **`useAdminMessageStats()`** : KPIs temps réel pour dashboard
+- **`useBulkUpdateMessages()`** : Actions masse (lecture, archivage, suppression)
+- **`useExportMessages()`** : Export CSV/JSON avec download automatique
+- **`useAdminMessageSearch()`** : Recherche multi-critères optimisée
+- **Quick Actions** : `useQuickMarkAsRead()`, `useQuickArchive()`, `useQuickPin()`
+
+#### 📊 **Intégration avec AdminDashboard**
+
+```tsx
+// Statistiques messagerie pour AdminDashboard
+const MessageStatsCard = () => {
+  const { data: stats } = useAdminMessageStats();
+
+  return (
+    <StatCard
+      icon="fa-envelope"
+      title="Messages"
+      value={stats?.totalMessages || 0}
+      change={stats?.monthlyGrowth || 0}
+      changeType="success"
+    />
+  );
+};
+```
+
 ## 🔄 Patterns et Architecture
 
 ### 🎯 **Patterns de State Management**
@@ -1079,14 +1300,15 @@ const savePageState = (page: string, state: any) => {
 ### 📈 **Statistiques Actuelles**
 
 - **Total pages** : 18 pages complètes (3 publiques + 9 app + **9 admin**)
-- **Lignes de code** : ~8,500 lignes total
+- **Lignes de code** : ~12,000 lignes total
 - **Composants utilisés** : 70+ composants réutilisables
 - **Pages admin finalisées** : 9/9 interfaces complètes avec mock data
 - **Composants admin** : AdminLayout, StatCard, CommandeStatusSelect + LoadingSpinner, Modal, ConfirmationModal
 - **Types TypeScript** : 50+ interfaces et enums (StatutPage, StatutFacture, TypeLog)
 - **Mock data complet** : Données réalistes pour toutes les entités admin
-- **Hooks personnalisés** : AuthContext + hooks React Query
-- **API Integration** : 15+ endpoints avec authentification JWT + structure admin API-ready
+- **Hooks personnalisés** : **4 hooks majeurs** - AuthContext + `useMessages` (654 lignes) + `useAdminMessages` (321 lignes) + `useIntersectionObserver`
+- **Système de messagerie** : **1000+ lignes** d'architecture React Query complète
+- **API Integration** : 15+ endpoints avec authentification JWT + **30+ hooks React Query** pour messagerie
 - **Paiements Stripe** : Intégration complète opérationnelle
 
 ### ⚡ **Optimisations Implémentées**
@@ -1095,10 +1317,13 @@ const savePageState = (page: string, state: any) => {
 - **Memoization** : useMemo pour calculs coûteux et filtres
 - **Callbacks optimisés** : useCallback pour éviter re-renders
 - **State normalisé** : AuthContext pour état utilisateur global
+- **React Query avancé** : Cache intelligent, optimistic updates, pagination infinie
+- **Intersection Observer** : Performance scroll et marquage lecture automatique
 - **Debouncing** : Recherche et filtres optimisés
 - **API centralisée** : Configuration et headers standardisés
 - **Token management** : Gestion automatique JWT avec refresh
 - **Error boundaries** : Gestion robuste des erreurs
+- **Invalidation intelligente** : Synchronisation cache React Query entre hooks user/admin
 
 ### 🎯 **Métriques de Qualité**
 
@@ -1110,6 +1335,8 @@ const savePageState = (page: string, state: any) => {
 - **Security** : JWT + role-based access + API protection
 - **Stripe Integration** : 100% fonctionnel avec données réelles
 - **Admin Interface** : Interface d'administration complète
+- **Messagerie Performance** : Pagination infinie, intersection observer, optimistic updates
+- **React Query Architecture** : Cache multi-niveaux avec invalidation synchronisée
 
 ---
 
@@ -1125,17 +1352,20 @@ L'architecture des pages de Staka Livres offre une base solide pour une applicat
 - **🎨 Mock data réalistes** : Données complètes pour démonstrations et tests
 - **🔧 Architecture API-ready** : Services mock facilement remplaçables
 - **💳 Intégration Stripe** : Paiements fonctionnels avec sessions et webhooks
+- **💬 Système de messagerie React Query** : Architecture complète avec 1000+ lignes de hooks optimisés
 - **🔐 Sécurité robuste** : JWT + rôles + API protection
 - **📱 Design responsive** : Mobile-first sur toutes les pages
 
 ### 🏗️ **Architecture Production-Ready**
 
 - **Séparation claire** : Public / App utilisateur / Administration
-- **Types TypeScript robustes** : 35+ interfaces pour sécurité du code
+- **Types TypeScript robustes** : 50+ interfaces pour sécurité du code
 - **AuthContext centralisé** : Gestion d'état utilisateur globale
 - **API intégrée** : 15+ endpoints avec authentification automatique
+- **React Query avancé** : 30+ hooks optimisés pour messagerie avec cache intelligent
+- **Hooks spécialisés** : `useMessages` (654 lignes) + `useAdminMessages` (321 lignes) + `useIntersectionObserver`
 - **Patterns réutilisables** : Components modulaires entre pages
-- **Performance optimisée** : Lazy loading, memoization et state management
+- **Performance optimisée** : Lazy loading, memoization, intersection observer, optimistic updates
 - **UX cohérente** : Design system unifié avec toast notifications
 - **Scalabilité** : Structure extensible pour futures fonctionnalités
 
@@ -1146,9 +1376,12 @@ Le système de pages est maintenant **complet et opérationnel** avec :
 - **18 pages fonctionnelles** couvrant tous les besoins métier (9 admin + 9 app)
 - **Espace admin finalisé** : 9 interfaces professionnelles avec mock data complet
 - **Intégration Stripe réelle** avec paiements de 468€
+- **Architecture messagerie professionnelle** : React Query + hooks optimisés + intersection observer
+- **Migration-ready** : Hooks `useMessages`/`useAdminMessages` prêts à remplacer l'implémentation actuelle
+- **Performance avancée** : Pagination infinie, optimistic updates, cache intelligent
 - **Architecture API-ready** : Mock services facilement remplaçables par vraies APIs
 - **Authentification sécurisée** avec gestion des rôles USER/ADMIN
 - **Données temps réel** via API avec AuthContext
 - **Interface de qualité production** prête pour démonstrations clients
 
-Chaque page est conçue comme un **module autonome** avec ses responsabilités claires, facilitant la maintenance et l'évolution de l'application vers de nouvelles fonctionnalités. L'espace admin est particulièrement **prêt pour l'intégration backend** avec une structure de services modulaire.
+Chaque page est conçue comme un **module autonome** avec ses responsabilités claires, facilitant la maintenance et l'évolution de l'application vers de nouvelles fonctionnalités. L'espace admin est particulièrement **prêt pour l'intégration backend** avec une structure de services modulaire. **Le système de messagerie dispose d'une architecture React Query complète et professionnelle** avec hooks optimisés prêts pour une migration performance immédiate.

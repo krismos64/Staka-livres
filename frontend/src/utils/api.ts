@@ -1,5 +1,6 @@
 // Configuration API pour les appels backend
-const API_BASE_URL = "http://localhost:3001";
+// En mode développement, Vite proxy /api vers le backend
+const API_BASE_URL = "/api";
 
 export const apiConfig = {
   baseURL: API_BASE_URL,

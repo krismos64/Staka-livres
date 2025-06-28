@@ -22,6 +22,13 @@ export default defineConfig({
       usePolling: true,
       interval: 1000,
     },
+    proxy: {
+      "/api": {
+        target: "http://backend:3001",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ""),
+      },
+    },
   },
   preview: {
     host: "0.0.0.0",

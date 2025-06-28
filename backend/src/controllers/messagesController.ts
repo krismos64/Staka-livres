@@ -98,6 +98,22 @@ const hasMessageAccess = async (
   return false;
 };
 
+// Mapper les types frontend vers les types Prisma
+const mapFrontendTypeToPrisma = (frontendType: string): MessageType => {
+  switch (frontendType) {
+    case "TEXT":
+    case "FILE":
+    case "IMAGE":
+      return MessageType.USER_MESSAGE;
+    case "SYSTEM":
+      return MessageType.SYSTEM_MESSAGE;
+    case "ADMIN_NOTE":
+      return MessageType.ADMIN_MESSAGE;
+    default:
+      return MessageType.USER_MESSAGE;
+  }
+};
+
 // Créer un nouveau message
 export const createMessage = async (
   req: Request,
@@ -116,9 +132,14 @@ export const createMessage = async (
       supportRequestId,
       subject,
       content,
-      type = MessageType.USER_MESSAGE,
+      type: frontendType,
       parentId,
     }: CreateMessageRequest = req.body;
+
+    // Mapper le type frontend vers le type Prisma
+    const type = frontendType
+      ? mapFrontendTypeToPrisma(frontendType)
+      : MessageType.USER_MESSAGE;
 
     // Validation des champs requis
     if (!content || content.trim().length === 0) {

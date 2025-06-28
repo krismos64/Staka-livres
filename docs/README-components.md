@@ -247,6 +247,61 @@ src/
 - **Export** : `usePricing(pageCount: number)`
 - **Return** : `{ totalPrice: string, formattedPrice: string }`
 
+#### `hooks/useIntersectionObserver.ts` - Observation de Visibilité
+
+- **Rôle** : Hook pour détecter la visibilité d'éléments avec Intersection Observer API
+- **Features** :
+  - Détection d'entrée/sortie dans le viewport
+  - Configuration personnalisable (threshold, rootMargin, root)
+  - Performance optimisée avec callbacks mémorisés
+  - Support TypeScript complet
+- **Export** : `useInView(options?: UseInViewOptions)`
+- **Return** : `{ ref: React.RefObject<HTMLDivElement>, inView: boolean }`
+- **Usage** : Pagination infinie, marquage messages lus, lazy loading
+
+#### `hooks/useMessages.ts` - Système de Messagerie Complet
+
+- **Rôle** : Suite complète de hooks pour la messagerie utilisateur (654 lignes)
+- **Features** :
+  - **API Functions** : fetchMessages, sendMessage, updateMessage, deleteMessage, uploadAttachment
+  - **Transformation** : Messages → Conversations avec grouping intelligent
+  - **React Query Integration** : Cache, invalidation, optimistic updates
+  - **Pagination infinie** : useInfiniteQuery avec fetchNextPage
+  - **Gestion des statuts** : non lu, lu, archivé, épinglé
+  - **Upload fichiers** : attachments avec FormData
+- **Hooks Exportés** :
+  - `useMessages(filters)` - Liste principale avec pagination
+  - `useSendMessage()` - Envoi avec optimistic updates
+  - `useMessage(id)` - Détail d'un message avec thread
+  - `useUpdateMessage()` - Modification statut/contenu
+  - `useDeleteMessage()` - Suppression douce/dure
+  - `useMarkAsRead()` - Marquage lecture individuel
+  - `useMarkConversationAsRead()` - Marquage conversation complète
+  - `useUploadAttachment()` - Upload fichiers avec progress
+  - `useConversationMessages()` - Messages d'une conversation
+  - `useUnreadCount()` - Compteur messages non lus
+  - `useMessageStats()` - Statistiques messagerie
+
+#### `hooks/useAdminMessages.ts` - Administration Messagerie
+
+- **Rôle** : Suite administrative pour la gestion globale des messages (321 lignes)
+- **Features** :
+  - **Gestion admin complète** : vue globale, modération, statistiques
+  - **Filtres avancés** : par utilisateur, projet, support, statut, priorité
+  - **Actions en masse** : lecture, archivage, suppression, épinglage
+  - **Export de données** : CSV/JSON avec filtres de date
+  - **Recherche intelligente** : multi-critères avec highlights
+- **Hooks Admin Exportés** :
+  - `useAdminMessages(filters)` - Vue globale admin avec pagination
+  - `useSendAdminMessage()` - Envoi messages administratifs
+  - `useUpdateAdminMessage()` - Modération et annotations
+  - `useDeleteAdminMessage()` - Suppression avec contrôles admin
+  - `useBulkUpdateMessages()` - Actions en masse
+  - `useExportMessages()` - Export automatique avec download
+  - `useAdminMessageStats()` - KPIs et métriques admin
+  - `useAdminMessageSearch()` - Recherche multi-critères
+  - `useQuickMarkAsRead()`, `useQuickArchive()`, `useQuickPin()` - Actions rapides
+
 ## 🏛️ Module `layout/` - Structure et Mise en Page
 
 ### `MainLayout.tsx` - Layout Principal Application
@@ -507,28 +562,52 @@ src/
 
 - **Rôle** : Sidebar avec toutes les conversations
 - **Features** :
-  - Liste des contacts
-  - Indicateurs de messages non lus
-  - Recherche de conversations
-  - Tri par date
+  - Liste des contacts avec données réelles via API
+  - **Indicateurs non lus** : compteurs dynamiques avec badges colorés
+  - **Recherche de conversations** : filtre en temps réel
+  - **Tri intelligent** : par date du dernier message
+  - **Types de conversations** : projet, support, général avec icônes distinctives
+  - **États visuels** : active, hover, non lu avec animations
+- **Props** : `conversations`, `activeConversationId`, `onConversationSelect`, `searchTerm`, `onSearchChange`
+- **Hooks** : `useMessages`, `useUnreadCount` pour données dynamiques
 
-### `MessageThread.tsx` - Fil de Conversation
+### `MessageThread.tsx` - Fil de Conversation Avancé
 
-- **Rôle** : Affichage des messages d'une conversation
+- **Rôle** : Affichage des messages avec fonctionnalités UX avancées (297 lignes)
 - **Features** :
-  - Messages avec timestamps
-  - Indicateurs de lecture
-  - Scroll automatique
-  - Chargement des anciens messages
+  - **Pagination infinie** : chargement automatique des anciens messages avec `useIntersectionObserver`
+  - **Auto-scroll intelligent** : détection scroll manuel vs automatique
+  - **Marquage automatique comme lu** : intersection observer pour messages visibles
+  - **Grouping par date** : "Aujourd'hui", "Hier", dates complètes
+  - **États de chargement** : spinners pour initial et pagination
+  - **Gestion scroll** : préservation position, scroll vers nouveau message
+  - **Accessibility** : focus management et navigation clavier
+- **Props** : `messages`, `users`, `isLoading`, `onLoadMore`, `messagesEndRef`, `onMarkAsRead`, `canLoadMore`, `isFetchingNextPage`, `currentUserId`
+- **Hooks** : `useInView` (intersection observer), `useState`/`useCallback` pour état scroll
+- **Fonctions** :
+  - `scrollToBottom()` - Auto-scroll conditionnel
+  - `handleScroll()` - Détection position utilisateur
+  - `handleMessageVisible()` - Marquage lecture automatique
+  - `groupedMessages()` - Grouping par date avec formatage français
 
-### `MessageItem.tsx` - Élément de Message
+### `MessageItem.tsx` - Élément de Message Intelligent
 
-- **Rôle** : Composant individuel pour chaque message
+- **Rôle** : Composant individuel pour chaque message avec interactions complètes (217 lignes)
 - **Features** :
-  - Avatar et nom expéditeur
-  - Contenu du message
-  - Timestamp formaté
-  - Actions sur le message
+  - **Layout adaptatif** : expéditeur vs destinataire avec styles différents
+  - **Avatar et métadonnées** : photo, nom, timestamp formaté en français
+  - **Contenu riche** : support HTML, liens cliquables, mentions utilisateur
+  - **Statuts visuels** : envoyé, livré, lu avec icônes distinctives
+  - **Actions contextuelles** : répondre, transférer, supprimer, épingler
+  - **Pièces jointes** : prévisualisation images, téléchargement fichiers
+  - **Animations** : hover effects, loading states, transitions fluides
+- **Props** : `message`, `user`, `isCurrentUser`, `onReply`, `onEdit`, `onDelete`, `onMarkAsRead`, `showActions`
+- **État** : `isActionsOpen`, `isEditing`, `uploadProgress`
+- **Fonctions** :
+  - `formatTimestamp()` - Formatage date/heure français
+  - `handleActionClick()` - Gestion actions contextuelles
+  - `handleFileDownload()` - Téléchargement pièces jointes
+  - `renderAttachment()` - Rendu attachments selon type
 
 ## 📚 Module `project/` - Gestion des Projets
 
@@ -878,23 +957,26 @@ import { showToast } from '../../utils/toast';
 - **Pages** : 12 pages principales + **9 pages admin complètes**
 - **Admin complet** : Dashboard, Utilisateurs, Commandes, Factures, FAQ, Tarifs, Pages, Statistiques, Logs
 - **Composants communs** : LoadingSpinner, Modal, ConfirmationModal avec props TypeScript
-- **Hooks personnalisés** : 1 hook de pricing + AuthContext + hooks React Query
+- **Hooks personnalisés** : **4 hooks majeurs** - `usePricing`, `useIntersectionObserver`, `useMessages` (654 lignes), `useAdminMessages` (321 lignes)
+- **Système de messagerie** : Architecture complète avec 3 composants + 2 suites de hooks React Query
 - **Modales** : 8 modales pour toutes les interactions
 - **Formulaires** : 7 formulaires avec validation complète
 - **Mock data** : Données réalistes pour toutes les entités admin
-- **API Integration** : 15+ endpoints avec authentification JWT + structure admin API-ready
+- **API Integration** : 15+ endpoints avec authentification JWT + **30+ hooks React Query** pour messagerie
 - **Paiements Stripe** : intégration complète et fonctionnelle
 
 ### ⚡ **Optimisations Appliquées**
 
 - **Lazy loading ready** : structure modulaire par fonctionnalité
 - **Bundle splitting** : séparation landing/app/admin
-- **Memoization** : useMemo dans usePricing et AuthContext
+- **Memoization** : useMemo dans usePricing, useIntersectionObserver et hooks messagerie
 - **Event handlers** : optimisés pour éviter re-renders
 - **Images** : optimisées et responsive
-- **API calls** : centralisées dans utils/api.ts
-- **State management** : AuthContext pour état global utilisateur
+- **API calls** : centralisées dans utils/api.ts avec React Query cache intelligent
+- **State management** : AuthContext + React Query pour état global messagerie
 - **Error handling** : toast notifications centralisées
+- **Performance messagerie** : intersection observer, pagination infinie, optimistic updates
+- **Invalidation intelligente** : cache React Query synchronisé entre hooks utilisateur/admin
 
 ---
 
@@ -905,9 +987,10 @@ Cette architecture modulaire offre une base solide pour une application SaaS com
 - **Landing page marketing** complète et optimisée pour la conversion
 - **Application dashboard** fonctionnelle avec toutes les features essentielles
 - **Interface d'administration** moderne pour la gestion back-office
+- **Système de messagerie complet** : 1000+ lignes de hooks React Query, pagination infinie, intersection observer
 - **Intégration Stripe** complète et fonctionnelle pour les paiements
 - **Système de design** cohérent avec Tailwind CSS
-- **Performance** optimisée et scalable
+- **Performance** optimisée et scalable avec hooks React Query avancés
 - **Sécurité JWT** avec gestion des rôles USER/ADMIN
 - **Maintenabilité** élevée avec séparation claire des responsabilités
 
@@ -920,10 +1003,11 @@ Le frontend est maintenant **complet et opérationnel** avec :
 - **📊 Dashboard utilisateur** : projets, facturation, messagerie, profil
 - **👨‍💼 Administration** : gestion utilisateurs, commandes, statistiques
 - **💳 Paiements Stripe** : sessions de checkout, webhooks, gestion statuts
+- **💬 Messagerie unifiée** : système complet avec React Query, pagination infinie, intersection observer
 - **🎨 UI/UX** : design moderne, responsive, animations fluides
-- **🛠️ API Integration** : 15+ endpoints avec gestion d'erreurs
-- **🏗️ Architecture** : 55+ composants modulaires et réutilisables
+- **🛠️ API Integration** : 15+ endpoints backend + 30+ hooks React Query messagerie
+- **🏗️ Architecture** : 70+ composants modulaires et réutilisables
 
 ### 🚀 **Prêt pour Production**
 
-L'architecture frontend est maintenant **production-ready** avec une expérience utilisateur complète, de la découverte des services sur la landing page jusqu'à la gestion avancée des projets et paiements dans l'application, plus un **espace d'administration complet** avec 9 interfaces fonctionnelles. Le système est **scalable**, **maintenable** et **sécurisé**, prêt pour l'intégration API backend.
+L'architecture frontend est maintenant **production-ready** avec une expérience utilisateur complète, de la découverte des services sur la landing page jusqu'à la gestion avancée des projets, paiements et **messagerie en temps réel** dans l'application, plus un **espace d'administration complet** avec 9 interfaces fonctionnelles. Le système est **scalable**, **maintenable** et **sécurisé**, avec une **architecture de messagerie professionnelle** utilisant les meilleures pratiques React Query, prêt pour l'intégration API backend.

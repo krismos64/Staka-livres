@@ -5,14 +5,8 @@ import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useToast } from "../../components/layout/ToastProvider";
 import {
   Conversation,
-  ConversationStats,
-  ConversationTag,
   CreateMessageRequest,
-  Message as MessageType,
-  PrioriteConversation,
-  StatutConversation,
   TypeMessage,
-  UpdateConversationRequest,
 } from "../../types/shared";
 import { adminAPI } from "../../utils/adminAPI";
 
@@ -21,32 +15,20 @@ const AdminMessagerie: React.FC = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] =
     useState<Conversation | null>(null);
-  const [conversationStats, setConversationStats] =
-    useState<ConversationStats | null>(null);
-  const [tags, setTags] = useState<ConversationTag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingConversation, setIsLoadingConversation] = useState(false);
   const [isLoadingMessage, setIsLoadingMessage] = useState(false);
 
-  // États de filtrage et recherche
+  // États de filtrage et recherche simplifiés
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState<StatutConversation | "">(
-    ""
-  );
-  const [selectedPriority, setSelectedPriority] = useState<
-    PrioriteConversation | ""
-  >("");
-  const [selectedUserId, setSelectedUserId] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [onlyUnread, setOnlyUnread] = useState(false);
+  const [sortBy, setSortBy] = useState<"date" | "user">("user");
 
   // États des modales et actions
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<
     string | null
   >(null);
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-  const [showTagModal, setShowTagModal] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [isAdminNote, setIsAdminNote] = useState(false);
 
@@ -57,13 +39,6 @@ const AdminMessagerie: React.FC = () => {
     const loadInitialData = async () => {
       try {
         setIsLoading(true);
-        const [statsData, tagsData] = await Promise.all([
-          adminAPI.getConversationStats(),
-          adminAPI.getConversationTags(),
-        ]);
-
-        setConversationStats(statsData);
-        setTags(tagsData);
         await loadConversations();
       } catch (error) {
         console.error("Erreur chargement données:", error);
@@ -80,22 +55,66 @@ const AdminMessagerie: React.FC = () => {
     loadInitialData();
   }, []);
 
-  // Charger les conversations avec filtres
+  // Charger les conversations avec filtres simplifiés
   const loadConversations = async () => {
     try {
+      // Appeler l'API admin pour récupérer les vraies conversations
       const data = await adminAPI.getConversations(
-        currentPage,
-        20,
-        searchQuery,
-        selectedStatus || undefined,
-        selectedPriority || undefined,
-        selectedUserId || undefined
+        1,
+        100, // Charger plus de conversations pour un meilleur tri côté client
+        searchQuery
       );
-      setConversations(data);
+
+      // Extraire les conversations
+      let conversationsList: Conversation[] = [];
+      if (data && typeof data === "object" && "conversations" in data) {
+        conversationsList = (data as any).conversations || [];
+      } else if (Array.isArray(data)) {
+        conversationsList = data;
+      }
+
+      // Filtrer par statut lu/non lu si nécessaire
+      if (onlyUnread) {
+        conversationsList = conversationsList.filter(
+          (conv) => conv.unreadCount > 0
+        );
+      }
+
+      // Trier selon la préférence
+      if (sortBy === "user") {
+        conversationsList.sort((a, b) => {
+          const nameA = getUserDisplayName(a);
+          const nameB = getUserDisplayName(b);
+          return nameA.localeCompare(nameB);
+        });
+      } else {
+        conversationsList.sort(
+          (a, b) =>
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
+      }
+
+      setConversations(conversationsList);
     } catch (error) {
       console.error("Erreur chargement conversations:", error);
       showToast("error", "Erreur", "Impossible de charger les conversations");
+      setConversations([]);
     }
+  };
+
+  // Fonction utilitaire pour extraire le nom d'utilisateur d'une conversation
+  const getUserDisplayName = (conversation: Conversation): string => {
+    if (Array.isArray(conversation.participants)) {
+      return conversation.participants.join(" ↔ ");
+    }
+    if (conversation.participants?.client) {
+      return `${conversation.participants.client.prenom} ${conversation.participants.client.nom}`;
+    }
+    // Extraire le nom depuis le titre si possible
+    if (conversation.titre.includes("Conversation avec")) {
+      return conversation.titre.replace("Conversation avec ", "");
+    }
+    return conversation.titre;
   };
 
   // Recharger les conversations quand les filtres changent
@@ -104,13 +123,7 @@ const AdminMessagerie: React.FC = () => {
       const debounceTimer = setTimeout(loadConversations, 300);
       return () => clearTimeout(debounceTimer);
     }
-  }, [
-    searchQuery,
-    selectedStatus,
-    selectedPriority,
-    selectedUserId,
-    currentPage,
-  ]);
+  }, [searchQuery, onlyUnread, sortBy]);
 
   // Charger les détails d'une conversation
   const loadConversationDetails = async (conversationId: string) => {
@@ -176,44 +189,6 @@ const AdminMessagerie: React.FC = () => {
     }
   };
 
-  // Mettre à jour une conversation
-  const handleUpdateConversation = async (
-    conversationId: string,
-    updateData: UpdateConversationRequest
-  ) => {
-    try {
-      const updatedConversation = await adminAPI.updateConversation(
-        conversationId,
-        updateData
-      );
-
-      // Mettre à jour les états locaux
-      if (selectedConversation && selectedConversation.id === conversationId) {
-        setSelectedConversation(updatedConversation);
-      }
-
-      setConversations(
-        conversations.map((conv) =>
-          conv.id === conversationId ? { ...conv, ...updateData } : conv
-        )
-      );
-
-      showToast(
-        "success",
-        "Conversation mise à jour",
-        "Les modifications ont été appliquées"
-      );
-      await loadConversations();
-    } catch (error) {
-      console.error("Erreur mise à jour conversation:", error);
-      showToast(
-        "error",
-        "Erreur",
-        "Impossible de mettre à jour la conversation"
-      );
-    }
-  };
-
   // Supprimer une conversation (RGPD)
   const handleDeleteConversation = async () => {
     if (!conversationToDelete) return;
@@ -245,35 +220,6 @@ const AdminMessagerie: React.FC = () => {
     }
   };
 
-  // Exporter les conversations
-  const handleExport = async (format: "csv" | "json") => {
-    try {
-      setIsExporting(true);
-      const blob = await adminAPI.exportConversations(format);
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `conversations_export.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      setShowExportModal(false);
-      showToast(
-        "success",
-        "Export réussi",
-        `Les conversations ont été exportées en ${format.toUpperCase()}`
-      );
-    } catch (error) {
-      console.error("Erreur export:", error);
-      showToast("error", "Erreur", "Impossible d'exporter les conversations");
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
   // Helper pour formater les dates
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -290,161 +236,87 @@ const AdminMessagerie: React.FC = () => {
     }
   };
 
-  // Helper pour les icônes de statut
-  const getStatusIcon = (status: StatutConversation) => {
-    switch (status) {
-      case StatutConversation.ACTIVE:
-        return <i className="fas fa-circle text-green-500"></i>;
-      case StatutConversation.EN_ATTENTE:
-        return <i className="fas fa-clock text-yellow-500"></i>;
-      case StatutConversation.RESOLUE:
-        return <i className="fas fa-check-circle text-blue-500"></i>;
-      case StatutConversation.FERMEE:
-        return <i className="fas fa-archive text-gray-500"></i>;
-      default:
-        return <i className="fas fa-archive text-gray-400"></i>;
-    }
-  };
-
-  // Helper pour les icônes de priorité
-  const getPriorityColor = (priority: PrioriteConversation) => {
-    switch (priority) {
-      case PrioriteConversation.CRITIQUE:
-        return "text-red-600 bg-red-100";
-      case PrioriteConversation.HAUTE:
-        return "text-orange-600 bg-orange-100";
-      case PrioriteConversation.NORMALE:
-        return "text-blue-600 bg-blue-100";
-      case PrioriteConversation.FAIBLE:
-        return "text-gray-600 bg-gray-100";
-      default:
-        return "text-gray-600 bg-gray-100";
-    }
-  };
-
-  // Helper pour les icônes de type de message
-  const getMessageIcon = (message: MessageType) => {
-    switch (message.type) {
-      case TypeMessage.FILE:
-        return <i className="fas fa-paperclip text-gray-500"></i>;
-      case TypeMessage.IMAGE:
-        return <i className="fas fa-image text-green-500"></i>;
-      case TypeMessage.ADMIN_NOTE:
-        return <i className="fas fa-cog text-blue-500"></i>;
-      default:
-        return <i className="fas fa-comment text-gray-500"></i>;
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <LoadingSpinner />
+        <LoadingSpinner size="lg" />
+        <span className="ml-3 text-gray-600">
+          Chargement des conversations...
+        </span>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      {/* En-tête avec stats */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
           <h1 className="text-2xl font-bold text-gray-900">Messagerie Admin</h1>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowExportModal(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-            >
-              <i className="fas fa-download"></i>
-              Exporter
-            </button>
-          </div>
+          <p className="text-gray-600">
+            Superviser les conversations client-admin
+          </p>
         </div>
+      </div>
 
-        {/* Statistiques */}
-        {conversationStats && (
-          <div className="grid grid-cols-5 gap-4 mb-6">
-            <div className="bg-white p-4 rounded-lg border">
-              <div className="text-2xl font-bold text-gray-900">
-                {conversationStats.total}
-              </div>
-              <div className="text-sm text-gray-600">Total conversations</div>
-            </div>
-            <div className="bg-white p-4 rounded-lg border">
-              <div className="text-2xl font-bold text-green-600">
-                {conversationStats.actives}
-              </div>
-              <div className="text-sm text-gray-600">Actives</div>
-            </div>
-            <div className="bg-white p-4 rounded-lg border">
-              <div className="text-2xl font-bold text-yellow-600">
-                {conversationStats.enAttente}
-              </div>
-              <div className="text-sm text-gray-600">En attente</div>
-            </div>
-            <div className="bg-white p-4 rounded-lg border">
-              <div className="text-2xl font-bold text-blue-600">
-                {conversationStats.resolues}
-              </div>
-              <div className="text-sm text-gray-600">Résolues</div>
-            </div>
-            <div className="bg-white p-4 rounded-lg border">
-              <div className="text-2xl font-bold text-gray-600">
-                {Math.round(conversationStats.tempsReponseMoyen / 60)}h
-              </div>
-              <div className="text-sm text-gray-600">Temps de réponse</div>
-            </div>
+      {/* Statistiques simplifiées */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white p-4 rounded-lg border">
+          <div className="text-2xl font-bold text-blue-600">
+            {conversations.length}
           </div>
-        )}
+          <div className="text-sm text-gray-600">Total conversations</div>
+        </div>
+        <div className="bg-white p-4 rounded-lg border">
+          <div className="text-2xl font-bold text-orange-600">
+            {conversations.filter((conv) => conv.unreadCount > 0).length}
+          </div>
+          <div className="text-sm text-gray-600">Non lues</div>
+        </div>
+        <div className="bg-white p-4 rounded-lg border">
+          <div className="text-2xl font-bold text-green-600">
+            {conversations.reduce((sum, conv) => sum + conv.messageCount, 0)}
+          </div>
+          <div className="text-sm text-gray-600">Messages total</div>
+        </div>
       </div>
 
       {/* Interface principale */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Panel des conversations */}
         <div className="lg:col-span-1 bg-white rounded-lg border">
-          {/* Filtres et recherche */}
+          {/* Filtres et recherche simplifiés */}
           <div className="p-4 border-b">
             <div className="relative mb-4">
               <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
               <input
                 type="text"
-                placeholder="Rechercher conversations..."
+                placeholder="Rechercher par nom d'utilisateur..."
                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 mb-3">
               <select
-                className="border rounded px-3 py-2"
-                value={selectedStatus}
-                onChange={(e) =>
-                  setSelectedStatus(e.target.value as StatutConversation)
-                }
+                className="border rounded px-3 py-2 text-sm"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as "date" | "user")}
               >
-                <option value="">Tous les statuts</option>
-                <option value={StatutConversation.ACTIVE}>Actif</option>
-                <option value={StatutConversation.EN_ATTENTE}>
-                  En attente
-                </option>
-                <option value={StatutConversation.RESOLUE}>Résolu</option>
-                <option value={StatutConversation.FERMEE}>Fermé</option>
+                <option value="user">Trier par utilisateur</option>
+                <option value="date">Trier par date</option>
               </select>
 
-              <select
-                className="border rounded px-3 py-2"
-                value={selectedPriority}
-                onChange={(e) =>
-                  setSelectedPriority(e.target.value as PrioriteConversation)
-                }
-              >
-                <option value="">Toutes priorités</option>
-                <option value={PrioriteConversation.CRITIQUE}>Critique</option>
-                <option value={PrioriteConversation.HAUTE}>Haute</option>
-                <option value={PrioriteConversation.NORMALE}>Normale</option>
-                <option value={PrioriteConversation.FAIBLE}>Faible</option>
-              </select>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={onlyUnread}
+                  onChange={(e) => setOnlyUnread(e.target.checked)}
+                  className="rounded"
+                />
+                Non lues seulement
+              </label>
             </div>
           </div>
 
@@ -462,41 +334,11 @@ const AdminMessagerie: React.FC = () => {
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    {getStatusIcon(conversation.statut)}
+                    <i className="fas fa-user text-gray-500"></i>
                     <h3 className="font-medium text-sm">
-                      {conversation.titre}
+                      {getUserDisplayName(conversation)}
                     </h3>
                   </div>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs ${getPriorityColor(
-                      conversation.priorite
-                    )}`}
-                  >
-                    {conversation.priorite}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
-                  <i className="fas fa-user text-xs"></i>
-                  <span>
-                    {conversation.participants.client.prenom}{" "}
-                    {conversation.participants.client.nom}
-                  </span>
-                  {conversation.participants.correcteur && (
-                    <>
-                      <span>↔</span>
-                      <span>
-                        {conversation.participants.correcteur.prenom}{" "}
-                        {conversation.participants.correcteur.nom}
-                      </span>
-                    </>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">
-                    {formatDate(conversation.updatedAt)}
-                  </span>
                   {conversation.unreadCount > 0 && (
                     <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
                       {conversation.unreadCount}
@@ -504,30 +346,38 @@ const AdminMessagerie: React.FC = () => {
                   )}
                 </div>
 
-                {/* Tags */}
-                {conversation.tags.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {conversation.tags.slice(0, 2).map((tag) => (
-                      <span
-                        key={tag.id}
-                        className="px-2 py-1 rounded text-xs"
-                        style={{
-                          backgroundColor: tag.couleur + "20",
-                          color: tag.couleur,
-                        }}
-                      >
-                        {tag.nom}
-                      </span>
-                    ))}
-                    {conversation.tags.length > 2 && (
-                      <span className="text-xs text-gray-500">
-                        +{conversation.tags.length - 2}
-                      </span>
-                    )}
+                <div className="text-xs text-gray-600 mb-2">
+                  <span className="font-medium">Type: </span>
+                  {conversation.type === "direct" && "Conversation directe"}
+                  {conversation.type === "projet" && "Projet"}
+                  {conversation.type === "support" && "Support"}
+                </div>
+
+                {conversation.lastMessage && (
+                  <div className="text-xs text-gray-500 mb-2 truncate">
+                    {conversation.lastMessage.content}
                   </div>
                 )}
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">
+                    {formatDate(conversation.updatedAt)}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {conversation.messageCount} messages
+                  </span>
+                </div>
               </div>
             ))}
+
+            {conversations.length === 0 && (
+              <div className="p-8 text-center text-gray-500">
+                <i className="fas fa-inbox text-3xl mb-2 block"></i>
+                {onlyUnread
+                  ? "Aucune conversation non lue"
+                  : "Aucune conversation trouvée"}
+              </div>
+            )}
           </div>
         </div>
 
@@ -539,17 +389,9 @@ const AdminMessagerie: React.FC = () => {
               <div className="p-4 border-b">
                 <div className="flex items-center justify-between mb-2">
                   <h2 className="text-lg font-semibold">
-                    {selectedConversation.titre}
+                    {getUserDisplayName(selectedConversation)}
                   </h2>
                   <div className="flex items-center gap-2">
-                    {/* Actions de conversation */}
-                    <button
-                      onClick={() => setShowTagModal(true)}
-                      className="p-2 text-gray-500 hover:text-gray-700"
-                      title="Gérer les tags"
-                    >
-                      <i className="fas fa-tags"></i>
-                    </button>
                     <button
                       onClick={() =>
                         setConversationToDelete(selectedConversation.id)
@@ -559,68 +401,26 @@ const AdminMessagerie: React.FC = () => {
                     >
                       <i className="fas fa-trash"></i>
                     </button>
-                    <div className="relative">
-                      <button className="p-2 text-gray-500 hover:text-gray-700">
-                        <i className="fas fa-ellipsis-v"></i>
-                      </button>
-                    </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-4 text-sm text-gray-600">
                   <div className="flex items-center gap-2">
-                    {getStatusIcon(selectedConversation.statut)}
-                    <span>{selectedConversation.statut}</span>
+                    <i className="fas fa-comments"></i>
+                    <span>{selectedConversation.messageCount} messages</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <i className="fas fa-exclamation-circle"></i>
-                    <span>{selectedConversation.priorite}</span>
-                  </div>
-                  {selectedConversation.commande && (
+                  {selectedConversation.type === "projet" && (
                     <div className="flex items-center gap-2">
                       <i className="fas fa-file-text"></i>
-                      <span>{selectedConversation.commande.titre}</span>
+                      <span>Projet</span>
                     </div>
                   )}
-                </div>
-
-                {/* Contrôles de statut rapides */}
-                <div className="mt-3 flex gap-2">
-                  <select
-                    className="border rounded px-3 py-1 text-sm"
-                    value={selectedConversation.statut}
-                    onChange={(e) =>
-                      handleUpdateConversation(selectedConversation.id, {
-                        statut: e.target.value as StatutConversation,
-                      })
-                    }
-                  >
-                    <option value={StatutConversation.ACTIVE}>Actif</option>
-                    <option value={StatutConversation.EN_ATTENTE}>
-                      En attente
-                    </option>
-                    <option value={StatutConversation.RESOLUE}>Résolu</option>
-                    <option value={StatutConversation.FERMEE}>Fermé</option>
-                  </select>
-
-                  <select
-                    className="border rounded px-3 py-1 text-sm"
-                    value={selectedConversation.priorite}
-                    onChange={(e) =>
-                      handleUpdateConversation(selectedConversation.id, {
-                        priorite: e.target.value as PrioriteConversation,
-                      })
-                    }
-                  >
-                    <option value={PrioriteConversation.FAIBLE}>Faible</option>
-                    <option value={PrioriteConversation.NORMALE}>
-                      Normale
-                    </option>
-                    <option value={PrioriteConversation.HAUTE}>Haute</option>
-                    <option value={PrioriteConversation.CRITIQUE}>
-                      Critique
-                    </option>
-                  </select>
+                  {selectedConversation.type === "support" && (
+                    <div className="flex items-center gap-2">
+                      <i className="fas fa-life-ring"></i>
+                      <span>Support</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -632,18 +432,20 @@ const AdminMessagerie: React.FC = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {selectedConversation.messages.map((message) => (
+                    {selectedConversation.messages.map((message: any) => (
                       <div
                         key={message.id}
                         className={`flex ${
-                          message.auteur.role === "ADMIN"
+                          (message.sender?.role || message.auteur?.role) ===
+                          "ADMIN"
                             ? "justify-end"
                             : "justify-start"
                         }`}
                       >
                         <div
                           className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                            message.auteur.role === "ADMIN"
+                            (message.sender?.role || message.auteur?.role) ===
+                            "ADMIN"
                               ? "bg-blue-600 text-white"
                               : "bg-gray-100 text-gray-900"
                           } ${
@@ -653,24 +455,23 @@ const AdminMessagerie: React.FC = () => {
                           }`}
                         >
                           <div className="flex items-center gap-2 mb-1">
-                            {message.auteur.avatar && (
-                              <img
-                                src={message.auteur.avatar}
-                                alt={message.auteur.prenom}
-                                className="w-5 h-5 rounded-full"
-                              />
-                            )}
                             <span className="font-medium text-sm">
-                              {message.auteur.prenom} {message.auteur.nom}
+                              {message.sender?.prenom || message.auteur?.prenom}{" "}
+                              {message.sender?.nom || message.auteur?.nom}
                             </span>
-                            {getMessageIcon(message)}
+                            {(message.sender?.role || message.auteur?.role) ===
+                              "ADMIN" && (
+                              <i className="fas fa-shield-alt text-xs"></i>
+                            )}
                           </div>
 
-                          <p className="text-sm">{message.contenu}</p>
+                          <p className="text-sm">
+                            {message.content || message.contenu}
+                          </p>
 
                           {message.files && message.files.length > 0 && (
                             <div className="mt-2 flex flex-wrap gap-2">
-                              {message.files.map((file) => (
+                              {message.files.map((file: any) => (
                                 <a
                                   key={file.id}
                                   href={file.url}
@@ -742,7 +543,7 @@ const AdminMessagerie: React.FC = () => {
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500">
               <div className="text-center">
-                <i className="fas fa-comment-dots w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                <i className="fas fa-comment-dots text-5xl mb-4 text-gray-300"></i>
                 <p>Sélectionnez une conversation pour voir les détails</p>
               </div>
             </div>
@@ -763,44 +564,6 @@ const AdminMessagerie: React.FC = () => {
         confirmText="Supprimer définitivement"
         type="danger"
       />
-
-      {/* Modal d'export */}
-      {showExportModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">
-              Exporter les conversations
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Choisissez le format d'export pour toutes les conversations.
-            </p>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => handleExport("csv")}
-                disabled={isExporting}
-                className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
-              >
-                {isExporting ? <LoadingSpinner /> : "Export CSV"}
-              </button>
-              <button
-                onClick={() => handleExport("json")}
-                disabled={isExporting}
-                className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-              >
-                {isExporting ? <LoadingSpinner /> : "Export JSON"}
-              </button>
-            </div>
-
-            <button
-              onClick={() => setShowExportModal(false)}
-              className="w-full mt-3 border border-gray-300 py-2 rounded-lg hover:bg-gray-50"
-            >
-              Annuler
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

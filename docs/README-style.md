@@ -8,28 +8,36 @@ Ce dossier contient l'architecture complète des styles de l'application Staka L
 
 ```
 src/styles/
-└── global.css          # 🌟 Fichier principal (602 lignes)
+└── global.css          # 🌟 Fichier principal (626 lignes)
     ├── Imports & Base   # Google Fonts + Tailwind directives
     ├── Variables CSS    # Design tokens et couleurs
-    ├── Animations       # 25+ animations personnalisées
+    ├── Animations       # 30+ animations personnalisées
     ├── Composants       # Classes utilitaires spécialisées
     ├── Responsive       # Media queries et adaptations
     └── Optimisations    # Performance et accessibilité
+
+Configuration Tailwind:
+├── tailwind.config.js  # Configuration de base (9 lignes)
+├── index.html          # CDN + configuration runtime
+└── postcss.config.js   # Tailwind + Autoprefixer
 ```
 
 ## 🎨 Architecture CSS Hybride
 
 ### 📦 **Stack Technologique**
 
-- **Tailwind CSS** : Framework utilitaire principal
+- **Tailwind CSS** : Framework utilitaire principal (CDN + config runtime)
+- **Framer Motion v12.18.1** : Animations avancées et micro-interactions
 - **CSS Variables** : Design tokens pour consistance
-- **CSS Animations** : Transitions et micro-interactions
+- **CSS Animations** : Transitions personnalisées (30+ keyframes)
 - **Google Fonts** : Typographie Inter optimisée
-- **PostCSS** : Traitement et optimisation
+- **Font Awesome 6.4.0** : Iconographie complète
+- **PostCSS** : Traitement et optimisation (Tailwind + Autoprefixer)
 
 ### 🎯 **Philosophie de Design**
 
-- **Utility-first** : Tailwind pour 90% des styles
+- **Utility-first** : Tailwind pour 85% des styles
+- **Motion-enhanced** : Framer Motion pour animations avancées
 - **Component-based** : CSS custom pour composants complexes
 - **Performance-first** : Optimisations et lazy loading
 - **Accessibility-first** : WCAG 2.1 AA compliance
@@ -105,9 +113,126 @@ src/styles/
 
 ---
 
-## ✨ Système d'Animations Avancé
+## 🎬 Intégration Framer Motion
 
-### 🎬 **Animations Principales** (25+ animations)
+### 🚀 **Architecture Hybride CSS + Motion**
+
+L'application utilise une approche hybride combinant **CSS animations** pour les micro-interactions simples et **Framer Motion** pour les animations complexes nécessitant plus de contrôle.
+
+#### **📦 Configuration Framer Motion**
+
+```json
+{
+  "framer-motion": "^12.18.1"
+}
+```
+
+#### **🎯 Répartition des Responsabilités**
+
+- **CSS Animations (70%)** : Hover, transitions, loading spinners
+- **Framer Motion (30%)** : Modales, toasts, animations complexes
+
+### 🎭 **Patterns Framer Motion Principaux**
+
+#### **1. AnimatePresence pour Entrées/Sorties**
+
+```tsx
+// Pattern utilisé dans ToastProvider, FAQ, Modales
+<AnimatePresence>
+  {isVisible && (
+    <motion.div
+      initial={{ opacity: 0, y: 50, scale: 0.3 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.5 }}
+      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+    >
+      {content}
+    </motion.div>
+  )}
+</AnimatePresence>
+```
+
+#### **2. Motion.div pour Modales**
+
+```tsx
+// Pattern standardisé pour toutes les modales
+<motion.div
+  initial={{ opacity: 0, scale: 0.95 }}
+  animate={{ opacity: 1, scale: 1 }}
+  exit={{ opacity: 0, scale: 0.95 }}
+  transition={{ duration: 0.2, ease: "easeOut" }}
+  className="modal-content"
+>
+```
+
+#### **3. Layout Animations**
+
+```tsx
+// Auto-animations lors de changements de layout
+<motion.div layout>{dynamicContent}</motion.div>
+```
+
+### 🎨 **Implémentations Framer Motion**
+
+#### **Composants Utilisant Motion**
+
+1. **ToastProvider.tsx** : AnimatePresence + spring physics
+2. **AvatarUploadModal.tsx** : Scale animations + conditional rendering
+3. **HelpPage.tsx** : FAQ accordion avec height: "auto"
+4. **DeleteAccountModal.tsx** : Modal enter/exit animations
+5. **DeactivateAccountModal.tsx** : Confirmation flow animations
+
+#### **Physics Avancées**
+
+```tsx
+// Spring physics pour animations naturelles
+transition={{
+  type: "spring",
+  stiffness: 500,
+  damping: 30
+}}
+
+// Timing précis pour modales
+transition={{
+  duration: 0.2,
+  ease: "easeOut"
+}}
+
+// Height auto pour accordions
+animate={{
+  height: "auto",
+  transition: { duration: 0.3, ease: "easeInOut" }
+}}
+```
+
+### ⚡ **Optimisations Performance**
+
+#### **Lazy Animations**
+
+```tsx
+// Animations conditionnelles pour éviter le re-render
+{shouldAnimate && (
+  <motion.div initial={false}>
+)}
+```
+
+#### **GPU Acceleration**
+
+```tsx
+// Force hardware acceleration
+<motion.div
+  style={{
+    transform: "translateZ(0)",
+    willChange: "transform"
+  }}
+>
+```
+
+---
+
+## ✨ Système d'Animations CSS Avancé
+
+### 🎬 **Animations CSS Principales** (30+ animations)
 
 #### **1. Animations d'Entrée**
 
@@ -674,6 +799,47 @@ html {
 
 ### 🏗️ **Architecture Patterns**
 
+#### **Configuration Tailwind Réelle**
+
+##### **Configuration de Base (tailwind.config.js)**
+
+```javascript
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+```
+
+##### **Configuration Runtime (index.html)**
+
+```javascript
+// Configuration personnalisée via CDN
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: "#eff6ff",
+          500: "#3b82f6",
+          600: "#2563eb",
+          700: "#1d4ed8",
+          900: "#1e3a8a",
+        },
+      },
+      animation: {
+        "fade-in": "fadeIn 0.5s ease-out",
+        "slide-in": "slideIn 0.3s ease-out",
+        "pulse-slow": "pulse 3s infinite",
+      },
+    },
+  },
+};
+```
+
 #### **Component-Based CSS**
 
 ```css
@@ -695,13 +861,16 @@ html {
 }
 ```
 
-#### **Utility-First avec Exceptions**
+#### **Architecture Hybride**
 
-```css
-/* 90% Tailwind utilities dans les composants */
+```tsx
+/* 70% Tailwind utilities dans les composants */
 <div className="bg-white p-6 rounded-lg shadow-md">
 
-/* 10% CSS custom pour animations complexes */
+/* 15% Framer Motion pour animations complexes */
+<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+
+/* 15% CSS custom pour besoins spécifiques */
 .animate-special-effect {
   animation: complexAnimation 0.5s ease-out;
 }
@@ -803,11 +972,13 @@ cubic-bezier(0.215, 0.61, 0.355, 1) /* Bounce */
 
 ### 📈 **Statistiques Actuelles**
 
-- **Fichier principal** : 602 lignes CSS
+- **Fichier principal** : 626 lignes CSS
 - **Variables CSS** : 20+ design tokens
-- **Animations** : 25+ keyframes personnalisées
+- **Animations CSS** : 30+ keyframes personnalisées
+- **Animations Framer Motion** : 5+ composants avancés
 - **Classes utilitaires** : 50+ classes custom
 - **Responsive breakpoints** : 3 breakpoints principaux
+- **Stack hybride** : CSS (70%) + Framer Motion (15%) + Tailwind (85%)
 
 ### ⚡ **Optimisations Implémentées**
 
@@ -831,39 +1002,44 @@ cubic-bezier(0.215, 0.61, 0.355, 1) /* Bounce */
 
 ### 🔮 **Roadmap Technique**
 
-1. **CSS-in-JS Migration** : Styled-components ou Emotion
-2. **Design Tokens** : JSON tokens avec style-dictionary
-3. **CSS Modules** : Scoped styles pour composants
-4. **PostCSS Plugins** : Autoprefixer et optimisations
-5. **Critical CSS** : Extraction automatique
+1. **Framer Motion v4/v5** : Migration vers nouvelles APIs
+2. **CSS-in-JS Migration** : Styled-components ou Emotion
+3. **Design Tokens** : JSON tokens avec style-dictionary
+4. **CSS Modules** : Scoped styles pour composants
+5. **Advanced Motion** : Gesture handling et scroll-triggered animations
+6. **PostCSS Plugins** : Autoprefixer et optimisations avancées
+7. **Critical CSS** : Extraction automatique
 
 ## 🏆 Conclusion
 
-L'architecture CSS de Staka Livres combine le meilleur des deux mondes :
+L'architecture CSS de Staka Livres combine le meilleur de **trois mondes** :
 
 ### ✅ **Forces Actuelles**
 
-- **Tailwind CSS** pour la rapidité et consistance
+- **Tailwind CSS** pour la rapidité et consistance (85% des styles)
+- **Framer Motion** pour les animations avancées et physiques
 - **CSS Variables** pour la flexibilité et thèmes
-- **Animations personnalisées** pour l'expérience utilisateur
-- **Performance optimisée** avec GPU acceleration
+- **Animations hybrides** CSS + Motion pour l'expérience utilisateur
+- **Performance optimisée** avec GPU acceleration et spring physics
 - **Responsive design** mobile-first
 
 ### 🎯 **Philosophie Design**
 
-- **Utility-first** avec exceptions justifiées
-- **Performance-first** avec optimisations
-- **Accessibility-first** avec focus states
-- **Maintainability-first** avec variables et patterns
-- **User-experience-first** avec micro-interactions
+- **Hybrid-first** : CSS + Motion + Tailwind orchestrés
+- **Performance-first** avec optimisations multicouches
+- **Motion-enhanced** avec physiques naturelles
+- **Accessibility-first** avec focus states et reduced motion
+- **Maintainability-first** avec patterns cohérents
+- **User-experience-first** avec micro-interactions avancées
 
 ### 🚀 **Évolutivité**
 
 L'architecture actuelle offre une base solide pour :
 
-- **Scaling** : Ajout de nouveaux composants
-- **Theming** : Support multi-thèmes
-- **Performance** : Optimisations continues
-- **Maintenance** : Patterns cohérents et documentés
+- **Scaling** : Ajout de nouveaux composants avec Motion
+- **Theming** : Support multi-thèmes avec variables CSS
+- **Performance** : Optimisations CSS + Motion continues
+- **Advanced Animations** : Gesture handling et scroll-triggered
+- **Maintenance** : Patterns hybrides cohérents et documentés
 
-Cette approche hybride garantit une expérience utilisateur premium tout en maintenant une base de code maintenable et performante.
+Cette approche **triple hybride** (CSS + Framer Motion + Tailwind) garantit une expérience utilisateur premium avec des animations de niveau production, tout en maintenant une base de code maintenable et performante.

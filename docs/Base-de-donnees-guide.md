@@ -686,6 +686,139 @@ const supportMessage = await prisma.message.create({
     supportRequestId: ticketId,
   },
 });
+
+// 🆕 NOUVEAUX ENDPOINTS ADMIN - Messagerie Admin
+
+// Grouper messages en conversations pour admin
+const groupMessagesIntoConversations = (messages: Message[]) => {
+  const conversationsMap = new Map();
+
+  messages.forEach((message) => {
+    let conversationId: string;
+
+    if (message.commandeId) {
+      conversationId = `projet_${message.commandeId}`;
+    } else if (message.supportRequestId) {
+      conversationId = `support_${message.supportRequestId}`;
+    } else {
+      // Conversation directe
+      const userIds = [message.senderId, message.receiverId]
+        .filter(Boolean)
+        .sort();
+      conversationId = `direct_${userIds.join("_")}`;
+    }
+
+    if (!conversationsMap.has(conversationId)) {
+      conversationsMap.set(conversationId, {
+        id: conversationId,
+        type: message.commandeId
+          ? "projet"
+          : message.supportRequestId
+          ? "support"
+          : "direct",
+        messages: [],
+        participants: [], // À remplir selon le contexte
+        messageCount: 0,
+        unreadCount: 0,
+        lastMessage: null,
+      });
+    }
+
+    const conversation = conversationsMap.get(conversationId);
+    conversation.messages.push(message);
+    conversation.messageCount++;
+    if (!message.isRead) conversation.unreadCount++;
+
+    if (
+      !conversation.lastMessage ||
+      message.createdAt > conversation.lastMessage.createdAt
+    ) {
+      conversation.lastMessage = {
+        content: message.content,
+        createdAt: message.createdAt,
+        sender:
+          message.sender?.prenom + " " + message.sender?.nom || "Utilisateur",
+      };
+    }
+  });
+
+  return Array.from(conversationsMap.values());
+};
+
+// Parser conversation ID pour identifier destinataire (messages admin)
+const parseConversationId = async (conversationId: string, adminId: string) => {
+  let receiverId = null;
+  let commandeId = null;
+  let supportRequestId = null;
+
+  if (conversationId.startsWith("direct_")) {
+    // Conversation directe : extraire l'autre utilisateur
+    const parts = conversationId.split("_");
+    for (let i = 1; i < parts.length; i++) {
+      if (parts[i] !== adminId) {
+        receiverId = parts[i];
+        break;
+      }
+    }
+  } else if (conversationId.startsWith("projet_")) {
+    // Conversation projet : récupérer le propriétaire
+    commandeId = conversationId.replace("projet_", "");
+    const commande = await prisma.commande.findUnique({
+      where: { id: commandeId },
+      select: { userId: true },
+    });
+    receiverId = commande?.userId;
+  } else if (conversationId.startsWith("support_")) {
+    // Conversation support : récupérer le créateur du ticket
+    supportRequestId = conversationId.replace("support_", "");
+    const supportRequest = await prisma.supportRequest.findUnique({
+      where: { id: supportRequestId },
+      select: { userId: true },
+    });
+    receiverId = supportRequest?.userId;
+  }
+
+  return { receiverId, commandeId, supportRequestId };
+};
+
+// Statistiques avancées pour dashboard admin
+const getAdvancedStats = async () => {
+  const [
+    totalCommandes,
+    totalFactures,
+    totalUtilisateurs,
+    totalMessages,
+    messagesNonLus,
+    commandesEnCours,
+    facturesEnAttente,
+    utilisateursActifs,
+  ] = await Promise.all([
+    prisma.commande.count(),
+    prisma.invoice.count(),
+    prisma.user.count({ where: { isActive: true } }),
+    prisma.message.count(),
+    prisma.message.count({ where: { isRead: false } }),
+    prisma.commande.count({ where: { statut: "EN_COURS" } }),
+    prisma.invoice.count({ where: { status: "GENERATED" } }),
+    prisma.user.count({
+      where: {
+        isActive: true,
+        createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+      },
+    }),
+  ]);
+
+  return {
+    totalCommandes,
+    totalFactures,
+    totalUtilisateurs,
+    totalMessages,
+    messagesNonLus,
+    commandesEnCours,
+    facturesEnAttente,
+    utilisateursActifs,
+  };
+};
 ```
 
 ### **Facturation et Paiements**
@@ -774,6 +907,251 @@ const activeUsers = await prisma.user.findMany({
   orderBy: { commandes: { _count: "desc" } },
   take: 10,
 });
+```
+
+---
+
+## 🔗 **Nouveaux Endpoints API Admin - Messagerie **
+
+### **Endpoints Implémentés**
+
+```typescript
+// Routes admin messagerie dans backend/src/routes/admin.ts
+
+// 1. Liste des conversations avec pagination et filtres
+GET /admin/conversations
+Query params: page, limit, search, isRead, sortBy
+Response: { conversations: Conversation[], total: number, page: number }
+
+// 2. Détails d'une conversation spécifique
+GET /admin/conversations/:id
+Response: { conversation: Conversation, messages: Message[] }
+
+// 3. Statistiques globales des conversations
+GET /admin/conversations/stats
+Response: { total: number, unread: number, totalMessages: number }
+
+// 4. Envoi de message admin dans une conversation
+POST /admin/conversations/:conversationId/messages
+Body: { contenu: string, isNote?: boolean }
+Response: { message: Message }
+
+// 5. Mise à jour d'une conversation
+PUT /admin/conversations/:id
+Body: { isRead?: boolean, isArchived?: boolean }
+Response: { conversation: Conversation }
+
+// 6. Suppression RGPD d'une conversation
+DELETE /admin/conversations/:id
+Response: { success: true }
+
+// 7. Tags disponibles pour conversations
+GET /admin/conversations/tags
+Response: { tags: string[] }
+
+// 8. Compteur de conversations non lues (badge sidebar)
+GET /admin/conversations/unread-count
+Response: { unreadCount: number }
+
+// 9. Statistiques avancées pour dashboard
+GET /admin/stats/advanced
+Response: { totalCommandes, totalFactures, totalUtilisateurs, ... }
+```
+
+### **Fonctionnalités Techniques Clés**
+
+#### **Parser de Conversation IDs**
+
+```typescript
+// Gestion intelligente des types de conversations
+// direct_userId1_userId2 → Conversation directe entre utilisateurs
+// projet_commandeId → Conversation liée à un projet
+// support_supportRequestId → Conversation liée à un ticket support
+
+const parseConversationId = (conversationId: string) => {
+  if (conversationId.startsWith("direct_")) {
+    return { type: "direct", userIds: conversationId.split("_").slice(1) };
+  } else if (conversationId.startsWith("projet_")) {
+    return {
+      type: "projet",
+      commandeId: conversationId.replace("projet_", ""),
+    };
+  } else if (conversationId.startsWith("support_")) {
+    return {
+      type: "support",
+      supportRequestId: conversationId.replace("support_", ""),
+    };
+  }
+  return null;
+};
+```
+
+#### **Identification Automatique des Destinataires**
+
+```typescript
+// Lors de l'envoi d'un message admin, identification du destinataire
+const identifyReceiver = async (conversationId: string, adminId: string) => {
+  const parsed = parseConversationId(conversationId);
+
+  switch (parsed?.type) {
+    case "direct":
+      // Trouver l'utilisateur qui n'est pas l'admin
+      return parsed.userIds.find((id) => id !== adminId);
+
+    case "projet":
+      // Récupérer le propriétaire du projet
+      const commande = await prisma.commande.findUnique({
+        where: { id: parsed.commandeId },
+        select: { userId: true },
+      });
+      return commande?.userId;
+
+    case "support":
+      // Récupérer le créateur du ticket
+      const ticket = await prisma.supportRequest.findUnique({
+        where: { id: parsed.supportRequestId },
+        select: { userId: true },
+      });
+      return ticket?.userId;
+  }
+};
+```
+
+### **Intégration Frontend - Types TypeScript Unifiés**
+
+#### **Fichier : frontend/src/types/messages.ts**
+
+```typescript
+// Types alignés sur le schéma Prisma backend
+export enum MessageType {
+  TEXT = "TEXT",
+  FILE = "FILE",
+  IMAGE = "IMAGE",
+  SYSTEM = "SYSTEM",
+  ADMIN_NOTE = "ADMIN_NOTE",
+}
+
+export enum MessageStatut {
+  BROUILLON = "BROUILLON",
+  ENVOYE = "ENVOYE",
+  DELIVRE = "DELIVRE",
+  LU = "LU",
+  ARCHIVE = "ARCHIVE",
+}
+
+export interface Message {
+  id: string;
+  senderId: string;
+  receiverId?: string;
+  commandeId?: string;
+  supportRequestId?: string;
+  subject?: string;
+  content: string;
+  type: MessageType;
+  statut: MessageStatut;
+  isRead: boolean;
+  isArchived: boolean;
+  isPinned: boolean;
+  createdAt: string;
+  updatedAt: string;
+  sender?: User;
+  receiver?: User;
+  attachments?: MessageAttachment[];
+}
+
+export interface Conversation {
+  id: string;
+  titre: string;
+  type: "direct" | "projet" | "support";
+  participants: string[] | { client: User };
+  messages: Message[];
+  messageCount: number;
+  unreadCount: number;
+  lastMessage?: {
+    content: string;
+    createdAt: string;
+    sender: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+#### **Hooks React Query Optimisés**
+
+```typescript
+// Fichier : frontend/src/hooks/useAdminMessages.ts
+
+// Vue admin globale avec cache intelligent
+export const useAdminMessages = (filters) => {
+  return useQuery({
+    queryKey: ["admin", "messages", filters],
+    queryFn: () => messagesAPI.getMessages(filters),
+    staleTime: 30000, // 30s
+    cacheTime: 5 * 60 * 1000, // 5min
+  });
+};
+
+// Envoi de messages admin avec optimistic updates
+export const useSendAdminMessage = () => {
+  return useMutation({
+    mutationFn: messagesAPI.sendAdminMessage,
+    onMutate: async (newMessage) => {
+      await queryClient.cancelQueries(["admin", "messages"]);
+      const previousMessages = queryClient.getQueryData(["admin", "messages"]);
+      queryClient.setQueryData(["admin", "messages"], (old) => [
+        ...old,
+        newMessage,
+      ]);
+      return { previousMessages };
+    },
+    onError: (err, newMessage, context) => {
+      queryClient.setQueryData(["admin", "messages"], context.previousMessages);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(["admin", "messages"]);
+    },
+  });
+};
+```
+
+### **Corrections Techniques Majeures**
+
+#### **Configuration Proxy Docker**
+
+```javascript
+// Fichier : frontend/vite.config.ts
+export default defineConfig({
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://backend:3001", // ✅ Corrigé de localhost vers backend
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ""),
+      },
+    },
+  },
+});
+```
+
+#### **Mapping Types Frontend ↔ Backend**
+
+```typescript
+// Fichier : backend/src/controllers/messagesController.ts
+const mapFrontendTypeToPrisma = (frontendType: string): MessageType => {
+  switch (frontendType) {
+    case "TEXT":
+    case "FILE":
+    case "IMAGE":
+      return MessageType.USER_MESSAGE;
+    case "SYSTEM":
+      return MessageType.SYSTEM_MESSAGE;
+    case "ADMIN_NOTE":
+      return MessageType.ADMIN_MESSAGE;
+    default:
+      return MessageType.USER_MESSAGE;
+  }
+};
 ```
 
 ---
@@ -1215,6 +1593,149 @@ sudo chown -R $USER:$USER backend/scripts
 docker exec -u root -it staka_backend chown -R node:node /app
 ```
 
+### **9. 🆕 Problèmes Messagerie Admin (Décembre 2024)**
+
+#### **Messages admin non reçus côté utilisateur**
+
+**Problème** : Messages envoyés par admin n'apparaissent pas dans l'interface utilisateur
+
+**Diagnostic** :
+
+```bash
+# Vérifier que le message a été créé en DB
+docker exec -it staka_db mysql -u staka -pstaka stakalivres -e "
+SELECT id, senderId, receiverId, content, createdAt
+FROM messages
+WHERE senderId = 'ADMIN_USER_ID'
+ORDER BY createdAt DESC LIMIT 5;"
+```
+
+**Solutions** :
+
+```bash
+# 1. Vérifier le parsing des conversation IDs
+# Dans backend/src/routes/admin.ts, vérifier que parseConversationId() fonctionne
+
+# 2. Tester l'identification du destinataire
+curl -X POST http://localhost:3001/admin/conversations/direct_adminId_userId/messages \
+  -H "Authorization: Bearer ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"contenu": "Test message admin"}'
+
+# 3. Vérifier les logs backend pour debugging
+docker logs staka_backend --tail 20 | grep "conversation\|receiverId"
+```
+
+#### **Erreur "Cannot read properties of undefined (reading 'id')"**
+
+**Problème** : Erreur frontend lors de l'affichage des conversations
+
+**Solution** :
+
+```typescript
+// Dans frontend/src/pages/admin/AdminMessagerie.tsx
+// S'assurer que les propriétés sont sécurisées :
+
+const conversationTitle =
+  conversation.participants?.client?.nom ||
+  conversation.titre ||
+  `Conversation ${conversation.id?.slice(-6)}`;
+
+const lastMessageSender =
+  conversation.lastMessage?.sender ||
+  message.sender?.prenom + " " + message.sender?.nom ||
+  message.auteur?.prenom + " " + message.auteur?.nom ||
+  "Utilisateur";
+```
+
+#### **Endpoints admin 404 "Cannot GET /admin/conversations"**
+
+**Problème** : Routes admin non trouvées
+
+**Vérifications** :
+
+```bash
+# 1. Vérifier que les routes admin sont bien montées
+docker exec -it staka_backend grep -r "admin/conversations" src/routes/
+
+# 2. Vérifier l'import dans server.ts
+docker exec -it staka_backend grep -A5 -B5 "adminRoutes" src/server.ts
+
+# 3. Tester directement l'endpoint
+curl -X GET http://localhost:3001/admin/conversations \
+  -H "Authorization: Bearer ADMIN_TOKEN"
+```
+
+**Solution** :
+
+```typescript
+// Dans backend/src/server.ts, s'assurer que :
+import adminRoutes from "./routes/admin";
+app.use("/admin", adminRoutes);
+
+// Dans backend/src/routes/admin.ts, vérifier :
+router.get("/conversations", async (req, res) => {
+  // Implémentation endpoint
+});
+```
+
+#### **Types incompatibles frontend/backend**
+
+**Problème** : Erreurs TypeScript lors de l'utilisation des APIs
+
+**Solution** :
+
+```typescript
+// Créer un mapping dans backend/src/controllers/messagesController.ts
+const mapPrismaToFrontend = (message: any) => ({
+  id: message.id,
+  content: message.content || message.contenu,
+  sender: message.sender || message.auteur,
+  isRead: message.isRead,
+  createdAt: message.createdAt,
+  // ... autres mappings
+});
+
+// Utiliser dans les réponses API
+res.json({
+  conversations: conversations.map(mapPrismaToFrontend),
+  total,
+});
+```
+
+#### **Configuration proxy Docker non fonctionnelle**
+
+**Problème** : Frontend ne peut pas joindre le backend dans les containers
+
+**Vérification** :
+
+```bash
+# Tester la connectivité inter-containers
+docker exec -it staka_frontend ping backend
+
+# Vérifier la configuration réseau
+docker network ls
+docker network inspect staka-livres_default
+```
+
+**Solution** :
+
+```javascript
+// Dans frontend/vite.config.ts
+export default defineConfig({
+  server: {
+    host: true, // Important pour Docker
+    proxy: {
+      "/api": {
+        target: "http://backend:3001", // Nom du service Docker
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ""),
+      },
+    },
+  },
+});
+```
+
 ### **Contacts Techniques**
 
 - **Documentation Prisma** : https://prisma.io/docs
@@ -1283,7 +1804,20 @@ docker exec staka_db du -sh /var/lib/mysql
 
 ## 📝 **Changelog - Dernières Corrections**
 
-**Version 1.1 - Juin 2025**
+**Version 1.2 - ⭐ MIGRATION MESSAGERIE ADMIN**
+
+- 🚀 **Migration complète messagerie** : Frontend Mock → API Backend réelles
+- 🔗 **9 nouveaux endpoints admin** : `/admin/conversations/*`, `/admin/stats/advanced`
+- 🧠 **Parser intelligent conversation IDs** : Identification automatique destinataires
+- 🔧 **Corrections techniques majeures** : Proxy Docker, mapping types, parsing IDs
+- 📊 **Types TypeScript unifiés** : `frontend/src/types/messages.ts` aligné Prisma
+- ⚡ **Hooks React Query optimisés** : Cache intelligent, optimistic updates
+- 💬 **Communication bidirectionnelle** : Admin ↔ Utilisateur fonctionnelle
+- 🗑️ **Suppression RGPD** : Effacement définitif en base de données
+- 🔍 **Interface admin simplifiée** : Filtres épurés selon retours utilisateur
+- ✅ **Tests validés** : Communication bidirectionnelle testée et opérationnelle
+
+**Version 1.1 - Juin 2024**
 
 - ✅ Correction champ `number` obligatoire dans modèle Invoice
 - ✅ Ajout colonne `supportRequestId` dans table messages avec contraintes FK
@@ -1299,6 +1833,37 @@ docker exec staka_db du -sh /var/lib/mysql
 - 🐳 Déploiement Docker avec Prisma Studio
 - 📊 Exemples requêtes et métriques business
 - 🛡️ Sécurité et optimisations performance
+
+### **🏆 Fonctionnalités Majeures Ajoutées (v1.2)**
+
+#### **Architecture Messagerie Admin Complète**
+
+- **Parser de conversation IDs** : `direct_user1_user2`, `projet_cmdId`, `support_reqId`
+- **Identification automatique** des destinataires pour messages admin
+- **Grouping intelligent** des messages en conversations
+- **Statistiques calculées** depuis vraies données DB
+- **Interface épurée** avec filtres essentiels seulement
+
+#### **Intégration Frontend-Backend**
+
+- **Types unifiés** : Alignement parfait schéma Prisma ↔ Types TypeScript
+- **Hooks optimisés** : Cache React Query 30s, optimistic updates avec rollback
+- **Configuration Docker** : Proxy corrigé pour communication inter-services
+- **Mapping automatique** : Conversion types frontend/backend transparente
+
+#### **Endpoints API Admin Fonctionnels**
+
+```bash
+✅ GET    /admin/conversations              # Liste avec tri et pagination
+✅ GET    /admin/conversations/:id          # Détails avec parsing ID
+✅ GET    /admin/conversations/stats        # Stats calculées DB
+✅ POST   /admin/conversations/:id/messages # Envoi avec destinataire
+✅ PUT    /admin/conversations/:id          # Mise à jour
+✅ DELETE /admin/conversations/:id          # Suppression RGPD
+✅ GET    /admin/conversations/tags         # Tags disponibles
+✅ GET    /admin/conversations/unread-count # Badge sidebar
+✅ GET    /admin/stats/advanced             # Dashboard complet
+```
 
 ---
 

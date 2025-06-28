@@ -65,6 +65,7 @@ backend/
 │   │   ├── adminController.ts     # Administration
 │   │   ├── commandeController.ts  # Gestion commandes (admin)
 │   │   ├── commandeClientController.ts  # Commandes côté client
+│   │   ├── messagesController.ts  # Système de messagerie
 │   │   └── paymentController.ts   # Paiements Stripe
 │   ├── middleware/           # Middlewares de sécurité
 │   │   ├── auth.ts               # Authentification JWT
@@ -73,6 +74,7 @@ backend/
 │   │   ├── auth.ts              # Routes d'authentification
 │   │   ├── admin.ts             # Routes administrateur
 │   │   ├── commandes.ts         # Routes commandes client
+│   │   ├── messages.ts          # Routes messagerie
 │   │   └── payments.ts          # Routes paiements
 │   ├── services/            # Services externes
 │   │   └── stripeService.ts     # Intégration Stripe
@@ -112,6 +114,7 @@ User {
   createdAt: DateTime
   updatedAt: DateTime
   commandes: Commande[]
+  messages: Message[]
 }
 
 // Commande
@@ -129,6 +132,34 @@ Commande {
   createdAt: DateTime
   updatedAt: DateTime
   user: User
+  messages: Message[]
+}
+
+// Message (Système de messagerie unifiée)
+Message {
+  id: string (UUID)
+  senderId: string
+  receiverId?: string
+  commandeId?: string
+  supportRequestId?: string
+  subject?: string
+  content: string
+  type: MessageType
+  statut: MessageStatut
+  isRead: boolean
+  isArchived: boolean
+  isPinned: boolean
+  threadId?: string
+  parentId?: string
+  createdAt: DateTime
+  updatedAt: DateTime
+  sender: User
+  receiver?: User
+  commande?: Commande
+  supportRequest?: SupportRequest
+  parent?: Message
+  replies: Message[]
+  attachments: MessageAttachment[]
 }
 ```
 
@@ -297,13 +328,412 @@ Content-Type: application/json
 }
 ```
 
+## 💬 **Système de Messagerie Unifiée - NOUVEAU**
+
+### **Vue d'ensemble**
+
+Système de messagerie complet avec support pour :
+
+- **Messages directs** entre utilisateurs
+- **Messages projet** liés aux commandes
+- **Messages support** via tickets
+- **Threading** et réponses
+- **Pièces jointes** avec gestion fichiers
+- **Administration** complète côté admin
+
+### **Architecture technique**
+
+#### **Types de messages**
+
+```typescript
+enum MessageType {
+  USER_MESSAGE     // Message standard utilisateur
+  SYSTEM_MESSAGE   // Message automatique du système
+  ADMIN_MESSAGE    // Message administrateur
+}
+
+enum MessageStatut {
+  BROUILLON        // En cours de rédaction
+  ENVOYE           // Envoyé avec succès
+  DELIVRE          // Délivré au destinataire
+  LU               // Lu par le destinataire
+  ARCHIVE          // Archivé
+}
+```
+
+#### **Contrôle d'accès intelligent**
+
+- **Utilisateurs** : Accès aux messages où ils sont expéditeur/destinataire
+- **Propriétaires de projets** : Accès aux messages liés à leurs commandes
+- **Support** : Accès aux messages des tickets assignés/créés
+- **Admins** : Accès complet à tous les messages
+
+#### **Anti-spam & sécurité**
+
+- **Rate limiting** : 50 messages/heure par utilisateur
+- **Validation contenu** : Maximum 10,000 caractères
+- **Vérification contexte** : Au moins un destinataire requis
+- **RGPD** : Soft delete par défaut, hard delete admin
+
+### **Routes Messages (`/messages`)**
+
+#### **1. POST /messages - Créer un message**
+
+```http
+POST /messages
+Authorization: Bearer token
+Content-Type: application/json
+
+{
+  "content": "Contenu du message",
+  "receiverId": "uuid-destinataire",        // Optionnel (message direct)
+  "commandeId": "uuid-commande",            // Optionnel (message projet)
+  "supportRequestId": "uuid-ticket",       // Optionnel (message support)
+  "subject": "Sujet du message",            // Optionnel
+  "type": "TEXT",                           // TEXT, FILE, IMAGE, SYSTEM
+  "parentId": "uuid-message-parent"        // Optionnel (réponse)
+}
+
+# Response: 201
+{
+  "message": "Message créé avec succès",
+  "data": {
+    "id": "msg-123",
+    "content": "Contenu du message",
+    "type": "USER_MESSAGE",
+    "statut": "ENVOYE",
+    "isRead": false,
+    "isPinned": false,
+    "threadId": "thread-456",
+    "createdAt": "2024-01-15T10:30:00Z",
+    "sender": {
+      "id": "user-789",
+      "prenom": "Jean",
+      "nom": "Dupont",
+      "role": "USER"
+    },
+    "receiver": { ... },
+    "commande": {
+      "id": "cmd-123",
+      "titre": "Mon projet",
+      "statut": "EN_COURS"
+    },
+    "attachments": [],
+    "_count": { "replies": 0 }
+  }
+}
+```
+
+#### **2. GET /messages - Liste avec filtres et pagination**
+
+```http
+GET /messages?page=1&limit=20&commandeId=cmd-123&isRead=false&search=correction
+Authorization: Bearer token
+
+# Filtres disponibles:
+# - page, limit: Pagination
+# - commandeId: Messages d'un projet
+# - supportRequestId: Messages d'un ticket support
+# - threadId: Messages d'un thread
+# - type: Type de message
+# - statut: Statut du message
+# - isRead: true/false - Messages lus/non lus
+# - isArchived: true/false - Messages archivés
+# - isPinned: true/false - Messages épinglés
+# - search: Recherche dans contenu et sujet
+
+# Response: 200
+{
+  "messages": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 150,
+    "totalPages": 8,
+    "hasNextPage": true,
+    "hasPreviousPage": false
+  }
+}
+```
+
+#### **3. GET /messages/stats - Statistiques utilisateur**
+
+```http
+GET /messages/stats
+Authorization: Bearer token
+
+# Response: 200
+{
+  "totalSent": 45,
+  "totalReceived": 38,
+  "unreadCount": 7,
+  "pinnedCount": 3,
+  "projectMessages": 25,
+  "supportMessages": 12,
+  "total": 83
+}
+```
+
+#### **4. GET /messages/:id - Détail avec réponses**
+
+```http
+GET /messages/msg-123
+Authorization: Bearer token
+
+# Response: 200
+{
+  "id": "msg-123",
+  "content": "Message principal",
+  "subject": "Discussion projet",
+  // ... autres champs
+  "replies": [
+    {
+      "id": "msg-124",
+      "content": "Première réponse",
+      "createdAt": "2024-01-15T11:00:00Z",
+      "sender": { ... },
+      "attachments": []
+    }
+  ],
+  "attachments": [
+    {
+      "id": "att-456",
+      "file": {
+        "filename": "document.pdf",
+        "size": 1024000,
+        "mimeType": "application/pdf",
+        "url": "https://storage.../document.pdf"
+      }
+    }
+  ]
+}
+```
+
+#### **5. PATCH /messages/:id - Mise à jour statut**
+
+```http
+PATCH /messages/msg-123
+Authorization: Bearer token
+Content-Type: application/json
+
+{
+  "isRead": true,          // Marquer comme lu (destinataire uniquement)
+  "isArchived": false,     // Archiver/désarchiver
+  "isPinned": true,        // Épingler (expéditeur/admin uniquement)
+  "statut": "LU"          // Changer statut (expéditeur/admin uniquement)
+}
+
+# Contrôle des permissions:
+# - isRead: Seul le destinataire peut marquer comme lu
+# - isArchived: Tous les utilisateurs concernés
+# - isPinned: Seul l'expéditeur ou admin
+# - statut: Seul l'expéditeur ou admin
+```
+
+#### **6. DELETE /messages/:id - Suppression RGPD**
+
+```http
+DELETE /messages/msg-123?hard=false
+Authorization: Bearer token
+
+# Paramètres:
+# - hard=true: Suppression définitive (ADMIN uniquement)
+# - hard=false: Soft delete (anonymisation)
+
+# Soft Delete (défaut):
+# - Contenu remplacé par "[Message supprimé]"
+# - Message marqué comme archivé
+# - Pièces jointes conservées
+
+# Hard Delete (Admin uniquement):
+# - Suppression définitive du message
+# - Suppression des pièces jointes
+# - Suppression en cascade des réponses
+```
+
+#### **7. POST /messages/:id/attachments - Pièces jointes**
+
+```http
+POST /messages/msg-123/attachments
+Authorization: Bearer token
+Content-Type: application/json
+
+{
+  "fileId": "file-456"  // Fichier déjà uploadé via l'API Files
+}
+
+# Contraintes:
+# - Seul l'expéditeur peut ajouter des pièces jointes
+# - Maximum 10 pièces jointes par message
+# - Le fichier doit appartenir à l'utilisateur
+```
+
+### **Routes Admin Messagerie (`/admin/conversations`)**
+
+#### **1. GET /admin/conversations - Vue globale admin**
+
+```http
+GET /admin/conversations?page=1&limit=100&search=client&isRead=false&sortBy=user
+Authorization: Bearer admin-token
+
+# Paramètres:
+# - page, limit: Pagination (max 100)
+# - search: Recherche par nom utilisateur
+# - isRead: Filtrer lu/non lu
+# - sortBy: "user" (alphabétique) ou "date"
+
+# Response: 200
+{
+  "conversations": [
+    {
+      "id": "direct_user1_user2",
+      "type": "direct",
+      "participants": {
+        "client": {
+          "nom": "Dupont",
+          "prenom": "Jean"
+        }
+      },
+      "messageCount": 5,
+      "unreadCount": 2,
+      "lastMessage": {
+        "content": "Dernier message...",
+        "createdAt": "2024-01-15T10:30:00Z",
+        "sender": "Jean Dupont"
+      }
+    }
+  ],
+  "total": 45,
+  "page": 1
+}
+```
+
+#### **2. POST /admin/conversations/:id/messages - Message admin**
+
+```http
+POST /admin/conversations/direct_user1_user2/messages
+Authorization: Bearer admin-token
+Content-Type: application/json
+
+{
+  "contenu": "Message de l'administrateur",
+  "isNote": false  // true pour note interne non visible
+}
+
+# Fonctionnalités backend:
+# - Parser intelligent des conversation IDs
+# - Identification automatique du destinataire
+# - Support des contextes: direct, projet, support
+# - Communication bidirectionnelle garantie
+```
+
+#### **3. GET /admin/conversations/stats - Statistiques globales**
+
+```http
+GET /admin/conversations/stats
+Authorization: Bearer admin-token
+
+# Response: 200
+{
+  "total": 156,
+  "unread": 23,
+  "totalMessages": 1247
+}
+```
+
+#### **4. DELETE /admin/conversations/:id - Suppression RGPD**
+
+```http
+DELETE /admin/conversations/direct_user1_user2
+Authorization: Bearer admin-token
+
+# Suppression définitive de tous les messages
+# de la conversation en base de données
+```
+
+### **Architecture Backend Avancée**
+
+#### **Parser de Conversation IDs**
+
+```typescript
+const parseConversationId = (conversationId: string) => {
+  if (conversationId.startsWith("direct_")) {
+    return {
+      type: "direct",
+      userIds: conversationId.split("_").slice(1),
+    };
+  } else if (conversationId.startsWith("projet_")) {
+    return {
+      type: "projet",
+      commandeId: conversationId.replace("projet_", ""),
+    };
+  } else if (conversationId.startsWith("support_")) {
+    return {
+      type: "support",
+      supportRequestId: conversationId.replace("support_", ""),
+    };
+  }
+  return null;
+};
+```
+
+#### **Grouping automatique Messages → Conversations**
+
+```typescript
+const groupMessagesIntoConversations = (messages: Message[]) => {
+  const conversationsMap = new Map();
+
+  messages.forEach((message) => {
+    let conversationId: string;
+
+    if (message.commandeId) {
+      conversationId = `projet_${message.commandeId}`;
+    } else if (message.supportRequestId) {
+      conversationId = `support_${message.supportRequestId}`;
+    } else {
+      // Conversation directe
+      const userIds = [message.senderId, message.receiverId]
+        .filter(Boolean)
+        .sort();
+      conversationId = `direct_${userIds.join("_")}`;
+    }
+
+    // Accumulation des messages par conversation
+    // Calcul automatique compteurs non-lus
+    // Détermination du dernier message
+  });
+
+  return Array.from(conversationsMap.values());
+};
+```
+
+#### **Mapping Types Frontend ↔ Backend**
+
+```typescript
+// Compatibilité avec les types frontend
+const mapFrontendTypeToPrisma = (frontendType: string): MessageType => {
+  switch (frontendType) {
+    case "TEXT":
+    case "FILE":
+    case "IMAGE":
+      return MessageType.USER_MESSAGE;
+    case "SYSTEM":
+      return MessageType.SYSTEM_MESSAGE;
+    case "ADMIN_NOTE":
+      return MessageType.ADMIN_MESSAGE;
+    default:
+      return MessageType.USER_MESSAGE;
+  }
+};
+```
+
 ## 🎯 **Webhook Stripe - Nouveau Système**
 
 ### Configuration
 
 Le nouveau système de webhook Stripe est implémenté avec une architecture modulaire et robuste :
 
-````typescript
+```typescript
 // Routeur séparé : src/routes/payments/webhook.ts
 // Body parser raw configuré dans server.ts AVANT express.json()
 app.use(
@@ -311,10 +741,12 @@ app.use(
   bodyParser.raw({ type: "application/json" }),
   webhookRoutes
 );
+```
 
 ## 🧾 **Système de Facturation Automatique**
 
 ### Modèle Prisma Invoice
+
 ```prisma
 model Invoice {
   id         String   @id @default(uuid())
@@ -324,7 +756,7 @@ model Invoice {
   pdfUrl     String   // URL du PDF sur S3
   createdAt  DateTime @default(now())
 }
-````
+```
 
 ### Service InvoiceService
 
@@ -425,8 +857,6 @@ Authorization: Bearer token
 - **Format montant** : En centimes (base) et formaté avec devise (affichage)
 - **Tri** : Les factures les plus récentes en premier
 
-````
-
 ### Événements Gérés
 
 #### **checkout.session.completed**
@@ -469,7 +899,7 @@ npm test -- webhook.test.ts
 # - ✅ Commande non trouvée (404)
 # - ✅ Événements non gérés
 # - ✅ Erreurs base de données
-````
+```
 
 ### Tests avec Stripe CLI
 
@@ -541,6 +971,13 @@ GET /admin/analytics/projects
 
 # Logs système (pour AdminLogs)
 GET /admin/logs?type=AUTH&date=2025-01
+
+# Messagerie admin (IMPLÉMENTÉ)
+GET /admin/conversations
+POST /admin/conversations/:id/messages
+DELETE /admin/conversations/:id
+GET /admin/conversations/stats
+GET /admin/stats/advanced
 ```
 
 ## 💳 Intégration Stripe
@@ -601,9 +1038,11 @@ tests/
 ├── controllers/
 │   ├── authController.test.ts
 │   ├── commandeController.test.ts
+│   ├── messagesController.test.ts
 │   └── paymentController.test.ts
 ├── routes/
 │   ├── auth.test.ts
+│   ├── messages.test.ts
 │   └── admin.test.ts
 └── utils/
     └── token.test.ts
@@ -1004,12 +1443,23 @@ GET /admin/logs?type=AUTH&userId=uuid&date=2025-01
 GET /admin/logs/export?format=csv&period=week
 ```
 
+#### **10. AdminMessagerie** - **✅ IMPLÉMENTÉ**
+
+```typescript
+✅ GET /admin/conversations
+✅ POST /admin/conversations/:id/messages
+✅ DELETE /admin/conversations/:id
+✅ GET /admin/conversations/stats
+✅ GET /admin/stats/advanced
+```
+
 ### 🎯 **Frontend Prêt pour Intégration**
 
 - ✅ **Mock services configurés** : `adminAPI.ts` avec structure complète
 - ✅ **Types TypeScript** : Interfaces pour toutes les entités dans `shared.ts`
-- ✅ **UI Components** : 9 pages admin avec états loading/error/empty
+- ✅ **UI Components** : 10 pages admin avec états loading/error/empty
 - ✅ **Architecture modulaire** : Services facilement remplaçables par vrais appels API
+- ✅ **Messagerie complète** : Interface admin fonctionnelle avec API backend
 
 ### 🔄 **Plan d'Intégration**
 
@@ -1023,4 +1473,4 @@ GET /admin/logs/export?format=csv&period=week
 
 **Backend Staka Livres** - API REST moderne pour plateforme de correction de livres
 
-**✨ Espace admin frontend complet - Prêt pour intégration API**
+**✨ Système de messagerie complet + Espace admin frontend - Prêt pour production**

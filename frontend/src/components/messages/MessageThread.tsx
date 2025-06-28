@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useInView } from "react-intersection-observer";
+import { useInView } from "../../hooks/useIntersectionObserver";
 import { Message } from "../../types/messages";
 import { User } from "../../types/shared";
 import LoadingSpinner from "../common/LoadingSpinner";

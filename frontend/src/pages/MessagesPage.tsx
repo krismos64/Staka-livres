@@ -53,12 +53,18 @@ async function fetchMessages(filters: any = {}) {
     }
   });
 
-  const response = await fetch(buildApiUrl(`/messages?${params.toString()}`), {
-    headers: getAuthHeaders(),
-  });
+  const url = buildApiUrl(`/messages?${params.toString()}`);
+  const headers = getAuthHeaders();
+
+  console.log("Fetching messages from:", url);
+  console.log("Headers:", headers);
+  console.log("Token from localStorage:", localStorage.getItem("auth_token"));
+
+  const response = await fetch(url, { headers });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
+    console.error("API Error:", response.status, errorData);
     throw new Error(errorData.error || `Erreur ${response.status}`);
   }
 
@@ -124,12 +130,19 @@ function MessagesPage() {
     refetch,
   } = useQuery(
     ["messages", filter],
-    () =>
-      fetchMessages({
-        isArchived: filter === "archived" ? true : false,
-        isRead: filter === "unread" ? false : undefined,
-        limit: 50,
-      }),
+    () => {
+      const filters: any = { limit: 50 };
+
+      // Ne passer que les paramètres nécessaires
+      if (filter === "archived") {
+        filters.isArchived = true;
+      } else if (filter === "unread") {
+        filters.isRead = false;
+      }
+
+      console.log("Fetching messages with filters:", filters);
+      return fetchMessages(filters);
+    },
     {
       staleTime: 30 * 1000, // 30 secondes
       cacheTime: 5 * 60 * 1000, // 5 minutes
@@ -203,13 +216,32 @@ function MessagesPage() {
   const messages: MessageAPI[] = React.useMemo(() => {
     if (!messagesData?.messages) return [];
 
-    return messagesData.messages.map((msg: Message) => ({
-      ...msg,
-      timestamp: new Date(msg.createdAt),
-      status: msg.isRead ? "read" : "delivered",
-      sender: msg.auteur,
-      // Adapter les champs pour compatibilité avec les composants existants
-    }));
+    console.log("Raw messages data:", messagesData.messages); // Debug log
+
+    return messagesData.messages.map((msg: any) => {
+      // Créer un auteur valide à partir des données API
+      const sender = msg.sender || {};
+      const author = {
+        id: sender.id || msg.senderId || "unknown",
+        prenom: sender.prenom || "Utilisateur",
+        nom: sender.nom || "",
+        email: sender.email || "",
+        role: sender.role || "USER",
+        avatar: sender.avatar,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      return {
+        ...msg,
+        timestamp: new Date(msg.createdAt),
+        status: msg.isRead ? "read" : "delivered",
+        sender: author,
+        auteur: author, // For compatibility with existing components
+        conversationId: msg.commandeId || msg.supportRequestId || "general",
+      };
+    });
   }, [messagesData]);
 
   // Group messages into conversations
@@ -225,9 +257,9 @@ function MessagesPage() {
         conversationMap.set(convId, {
           id: convId,
           participants: [
-            message.auteur,
+            message.auteur || message.sender,
             // Ajouter d'autres participants si disponibles
-          ],
+          ].filter(Boolean), // Remove undefined participants
           unreadCount: 0,
           isArchived: false,
           updatedAt: message.createdAt,
@@ -238,7 +270,8 @@ function MessagesPage() {
       const conversation = conversationMap.get(convId)!;
       conversation.lastMessage = message;
       conversation.updatedAt = message.createdAt;
-      if (!message.isRead && message.auteur.id !== user?.id) {
+      const messageAuthor = message.auteur || message.sender;
+      if (!message.isRead && messageAuthor?.id !== user?.id) {
         conversation.unreadCount++;
       }
     });
@@ -282,9 +315,10 @@ function MessagesPage() {
 
   // Mark as read
   const markAsRead = async (conversationId: string) => {
-    const unreadMessages = conversationMessages.filter(
-      (msg) => !msg.isRead && msg.auteur.id !== user?.id
-    );
+    const unreadMessages = conversationMessages.filter((msg) => {
+      const msgAuthor = msg.auteur || msg.sender;
+      return !msg.isRead && msgAuthor?.id !== user?.id;
+    });
 
     // Mark each unread message as read
     for (const msg of unreadMessages) {
@@ -316,14 +350,30 @@ function MessagesPage() {
     if (!selectedConversationId || (!content.trim() && !attachment)) return;
 
     try {
-      await sendMessageMutation.mutateAsync({
+      // Préparer les données du message de base
+      const messageData: any = {
         content: content.trim(),
-        commandeId:
-          selectedConversationId !== "general"
-            ? selectedConversationId
-            : undefined,
         type: attachment ? TypeMessage.FILE : TypeMessage.TEXT,
-      });
+      };
+
+      // Pour les messages admin ou généraux, utiliser receiverId au lieu de commandeId
+      if (user?.role === "ADMIN") {
+        // Admin envoie à un utilisateur spécifique si possible
+        const targetUser = selectedConversation?.participants.find(
+          (p) => p.id !== user.id
+        );
+        if (targetUser) {
+          messageData.receiverId = targetUser.id;
+        }
+      } else {
+        // Pour les utilisateurs normaux, laisser vide - le backend déterminera le destinataire
+        // Ou utiliser un admin comme destinataire par défaut
+        messageData.receiverId = "5b3196bc-0df6-43f0-bf17-f77c2d0a7bd7"; // Admin par défaut
+      }
+
+      console.log("Sending message data:", messageData); // Debug log
+
+      await sendMessageMutation.mutateAsync(messageData);
 
       // Notification sonore (bonus)
       if ("Audio" in window) {
