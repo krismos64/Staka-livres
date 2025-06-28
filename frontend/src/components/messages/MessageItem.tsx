@@ -1,13 +1,13 @@
-import React from "react";
-import { Message, User } from "../../pages/MessagesPage";
+import { Message } from "../../types/messages";
+import { User } from "../../types/shared";
 
 interface MessageItemProps {
   message: Message;
   user?: User;
   isOwn: boolean;
-  showAvatar: boolean;
-  showSender: boolean;
-  isConsecutive: boolean;
+  isLastInGroup?: boolean;
+  onVisible?: () => void;
+  className?: string;
 }
 
 // Formater l'heure d'un message

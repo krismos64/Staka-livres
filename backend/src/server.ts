@@ -7,6 +7,7 @@ import adminRoutes from "./routes/admin";
 import authRoutes from "./routes/auth";
 import commandesRoutes from "./routes/commandes";
 import invoiceRoutes from "./routes/invoice";
+import messagesRoutes from "./routes/messages";
 import paymentsRoutes from "./routes/payments";
 import webhookRoutes from "./routes/payments/webhook";
 
@@ -51,6 +52,9 @@ app.use("/auth", authRoutes);
 // Routes commandes (côté client)
 app.use("/commandes", commandesRoutes);
 
+// Routes messages (authentifiées)
+app.use("/messages", messagesRoutes);
+
 // Routes paiements (sans webhook qui est déjà géré ci-dessus)
 app.use("/payments", paymentsRoutes);
 
@@ -77,6 +81,14 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`   POST /commandes - Créer une commande`);
   console.log(`   GET /commandes - Mes commandes`);
   console.log(`   GET /commandes/:id - Détail d'une commande`);
+  console.log(`💬 Routes messages (utilisateurs connectés):`);
+  console.log(`   POST /messages - Créer un message`);
+  console.log(`   GET /messages - Liste paginée avec filtres`);
+  console.log(`   GET /messages/stats - Statistiques messages`);
+  console.log(`   GET /messages/:id - Détail message + réponses`);
+  console.log(`   PATCH /messages/:id - Maj statut (lu, archivé, épinglé)`);
+  console.log(`   DELETE /messages/:id - Suppression (soft/hard RGPD)`);
+  console.log(`   POST /messages/:id/attachments - Ajouter pièce jointe`);
   console.log(`💳 Routes paiements:`);
   console.log(
     `   POST /payments/create-checkout-session - Créer session paiement`

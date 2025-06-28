@@ -5,21 +5,17 @@ import MessageInput from "../components/forms/MessageInput";
 import ConversationList from "../components/messages/ConversationList";
 import MessageThread from "../components/messages/MessageThread";
 import { useAuth } from "../contexts/AuthContext";
-import { Message, TypeMessage, User } from "../types/shared";
 import { buildApiUrl, getAuthHeaders } from "../utils/api";
 
-// Types pour adapter aux données backend
-export interface MessageAPI extends Message {
-  sender?: User;
-  receiver?: User;
-  subject?: string;
-  commandeId?: string;
-  supportRequestId?: string;
-  replies?: MessageAPI[];
-  attachments?: any[];
-  statut?: string;
-  timestamp?: Date; // Pour compatibilité avec les composants existants
-  status?: "sending" | "sent" | "delivered" | "read";
+// Types simplifiés pour éviter les conflits
+interface SimpleMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  timestamp: Date;
+  type: "text" | "file" | "image";
+  status: "sending" | "sent" | "delivered" | "read";
   attachment?: {
     name: string;
     url: string;
@@ -28,24 +24,34 @@ export interface MessageAPI extends Message {
   };
 }
 
-export interface ConversationAPI {
+interface SimpleUser {
   id: string;
-  participants: User[];
-  lastMessage?: MessageAPI;
+  name: string;
+  initials: string;
+  color: string;
+  avatar?: string;
+  isOnline: boolean;
+}
+
+interface SimpleConversation {
+  id: string;
+  participants: SimpleUser[];
+  lastMessage?: SimpleMessage;
   unreadCount: number;
   isArchived: boolean;
-  updatedAt: Date | string;
+  updatedAt: Date;
   project?: {
     id: string;
     title: string;
   };
-  titre?: string;
 }
 
 type ConversationFilter = "all" | "unread" | "archived";
 
 // API Functions
 async function fetchMessages(filters: any = {}) {
+  console.log("🔗 Fetching messages from API with filters:", filters);
+
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") {
@@ -53,61 +59,90 @@ async function fetchMessages(filters: any = {}) {
     }
   });
 
-  const response = await fetch(buildApiUrl(`/messages?${params.toString()}`), {
-    headers: getAuthHeaders(),
-  });
+  try {
+    const response = await fetch(
+      buildApiUrl(`/messages?${params.toString()}`),
+      {
+        headers: getAuthHeaders(),
+      }
+    );
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Erreur ${response.status}`);
+    if (!response.ok) {
+      console.error("❌ API Error:", response.status, response.statusText);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Erreur ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("✅ Messages fetched:", data);
+    return data;
+  } catch (error) {
+    console.error("❌ Network error:", error);
+    throw error;
   }
-
-  return response.json();
 }
 
 async function sendMessageAPI(messageData: {
   content: string;
   receiverId?: string;
   commandeId?: string;
-  supportRequestId?: string;
   subject?: string;
-  type?: TypeMessage;
 }) {
-  const response = await fetch(buildApiUrl("/messages"), {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(messageData),
-  });
+  console.log("📤 Sending message:", messageData);
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Erreur ${response.status}`);
+  try {
+    const response = await fetch(buildApiUrl("/messages"), {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(messageData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Erreur ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("✅ Message sent:", data);
+    return data.data || data;
+  } catch (error) {
+    console.error("❌ Send error:", error);
+    throw error;
   }
-
-  const data = await response.json();
-  return data.data || data;
 }
 
-async function markAsReadAPI(messageId: string) {
-  const response = await fetch(buildApiUrl(`/messages/${messageId}`), {
-    method: "PATCH",
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ isRead: true }),
-  });
+// Transform backend data to frontend format
+function transformBackendMessage(backendMsg: any): SimpleMessage {
+  return {
+    id: backendMsg.id,
+    conversationId: backendMsg.conversationId || "general",
+    senderId: backendMsg.auteur?.id || backendMsg.senderId || "unknown",
+    content: backendMsg.contenu || backendMsg.content || "",
+    timestamp: new Date(backendMsg.createdAt || backendMsg.timestamp),
+    type: "text",
+    status: backendMsg.isRead ? "read" : "delivered",
+  };
+}
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Erreur ${response.status}`);
-  }
+function transformBackendUser(backendUser: any): SimpleUser {
+  const firstName = backendUser.prenom || backendUser.name || "User";
+  const lastName = backendUser.nom || "";
 
-  return response.json();
+  return {
+    id: backendUser.id,
+    name: `${firstName} ${lastName}`.trim(),
+    initials: `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase(),
+    color: "bg-blue-600",
+    avatar: backendUser.avatar,
+    isOnline: true,
+  };
 }
 
 function MessagesPage() {
   // États principaux
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
-  >("1");
+  >(null);
   const [filter, setFilter] = useState<ConversationFilter>("all");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -118,7 +153,7 @@ function MessagesPage() {
 
   // React Query - Fetch messages
   const {
-    data: messagesData,
+    data: backendData,
     isLoading,
     error,
     refetch,
@@ -126,7 +161,7 @@ function MessagesPage() {
     ["messages", filter],
     () =>
       fetchMessages({
-        isArchived: filter === "archived" ? true : false,
+        isArchived: filter === "archived" ? true : undefined,
         isRead: filter === "unread" ? false : undefined,
         limit: 50,
       }),
@@ -135,117 +170,108 @@ function MessagesPage() {
       cacheTime: 5 * 60 * 1000, // 5 minutes
       retry: 2,
       refetchOnWindowFocus: false,
+      onError: (error) => {
+        console.error("🔥 Query error:", error);
+      },
+      onSuccess: (data) => {
+        console.log("✅ Query success:", data);
+      },
     }
   );
 
   // React Query - Send message mutation
   const sendMessageMutation = useMutation(sendMessageAPI, {
     onMutate: async (newMessage) => {
-      // Cancel outgoing refetches
+      console.log("🔄 Optimistic update for:", newMessage);
+
       await queryClient.cancelQueries(["messages"]);
+      const previousData = queryClient.getQueryData(["messages"]);
 
-      // Snapshot previous value
-      const previousMessages = queryClient.getQueryData(["messages"]);
-
-      // Optimistically update
-      const tempMessage: MessageAPI = {
+      // Create optimistic message
+      const tempMessage: SimpleMessage = {
         id: `temp-${Date.now()}`,
         conversationId: selectedConversationId || "general",
-        contenu: newMessage.content,
-        type: TypeMessage.TEXT,
-        auteur: {
-          id: user?.id || "current-user",
-          prenom: user?.prenom || "Vous",
-          nom: user?.nom || "",
-          role: user?.role || ("USER" as any),
-          email: user?.email || "",
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        isRead: false,
+        senderId: user?.id || "me",
+        content: newMessage.content,
         timestamp: new Date(),
+        type: "text",
         status: "sending",
       };
 
+      // Update cache optimistically
       queryClient.setQueryData(["messages"], (old: any) => {
-        if (!old || !old.messages) return old;
+        if (!old) return { messages: [tempMessage] };
         return {
           ...old,
-          messages: [...old.messages, tempMessage],
+          messages: [...(old.messages || []), tempMessage],
         };
       });
 
-      return { previousMessages };
+      return { previousData };
     },
-    onError: (err, newMessage, context: any) => {
-      // Rollback on error
-      if (context?.previousMessages) {
-        queryClient.setQueryData(["messages"], context.previousMessages);
+    onError: (err, variables, context) => {
+      console.error("❌ Send failed, rolling back:", err);
+      if (context?.previousData) {
+        queryClient.setQueryData(["messages"], context.previousData);
       }
     },
     onSuccess: () => {
-      // Refetch messages after successful send
+      console.log("✅ Message sent successfully");
       queryClient.invalidateQueries(["messages"]);
     },
   });
 
-  // React Query - Mark as read mutation
-  const markAsReadMutation = useMutation(markAsReadAPI, {
-    onSuccess: () => {
-      queryClient.invalidateQueries(["messages"]);
-    },
-  });
+  // Transform backend data
+  const messages: SimpleMessage[] = React.useMemo(() => {
+    if (!backendData?.messages) {
+      console.log("📝 No messages data available");
+      return [];
+    }
 
-  // Transform API data to component format
-  const messages: MessageAPI[] = React.useMemo(() => {
-    if (!messagesData?.messages) return [];
+    const transformed = backendData.messages.map(transformBackendMessage);
+    console.log("🔄 Transformed messages:", transformed);
+    return transformed;
+  }, [backendData]);
 
-    return messagesData.messages.map((msg: Message) => ({
-      ...msg,
-      timestamp: new Date(msg.createdAt),
-      status: msg.isRead ? "read" : "delivered",
-      sender: msg.auteur,
-      // Adapter les champs pour compatibilité avec les composants existants
-    }));
-  }, [messagesData]);
-
-  // Group messages into conversations
-  const conversations: ConversationAPI[] = React.useMemo(() => {
+  // Create conversations from messages
+  const conversations: SimpleConversation[] = React.useMemo(() => {
     if (!messages.length) return [];
 
-    const conversationMap = new Map<string, ConversationAPI>();
+    const conversationMap = new Map<string, SimpleConversation>();
 
     messages.forEach((message) => {
-      const convId = message.conversationId || "general";
+      const convId = message.conversationId;
 
       if (!conversationMap.has(convId)) {
+        // Create user for sender
+        const senderUser: SimpleUser = {
+          id: message.senderId,
+          name: message.senderId === user?.id ? "Vous" : "Utilisateur",
+          initials: message.senderId === user?.id ? "V" : "U",
+          color: "bg-blue-600",
+          isOnline: true,
+        };
+
         conversationMap.set(convId, {
           id: convId,
-          participants: [
-            message.auteur,
-            // Ajouter d'autres participants si disponibles
-          ],
+          participants: [senderUser],
           unreadCount: 0,
           isArchived: false,
-          updatedAt: message.createdAt,
-          titre: `Conversation ${convId}`,
+          updatedAt: message.timestamp,
         });
       }
 
       const conversation = conversationMap.get(convId)!;
       conversation.lastMessage = message;
-      conversation.updatedAt = message.createdAt;
-      if (!message.isRead && message.auteur.id !== user?.id) {
+      conversation.updatedAt = message.timestamp;
+
+      if (message.status !== "read" && message.senderId !== user?.id) {
         conversation.unreadCount++;
       }
     });
 
     return Array.from(conversationMap.values()).sort(
-      (a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
     );
   }, [messages, user?.id]);
 
@@ -271,6 +297,13 @@ function MessagesPage() {
     (m) => m.conversationId === selectedConversationId
   );
 
+  // Auto-select first conversation if none selected
+  useEffect(() => {
+    if (!selectedConversationId && filteredConversations.length > 0) {
+      setSelectedConversationId(filteredConversations[0].id);
+    }
+  }, [selectedConversationId, filteredConversations]);
+
   // Scroll to bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -280,29 +313,19 @@ function MessagesPage() {
     scrollToBottom();
   }, [conversationMessages]);
 
-  // Mark as read
+  // Mark as read (simplified)
   const markAsRead = async (conversationId: string) => {
-    const unreadMessages = conversationMessages.filter(
-      (msg) => !msg.isRead && msg.auteur.id !== user?.id
-    );
-
-    // Mark each unread message as read
-    for (const msg of unreadMessages) {
-      try {
-        await markAsReadMutation.mutateAsync(msg.id);
-      } catch (error) {
-        console.error("Error marking message as read:", error);
-      }
-    }
+    console.log("👁️ Marking conversation as read:", conversationId);
+    // À implémenter avec PATCH /messages/:id
   };
 
   // Select conversation
   const selectConversation = async (conversationId: string) => {
+    console.log("📁 Selecting conversation:", conversationId);
     setSelectedConversationId(conversationId);
     setIsMobileMenuOpen(false);
     await markAsRead(conversationId);
 
-    // Focus on message input
     setTimeout(() => {
       const messageInput = document.querySelector(
         "#message-input"
@@ -315,6 +338,8 @@ function MessagesPage() {
   const sendMessage = async (content: string, attachment?: File) => {
     if (!selectedConversationId || (!content.trim() && !attachment)) return;
 
+    console.log("📤 Sending message to conversation:", selectedConversationId);
+
     try {
       await sendMessageMutation.mutateAsync({
         content: content.trim(),
@@ -322,32 +347,20 @@ function MessagesPage() {
           selectedConversationId !== "general"
             ? selectedConversationId
             : undefined,
-        type: attachment ? TypeMessage.FILE : TypeMessage.TEXT,
       });
-
-      // Notification sonore (bonus)
-      if ("Audio" in window) {
-        const audio = new Audio("/notification.mp3");
-        audio.volume = 0.3;
-        audio.play().catch(() => {}); // Ignorer les erreurs
-      }
     } catch (error) {
-      console.error("Erreur envoi message:", error);
-      // L'erreur est gérée par React Query
+      console.error("❌ Error sending message:", error);
     }
   };
 
-  // Load more messages (pour plus tard)
+  // Load more messages (placeholder)
   const loadMoreMessages = async () => {
-    if (!selectedConversationId) return;
-    // À implémenter avec pagination
-    console.log("Chargement d'anciens messages...");
+    console.log("📜 Loading more messages...");
   };
 
-  // Archive conversation (pour plus tard)
+  // Archive conversation (placeholder)
   const toggleArchiveConversation = (conversationId: string) => {
-    // À implémenter avec API
-    console.log("Archive conversation:", conversationId);
+    console.log("📦 Toggling archive for conversation:", conversationId);
   };
 
   // Loading state
@@ -370,6 +383,7 @@ function MessagesPage() {
           <div className="text-red-500 mb-4">
             <i className="fas fa-exclamation-triangle text-4xl mb-2"></i>
             <p>Erreur lors du chargement des messages</p>
+            <p className="text-sm mt-2">{(error as Error).message}</p>
           </div>
           <button
             onClick={() => refetch()}
@@ -382,6 +396,19 @@ function MessagesPage() {
     );
   }
 
+  // Debug info
+  const debugInfo = {
+    hasBackendData: !!backendData,
+    messagesCount: messages.length,
+    conversationsCount: conversations.length,
+    selectedConversationId,
+    filteredConversationsCount: filteredConversations.length,
+    isLoading,
+    error: error?.message,
+  };
+
+  console.log("🐛 Debug info:", debugInfo);
+
   return (
     <section className="w-full h-full">
       {/* En-tête */}
@@ -390,6 +417,14 @@ function MessagesPage() {
         <p className="text-gray-600">
           Communiquez avec votre équipe éditoriale
         </p>
+
+        {/* Debug info (à retirer en prod) */}
+        <div className="mt-2 p-2 bg-gray-100 rounded text-xs text-gray-600">
+          <strong>Debug:</strong> {conversations.length} conversations,{" "}
+          {messages.length} messages
+          {selectedConversationId &&
+            ` • Conversation sélectionnée: ${selectedConversationId}`}
+        </div>
       </div>
 
       <div className="flex gap-8 h-[600px]">
@@ -435,13 +470,13 @@ function MessagesPage() {
                 <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-600 text-white font-bold text-base">
                   {selectedConversation.participants.find(
                     (p) => p.id !== user?.id
-                  )?.prenom?.[0] || "?"}
+                  )?.initials || "?"}
                 </div>
                 <div className="flex-1">
                   <div className="font-semibold text-gray-900">
                     {selectedConversation.participants.find(
                       (p) => p.id !== user?.id
-                    )?.prenom || "Conversation"}
+                    )?.name || "Conversation"}
                   </div>
                   <div className="text-xs text-gray-500">
                     En ligne
@@ -478,7 +513,7 @@ function MessagesPage() {
               <MessageThread
                 messages={conversationMessages}
                 users={conversations.flatMap((c) => c.participants)}
-                isLoading={isLoading}
+                isLoading={false}
                 onLoadMore={loadMoreMessages}
                 messagesEndRef={messagesEndRef}
               />

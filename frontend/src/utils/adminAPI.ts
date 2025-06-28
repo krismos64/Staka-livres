@@ -885,3 +885,199 @@ class AdaptiveAdminAPI {
 
 // Export de l'instance du service adaptatif
 export const adminAPI = new AdaptiveAdminAPI();
+
+// API Messages Admin
+export const messagesAPI = {
+  // Liste des messages avec filtres admin
+  async getMessages(
+    filters: {
+      page?: number;
+      limit?: number;
+      type?: string;
+      statut?: string;
+      isRead?: boolean;
+      isArchived?: boolean;
+      search?: string;
+      commandeId?: string;
+      supportRequestId?: string;
+      senderId?: string;
+      receiverId?: string;
+    } = {}
+  ) {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        params.append(key, value.toString());
+      }
+    });
+
+    const response = await fetch(
+      buildApiUrl(`/admin/messages?${params.toString()}`),
+      {
+        headers: getAuthHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Erreur ${response.status}`);
+    }
+
+    return response.json();
+  },
+
+  // Détail d'un message avec thread complet
+  async getMessageDetail(id: string) {
+    const response = await fetch(buildApiUrl(`/admin/messages/${id}`), {
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Erreur ${response.status}`);
+    }
+
+    return response.json();
+  },
+
+  // Envoyer un message admin
+  async sendMessage(data: {
+    content: string;
+    receiverId?: string;
+    commandeId?: string;
+    supportRequestId?: string;
+    subject?: string;
+    type?: string;
+    priority?: string;
+  }) {
+    const response = await fetch(buildApiUrl("/admin/messages"), {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Erreur ${response.status}`);
+    }
+
+    return response.json();
+  },
+
+  // Mettre à jour un message (admin)
+  async updateMessage(
+    id: string,
+    data: {
+      isRead?: boolean;
+      isArchived?: boolean;
+      isPinned?: boolean;
+      statut?: string;
+      adminNote?: string;
+      priority?: string;
+    }
+  ) {
+    const response = await fetch(buildApiUrl(`/admin/messages/${id}`), {
+      method: "PATCH",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Erreur ${response.status}`);
+    }
+
+    return response.json();
+  },
+
+  // Supprimer un message (admin)
+  async deleteMessage(id: string, hard = false) {
+    const params = hard ? "?hard=true" : "";
+    const response = await fetch(
+      buildApiUrl(`/admin/messages/${id}${params}`),
+      {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Erreur ${response.status}`);
+    }
+
+    return response.json();
+  },
+
+  // Statistiques de messagerie
+  async getStats() {
+    const response = await fetch(buildApiUrl("/admin/messages/stats"), {
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Erreur ${response.status}`);
+    }
+
+    return response.json();
+  },
+
+  // Export des messages
+  async exportMessages(
+    filters: {
+      startDate?: string;
+      endDate?: string;
+      format?: "csv" | "json";
+      commandeId?: string;
+      supportRequestId?: string;
+    } = {}
+  ) {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        params.append(key, value.toString());
+      }
+    });
+
+    const response = await fetch(
+      buildApiUrl(`/admin/messages/export?${params.toString()}`),
+      {
+        headers: getAuthHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Erreur ${response.status}`);
+    }
+
+    // Pour les exports, retourner le blob
+    return response.blob();
+  },
+
+  // Marquer plusieurs messages
+  async bulkUpdate(
+    messageIds: string[],
+    action: {
+      type: "read" | "archive" | "delete" | "pin";
+      value?: boolean;
+    }
+  ) {
+    const response = await fetch(buildApiUrl("/admin/messages/bulk"), {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        messageIds,
+        action,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Erreur ${response.status}`);
+    }
+
+    return response.json();
+  },
+};

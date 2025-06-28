@@ -1,163 +1,296 @@
-import React from "react";
-import { Message, User } from "../../pages/MessagesPage";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useInView } from "react-intersection-observer";
+import { Message } from "../../types/messages";
+import { User } from "../../types/shared";
+import LoadingSpinner from "../common/LoadingSpinner";
 import MessageItem from "./MessageItem";
 
 interface MessageThreadProps {
   messages: Message[];
   users: User[];
   isLoading: boolean;
-  onLoadMore: () => void;
+  onLoadMore?: () => void;
   messagesEndRef: React.RefObject<HTMLDivElement>;
+  onMarkAsRead?: (messageId: string) => void;
+  canLoadMore?: boolean;
+  isFetchingNextPage?: boolean;
+  currentUserId?: string;
+  className?: string;
 }
 
-function MessageThread({
+const MessageThread: React.FC<MessageThreadProps> = ({
   messages,
   users,
   isLoading,
   onLoadMore,
   messagesEndRef,
-}: MessageThreadProps) {
-  // Grouper les messages par date pour afficher des séparateurs
-  const groupedMessages = React.useMemo(() => {
+  onMarkAsRead,
+  canLoadMore = false,
+  isFetchingNextPage = false,
+  currentUserId,
+  className = "",
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [visibleMessages, setVisibleMessages] = useState<Set<string>>(
+    new Set()
+  );
+  const [hasUserScrolled, setHasUserScrolled] = useState(false);
+
+  // Intersection observer pour le "Load More"
+  const { ref: loadMoreRef, inView: loadMoreInView } = useInView({
+    threshold: 0.1,
+    rootMargin: "50px",
+  });
+
+  // Intersection observer pour détecter quand les messages entrent dans la vue
+  const { ref: messagesContainerRef } = useInView({
+    threshold: 0,
+    root: containerRef.current,
+  });
+
+  // Auto-scroll vers le bas pour les nouveaux messages
+  const scrollToBottom = useCallback(
+    (force = false) => {
+      if (messagesEndRef.current && (shouldAutoScroll || force)) {
+        messagesEndRef.current.scrollIntoView({
+          behavior: force ? "auto" : "smooth",
+          block: "end",
+        });
+      }
+    },
+    [messagesEndRef, shouldAutoScroll]
+  );
+
+  // Detect manual scroll to disable auto-scroll
+  const handleScroll = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+
+    // Update auto-scroll based on user position
+    setShouldAutoScroll(isNearBottom);
+
+    // Track if user has manually scrolled
+    if (!hasUserScrolled && scrollTop > 0) {
+      setHasUserScrolled(true);
+    }
+  }, [hasUserScrolled]);
+
+  // Load more when in view
+  useEffect(() => {
+    if (loadMoreInView && canLoadMore && !isFetchingNextPage && onLoadMore) {
+      onLoadMore();
+    }
+  }, [loadMoreInView, canLoadMore, isFetchingNextPage, onLoadMore]);
+
+  // Auto-scroll for new messages
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+
+      // Auto-scroll if it's the current user's message or if user is at bottom
+      if (lastMessage.senderId === currentUserId || shouldAutoScroll) {
+        setTimeout(() => scrollToBottom(), 100);
+      }
+    }
+  }, [messages.length, currentUserId, shouldAutoScroll, scrollToBottom]);
+
+  // Mark messages as read when they become visible
+  const handleMessageVisible = useCallback(
+    (messageId: string) => {
+      if (!visibleMessages.has(messageId)) {
+        setVisibleMessages((prev) => new Set([...prev, messageId]));
+
+        // Mark as read if it's not from current user and onMarkAsRead is provided
+        const message = messages.find((m) => m.id === messageId);
+        if (
+          message &&
+          message.senderId !== currentUserId &&
+          !message.isRead &&
+          onMarkAsRead
+        ) {
+          onMarkAsRead(messageId);
+        }
+      }
+    },
+    [visibleMessages, messages, currentUserId, onMarkAsRead]
+  );
+
+  // Get user info helper
+  const getUserById = useCallback(
+    (id: string): User | undefined => {
+      return users.find((user) => user.id === id);
+    },
+    [users]
+  );
+
+  // Group messages by date
+  const groupedMessages = useCallback(() => {
     const groups: { date: string; messages: Message[] }[] = [];
 
     messages.forEach((message) => {
-      const dateStr = message.timestamp.toLocaleDateString("fr-FR", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
+      const messageDate = new Date(message.createdAt).toDateString();
 
-      const existingGroup = groups.find((g) => g.date === dateStr);
-      if (existingGroup) {
-        existingGroup.messages.push(message);
-      } else {
-        groups.push({ date: dateStr, messages: [message] });
+      let group = groups.find((g) => g.date === messageDate);
+      if (!group) {
+        group = { date: messageDate, messages: [] };
+        groups.push(group);
       }
+
+      group.messages.push(message);
     });
 
     return groups;
   }, [messages]);
 
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return "Aujourd'hui";
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return "Hier";
+    } else {
+      return date.toLocaleDateString("fr-FR", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    }
+  };
+
+  if (isLoading && messages.length === 0) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <LoadingSpinner />
+        <span className="ml-3 text-gray-500">Chargement des messages...</span>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Bouton "Charger plus" en haut */}
-      {messages.length > 0 && (
-        <div className="p-4 text-center border-b border-gray-50">
+    <div
+      ref={containerRef}
+      className={`flex-1 overflow-y-auto scroll-smooth ${className}`}
+      onScroll={handleScroll}
+    >
+      {/* Load more button/indicator at top */}
+      {canLoadMore && (
+        <div ref={loadMoreRef} className="py-4 text-center">
+          {isFetchingNextPage ? (
+            <div className="flex items-center justify-center gap-2">
+              <LoadingSpinner size="sm" />
+              <span className="text-sm text-gray-500">
+                Chargement des messages précédents...
+              </span>
+            </div>
+          ) : (
+            <button
+              onClick={onLoadMore}
+              className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
+            >
+              <i className="fas fa-chevron-up mr-2"></i>
+              Charger les messages précédents
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Messages container */}
+      <div ref={messagesContainerRef} className="space-y-1 px-4 pb-4">
+        {messages.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <i className="fas fa-comments text-gray-400 text-xl"></i>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Aucun message
+            </h3>
+            <p className="text-gray-500">
+              Commencez la conversation en envoyant votre premier message.
+            </p>
+          </div>
+        ) : (
+          groupedMessages().map((group) => (
+            <div key={group.date} className="space-y-1">
+              {/* Date separator */}
+              <div className="flex items-center justify-center py-4">
+                <div className="bg-gray-100 text-gray-600 text-xs font-medium px-3 py-1 rounded-full">
+                  {formatDate(group.date)}
+                </div>
+              </div>
+
+              {/* Messages for this date */}
+              {group.messages.map((message, index) => {
+                const user = getUserById(message.senderId);
+                const isOwn = message.senderId === currentUserId;
+                const nextMessage = group.messages[index + 1];
+                const isLastInGroup =
+                  !nextMessage || nextMessage.senderId !== message.senderId;
+
+                return (
+                  <MessageItem
+                    key={message.id}
+                    message={message}
+                    user={user}
+                    isOwn={isOwn}
+                    isLastInGroup={isLastInGroup}
+                    onVisible={() => handleMessageVisible(message.id)}
+                    className={`transition-all duration-200 ${
+                      visibleMessages.has(message.id)
+                        ? "opacity-100"
+                        : "opacity-90"
+                    }`}
+                  />
+                );
+              })}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Scroll indicator */}
+      {!shouldAutoScroll && (
+        <div className="absolute bottom-20 right-4 z-10">
           <button
-            onClick={onLoadMore}
-            disabled={isLoading}
-            className={`
-              px-4 py-2 text-sm font-medium rounded-lg border transition-colors
-              ${
-                isLoading
-                  ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
-              }
-            `}
-            aria-label="Charger d'anciens messages"
+            onClick={() => scrollToBottom(true)}
+            className="bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg hover:bg-blue-700 transition-colors"
+            title="Aller au dernier message"
           >
-            {isLoading ? (
-              <>
-                <i className="fas fa-spinner fa-spin mr-2"></i>
-                Chargement...
-              </>
-            ) : (
-              <>
-                <i className="fas fa-chevron-up mr-2"></i>
-                Charger d'anciens messages
-              </>
+            <i className="fas fa-chevron-down text-sm"></i>
+            {/* Unread count indicator */}
+            {messages.filter((m) => !m.isRead && m.senderId !== currentUserId)
+              .length > 0 && (
+              <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {Math.min(
+                  messages.filter(
+                    (m) => !m.isRead && m.senderId !== currentUserId
+                  ).length,
+                  9
+                )}
+              </div>
             )}
           </button>
         </div>
       )}
 
-      {/* Zone des messages avec scroll */}
-      <div className="flex-1 px-8 py-6 overflow-y-auto space-y-4">
-        {messages.length === 0 ? (
-          /* État vide */
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <i className="fas fa-comment-dots text-gray-400 text-2xl"></i>
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Commencez la conversation
-            </h3>
-            <p className="text-gray-600 max-w-sm">
-              Envoyez votre premier message pour démarrer la discussion.
-            </p>
-          </div>
-        ) : (
-          /* Messages groupés par date */
-          groupedMessages.map((group, groupIndex) => (
-            <div key={`group-${groupIndex}`} className="space-y-4">
-              {/* Séparateur de date */}
-              <div className="flex items-center justify-center py-2">
-                <div className="bg-gray-100 px-3 py-1 rounded-full">
-                  <span className="text-xs text-gray-600 font-medium capitalize">
-                    {group.date}
-                  </span>
-                </div>
-              </div>
-
-              {/* Messages du groupe */}
-              <div className="space-y-4">
-                {group.messages.map((message, messageIndex) => {
-                  const user = users.find((u) => u.id === message.senderId);
-                  const isOwn = message.senderId === "me";
-                  const prevMessage = group.messages[messageIndex - 1];
-                  const nextMessage = group.messages[messageIndex + 1];
-
-                  // Déterminer si on doit afficher l'avatar et le nom
-                  const showAvatar =
-                    !prevMessage || prevMessage.senderId !== message.senderId;
-                  const showSender = showAvatar && !isOwn;
-                  const isConsecutive =
-                    nextMessage && nextMessage.senderId === message.senderId;
-
-                  return (
-                    <MessageItem
-                      key={message.id}
-                      message={message}
-                      user={user}
-                      isOwn={isOwn}
-                      showAvatar={showAvatar}
-                      showSender={showSender}
-                      isConsecutive={isConsecutive}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          ))
-        )}
-
-        {/* Indicateur de frappe (bonus) */}
-        {false && ( // Ici on pourrait ajouter la logique de "en train d'écrire"
-          <div className="flex items-start gap-3 animate-pulse">
-            <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-            <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3">
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div
-                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                  style={{ animationDelay: "0.1s" }}
-                ></div>
-                <div
-                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                  style={{ animationDelay: "0.2s" }}
-                ></div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Référence pour le scroll automatique */}
-        <div ref={messagesEndRef} className="h-px" />
+      {/* Typing indicator placeholder */}
+      <div className="px-4 py-2">
+        {/* This would be where typing indicators appear */}
       </div>
+
+      {/* Bottom anchor for auto-scroll */}
+      <div ref={messagesEndRef} />
     </div>
   );
-}
+};
 
 export default MessageThread;

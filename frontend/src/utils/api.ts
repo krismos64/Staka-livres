@@ -24,6 +24,15 @@ export const apiConfig = {
       detail: "/invoices",
       download: "/invoices",
     },
+    messages: {
+      list: "/messages",
+      detail: "/messages",
+      create: "/messages",
+      update: "/messages",
+      delete: "/messages",
+      stats: "/messages/stats",
+      attachments: "/messages",
+    },
   },
 };
 

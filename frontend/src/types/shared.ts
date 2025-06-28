@@ -237,6 +237,14 @@ export enum TypeMessage {
   ADMIN_NOTE = "ADMIN_NOTE",
 }
 
+export enum MessageStatut {
+  BROUILLON = "BROUILLON",
+  ENVOYE = "ENVOYE",
+  DELIVRE = "DELIVRE",
+  LU = "LU",
+  ARCHIVE = "ARCHIVE",
+}
+
 export enum PrioriteConversation {
   FAIBLE = "FAIBLE",
   NORMALE = "NORMALE",
