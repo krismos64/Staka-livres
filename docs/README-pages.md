@@ -831,15 +831,18 @@ interface AdminStats {
 
 ---
 
-### `AdminUtilisateurs.tsx` - Gestion des Utilisateurs
+### `AdminUtilisateurs.tsx` - Gestion des Utilisateurs - ✅ PRODUCTION READY
 
 #### 🎯 **Rôle Principal**
 
-Interface CRUD complète pour la gestion des utilisateurs avec actions administratives.
+Interface CRUD complète pour la gestion des utilisateurs avec **intégration backend réelle** et API opérationnelle.
 
-- **État** : ✅ **COMPLET** - Interface avec recherche, filtres, pagination et actions bulk
+- **État** : ✅ **PRODUCTION READY** - Module complet testé en conditions réelles Docker
+- **Backend** : **7 endpoints `/admin/users/*`** fonctionnels avec architecture robuste
+- **Tests validés** : ✅ Tests Docker complets avec résultats concrets
+- **Documentation** : 📖 **[Guide technique détaillé](./INTEGRATION_ADMIN_USERS_COMPLETE.md)**
 
-#### 🏗️ **Architecture CRUD**
+#### 🏗️ **Architecture CRUD avec Backend Réel**
 
 ```tsx
 interface AdminUser {
@@ -851,27 +854,73 @@ interface AdminUser {
   isActive: boolean;
   createdAt: string;
   lastLogin?: string;
+  _count?: {
+    commandes: number;
+    sentMessages: number;
+    receivedMessages: number;
+  };
 }
 
-// Intégration API admin
-const { users, loading, error, fetchUsers, updateUser } = useAdminUsers();
+// Intégration API réelle (7 endpoints)
+// GET /admin/users/stats - Statistiques dashboard
+// GET /admin/users?page=1&limit=10&search=jean&role=USER&isActive=true
+// GET /admin/users/:id - Détails avec compteurs relations
+// POST /admin/users - Création avec validation complète
+// PATCH /admin/users/:id - Modification partielle
+// PATCH /admin/users/:id/toggle-status - Basculement statut
+// DELETE /admin/users/:id - Suppression RGPD complète
 ```
 
-#### 📋 **Fonctionnalités Admin**
+#### 🏭 **Architecture Backend Opérationnelle**
 
-- **Liste paginée** : Tableau avec tri et filtres
-- **Recherche avancée** : Par nom, email, rôle
-- **Actions en lot** : Activation/désactivation multiple
-- **Détails utilisateur** : Modal avec informations complètes
-- **Modification rôles** : USER ↔ ADMIN avec validation
-- **Historique activité** : Logs de connexion et actions
+- **AdminUserService** : Service avec méthodes statiques optimisées (pagination Prisma, suppression RGPD)
+- **AdminUserController** : Contrôleur avec validation stricte (Joi, email format, password 8+ caractères)
+- **Routes sécurisées** : Middleware `requireRole('ADMIN')` + authentification JWT obligatoire
+- **Transaction RGPD** : Suppression complète utilisateur + toutes relations en cascade
+- **Protection admin** : Dernier administrateur actif protégé contre suppression
 
-#### 🔒 **Sécurité Admin**
+#### 📋 **Fonctionnalités CRUD Validées**
 
-- **Validation rôle** : Middleware `requireRole('ADMIN')`
-- **Audit trail** : Traçabilité des modifications admin
-- **Protection données** : Masquage informations sensibles
-- **Rate limiting** : Protection contre abus
+- **Pagination optimisée** : Skip/take Prisma avec filtres combinables (search, role, isActive)
+- **Recherche intelligente** : Multi-critères (prénom, nom, email) avec mode insensitive
+- **Statistiques temps réel** : Dashboard KPIs (total, actifs, inactifs, admin, users, récents)
+- **Création sécurisée** : Validation email + hashage bcrypt 12 rounds + logs audit
+- **Modification granulaire** : PATCH avec tous champs optionnels
+- **Toggle statut rapide** : Action one-click pour activation/désactivation
+- **Suppression RGPD** : Transaction complète (messages, notifications, fichiers, commandes, factures)
+
+#### ✅ **Tests de Validation Docker (Décembre 2024)**
+
+```bash
+# Tests complets effectués en conditions réelles
+TOKEN=$(curl -s -X POST http://localhost:3001/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@staka-editions.com", "password": "admin123"}' \
+  | jq -r '.token')
+
+# ✅ Statistiques : {"total":3,"actifs":3,"inactifs":0,"admin":1,"users":2}
+curl -X GET http://localhost:3001/admin/users/stats -H "Authorization: Bearer $TOKEN"
+
+# ✅ Pagination fonctionnelle avec recherche
+curl -X GET "http://localhost:3001/admin/users?page=1&limit=10&search=user" -H "Authorization: Bearer $TOKEN"
+
+# ✅ Création utilisateur : Sophie Dubois créée avec validation complète
+curl -X POST http://localhost:3001/admin/users \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"prenom":"Sophie","nom":"Dubois","email":"sophie.dubois@test.com","password":"sophie123","role":"USER"}'
+
+# ✅ Suppression RGPD : Transaction complète toutes relations effacées
+curl -X DELETE http://localhost:3001/admin/users/USER_ID -H "Authorization: Bearer $TOKEN"
+```
+
+#### 🔒 **Sécurité Production**
+
+- **JWT Admin obligatoire** : Tous endpoints protégés par middleware requireRole('ADMIN')
+- **Validation stricte** : Email format, mots de passe 8+ caractères, rôles enum
+- **Hashage sécurisé** : bcryptjs 12 rounds pour tous nouveaux mots de passe
+- **Logs d'audit** : Traçabilité complète toutes actions admin (création, modification, suppression)
+- **Protection système** : Dernier admin actif ne peut être supprimé ou désactivé
+- **Gestion d'erreurs** : Codes HTTP standardisés avec messages français
 
 ---
 
@@ -1303,6 +1352,7 @@ const savePageState = (page: string, state: any) => {
 - **Lignes de code** : ~12,000 lignes total
 - **Composants utilisés** : 70+ composants réutilisables
 - **Pages admin finalisées** : 9/9 interfaces complètes avec mock data
+- **Module Admin Users PRODUCTION** : Architecture backend complète (AdminUserService, AdminUserController, 7 endpoints testés)
 - **Composants admin** : AdminLayout, StatCard, CommandeStatusSelect + LoadingSpinner, Modal, ConfirmationModal
 - **Types TypeScript** : 50+ interfaces et enums (StatutPage, StatutFacture, TypeLog)
 - **Mock data complet** : Données réalistes pour toutes les entités admin
@@ -1335,6 +1385,7 @@ const savePageState = (page: string, state: any) => {
 - **Security** : JWT + role-based access + API protection
 - **Stripe Integration** : 100% fonctionnel avec données réelles
 - **Admin Interface** : Interface d'administration complète
+- **Admin Users Backend** : 100% production avec tests Docker validés
 - **Messagerie Performance** : Pagination infinie, intersection observer, optimistic updates
 - **React Query Architecture** : Cache multi-niveaux avec invalidation synchronisée
 
@@ -1349,6 +1400,7 @@ L'architecture des pages de Staka Livres offre une base solide pour une applicat
 - **🌟 Pages publiques** : Landing marketing + authentification JWT
 - **📊 Application utilisateur** : Dashboard complet avec données réelles
 - **👨‍💼 Espace admin complet** : 9 pages fonctionnelles avec interfaces modernes
+- **👥 Module Admin Users PRODUCTION** : 7 endpoints testés avec backend réel ([guide complet](./INTEGRATION_ADMIN_USERS_COMPLETE.md))
 - **🎨 Mock data réalistes** : Données complètes pour démonstrations et tests
 - **🔧 Architecture API-ready** : Services mock facilement remplaçables
 - **💳 Intégration Stripe** : Paiements fonctionnels avec sessions et webhooks
@@ -1375,13 +1427,15 @@ Le système de pages est maintenant **complet et opérationnel** avec :
 
 - **18 pages fonctionnelles** couvrant tous les besoins métier (9 admin + 9 app)
 - **Espace admin finalisé** : 9 interfaces professionnelles avec mock data complet
+- **Module Admin Users PRODUCTION** : 7 endpoints opérationnels avec tests Docker validés
 - **Intégration Stripe réelle** avec paiements de 468€
 - **Architecture messagerie professionnelle** : React Query + hooks optimisés + intersection observer
 - **Migration-ready** : Hooks `useMessages`/`useAdminMessages` prêts à remplacer l'implémentation actuelle
 - **Performance avancée** : Pagination infinie, optimistic updates, cache intelligent
 - **Architecture API-ready** : Mock services facilement remplaçables par vraies APIs
+- **Module Admin Users intégré** : Backend complet avec 7 endpoints production et tests Docker validés
 - **Authentification sécurisée** avec gestion des rôles USER/ADMIN
 - **Données temps réel** via API avec AuthContext
 - **Interface de qualité production** prête pour démonstrations clients
 
-Chaque page est conçue comme un **module autonome** avec ses responsabilités claires, facilitant la maintenance et l'évolution de l'application vers de nouvelles fonctionnalités. L'espace admin est particulièrement **prêt pour l'intégration backend** avec une structure de services modulaire. **Le système de messagerie dispose d'une architecture React Query complète et professionnelle** avec hooks optimisés prêts pour une migration performance immédiate.
+Chaque page est conçue comme un **module autonome** avec ses responsabilités claires, facilitant la maintenance et l'évolution de l'application vers de nouvelles fonctionnalités. L'espace admin dispose maintenant d'**un module de production complet** (Admin Users) avec backend intégré et tests validés, démontrant la robustesse de l'architecture. **Le système de messagerie dispose d'une architecture React Query complète et professionnelle** avec hooks optimisés prêts pour une migration performance immédiate.

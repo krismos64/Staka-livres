@@ -32,6 +32,46 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 
 ---
 
+## 📚 **Documentation Technique Complète**
+
+Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvrant tous les aspects techniques et fonctionnels :
+
+### 🏗️ **Architecture et Développement**
+
+- **[Guide Backend API](docs/README-backend.md)** : Documentation complète de l'API REST avec exemples et architecture technique
+- **[Guide Components](docs/README-components.md)** : Documentation des composants React avec patterns et bonnes pratiques
+- **[Guide Pages](docs/README-pages.md)** : Architecture des pages avec détails d'implémentation et flows utilisateur
+- **[Guide Landing Page](docs/README-landingpage.md)** : Documentation des 14 composants marketing et hooks spécialisés
+- **[Guide Styles](docs/README-style.md)** : Système de design, Tailwind CSS et guidelines visuelles
+
+### 🗄️ **Base de Données et Intégrations**
+
+- **[Guide Base de Données](docs/Base-de-donnees-guide.md)** : Documentation exhaustive des 10 modèles Prisma, relations, optimisations et troubleshooting
+- **[Guide Messagerie API](docs/MESSAGES_API_GUIDE.md)** : Architecture React Query, hooks spécialisés et performance
+- **[Guide React Query](docs/README-REACT-QUERY.md)** : Intégration cache intelligent, patterns et optimisations
+
+### 👨‍💼 **Administration et Production**
+
+- **[Guide Admin Complet](docs/ADMIN_COMPLETE_GUIDE.md)** : Vue d'ensemble espace admin, sécurité et mode démo
+- **[Guide Admin Users Production](docs/INTEGRATION_ADMIN_USERS_COMPLETE.md)** : Module CRUD complet avec backend opérationnel et tests Docker
+- **[Guide Facturation Stripe](docs/BILLING_README.md)** : Intégration paiements, webhooks et gestion des factures
+- **[Guide Système de Factures](docs/INVOICE_SYSTEM.md)** : Architecture facturation automatique et PDF
+- **[Guide Webhooks](docs/WEBHOOK_IMPLEMENTATION.md)** : Implémentation Stripe et gestion des événements
+
+### 🔧 **Guides Techniques Spécialisés**
+
+- **[Solutions Erreurs](docs/SOLUTION-ERREUR-504.md)** : Résolution des problèmes courants et optimisations
+- **[Demo Espace Admin](docs/Demo-espace-admin.md)** : Guide d'utilisation du mode démonstration
+
+### 📊 **Métriques et Validation**
+
+- Tests Docker validés avec résultats de production
+- Architecture backend complète avec 35+ endpoints
+- Système de messagerie React Query (1000+ lignes de hooks optimisés)
+- Module Admin Users production-ready avec suppression RGPD
+
+---
+
 ## 🔐 Fonctionnalités Développées
 
 ### 🚀 **Système d'Authentification Complet**
@@ -58,7 +98,7 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 ### 👨‍💼 **Espace Administrateur Complet (9 Pages)**
 
 - **AdminDashboard** : Vue d'ensemble avec KPIs et statistiques temps réel
-- **AdminUtilisateurs** : Gestion CRUD complète avec recherche et filtres
+- **AdminUtilisateurs** : **✅ PRODUCTION READY** - Module complet avec 7 endpoints backend opérationnels
 - **AdminCommandes** : Suivi projets avec changement de statuts
 - **AdminFactures** : Interface facturation avec téléchargement PDF et actions
 - **AdminMessagerie** : Interface messagerie avancée avec hooks React Query spécialisés
@@ -68,8 +108,12 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 - **AdminStatistiques** : Analytics avancées avec graphiques mockés
 - **AdminLogs** : Timeline d'audit avec filtres et métadonnées
 - **Design moderne** : Sidebar sombre, animations fluides, responsive
+- **Module Admin Users** : Architecture backend complète (AdminUserService, AdminUserController)
+- **Tests validés** : Tests Docker complets avec résultats de production
 - **Mock data réalistes** : Données complètes prêtes pour API
 - **Architecture API-ready** : Services facilement remplaçables
+
+📖 **Documentation technique complète** : [Guide Admin Users Production](docs/INTEGRATION_ADMIN_USERS_COMPLETE.md)
 
 ### 🎭 **Mode Démonstration Admin Complet**
 
@@ -96,14 +140,18 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 ### 📊 **API Backend Robuste**
 
 - **Routes d'authentification** : /auth/register, /auth/login, /auth/me
-- **Routes admin utilisateurs** : GET /admin/users, GET /admin/user/:id
+- **Routes admin utilisateurs** : **7 endpoints production** `/admin/users/*` avec CRUD complet et suppression RGPD
 - **Routes admin commandes** : GET /admin/commandes, PATCH /admin/commande/:id
 - **Routes client commandes** : POST /commandes, GET /commandes
 - **Routes de facturation** : GET /invoices, GET /invoices/:id, GET /invoices/:id/download
 - **Routes de paiement Stripe** : POST /payments/create-checkout-session, GET /payments/status, POST /payments/webhook
+- **Architecture backend** : AdminUserService avec méthodes statiques optimisées, AdminUserController avec validation stricte
+- **Sécurité production** : JWT Admin obligatoire, validation Joi, hashage bcrypt 12 rounds, protection dernier admin
 - **Middleware de rôles** avec RequireAdmin
 - **Gestion d'erreurs** centralisée avec logs
 - **Données de fallback** en cas d'indisponibilité DB
+
+📖 **Documentation API complète** : [Guide Backend](docs/README-backend.md)
 
 ### 🗄️ **Base de Données Complète (10 Modèles)**
 
@@ -120,7 +168,7 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 
 **Relations RGPD** : Cascade DELETE, contraintes FK, soft delete  
 **Performance** : Index optimisés, requêtes type-safe Prisma  
-**Documentation** : Guide complet dans `docs/Base-de-donnees-guide.md`
+**Documentation** : [Guide complet Base de Données](docs/Base-de-donnees-guide.md)
 
 ---
 
@@ -665,19 +713,43 @@ Headers: Authorization: Bearer <jwt_token>
 
 ### 👨‍💼 **Administration (Role: ADMIN)**
 
+**Gestion des Utilisateurs - ✅ PRODUCTION READY :**
+
 ```bash
-# Statistiques utilisateurs
+# Statistiques utilisateurs pour dashboard
 GET /admin/users/stats
 Headers: Authorization: Bearer <admin_token>
 
-# Liste des utilisateurs (pagination)
-GET /admin/users?page=1&limit=10
+# Liste paginée avec filtres avancés
+GET /admin/users?page=1&limit=10&search=jean&role=USER&isActive=true
 Headers: Authorization: Bearer <admin_token>
 
-# Détail d'un utilisateur
-GET /admin/user/:id
+# Détails utilisateur avec compteurs relations
+GET /admin/users/:id
 Headers: Authorization: Bearer <admin_token>
 
+# Création utilisateur avec validation complète
+POST /admin/users
+Headers: Authorization: Bearer <admin_token>
+Body: { prenom, nom, email, password, role, isActive? }
+
+# Modification utilisateur (tous champs optionnels)
+PATCH /admin/users/:id
+Headers: Authorization: Bearer <admin_token>
+Body: { prenom?, nom?, email?, role?, isActive? }
+
+# Basculer statut actif/inactif
+PATCH /admin/users/:id/toggle-status
+Headers: Authorization: Bearer <admin_token>
+
+# Suppression RGPD complète et irréversible
+DELETE /admin/users/:id
+Headers: Authorization: Bearer <admin_token>
+```
+
+**Gestion des Commandes :**
+
+```bash
 # Statistiques commandes
 GET /admin/commandes/stats
 Headers: Authorization: Bearer <admin_token>
@@ -695,6 +767,8 @@ PATCH /admin/commande/:id
 Headers: Authorization: Bearer <admin_token>
 Body: { statut: "EN_COURS" }
 ```
+
+📖 **Documentation API complète** : [Guide Admin Users Production](docs/INTEGRATION_ADMIN_USERS_COMPLETE.md)
 
 ### 📝 **Commandes Client (Role: USER)**
 
@@ -1124,20 +1198,22 @@ Body: { commandeId: "uuid", priceId: "price_..." }
 
 - **Services** : 3 services Docker (frontend, backend, db)
 - **Workspaces** : 3 packages npm (frontend, backend, shared)
-- **Lignes de code** : ~16,000 lignes TypeScript/React
+- **Lignes de code** : ~18,000 lignes TypeScript/React
 - **Composants** : 80+ composants React réutilisables
 - **Hooks React Query** : 12 hooks spécialisés (facturation + messagerie + pagination)
 - **Pages admin** : 9 interfaces complètes + mode démo professionnel
+- **Module Admin Users** : **✅ PRODUCTION READY** avec 7 endpoints backend opérationnels
 - **Landing components** : 14 composants production-ready (2400+ lignes)
-- **API Endpoints** : 35+ endpoints REST avec sécurité JWT + Stripe
+- **API Endpoints** : 40+ endpoints REST avec sécurité JWT + Stripe + module Users
 - **Tables DB** : 10 modèles complets avec relations RGPD
-- **Tests** : 48 tests facturation + tests démo automatisés
+- **Tests** : Tests Docker validés + tests démo automatisés + validation production
 - **Architecture messagerie** : 1000+ lignes React Query (useMessages + useAdminMessages)
 - **Mode démonstration** : DemoModeProvider + MockDataService + tests complets
 - **Paiements** : Intégration Stripe complète avec webhooks
+- **Backend production** : AdminUserService + AdminUserController avec suppression RGPD
 - **Architecture API-ready** : Mock services facilement remplaçables
 - **Prisma Studio** : Interface d'administration base de données
-- **Documentation** : Guide complet base de données (32KB)
+- **Documentation complète** : 15+ guides techniques spécialisés dans `docs/`
 
 ### ⚡ **Performance et Sécurité avec React Query**
 
@@ -1155,6 +1231,7 @@ Body: { commandeId: "uuid", priceId: "price_..." }
 - **Authentification** : Inscription/Connexion complète
 - **Gestion des rôles** : USER/ADMIN avec restrictions
 - **Espace admin complet** : 9 pages avec interfaces moderne + mode démo professionnel
+- **Module Admin Users** : **✅ PRODUCTION READY** - CRUD complet avec backend opérationnel et tests Docker
 - **Facturation React Query** : Cache, pagination, téléchargement PDF
 - **Messagerie avancée** : React Query avec hooks spécialisés (1000+ lignes)
 - **Landing Page** : 14 composants production-ready avec calculateur pricing
@@ -1162,6 +1239,7 @@ Body: { commandeId: "uuid", priceId: "price_..." }
 - **Dashboard** : Statistiques temps réel avec fallback
 - **Responsive Design** : Mobile-first avec Tailwind CSS + animations fluides
 - **Data Validation** : Frontend + Backend avec TypeScript
+- **Suppression RGPD** : Transaction complète avec toutes relations en cascade
 - **Paiements Stripe** : Sessions, webhooks et gestion des statuts
 
 ---
@@ -1252,15 +1330,17 @@ npm run build && echo "✅ Build successful"
 
 - **✅ Authentification JWT** : Inscription/Connexion sécurisée
 - **✅ Gestion des rôles** : USER/ADMIN avec protection routes
+- **✅ Module Admin Users PRODUCTION** : 7 endpoints backend avec CRUD complet et suppression RGPD
 - **✅ Système de facturation React Query** : Cache intelligent, pagination fluide, téléchargement PDF
 - **✅ Architecture messagerie complète** : 1000+ lignes React Query avec hooks spécialisés
 - **✅ Landing Page production-ready** : 14 composants React avec calculateur pricing
 - **✅ Mode démonstration admin** : Système complet pour démonstrations client
 - **✅ Espace admin moderne** : 9 pages + DemoModeProvider + MockDataService
-- **✅ API REST complète** : 35+ endpoints avec middleware sécurité
+- **✅ API REST complète** : 40+ endpoints avec middleware sécurité + module Users
 - **✅ Base de données** : 10 modèles Prisma avec relations RGPD
 - **✅ Interface responsive** : Design moderne mobile-first + animations fluides
 - **✅ Paiements Stripe** : API complète avec webhooks et sessions
+- **✅ Documentation complète** : 15+ guides techniques spécialisés dans `docs/`
 
 ### 🎯 **Architecture Technique Validée**
 
@@ -1284,16 +1364,37 @@ npm run build && echo "✅ Build successful"
 - **✅ Retry automatique** : 2 tentatives avec gestion d'erreurs
 - **✅ Téléchargement PDF** : Blob API avec trigger automatique
 
-Cette base solide avec **React Query intégré** (facturation + messagerie 1000+ lignes), **Landing Page production-ready** (14 composants), **Mode démonstration complet**, **Stripe fonctionnel** et **base de données complète (10 modèles)** est prête pour l'ajout des fonctionnalités métier avancées (mutations, upload fichiers, messagerie temps réel, abonnements) et le déploiement en production avec une architecture scalable et maintenable.
+Cette base solide avec **React Query intégré** (facturation + messagerie 1000+ lignes), **Module Admin Users production-ready** (7 endpoints backend opérationnels), **Landing Page production-ready** (14 composants), **Mode démonstration complet**, **Stripe fonctionnel** et **base de données complète (10 modèles)** est prête pour l'ajout des fonctionnalités métier avancées (mutations, upload fichiers, messagerie temps réel, abonnements) et le déploiement en production avec une architecture scalable et maintenable.
 
-## 📚 **Documentation Complète**
+## 📚 **Documentation Technique Exhaustive**
 
-- **README.md** : Guide général du projet (ce fichier)
-- **docs/Base-de-donnees-guide.md** : Guide ultra détaillé de la base de données (32KB)
-  - 10 modèles documentés avec exemples
-  - Prisma Studio et commandes Docker
-  - Troubleshooting 8 problèmes courants
-  - Métriques et optimisations
-  - Checklist de vérification complète
+Le projet dispose d'une **documentation complète et spécialisée** dans le dossier `docs/` avec **15+ guides techniques** couvrant tous les aspects :
 
-Consulter la documentation spécialisée selon vos besoins de développement ou d'administration.
+### 🎯 **Guides Principaux**
+
+- **[README.md](README.md)** : Guide général du projet (ce fichier)
+- **[Guide Backend API](docs/README-backend.md)** : Documentation complète API REST
+- **[Guide Base de Données](docs/Base-de-donnees-guide.md)** : 10 modèles Prisma + troubleshooting
+- **[Guide Admin Users Production](docs/INTEGRATION_ADMIN_USERS_COMPLETE.md)** : Module CRUD complet avec tests Docker
+
+### 🏗️ **Guides Architecture**
+
+- **[Guide Components](docs/README-components.md)** : Composants React et patterns
+- **[Guide Pages](docs/README-pages.md)** : Architecture des pages et flows
+- **[Guide Landing Page](docs/README-landingpage.md)** : 14 composants marketing
+- **[Guide Messagerie](docs/MESSAGES_API_GUIDE.md)** : React Query et hooks spécialisés
+
+### 👨‍💼 **Guides Administration**
+
+- **[Guide Admin Complet](docs/ADMIN_COMPLETE_GUIDE.md)** : Espace admin et mode démo
+- **[Guide Facturation](docs/BILLING_README.md)** : Stripe et paiements
+- **[Guide Factures](docs/INVOICE_SYSTEM.md)** : Système de facturation automatique
+- **[Guide Webhooks](docs/WEBHOOK_IMPLEMENTATION.md)** : Intégration Stripe
+
+### 🔧 **Guides Techniques**
+
+- **[Solutions Erreurs](docs/SOLUTION-ERREUR-504.md)** : Troubleshooting et optimisations
+- **[Guide React Query](docs/README-REACT-QUERY.md)** : Cache intelligent et performance
+- **[Guide Styles](docs/README-style.md)** : Système de design et Tailwind
+
+**Consulter la documentation spécialisée selon vos besoins de développement ou d'administration.**

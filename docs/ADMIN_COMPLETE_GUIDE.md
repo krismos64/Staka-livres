@@ -6,6 +6,14 @@
 
 L'espace admin de **Staka Livres** est maintenant **100% complet et sécurisé** pour la livraison client. Interface moderne avec système de routing robuste, authentification sécurisée, tests automatisés, mode démo, et architecture prête pour la production.
 
+## 📚 Documentation connexe
+
+- **[📖 Module Admin Users - Documentation technique complète](./INTEGRATION_ADMIN_USERS_COMPLETE.md)** : API détaillée, architecture backend/frontend, tests Docker, guide d'intégration
+- **[⚙️ Backend API Reference](./README-backend.md)** : Documentation complète de l'API backend
+- **[🎨 Frontend Components Guide](./README-components.md)** : Guide des composants React
+
+> **Note** : Ce guide présente la vue d'ensemble de l'espace admin. Pour l'implémentation technique détaillée du module gestion des utilisateurs, consultez la documentation spécialisée ci-dessus.
+
 ## 🔐 Sécurité et Authentification Renforcée
 
 ### Protection Multi-Niveaux
@@ -327,18 +335,18 @@ function App() {
 
 ### ✅ **10 Pages Admin Intégrées**
 
-| Section          | Composant           | API Endpoints | Fonctionnalités                         |
-| ---------------- | ------------------- | ------------- | --------------------------------------- |
-| **Dashboard**    | `AdminDashboard`    | 3 endpoints   | KPIs temps réel, stats générales        |
-| **Utilisateurs** | `AdminUtilisateurs` | 7 endpoints   | CRUD, permissions, recherche            |
-| **Commandes**    | `AdminCommandes`    | 4 endpoints   | Statuts, historique, assignation        |
-| **Factures**     | `AdminFactures`     | 6 endpoints   | PDF, rappels, stats financières         |
-| **Messagerie**   | `AdminMessagerie`   | 8 endpoints   | Supervision conversations, RGPD, export |
-| **FAQ**          | `AdminFAQ`          | 4 endpoints   | CRUD, réorganisation, catégories        |
-| **Tarifs**       | `AdminTarifs`       | 7 endpoints   | Prix, services, activation              |
-| **Pages**        | `AdminPages`        | 6 endpoints   | CMS, SEO, preview, publication          |
-| **Statistiques** | `AdminStatistiques` | 1 endpoint    | Analyses, graphiques, KPIs              |
-| **Logs**         | `AdminLogs`         | 2 endpoints   | Audit, export, timeline                 |
+| Section          | Composant           | API Endpoints | Fonctionnalités                                                                             |
+| ---------------- | ------------------- | ------------- | ------------------------------------------------------------------------------------------- |
+| **Dashboard**    | `AdminDashboard`    | 3 endpoints   | KPIs temps réel, stats générales                                                            |
+| **Utilisateurs** | `AdminUtilisateurs` | 7 endpoints   | CRUD, permissions, recherche - **[📖 Doc complète](./INTEGRATION_ADMIN_USERS_COMPLETE.md)** |
+| **Commandes**    | `AdminCommandes`    | 4 endpoints   | Statuts, historique, assignation                                                            |
+| **Factures**     | `AdminFactures`     | 6 endpoints   | PDF, rappels, stats financières                                                             |
+| **Messagerie**   | `AdminMessagerie`   | 8 endpoints   | Supervision conversations, RGPD, export                                                     |
+| **FAQ**          | `AdminFAQ`          | 4 endpoints   | CRUD, réorganisation, catégories                                                            |
+| **Tarifs**       | `AdminTarifs`       | 7 endpoints   | Prix, services, activation                                                                  |
+| **Pages**        | `AdminPages`        | 6 endpoints   | CMS, SEO, preview, publication                                                              |
+| **Statistiques** | `AdminStatistiques` | 1 endpoint    | Analyses, graphiques, KPIs                                                                  |
+| **Logs**         | `AdminLogs`         | 2 endpoints   | Audit, export, timeline                                                                     |
 
 ### 🔧 **Service API Centralisé (adminAPI.ts)**
 

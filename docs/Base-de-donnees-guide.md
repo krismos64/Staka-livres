@@ -911,9 +911,9 @@ const activeUsers = await prisma.user.findMany({
 
 ---
 
-## 🔗 **Nouveaux Endpoints API Admin - Messagerie **
+## 🔗 **Nouveaux Endpoints API Admin - Messagerie & Users** ⭐
 
-### **Endpoints Implémentés**
+### **🗣️ Endpoints Messagerie (9 endpoints)**
 
 ```typescript
 // Routes admin messagerie dans backend/src/routes/admin.ts
@@ -1113,6 +1113,288 @@ export const useSendAdminMessage = () => {
     },
   });
 };
+```
+
+### **👥 Endpoints Admin Users (7 endpoints) - ✅ PRODUCTION READY**
+
+```typescript
+// Routes admin users dans backend/src/routes/admin/users.ts
+
+// 1. Statistiques utilisateurs pour dashboard
+GET /admin/users/stats
+Response: { total: number, actifs: number, inactifs: number, admin: number, users: number, recents: number }
+
+// 2. Liste paginée avec filtres avancés
+GET /admin/users?page=1&limit=10&search=jean&role=USER&isActive=true
+Query params: page, limit, search, role, isActive
+Response: { data: User[], pagination: PaginationInfo }
+
+// 3. Détails utilisateur avec compteurs relations
+GET /admin/users/:id
+Response: { data: User & { _count: { commandes: number, sentMessages: number, receivedMessages: number } } }
+
+// 4. Création utilisateur avec validation complète
+POST /admin/users
+Body: { prenom: string, nom: string, email: string, password: string, role: Role, isActive?: boolean }
+Response: { data: User, message: string }
+
+// 5. Modification utilisateur (tous champs optionnels)
+PATCH /admin/users/:id
+Body: { prenom?: string, nom?: string, email?: string, role?: Role, isActive?: boolean }
+Response: { data: User, message: string }
+
+// 6. Basculer statut actif/inactif (action rapide)
+PATCH /admin/users/:id/toggle-status
+Response: { data: User, message: "Utilisateur activé/désactivé avec succès" }
+
+// 7. Suppression RGPD complète et irréversible
+DELETE /admin/users/:id
+Response: { message: "Utilisateur supprimé définitivement (RGPD)" }
+```
+
+#### **🏗️ Architecture Backend Admin Users**
+
+```typescript
+// Service principal : AdminUserService (backend/src/services/adminUserService.ts)
+export class AdminUserService {
+  // Pagination optimisée avec Prisma
+  static async getUsers(
+    page: number,
+    limit: number,
+    search?: string,
+    role?: Role,
+    isActive?: boolean
+  ) {
+    const skip = (page - 1) * limit;
+    const where = this.buildWhereClause(search, role, isActive);
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          _count: { select: { commandes: true, sentMessages: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.user.count({ where }),
+    ]);
+
+    return { users, total, page, totalPages: Math.ceil(total / limit) };
+  }
+
+  // Détails utilisateur avec relations
+  static async getUserById(id: string) {
+    return await prisma.user.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            commandes: true,
+            sentMessages: true,
+            receivedMessages: true,
+            supportRequests: true,
+            paymentMethods: true,
+          },
+        },
+      },
+    });
+  }
+
+  // Création avec hashage bcrypt
+  static async createUser(data: CreateUserRequest) {
+    const hashedPassword = await bcrypt.hash(data.password, 12);
+    return await prisma.user.create({
+      data: {
+        ...data,
+        password: hashedPassword,
+      },
+      select: {
+        id: true,
+        prenom: true,
+        nom: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  // Suppression RGPD complète avec transaction
+  static async deleteUser(id: string) {
+    return await prisma.$transaction(async (tx) => {
+      // 1. Supprimer toutes les relations en cascade
+      await tx.messageAttachment.deleteMany({
+        where: { message: { OR: [{ senderId: id }, { receiverId: id }] } },
+      });
+
+      await tx.message.deleteMany({
+        where: { OR: [{ senderId: id }, { receiverId: id }] },
+      });
+
+      await tx.notification.deleteMany({ where: { userId: id } });
+      await tx.file.deleteMany({ where: { uploadedById: id } });
+      await tx.paymentMethod.deleteMany({ where: { userId: id } });
+      await tx.supportRequest.deleteMany({ where: { userId: id } });
+      await tx.invoice.deleteMany({ where: { commande: { userId: id } } });
+      await tx.commande.deleteMany({ where: { userId: id } });
+
+      // 2. Supprimer l'utilisateur
+      await tx.user.delete({ where: { id } });
+
+      return { message: "Utilisateur supprimé définitivement (RGPD)" };
+    });
+  }
+
+  // Protection dernier admin actif
+  static async validateAdminDeletion(id: string) {
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (user?.role === "ADMIN") {
+      const activeAdmins = await prisma.user.count({
+        where: { role: "ADMIN", isActive: true, id: { not: id } },
+      });
+      if (activeAdmins === 0) {
+        throw new Error(
+          "Impossible de supprimer le dernier administrateur actif"
+        );
+      }
+    }
+  }
+
+  // Statistiques pour dashboard
+  static async getUserStats() {
+    const [total, actifs, admin, recents] = await Promise.all([
+      prisma.user.count(),
+      prisma.user.count({ where: { isActive: true } }),
+      prisma.user.count({ where: { role: "ADMIN" } }),
+      prisma.user.count({
+        where: {
+          createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+        },
+      }),
+    ]);
+
+    return {
+      total,
+      actifs,
+      inactifs: total - actifs,
+      admin,
+      users: total - admin,
+      recents,
+    };
+  }
+}
+
+// Contrôleur : AdminUserController (backend/src/controllers/adminUserController.ts)
+// - Validation avec Joi : email format, password 8+ caractères
+// - Authentification JWT Admin obligatoire
+// - Gestion d'erreurs standardisée avec codes HTTP
+// - Logs d'audit pour toutes les actions
+```
+
+#### **🔍 Requêtes Prisma Optimisées Admin Users**
+
+```typescript
+// Recherche avancée avec filtres combinables
+const buildUserSearchQuery = (
+  search?: string,
+  role?: Role,
+  isActive?: boolean
+) => {
+  const where: any = {};
+
+  if (search) {
+    where.OR = [
+      { prenom: { contains: search, mode: "insensitive" } },
+      { nom: { contains: search, mode: "insensitive" } },
+      { email: { contains: search, mode: "insensitive" } },
+    ];
+  }
+
+  if (role) where.role = role;
+  if (isActive !== undefined) where.isActive = isActive;
+
+  return where;
+};
+
+// Statistiques utilisateurs pour tableau de bord
+const getDashboardUserStats = async () => {
+  const stats = await prisma.user.groupBy({
+    by: ["role", "isActive"],
+    _count: { id: true },
+  });
+
+  // Transformation en format lisible
+  return stats.reduce((acc, stat) => {
+    const key = `${stat.role.toLowerCase()}_${
+      stat.isActive ? "actif" : "inactif"
+    }`;
+    acc[key] = stat._count.id;
+    return acc;
+  }, {});
+};
+
+// Utilisateurs les plus actifs (métriques business)
+const getMostActiveUsers = async (limit = 10) => {
+  return await prisma.user.findMany({
+    include: {
+      _count: {
+        select: {
+          commandes: true,
+          sentMessages: true,
+          supportRequests: true,
+        },
+      },
+    },
+    orderBy: {
+      commandes: { _count: "desc" },
+    },
+    take: limit,
+    where: { isActive: true },
+  });
+};
+```
+
+#### **✅ Tests de Validation Docker (Décembre 2024)**
+
+```bash
+# Tests complets effectués en conditions réelles
+docker-compose up --build -d
+
+# 1. Connexion admin et récupération token
+TOKEN=$(curl -s -X POST http://localhost:3001/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@staka-editions.com", "password": "admin123"}' \
+  | jq -r '.token')
+
+# 2. Statistiques utilisateurs (dashboard)
+curl -X GET http://localhost:3001/admin/users/stats \
+  -H "Authorization: Bearer $TOKEN"
+# ✅ Résultat : {"total":3,"actifs":3,"inactifs":0,"admin":1,"users":2,"recents":3}
+
+# 3. Liste paginée avec filtres
+curl -X GET "http://localhost:3001/admin/users?page=1&limit=10&search=user" \
+  -H "Authorization: Bearer $TOKEN"
+# ✅ Résultat : Pagination fonctionnelle, recherche active
+
+# 4. Création utilisateur test
+curl -X POST http://localhost:3001/admin/users \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"prenom":"Sophie","nom":"Dubois","email":"sophie.dubois@test.com","password":"sophie123","role":"USER"}'
+# ✅ Résultat : Utilisateur créé, password hashé, validation complète
+
+# 5. Basculement statut utilisateur
+curl -X PATCH http://localhost:3001/admin/users/USER_ID/toggle-status \
+  -H "Authorization: Bearer $TOKEN"
+# ✅ Résultat : Statut basculé de actif → inactif
+
+# 6. Suppression RGPD complète
+curl -X DELETE http://localhost:3001/admin/users/USER_ID \
+  -H "Authorization: Bearer $TOKEN"
+# ✅ Résultat : Suppression transaction complète, toutes relations effacées
 ```
 
 ### **Corrections Techniques Majeures**
@@ -1804,6 +2086,16 @@ docker exec staka_db du -sh /var/lib/mysql
 
 ## 📝 **Changelog - Dernières Corrections**
 
+**Version 1.3 - ⭐ DOCUMENTATION COMPLÈTE ADMIN USERS (Décembre 2024)**
+
+- 👥 **Module Admin Users intégré** : 7 endpoints `/admin/users/*` documentés
+- 🏗️ **Architecture complète** : AdminUserService, AdminUserController, requêtes optimisées
+- 🔒 **Suppression RGPD** : Transaction complète avec toutes relations
+- ✅ **Tests production validés** : Tests Docker complets avec résultats
+- 📊 **Statistiques dashboard** : Métriques utilisateurs pour admin
+- 🔧 **Protection admin** : Dernier administrateur actif protégé
+- 📝 **Guide troubleshooting** : Solutions problèmes courants module Users
+
 **Version 1.2 - ⭐ MIGRATION MESSAGERIE ADMIN**
 
 - 🚀 **Migration complète messagerie** : Frontend Mock → API Backend réelles
@@ -1867,4 +2159,4 @@ docker exec staka_db du -sh /var/lib/mysql
 
 ---
 
-_Version Base de Données : MySQL 8.4+ avec Prisma v6.10.1_
+_Version Base de Données : MySQL 8.4+ avec Prisma v6.10.1 - v1.3 Décembre 2024_

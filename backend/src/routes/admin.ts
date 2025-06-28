@@ -1,11 +1,6 @@
 import { Role } from "@prisma/client";
 import { Request, Response, Router } from "express";
 import {
-  getAllUsers,
-  getUserById,
-  getUserStats,
-} from "../controllers/adminController";
-import {
   getAllCommandes,
   getCommandeById,
   getCommandeStats,
@@ -13,6 +8,8 @@ import {
 } from "../controllers/commandeController";
 import { authenticateToken } from "../middleware/auth";
 import { requireRole } from "../middleware/requireRole";
+// Import des nouvelles routes utilisateurs
+import userRoutes from "./admin/users";
 
 // Import Prisma pour accéder aux données
 import { PrismaClient } from "@prisma/client";
@@ -39,15 +36,8 @@ router.get("/test", requireRole(Role.ADMIN), (req: Request, res: Response) => {
 });
 
 // 👥 GESTION DES UTILISATEURS
-
-// Statistiques des utilisateurs (AVANT /user/:id pour éviter conflits)
-router.get("/users/stats", requireRole(Role.ADMIN), getUserStats);
-
-// Liste de tous les utilisateurs
-router.get("/users", requireRole(Role.ADMIN), getAllUsers);
-
-// Utilisateur spécifique par ID
-router.get("/user/:id", requireRole(Role.ADMIN), getUserById);
+// Utilisation du module dédié pour la gestion complète des utilisateurs
+router.use("/users", userRoutes);
 
 // 📋 GESTION DES COMMANDES
 

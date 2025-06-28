@@ -1011,3 +1011,146 @@ Le frontend est maintenant **complet et opérationnel** avec :
 ### 🚀 **Prêt pour Production**
 
 L'architecture frontend est maintenant **production-ready** avec une expérience utilisateur complète, de la découverte des services sur la landing page jusqu'à la gestion avancée des projets, paiements et **messagerie en temps réel** dans l'application, plus un **espace d'administration complet** avec 9 interfaces fonctionnelles. Le système est **scalable**, **maintenable** et **sécurisé**, avec une **architecture de messagerie professionnelle** utilisant les meilleures pratiques React Query, prêt pour l'intégration API backend.
+
+# Documentation des Composants Frontend
+
+## AdminUtilisateurs.tsx
+
+### Nouvelles fonctionnalités intégrées (v2024.06)
+
+Le composant `AdminUtilisateurs.tsx` a été entièrement intégré avec les nouveaux endpoints backend `/admin/users` pour offrir une gestion complète des utilisateurs.
+
+#### Endpoints API utilisés
+
+- `GET /admin/users/stats` - Statistiques utilisateurs (total, actifs, admins, récents)
+- `GET /admin/users` - Liste paginée avec filtres (search, role, isActive)
+- `GET /admin/users/:id` - Détails d'un utilisateur spécifique
+- `POST /admin/users` - Création d'un nouvel utilisateur
+- `PATCH /admin/users/:id` - Modification d'un utilisateur
+- `PATCH /admin/users/:id/toggle-status` - Basculer statut actif/inactif
+- `DELETE /admin/users/:id` - Suppression RGPD complète
+
+#### Fonctionnalités principales
+
+1. **Dashboard statistiques**
+
+   - Affichage en temps réel des métriques utilisateurs
+   - Cartes de statistiques avec icônes et couleurs
+
+2. **Liste paginée**
+
+   - Pagination performante (skip/take Prisma)
+   - Filtres combinables : recherche, rôle, statut
+   - Tri par nom, email, date de création
+
+3. **Actions CRUD**
+
+   - **Création** : Formulaire de création avec validation côté client et serveur
+   - **Modification** : Édition en place avec sauvegarde automatique
+   - **Activation/Désactivation** : Bouton toggle rapide
+   - **Suppression RGPD** : Suppression complète avec confirmation
+
+4. **Sécurité**
+   - Token JWT admin obligatoire sur tous les appels
+   - Protection du dernier administrateur actif
+   - Validation stricte des données
+
+#### Types TypeScript utilisés
+
+```typescript
+interface CreateUserRequest {
+  prenom: string;
+  nom: string;
+  email: string;
+  password: string;
+  role: Role;
+  isActive?: boolean;
+}
+
+interface UpdateUserRequest {
+  prenom?: string;
+  nom?: string;
+  email?: string;
+  role?: Role;
+  isActive?: boolean;
+}
+
+interface UserStats {
+  total: number;
+  actifs: number;
+  inactifs: number;
+  admin: number;
+  users: number;
+  recents: number;
+}
+```
+
+#### Gestion d'erreurs
+
+- **Validation** : Messages d'erreur français explicites
+- **Connectivité** : Retry automatique et fallback
+- **Autorisations** : Redirection si pas admin
+- **RGPD** : Confirmation obligatoire pour suppression
+
+#### Tests d'intégration
+
+Le fichier `frontend/tests/integration/admin-users-integration.test.ts` couvre :
+
+- Workflow CRUD complet
+- Pagination et filtres
+- Gestion des erreurs
+- Validation des données
+- Suppression RGPD
+
+### Utilisation
+
+```typescript
+import { adminAPI } from "../utils/adminAPI";
+
+// Récupérer les statistiques
+const stats = await adminAPI.getUserStats();
+
+// Lister avec filtres
+const users = await adminAPI.getUsers(1, 10, "john", Role.USER, true);
+
+// Créer un utilisateur
+const newUser = await adminAPI.createUser({
+  prenom: "Jean",
+  nom: "Dupont",
+  email: "jean@example.com",
+  password: "password123",
+  role: Role.USER,
+});
+
+// Basculer le statut
+const toggledUser = await adminAPI.toggleUserStatus(userId);
+
+// Suppression RGPD
+await adminAPI.deleteUser(userId);
+```
+
+## AdminAPI.ts
+
+### Méthodes utilisateurs mises à jour
+
+- `getUsers(page, limit, search?, role?, isActive?)` - Liste paginée avec nouveaux filtres
+- `getUserById(id)` - Détails utilisateur (endpoint corrigé)
+- `createUser(userData)` - Création (endpoint corrigé)
+- `updateUser(id, userData)` - Modification (PATCH au lieu de PUT)
+- `deleteUser(id)` - Suppression (endpoint corrigé)
+
+### Nouvelles méthodes
+
+- `getUserStats()` - Statistiques dashboard
+- `toggleUserStatus(id)` - Basculer statut rapide
+- `activateUser(id)` - Activer un utilisateur
+- `deactivateUser(id)` - Désactiver un utilisateur
+
+### Mode démo
+
+Toutes les nouvelles méthodes supportent le mode démo avec :
+
+- Données mockées cohérentes
+- Simulation d'délais réseau (100-500ms)
+- Gestion des erreurs simulées
+- État persistant pendant la session

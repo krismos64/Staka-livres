@@ -177,7 +177,8 @@ class AdaptiveAdminAPI {
     page = 1,
     limit = 10,
     search?: string,
-    role?: Role
+    role?: Role,
+    isActive?: boolean
   ): Promise<PaginatedResponse<User>> {
     if (this.isDemoMode()) {
       return MockDataService.getUsers(page, limit, search, role);
@@ -190,6 +191,7 @@ class AdaptiveAdminAPI {
 
     if (search) params.append("search", search);
     if (role) params.append("role", role);
+    if (isActive !== undefined) params.append("isActive", isActive.toString());
 
     return this.realApiCall(`/admin/users?${params}`);
   }
@@ -202,7 +204,7 @@ class AdaptiveAdminAPI {
       return user;
     }
 
-    return this.realApiCall(`/admin/user/${id}`);
+    return this.realApiCall(`/admin/users/${id}`);
   }
 
   async createUser(userData: CreateUserRequest): Promise<User> {
@@ -217,7 +219,7 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall("/admin/user", {
+    return this.realApiCall("/admin/users", {
       method: "POST",
       body: JSON.stringify(userData),
     });
@@ -234,8 +236,8 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall(`/admin/user/${id}`, {
-      method: "PUT",
+    return this.realApiCall(`/admin/users/${id}`, {
+      method: "PATCH",
       body: JSON.stringify(userData),
     });
   }
@@ -246,9 +248,68 @@ class AdaptiveAdminAPI {
       return;
     }
 
-    await this.realApiCall(`/admin/user/${id}`, {
+    await this.realApiCall(`/admin/users/${id}`, {
       method: "DELETE",
     });
+  }
+
+  // Nouvelles méthodes pour les fonctionnalités manquantes
+  async getUserStats(): Promise<UserStats> {
+    if (this.isDemoMode()) {
+      // Retourner des stats mockées directement
+      return {
+        total: 125,
+        actifs: 118,
+        admin: 3,
+        recents: 15,
+      };
+    }
+
+    return this.realApiCall("/admin/users/stats");
+  }
+
+  async toggleUserStatus(id: string): Promise<User> {
+    if (this.isDemoMode()) {
+      await this.simulateAction("toggleUserStatus", 300);
+      const currentUser = await this.getUserById(id);
+      return {
+        ...currentUser,
+        isActive: !currentUser.isActive,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    return this.realApiCall(`/admin/users/${id}/toggle-status`, {
+      method: "PATCH",
+    });
+  }
+
+  async activateUser(id: string): Promise<User> {
+    if (this.isDemoMode()) {
+      await this.simulateAction("activateUser", 300);
+      const currentUser = await this.getUserById(id);
+      return {
+        ...currentUser,
+        isActive: true,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    return this.updateUser(id, { isActive: true });
+  }
+
+  async deactivateUser(id: string): Promise<User> {
+    if (this.isDemoMode()) {
+      await this.simulateAction("deactivateUser", 300);
+      const currentUser = await this.getUserById(id);
+      return {
+        ...currentUser,
+        isActive: false,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    return this.updateUser(id, { isActive: false });
   }
 
   // ===============================
