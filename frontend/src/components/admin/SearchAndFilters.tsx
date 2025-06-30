@@ -17,7 +17,7 @@ interface SearchAndFiltersProps {
   searchAriaLabel?: string;
   filterAriaLabel?: string;
   showAdvancedFilters?: boolean;
-  activeFilter?: boolean;
+  activeFilter?: boolean | "TOUS";
   onActiveFilterChange?: (active: boolean | "TOUS") => void;
 }
 

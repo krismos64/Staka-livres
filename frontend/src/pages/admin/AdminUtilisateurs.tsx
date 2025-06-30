@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ChangeRoleModal,
   DeactivateUserModal,
@@ -97,6 +97,49 @@ const AdminUtilisateurs: React.FC = () => {
     newRole: null,
   });
 
+  // Tri côté client des utilisateurs
+  const sortedUsers = useMemo(() => {
+    if (!sortColumn || !sortDirection) return users;
+
+    return [...users].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortColumn) {
+        case "email":
+          aValue = a.email.toLowerCase();
+          bValue = b.email.toLowerCase();
+          break;
+        case "role":
+          aValue = a.role;
+          bValue = b.role;
+          break;
+        case "status":
+          aValue = a.isActive ? 1 : 0;
+          bValue = b.isActive ? 1 : 0;
+          break;
+        case "createdAt":
+          aValue = new Date(a.createdAt).getTime();
+          bValue = new Date(b.createdAt).getTime();
+          break;
+        case "user":
+          aValue = `${a.prenom} ${a.nom}`.toLowerCase();
+          bValue = `${b.prenom} ${b.nom}`.toLowerCase();
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) {
+        return sortDirection === "asc" ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortDirection === "asc" ? 1 : -1;
+      }
+      return 0;
+    });
+  }, [users, sortColumn, sortDirection]);
+
   // Charger les utilisateurs et stats au montage du composant
   useEffect(() => {
     loadUserStats();
@@ -136,7 +179,6 @@ const AdminUtilisateurs: React.FC = () => {
   const handleSort = (column: string, direction: "asc" | "desc") => {
     setSortColumn(column);
     setSortDirection(direction);
-    // TODO: Implémenter le tri côté serveur si nécessaire
   };
 
   const handlePageChange = (page: number) => {
@@ -214,7 +256,9 @@ const AdminUtilisateurs: React.FC = () => {
   };
 
   const confirmExportUsers = async (format: "csv" | "json") => {
-    const filters: UserFilters = {};
+    const filters: UserFilters & { format?: "csv" | "json" } = {
+      format: format,
+    };
 
     if (roleFilter !== "TOUS") {
       filters.role = roleFilter;
@@ -224,7 +268,8 @@ const AdminUtilisateurs: React.FC = () => {
       filters.isActive = activeFilter;
     }
 
-    const blob = await exportUsers({ ...filters, format });
+    const blob = await exportUsers(filters);
+
     if (blob) {
       // Télécharger le fichier
       const url = window.URL.createObjectURL(blob);
@@ -242,19 +287,24 @@ const AdminUtilisateurs: React.FC = () => {
     }
   };
 
-  // Utilitaires de modales
   const closeModal = (modalKey: keyof ModalState) => {
     setModals((prev) => ({ ...prev, [modalKey]: false }));
 
-    // Nettoyer les données après fermeture
+    // Reset modal data after a small delay for smooth animation
     setTimeout(() => {
-      setModalData({
-        selectedUser: null,
-        userToDelete: null,
-        userToToggle: null,
-        userToChangeRole: null,
-        newRole: null,
-      });
+      if (modalKey === "showUserDetails") {
+        setModalData((prev) => ({ ...prev, selectedUser: null }));
+      } else if (modalKey === "showDeleteConfirm") {
+        setModalData((prev) => ({ ...prev, userToDelete: null }));
+      } else if (modalKey === "showStatusConfirm") {
+        setModalData((prev) => ({ ...prev, userToToggle: null }));
+      } else if (modalKey === "showRoleConfirm") {
+        setModalData((prev) => ({
+          ...prev,
+          userToChangeRole: null,
+          newRole: null,
+        }));
+      }
     }, 300);
   };
 
@@ -265,6 +315,13 @@ const AdminUtilisateurs: React.FC = () => {
       showStatusConfirm: false,
       showRoleConfirm: false,
       showExportConfirm: false,
+    });
+    setModalData({
+      selectedUser: null,
+      userToDelete: null,
+      userToToggle: null,
+      userToChangeRole: null,
+      newRole: null,
     });
   };
 
@@ -289,29 +346,6 @@ const AdminUtilisateurs: React.FC = () => {
 
   return (
     <div className="space-y-6 p-6">
-      {/* En-tête avec titre et actions principales */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Gestion des utilisateurs
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Gérez les comptes utilisateurs, leurs rôles et permissions
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => clearError()}
-            disabled={!error}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50"
-            title="Effacer les erreurs"
-          >
-            <i className="fas fa-times-circle"></i>
-          </button>
-        </div>
-      </div>
-
       {/* Statistiques rapides */}
       <QuickStats
         totalUsers={stats?.total || totalUsers}
@@ -368,7 +402,7 @@ const AdminUtilisateurs: React.FC = () => {
 
       {/* Table des utilisateurs */}
       <UserTable
-        users={users}
+        users={sortedUsers}
         isLoading={isLoading}
         isOperationLoading={isOperationLoading}
         actions={tableActions}
