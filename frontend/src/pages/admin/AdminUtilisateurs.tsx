@@ -1,456 +1,422 @@
 import React, { useEffect, useState } from "react";
-import ConfirmationModal from "../../components/common/ConfirmationModal";
+import {
+  ChangeRoleModal,
+  DeactivateUserModal,
+  DeleteUserModal,
+  ExportDataModal,
+} from "../../components/admin/ConfirmationModals";
+import SearchAndFilters, {
+  QuickStats,
+} from "../../components/admin/SearchAndFilters";
+import UserTable, {
+  createUserTableActions,
+} from "../../components/admin/UserTable";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Modal from "../../components/common/Modal";
+import { useAdminUsers, UserFilters } from "../../hooks/useAdminUsers";
+import { useDebouncedSearch } from "../../hooks/useDebouncedSearch";
 import { Role, User } from "../../types/shared";
-import { adminAPI } from "../../utils/adminAPI";
-import { useToasts } from "../../utils/toast";
 
 type RoleFilter = Role | "TOUS";
 
+interface ModalState {
+  showUserDetails: boolean;
+  showDeleteConfirm: boolean;
+  showStatusConfirm: boolean;
+  showRoleConfirm: boolean;
+  showExportConfirm: boolean;
+}
+
+interface ModalData {
+  selectedUser: User | null;
+  userToDelete: User | null;
+  userToToggle: User | null;
+  userToChangeRole: User | null;
+  newRole: Role | null;
+}
+
 const AdminUtilisateurs: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  // Hooks de recherche avec debounce
+  const {
+    searchTerm,
+    debouncedSearchTerm,
+    setSearchTerm,
+    isSearching,
+    clearSearch,
+  } = useDebouncedSearch({
+    delay: 300,
+    minLength: 0,
+  });
+
+  // Hook de gestion des utilisateurs
+  const {
+    users,
+    stats,
+    isLoading,
+    isRefreshing,
+    isOperationLoading,
+    error,
+    currentPage,
+    totalPages,
+    totalUsers,
+    loadUsers,
+    refreshUsers,
+    loadUserStats,
+    viewUser,
+    toggleUserStatus,
+    changeUserRole,
+    deleteUser,
+    exportUsers,
+    setCurrentPage,
+    clearError,
+  } = useAdminUsers({
+    initialPage: 1,
+    pageSize: 10,
+  });
+
+  // États locaux pour les filtres et modales
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("TOUS");
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [showUserModal, setShowUserModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<User | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [isOperationLoading, setIsOperationLoading] = useState(false);
-  const { showToast } = useToasts();
+  const [activeFilter, setActiveFilter] = useState<boolean | "TOUS">("TOUS");
+  const [sortColumn, setSortColumn] = useState<string | undefined>();
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-  const loadUsers = async (page = 1, search = "", role?: Role) => {
-    try {
-      setIsLoading(page === 1);
-      setError(null);
+  // États des modales
+  const [modals, setModals] = useState<ModalState>({
+    showUserDetails: false,
+    showDeleteConfirm: false,
+    showStatusConfirm: false,
+    showRoleConfirm: false,
+    showExportConfirm: false,
+  });
 
-      const searchParam = search.trim() || undefined;
+  const [modalData, setModalData] = useState<ModalData>({
+    selectedUser: null,
+    userToDelete: null,
+    userToToggle: null,
+    userToChangeRole: null,
+    newRole: null,
+  });
 
-      const response = await adminAPI.getUsers(page, 10, searchParam, role);
-
-      setUsers(response.data || []);
-      setTotalPages(response.pagination?.totalPages || 1);
-
-      if (page === 1) {
-        showToast(
-          "success",
-          "Données chargées",
-          "Liste des utilisateurs mise à jour"
-        );
-      }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Erreur de chargement des utilisateurs";
-      setError(errorMessage);
-      showToast("error", "Erreur", errorMessage);
-      console.error("Erreur chargement utilisateurs:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // Charger les utilisateurs et stats au montage du composant
   useEffect(() => {
-    const roleParam = roleFilter === "TOUS" ? undefined : roleFilter;
-    loadUsers(1, searchQuery, roleParam);
+    loadUserStats();
+  }, [loadUserStats]);
+
+  // Recharger quand les filtres changent
+  useEffect(() => {
+    const filters: UserFilters = {};
+
+    if (roleFilter !== "TOUS") {
+      filters.role = roleFilter;
+    }
+
+    if (activeFilter !== "TOUS") {
+      filters.isActive = activeFilter;
+    }
+
+    loadUsers(1, debouncedSearchTerm, filters);
     setCurrentPage(1);
-  }, [searchQuery, roleFilter]);
+  }, [
+    debouncedSearchTerm,
+    roleFilter,
+    activeFilter,
+    loadUsers,
+    setCurrentPage,
+  ]);
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-  };
-
+  // Gestionnaires d'événements
   const handleRoleFilterChange = (role: RoleFilter) => {
     setRoleFilter(role);
   };
 
+  const handleActiveFilterChange = (active: boolean | "TOUS") => {
+    setActiveFilter(active);
+  };
+
+  const handleSort = (column: string, direction: "asc" | "desc") => {
+    setSortColumn(column);
+    setSortDirection(direction);
+    // TODO: Implémenter le tri côté serveur si nécessaire
+  };
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    const roleParam = roleFilter === "TOUS" ? undefined : roleFilter;
-    loadUsers(page, searchQuery, roleParam);
+    const filters: UserFilters = {};
+
+    if (roleFilter !== "TOUS") {
+      filters.role = roleFilter;
+    }
+
+    if (activeFilter !== "TOUS") {
+      filters.isActive = activeFilter;
+    }
+
+    loadUsers(page, debouncedSearchTerm, filters);
   };
 
-  const handleViewUser = async (userId: string) => {
-    try {
-      setIsOperationLoading(true);
-      const user = await adminAPI.getUserById(userId);
-      setSelectedUser(user);
-      setShowUserModal(true);
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Erreur de récupération de l'utilisateur";
-      showToast("error", "Erreur", errorMessage);
-    } finally {
-      setIsOperationLoading(false);
+  // Actions utilisateur
+  const handleViewUser = async (user: User) => {
+    const userData = await viewUser(user.id);
+    if (userData) {
+      setModalData((prev) => ({ ...prev, selectedUser: userData }));
+      setModals((prev) => ({ ...prev, showUserDetails: true }));
     }
   };
 
-  const handleToggleUserStatus = async (user: User) => {
-    try {
-      setIsOperationLoading(true);
-
-      if (user.isActive) {
-        await adminAPI.deactivateUser(user.id);
-        showToast(
-          "success",
-          "Utilisateur désactivé",
-          `${user.prenom} ${user.nom} a été désactivé`
-        );
-      } else {
-        await adminAPI.activateUser(user.id);
-        showToast(
-          "success",
-          "Utilisateur activé",
-          `${user.prenom} ${user.nom} a été activé`
-        );
-      }
-
-      // Recharger la page courante
-      const roleParam = roleFilter === "TOUS" ? undefined : roleFilter;
-      await loadUsers(currentPage, searchQuery, roleParam);
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Erreur de mise à jour du statut";
-      showToast("error", "Erreur", errorMessage);
-    } finally {
-      setIsOperationLoading(false);
-    }
+  const handleToggleUserStatus = (user: User) => {
+    setModalData((prev) => ({ ...prev, userToToggle: user }));
+    setModals((prev) => ({ ...prev, showStatusConfirm: true }));
   };
 
-  const handleChangeUserRole = async (user: User, newRole: Role) => {
-    try {
-      setIsOperationLoading(true);
-
-      await adminAPI.updateUser(user.id, { role: newRole });
-      showToast(
-        "success",
-        "Rôle modifié",
-        `${user.prenom} ${user.nom} est maintenant ${newRole}`
-      );
-
-      // Recharger la page courante
-      const roleParam = roleFilter === "TOUS" ? undefined : roleFilter;
-      await loadUsers(currentPage, searchQuery, roleParam);
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Erreur de modification du rôle";
-      showToast("error", "Erreur", errorMessage);
-    } finally {
-      setIsOperationLoading(false);
-    }
+  const handleChangeUserRole = (user: User, newRole: Role) => {
+    setModalData((prev) => ({ ...prev, userToChangeRole: user, newRole }));
+    setModals((prev) => ({ ...prev, showRoleConfirm: true }));
   };
 
   const handleDeleteUser = (user: User) => {
-    setUserToDelete(user);
-    setShowDeleteModal(true);
+    setModalData((prev) => ({ ...prev, userToDelete: user }));
+    setModals((prev) => ({ ...prev, showDeleteConfirm: true }));
   };
 
-  const confirmDeleteUser = async () => {
-    if (!userToDelete) return;
+  const handleExportUsers = () => {
+    setModals((prev) => ({ ...prev, showExportConfirm: true }));
+  };
 
-    try {
-      setIsOperationLoading(true);
-
-      await adminAPI.deleteUser(userToDelete.id);
-      showToast(
-        "success",
-        "Utilisateur supprimé",
-        `${userToDelete.prenom} ${userToDelete.nom} a été supprimé`
-      );
-
-      setShowDeleteModal(false);
-      setUserToDelete(null);
-
-      // Recharger la page courante
-      const roleParam = roleFilter === "TOUS" ? undefined : roleFilter;
-      await loadUsers(currentPage, searchQuery, roleParam);
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Erreur de suppression de l'utilisateur";
-      showToast("error", "Erreur", errorMessage);
-    } finally {
-      setIsOperationLoading(false);
+  // Confirmations des actions
+  const confirmToggleStatus = async () => {
+    if (modalData.userToToggle) {
+      const success = await toggleUserStatus(modalData.userToToggle.id);
+      if (success) {
+        closeModal("showStatusConfirm");
+      }
     }
   };
 
-  const handleRefresh = () => {
-    const roleParam = roleFilter === "TOUS" ? undefined : roleFilter;
-    loadUsers(currentPage, searchQuery, roleParam);
+  const confirmChangeRole = async () => {
+    if (modalData.userToChangeRole && modalData.newRole) {
+      const success = await changeUserRole(
+        modalData.userToChangeRole.id,
+        modalData.newRole
+      );
+      if (success) {
+        closeModal("showRoleConfirm");
+      }
+    }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
+  const confirmDeleteUser = async () => {
+    if (modalData.userToDelete) {
+      const success = await deleteUser(modalData.userToDelete.id);
+      if (success) {
+        closeModal("showDeleteConfirm");
+      }
+    }
+  };
+
+  const confirmExportUsers = async (format: "csv" | "json") => {
+    const filters: UserFilters = {};
+
+    if (roleFilter !== "TOUS") {
+      filters.role = roleFilter;
+    }
+
+    if (activeFilter !== "TOUS") {
+      filters.isActive = activeFilter;
+    }
+
+    const blob = await exportUsers({ ...filters, format });
+    if (blob) {
+      // Télécharger le fichier
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `utilisateurs_${
+        new Date().toISOString().split("T")[0]
+      }.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      closeModal("showExportConfirm");
+    }
+  };
+
+  // Utilitaires de modales
+  const closeModal = (modalKey: keyof ModalState) => {
+    setModals((prev) => ({ ...prev, [modalKey]: false }));
+
+    // Nettoyer les données après fermeture
+    setTimeout(() => {
+      setModalData({
+        selectedUser: null,
+        userToDelete: null,
+        userToToggle: null,
+        userToChangeRole: null,
+        newRole: null,
+      });
+    }, 300);
+  };
+
+  const closeAllModals = () => {
+    setModals({
+      showUserDetails: false,
+      showDeleteConfirm: false,
+      showStatusConfirm: false,
+      showRoleConfirm: false,
+      showExportConfirm: false,
     });
   };
 
-  const getRoleBadgeColor = (role: Role) => {
-    return role === Role.ADMIN
-      ? "bg-purple-100 text-purple-800"
-      : "bg-blue-100 text-blue-800";
-  };
+  // Configuration des actions de la table
+  const tableActions = createUserTableActions({
+    onView: handleViewUser,
+    onToggleStatus: handleToggleUserStatus,
+    onChangeRole: handleChangeUserRole,
+    onDelete: handleDeleteUser,
+  });
 
-  const getStatusBadgeColor = (isActive: boolean) => {
-    return isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
-  };
+  // Gestion des erreurs
+  useEffect(() => {
+    if (error) {
+      console.error("Erreur AdminUtilisateurs:", error);
+    }
+  }, [error]);
 
-  if (isLoading && users.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <LoadingSpinner size="lg" />
-        <span className="ml-3 text-gray-600">
-          Chargement des utilisateurs...
-        </span>
-      </div>
-    );
-  }
-
-  if (error && users.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <div className="text-red-600 mb-4">
-          <i className="fas fa-users text-5xl"></i>
-        </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Erreur de chargement
-        </h3>
-        <p className="text-gray-600 mb-4">{error}</p>
-        <button
-          onClick={handleRefresh}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Réessayer
-        </button>
-      </div>
-    );
-  }
+  // Calculs des statistiques locales
+  const activeUsersCount = users.filter((u) => u.isActive).length;
+  const adminUsersCount = users.filter((u) => u.role === Role.ADMIN).length;
 
   return (
     <div className="space-y-6 p-6">
-      {/* Actions */}
-      <div className="flex justify-end">
-        <button
-          onClick={handleRefresh}
-          disabled={isLoading}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400"
-        >
-          {isLoading ? (
-            <LoadingSpinner size="sm" color="white" />
-          ) : (
-            "Actualiser"
-          )}
-        </button>
+      {/* En-tête avec titre et actions principales */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Gestion des utilisateurs
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Gérez les comptes utilisateurs, leurs rôles et permissions
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => clearError()}
+            disabled={!error}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50"
+            title="Effacer les erreurs"
+          >
+            <i className="fas fa-times-circle"></i>
+          </button>
+        </div>
       </div>
 
-      {/* Filtres et recherche */}
-      <div className="bg-white p-4 rounded-lg shadow-sm">
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Recherche */}
-          <div className="flex-1">
-            <div className="relative">
-              <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-              <input
-                type="text"
-                placeholder="Rechercher par nom, prénom ou email..."
-                value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
+      {/* Statistiques rapides */}
+      <QuickStats
+        totalUsers={stats?.total || totalUsers}
+        activeUsers={stats?.actifs || activeUsersCount}
+        adminUsers={stats?.admin || adminUsersCount}
+        isLoading={isLoading && !stats}
+      />
+
+      {/* Barre de recherche et filtres */}
+      <SearchAndFilters
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        roleFilter={roleFilter}
+        onRoleFilterChange={handleRoleFilterChange}
+        isSearching={isSearching}
+        isLoading={isLoading || isRefreshing}
+        onClearSearch={clearSearch}
+        onRefresh={refreshUsers}
+        onExport={handleExportUsers}
+        showAdvancedFilters={true}
+        activeFilter={activeFilter}
+        onActiveFilterChange={handleActiveFilterChange}
+        searchPlaceholder="Rechercher par nom, prénom ou email..."
+        searchAriaLabel="Rechercher des utilisateurs"
+        filterAriaLabel="Filtrer par rôle"
+      />
+
+      {/* Affichage des erreurs */}
+      {error && (
+        <div
+          className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg"
+          role="alert"
+          aria-live="polite"
+        >
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <i className="fas fa-exclamation-triangle mt-1"></i>
+            </div>
+            <div className="ml-3">
+              <h3 className="font-medium">Erreur de chargement</h3>
+              <p className="mt-1 text-sm">{error}</p>
+              <div className="mt-3">
+                <button
+                  onClick={refreshUsers}
+                  className="text-sm bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded transition-colors"
+                >
+                  Réessayer
+                </button>
+              </div>
             </div>
           </div>
-
-          {/* Filtre par rôle */}
-          <div className="flex items-center gap-2">
-            <i className="fas fa-filter text-gray-400"></i>
-            <select
-              value={roleFilter}
-              onChange={(e) =>
-                handleRoleFilterChange(e.target.value as RoleFilter)
-              }
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="TOUS">Tous les rôles</option>
-              <option value={Role.USER}>Utilisateurs</option>
-              <option value={Role.ADMIN}>Administrateurs</option>
-            </select>
-          </div>
         </div>
-      </div>
+      )}
 
-      {/* Tableau des utilisateurs */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Utilisateur
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Rôle
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Statut
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Inscription
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-semibold text-sm">
-                          {user.prenom.charAt(0)}
-                          {user.nom.charAt(0)}
-                        </span>
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {user.prenom} {user.nom}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{user.email}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadgeColor(
-                        user.role
-                      )}`}
-                    >
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(
-                        user.isActive
-                      )}`}
-                    >
-                      {user.isActive ? "Actif" : "Inactif"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(user.createdAt)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end space-x-2">
-                      {/* Voir détails */}
-                      <button
-                        onClick={() => handleViewUser(user.id)}
-                        disabled={isOperationLoading}
-                        className="text-blue-600 hover:text-blue-900 transition-colors"
-                        title="Voir les détails"
-                      >
-                        <i className="fas fa-eye"></i>
-                      </button>
-
-                      {/* Changer le rôle */}
-                      <select
-                        value={user.role}
-                        onChange={(e) =>
-                          handleChangeUserRole(user, e.target.value as Role)
-                        }
-                        disabled={isOperationLoading}
-                        className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500"
-                        title="Changer le rôle"
-                      >
-                        <option value={Role.USER}>USER</option>
-                        <option value={Role.ADMIN}>ADMIN</option>
-                      </select>
-
-                      {/* Activer/Désactiver */}
-                      <button
-                        onClick={() => handleToggleUserStatus(user)}
-                        disabled={isOperationLoading}
-                        className={`transition-colors ${
-                          user.isActive
-                            ? "text-red-600 hover:text-red-900"
-                            : "text-green-600 hover:text-green-900"
-                        }`}
-                        title={user.isActive ? "Désactiver" : "Activer"}
-                      >
-                        <i
-                          className={`fas ${
-                            user.isActive ? "fa-times" : "fa-check"
-                          }`}
-                        ></i>
-                      </button>
-
-                      {/* Supprimer */}
-                      <button
-                        onClick={() => handleDeleteUser(user)}
-                        disabled={isOperationLoading}
-                        className="text-red-600 hover:text-red-900 transition-colors"
-                        title="Supprimer"
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* État vide */}
-        {users.length === 0 && !isLoading && (
-          <div className="text-center py-12">
-            <i className="fas fa-users text-gray-400 text-4xl mb-4"></i>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Aucun utilisateur trouvé
-            </h3>
-            <p className="text-gray-500">
-              {searchQuery || roleFilter !== "TOUS"
-                ? "Essayez de modifier vos filtres de recherche"
-                : "Il n'y a pas encore d'utilisateurs dans le système"}
-            </p>
-          </div>
-        )}
-      </div>
+      {/* Table des utilisateurs */}
+      <UserTable
+        users={users}
+        isLoading={isLoading}
+        isOperationLoading={isOperationLoading}
+        actions={tableActions}
+        onSort={handleSort}
+        sortColumn={sortColumn}
+        sortDirection={sortDirection}
+        emptyStateMessage={
+          debouncedSearchTerm ||
+          roleFilter !== "TOUS" ||
+          activeFilter !== "TOUS"
+            ? "Aucun utilisateur ne correspond à vos critères de recherche"
+            : "Aucun utilisateur trouvé"
+        }
+        emptyStateIcon="fas fa-users"
+        aria-label="Table des utilisateurs avec actions"
+      />
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between bg-white px-4 py-3 rounded-lg shadow-sm">
+        <div
+          className="flex items-center justify-between bg-white px-4 py-3 rounded-lg shadow-sm"
+          role="navigation"
+          aria-label="Pagination des utilisateurs"
+        >
           <div className="text-sm text-gray-700">
-            Page {currentPage} sur {totalPages}
+            Page {currentPage} sur {totalPages} • {totalUsers} utilisateur
+            {totalUsers > 1 ? "s" : ""} au total
           </div>
           <div className="flex items-center space-x-2">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage <= 1 || isLoading}
               className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Page précédente"
             >
               Précédent
             </button>
+
+            {/* Affichage des numéros de pages (simplifié) */}
+            <span className="px-3 py-1 text-sm bg-blue-50 text-blue-700 rounded-md">
+              {currentPage}
+            </span>
+
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage >= totalPages || isLoading}
               className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Page suivante"
             >
               Suivant
             </button>
@@ -460,46 +426,58 @@ const AdminUtilisateurs: React.FC = () => {
 
       {/* Modal détails utilisateur */}
       <Modal
-        isOpen={showUserModal}
-        onClose={() => setShowUserModal(false)}
+        isOpen={modals.showUserDetails}
+        onClose={() => closeModal("showUserDetails")}
         title="Détails de l'utilisateur"
         size="md"
       >
-        {selectedUser && (
-          <div className="space-y-4">
+        {modalData.selectedUser && (
+          <div
+            className="space-y-4"
+            role="region"
+            aria-label="Détails de l'utilisateur"
+          >
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Prénom
                 </label>
                 <p className="mt-1 text-sm text-gray-900">
-                  {selectedUser.prenom}
+                  {modalData.selectedUser.prenom}
                 </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Nom
                 </label>
-                <p className="mt-1 text-sm text-gray-900">{selectedUser.nom}</p>
+                <p className="mt-1 text-sm text-gray-900">
+                  {modalData.selectedUser.nom}
+                </p>
               </div>
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Email
               </label>
-              <p className="mt-1 text-sm text-gray-900">{selectedUser.email}</p>
+              <p className="mt-1 text-sm text-gray-900">
+                {modalData.selectedUser.email}
+              </p>
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Rôle
                 </label>
                 <span
-                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadgeColor(
-                    selectedUser.role
-                  )}`}
+                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    modalData.selectedUser.role === Role.ADMIN
+                      ? "bg-purple-100 text-purple-800"
+                      : "bg-blue-100 text-blue-800"
+                  }`}
                 >
-                  {selectedUser.role}
+                  {modalData.selectedUser.role}
                 </span>
               </div>
               <div>
@@ -507,21 +485,32 @@ const AdminUtilisateurs: React.FC = () => {
                   Statut
                 </label>
                 <span
-                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(
-                    selectedUser.isActive
-                  )}`}
+                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    modalData.selectedUser.isActive
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
                 >
-                  {selectedUser.isActive ? "Actif" : "Inactif"}
+                  {modalData.selectedUser.isActive ? "Actif" : "Inactif"}
                 </span>
               </div>
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Inscription
                 </label>
                 <p className="mt-1 text-sm text-gray-900">
-                  {formatDate(selectedUser.createdAt)}
+                  {new Date(
+                    modalData.selectedUser.createdAt
+                  ).toLocaleDateString("fr-FR", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </p>
               </div>
               <div>
@@ -529,7 +518,15 @@ const AdminUtilisateurs: React.FC = () => {
                   Dernière modification
                 </label>
                 <p className="mt-1 text-sm text-gray-900">
-                  {formatDate(selectedUser.updatedAt)}
+                  {new Date(
+                    modalData.selectedUser.updatedAt
+                  ).toLocaleDateString("fr-FR", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </p>
               </div>
             </div>
@@ -537,20 +534,61 @@ const AdminUtilisateurs: React.FC = () => {
         )}
       </Modal>
 
-      {/* Modal de confirmation de suppression */}
-      <ConfirmationModal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        onConfirm={confirmDeleteUser}
-        title="Confirmer la suppression"
-        message={
-          userToDelete
-            ? `Êtes-vous sûr de vouloir supprimer l'utilisateur ${userToDelete.prenom} ${userToDelete.nom} ? Cette action est irréversible.`
-            : ""
-        }
-        type="danger"
+      {/* Modales de confirmation */}
+      <DeleteUserModal
+        isOpen={modals.showDeleteConfirm}
+        user={modalData.userToDelete}
         isLoading={isOperationLoading}
+        onClose={() => closeModal("showDeleteConfirm")}
+        onConfirm={confirmDeleteUser}
       />
+
+      <DeactivateUserModal
+        isOpen={modals.showStatusConfirm}
+        user={modalData.userToToggle}
+        isLoading={isOperationLoading}
+        onClose={() => closeModal("showStatusConfirm")}
+        onConfirm={confirmToggleStatus}
+      />
+
+      <ChangeRoleModal
+        isOpen={modals.showRoleConfirm}
+        user={modalData.userToChangeRole}
+        newRole={modalData.newRole}
+        isLoading={isOperationLoading}
+        onClose={() => closeModal("showRoleConfirm")}
+        onConfirm={confirmChangeRole}
+      />
+
+      <ExportDataModal
+        isOpen={modals.showExportConfirm}
+        userCount={totalUsers}
+        filters={{
+          roleFilter: roleFilter !== "TOUS" ? roleFilter : undefined,
+          activeFilter: activeFilter !== "TOUS" ? activeFilter : undefined,
+          search: debouncedSearchTerm || undefined,
+        }}
+        isLoading={isOperationLoading}
+        onClose={() => closeModal("showExportConfirm")}
+        onConfirm={confirmExportUsers}
+      />
+
+      {/* Overlay de chargement global */}
+      {isLoading && users.length === 0 && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-25 flex items-center justify-center z-50"
+          role="status"
+          aria-live="polite"
+          aria-label="Chargement en cours"
+        >
+          <div className="bg-white rounded-lg p-6 flex items-center">
+            <LoadingSpinner size="lg" />
+            <span className="ml-4 text-gray-700">
+              Chargement des utilisateurs...
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
