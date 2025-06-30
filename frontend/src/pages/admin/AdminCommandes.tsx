@@ -247,17 +247,9 @@ const AdminCommandes: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Gestion des Commandes
-          </h1>
-          <p className="text-gray-600">
-            Gérez les commandes et suivez leur progression
-          </p>
-        </div>
+    <div className="space-y-6 p-6">
+      {/* Actions */}
+      <div className="flex justify-end">
         <button
           onClick={handleRefresh}
           disabled={isLoading}

@@ -247,35 +247,27 @@ const AdminFAQ: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestion des FAQ</h1>
-          <p className="text-gray-600">
-            Gérez les questions fréquemment posées
-          </p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={handleRefresh}
-            disabled={isLoading}
-            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:bg-gray-400"
-          >
-            {isLoading ? (
-              <LoadingSpinner size="sm" color="white" />
-            ) : (
-              "Actualiser"
-            )}
-          </button>
-          <button
-            onClick={handleCreateFAQ}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <i className="fas fa-plus mr-2"></i>
-            Nouvelle FAQ
-          </button>
-        </div>
+    <div className="space-y-6 p-6">
+      {/* Actions */}
+      <div className="flex justify-end items-center space-x-3">
+        <button
+          onClick={handleRefresh}
+          disabled={isLoading}
+          className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:bg-gray-400"
+        >
+          {isLoading ? (
+            <LoadingSpinner size="sm" color="white" />
+          ) : (
+            "Actualiser"
+          )}
+        </button>
+        <button
+          onClick={handleCreateFAQ}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <i className="fas fa-plus mr-2"></i>
+          Nouvelle FAQ
+        </button>
       </div>
 
       {/* Stats */}

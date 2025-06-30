@@ -96,17 +96,9 @@ const AdminDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Tableau de Bord Admin
-          </h1>
-          <p className="text-gray-600">
-            Vue d'ensemble de l'activité de la plateforme
-          </p>
-        </div>
+    <div className="space-y-6 p-6">
+      {/* Actions */}
+      <div className="flex justify-end">
         <button
           onClick={handleRefresh}
           disabled={isLoading}

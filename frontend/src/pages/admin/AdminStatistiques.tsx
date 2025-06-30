@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { StatistiquesAvancees } from "../../types/shared";
-import { adminAPI } from "../../utils/adminAPI";
+import { MockDataService } from "../../utils/mockData";
 import { useToasts } from "../../utils/toast";
 
 const AdminStatistiques: React.FC = () => {
@@ -16,7 +16,8 @@ const AdminStatistiques: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      const response = await adminAPI.getStatistiquesAvancees();
+      // Utilisation des données mockées existantes
+      const response = await MockDataService.getStatistiquesAvancees();
       setStats(response);
 
       showToast("success", "Statistiques chargées", "Données mises à jour");
@@ -92,42 +93,34 @@ const AdminStatistiques: React.FC = () => {
   if (!stats) return null;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Statistiques Avancées
-          </h1>
-          <p className="text-gray-600">Tableau de bord analytique détaillé</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={handleExportData}
-            disabled={isExporting}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-green-400"
-          >
-            {isExporting ? (
-              <LoadingSpinner size="sm" color="white" />
-            ) : (
-              <>
-                <i className="fas fa-download mr-2"></i>Exporter
-              </>
-            )}
-          </button>
+    <div className="space-y-6 p-6">
+      {/* Actions */}
+      <div className="flex justify-end items-center space-x-3">
+        <button
+          onClick={handleExportData}
+          disabled={isExporting}
+          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-green-400"
+        >
+          {isExporting ? (
+            <LoadingSpinner size="sm" color="white" />
+          ) : (
+            <>
+              <i className="fas fa-download mr-2"></i>Exporter
+            </>
+          )}
+        </button>
 
-          <button
-            onClick={handleRefresh}
-            disabled={isLoading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400"
-          >
-            {isLoading ? (
-              <LoadingSpinner size="sm" color="white" />
-            ) : (
-              "Actualiser"
-            )}
-          </button>
-        </div>
+        <button
+          onClick={handleRefresh}
+          disabled={isLoading}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400"
+        >
+          {isLoading ? (
+            <LoadingSpinner size="sm" color="white" />
+          ) : (
+            "Actualiser"
+          )}
+        </button>
       </div>
 
       {/* KPI Cards */}

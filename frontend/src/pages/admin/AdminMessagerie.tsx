@@ -248,17 +248,7 @@ const AdminMessagerie: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Messagerie Admin</h1>
-          <p className="text-gray-600">
-            Superviser les conversations client-admin
-          </p>
-        </div>
-      </div>
-
+    <div className="space-y-6 p-6">
       {/* Statistiques simplifiées */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-lg border">

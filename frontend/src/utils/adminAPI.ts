@@ -152,7 +152,13 @@ class AdaptiveAdminAPI {
       throw new Error(data.message || `Erreur API: ${response.status}`);
     }
 
-    return data.data || data;
+    // Pour les endpoints qui retournent une structure avec data/pagination, on retourne tout
+    // Pour les autres (getUserById, etc.), on retourne juste les données
+    if (data.data !== undefined && data.pagination !== undefined) {
+      return data; // Retourne l'objet complet { data: [...], pagination: {...} }
+    }
+
+    return data.data || data; // Pour les autres cas
   }
 
   // ===============================

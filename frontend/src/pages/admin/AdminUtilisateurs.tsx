@@ -237,17 +237,9 @@ const AdminUtilisateurs: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Gestion des Utilisateurs
-          </h1>
-          <p className="text-gray-600">
-            Gérez les comptes utilisateurs et leurs permissions
-          </p>
-        </div>
+    <div className="space-y-6 p-6">
+      {/* Actions */}
+      <div className="flex justify-end">
         <button
           onClick={handleRefresh}
           disabled={isLoading}
