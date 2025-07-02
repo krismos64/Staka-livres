@@ -4,11 +4,15 @@
     "module": "ESNext",
     "moduleResolution": "node",
     "declaration": true,
-    "outDir": "./dist",
+    "declarationMap": true,
+    "outDir": "./types",
+    "rootDir": "./types",
     "strict": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["types/**/*.ts"]
+  "include": ["types/**/*.ts"],
+  "exclude": ["types/**/*.js", "types/**/*.d.ts"]
 }

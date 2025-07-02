@@ -14,7 +14,7 @@ La page de facturation a été modernisée selon une architecture modulaire avec
 - **Handlers uniformisés** : paiement, téléchargement, gestion des cartes
 - **Types TypeScript stricts** : Interface clara pour factures, cartes, stats
 - **Empty state intelligent** : affichage conditionnel si pas de données
-- **Mock data prête pour API** : structure compatible backend
+- **React Query intégré** : Gestion cache et états de chargement optimisés
 
 ### 🏗️ Composants modulaires
 
@@ -108,12 +108,12 @@ La page de facturation a été modernisée selon une architecture modulaire avec
 - Auto-dismiss configurable
 - **Queue management** : gestion des notifications multiples
 
-### Données mock
+### Données production
 
-- **Structure API-ready** : facile à connecter au backend
-- **IDs cohérents** : pour les relations entre entités
+- **API endpoints** : 3 endpoints `/invoices` opérationnels
+- **IDs cohérents** : relations entre entités validées
 - **Dates formatées** : standards français
-- **Montants** : avec symbole € et formatage
+- **Montants** : avec symbole € et formatage centimes→euros
 
 ## 🚀 Fonctionnalités implémentées
 
@@ -121,8 +121,8 @@ La page de facturation a été modernisée selon une architecture modulaire avec
 
 - [x] Affichage facture en cours avec actions
 - [x] Historique des factures interactif
-- [x] Gestion des moyens de paiement
-- [x] Statistiques annuelles avec progression VIP
+- [x] Gestion des moyens de paiement (simulation)
+- [x] Statistiques annuelles avec progression VIP (simulation)
 - [x] Support intégré avec informations de contact
 
 ### ✅ UX/UI Advanced
@@ -146,21 +146,21 @@ La page de facturation a été modernisée selon une architecture modulaire avec
 ### Intégrations backend
 
 1. **API Stripe** : remplacer les simulations par vraies intégrations
-2. **Endpoints factures** : récupération, création, mise à jour
+2. **Endpoints factures** : ✅ **TERMINÉ** - 3 endpoints opérationnels
 3. **Gestion paiements** : webhooks Stripe, confirmations 3D Secure
 4. **Notifications** : emails de confirmation, rappels d'échéance
 
 ### Fonctionnalités avancées
 
 1. **Filtres et tri** : par date, montant, projet, statut
-2. **Export PDF** : génération côté serveur des factures
+2. **Export PDF** : ✅ **TERMINÉ** - téléchargement sécurisé opérationnel
 3. **Récurrence** : abonnements et paiements automatiques
 4. **Multi-devises** : support international
 
 ### Performance
 
 1. **Virtualisation** : pour l'historique de nombreuses factures
-2. **Mise en cache** : optimisation des requêtes répétées
+2. **Mise en cache** : ✅ **TERMINÉ** - React Query cache optimisé
 3. **Lazy loading** : chargement progressif des composants
 
 ## 📝 Notes techniques
@@ -181,13 +181,13 @@ Cette page de facturation suit les principes de **design progressif** :
 
 La structure modulaire permet une **évolution incrémentale** : chaque composant peut être amélioré indépendamment sans casser l'ensemble.
 
-# Système de Facturation Frontend
+# Système de Facturation Frontend - Production Ready
 
 Ce dossier contient tous les composants et la logique pour la gestion des factures côté client.
 
 ## 📋 Vue d'ensemble
 
-Le système de facturation utilise **React Query v3** pour une intégration API complète avec le backend `/invoices`.
+Le système de facturation utilise **React Query v3.39.3** pour une intégration API complète avec le backend `/invoices`.
 
 ### Composants principaux
 
@@ -298,50 +298,38 @@ export function useInvalidateInvoices();
 export function usePrefetchInvoice();
 ```
 
-## 🔄 Refactoring BillingPage avec React Query
+## 🔄 Implémentation BillingPage avec React Query
 
-### Avant (Fetch manuel)
+### Architecture React Query Production
 
 ```typescript
-const [isLoading, setIsLoading] = useState(true);
+export default function BillingPage() {
+  // États pour les données dynamiques avec React Query
+  const [page, setPage] = useState(1);
+  const [currentInvoice, setCurrentInvoice] = useState<Invoice | null>(null);
+  const [invoiceHistory, setInvoiceHistory] = useState<Invoice[]>([]);
 
-useEffect(() => {
-  const loadInvoices = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetchInvoices(page, 20);
-      // Traitement manuel des données...
-    } catch (error) {
-      // Gestion d'erreur manuelle...
-    } finally {
-      setIsLoading(false);
+  // Hooks React Query pour les factures
+  const {
+    data: invoicesData,
+    isLoading,
+    error,
+    isFetching,
+  } = useInvoices(page, 20);
+
+  // Hook pour les détails de la facture sélectionnée
+  const { data: selectedInvoiceDetail } = useInvoice(selectedInvoiceId || "");
+
+  // Traitement automatique via useEffect
+  useEffect(() => {
+    if (invoicesData?.invoices) {
+      const transformedInvoices = invoicesData.invoices.map(
+        mapInvoiceApiToInvoice
+      );
+      // Séparation et mise à jour des états...
     }
-  };
-  loadInvoices();
-}, [page]);
-```
-
-### Après (React Query)
-
-```typescript
-const {
-  data: invoicesData,
-  isLoading,
-  error,
-  isFetching,
-} = useInvoices(page, 20);
-
-const { data: selectedInvoiceDetail } = useInvoice(selectedInvoiceId || "");
-
-// Traitement automatique via useEffect
-useEffect(() => {
-  if (invoicesData?.invoices) {
-    const transformedInvoices = invoicesData.invoices.map(
-      mapInvoiceApiToInvoice
-    );
-    // Séparation et mise à jour des états...
-  }
-}, [invoicesData]);
+  }, [invoicesData]);
+}
 ```
 
 ## 🎯 Avantages de React Query
@@ -459,7 +447,7 @@ if (!currentInvoice && invoiceHistory.length === 0 && !isLoading) {
 ### Développement
 
 ```bash
-# React Query v3.39.3 déjà installé et configuré
+# React Query v3.39.3 installé et configuré
 # Vérifier les dépendances
 docker exec -it staka_frontend npm list react-query
 
@@ -675,7 +663,7 @@ useEffect(() => {
 }, [data, isLoading, error]);
 ```
 
-Cette refactorisation avec React Query offre une expérience de facturation **robuste, performante et maintenir** ! 🎉
+Cette architecture avec React Query offre une expérience de facturation **robuste, performante et maintenable** ! 🎉
 
 ---
 

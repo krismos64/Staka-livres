@@ -104,7 +104,10 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
   - **UserTable** : Composant table générique avec accessibilité WCAG complète
   - **SearchAndFilters** : Composants de recherche et filtres avec états visuels
   - **ConfirmationModals** : Modales RGPD avec conséquences détaillées
-- **AdminCommandes** : Suivi projets avec changement de statuts
+- **AdminCommandes** : **✅ REFACTORISÉ COMPLET** - Suivi projets avec changement de statuts et modale de détails moderne
+  - **CommandeDetailed** : Type étendu avec toutes les données (montant, priorité, fichiers, statistiques)
+  - **Modale moderne XL** : Design gradient avec sections visuellement distinctes et actions rapides
+  - **Backend enrichi** : Service `getCommandeById()` avec toutes les relations Prisma
 - **AdminFactures** : Interface facturation avec téléchargement PDF et actions
 - **AdminMessagerie** : Interface messagerie avancée avec hooks React Query spécialisés
 - **AdminFAQ** : Gestion base de connaissance avec réorganisation
@@ -147,7 +150,7 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 
 - **Routes d'authentification** : /auth/register, /auth/login, /auth/me
 - **Routes admin utilisateurs** : **7 endpoints production** `/admin/users/*` avec CRUD complet et suppression RGPD
-- **Routes admin commandes** : ✅ Module complet (GET /admin/commandes avec filtres, PUT /admin/commandes/:id, DELETE /admin/commandes/:id)
+- **Routes admin commandes** : ✅ Module complet (GET /admin/commandes avec filtres, GET /admin/commandes/:id détaillé, PUT /admin/commandes/:id, DELETE /admin/commandes/:id)
 - **Routes client commandes** : POST /commandes, GET /commandes
 - **Routes de facturation** : GET /invoices, GET /invoices/:id, GET /invoices/:id/download
 - **Routes de paiement Stripe** : POST /payments/create-checkout-session, GET /payments/status, POST /payments/webhook
@@ -294,7 +297,8 @@ Staka-livres/
 │   │   │   ├── api.ts      # Services API factures
 │   │   │   └── toast.ts    # Notifications toast
 │   │   ├── types/          # Types TypeScript
-│   │   │   └── shared.ts   # Types partagés locaux
+│   │   │   ├── shared.ts      # Types partagés locaux avec CommandeDetailed
+│   │   │   └── messages.ts    # Types messagerie
 │   │   └── styles/         # Styles CSS globaux
 │   ├── package.json        # Dépendances frontend + react-query@3.39.3
 │   ├── Dockerfile          # Container frontend
@@ -366,11 +370,12 @@ Staka-livres/
 
 **🎯 Module AdminCommandes Complet Développé :**
 
-- ✅ **AdminCommandeService** : Service complet avec méthode `getCommandes()` incluant filtres avancés (search, statut, clientId, dateFrom/dateTo), calcul de statistiques par statut, et pagination intelligente
+- ✅ **AdminCommandeService** : Service complet avec méthodes `getCommandes()` et `getCommandeById()` incluant filtres avancés, calcul de statistiques par statut, et récupération détaillée avec toutes les relations
 - ✅ **AdminCommandeController** : Contrôleur avec gestion d'erreurs complète, validation des entrées et logs de debugging
-- ✅ **Routes AdminCommandes** : 3 endpoints REST protégés (`GET /admin/commandes`, `PUT /admin/commandes/:id`, `DELETE /admin/commandes/:id`)
+- ✅ **Routes AdminCommandes** : 4 endpoints REST protégés (`GET /admin/commandes`, `GET /admin/commandes/:id`, `PUT /admin/commandes/:id`, `DELETE /admin/commandes/:id`)
 - ✅ **Tests complets** : 13 tests unitaires + 15 tests d'intégration validés avec authentification JWT et autorisation ADMIN
 - ✅ **Logs de debugging** : Système complet de logs pour traçabilité des requêtes et filtres appliqués
+- ✅ **Modale de détails moderne** : Interface XL avec design élégant, toutes les données disponibles et actions rapides
 
 **🗄️ Base de Données Complète Opérationnelle :**
 
@@ -399,12 +404,15 @@ Staka-livres/
 - ✅ Téléchargement PDF via blob API avec trigger automatique
 - ✅ BillingPage refactorisée : suppression des fetch manuels
 
-**🔧 Résolution Erreur 504 Vite :**
+**🔧 Résolution Problèmes Frontend :**
 
 - ✅ Configuration `optimizeDeps` dans vite.config.ts
 - ✅ Force re-optimization des dépendances React Query
 - ✅ Nettoyage cache Vite automatique
 - ✅ Build TypeScript fonctionnel sans erreurs
+- ✅ **Correction Tailwind CDN** : Suppression du CDN en faveur de PostCSS avec configuration personnalisée
+- ✅ **Résolution "exports is not defined"** : Configuration modules ES6 pour types partagés
+- ✅ **Types partagés optimisés** : Utilisation directe des fichiers TypeScript source
 
 **🚀 Performance et UX Optimisées :**
 
@@ -593,7 +601,23 @@ La base contient 3 commandes de test :
 
 ### ❗ **Problèmes Courants et Solutions**
 
-#### **1. Erreur "Property 'number' is missing" sur Invoice**
+#### **1. Warning Tailwind CDN en production**
+
+```bash
+# Problème : "cdn.tailwindcss.com should not be used in production"
+# Solution : Suppression du CDN et utilisation de PostCSS
+# ✅ RÉSOLU : Tailwind configuré localement avec couleurs et animations personnalisées
+```
+
+#### **2. Erreur "exports is not defined"**
+
+```bash
+# Problème : Conflit modules CommonJS/ES6 dans types partagés
+# Solution : Configuration correcte des modules ES6
+# ✅ RÉSOLU : Package.json partagé utilise directement les types TypeScript
+```
+
+#### **3. Erreur "Property 'number' is missing" sur Invoice**
 
 ```bash
 # Problème : Champ number manquant dans création facture
@@ -793,6 +817,11 @@ Headers: Authorization: Bearer <admin_token>
 GET /admin/commandes?page=1&limit=10&search=jean&statut=EN_COURS&clientId=user-id&dateFrom=2025-01-01&dateTo=2025-01-31
 Headers: Authorization: Bearer <admin_token>
 # Réponse: { data: [], stats: { total, byStatut }, page, totalPages, filters }
+
+# Détails complets d'une commande avec toutes les relations
+GET /admin/commandes/:id
+Headers: Authorization: Bearer <admin_token>
+# Réponse: CommandeDetailed avec user, files, messages, invoices, _count
 
 # Modifier le statut d'une commande avec validation stricte
 PUT /admin/commandes/:id
@@ -1266,7 +1295,7 @@ Body: { commandeId: "uuid", priceId: "price_..." }
 - **Pages admin** : 9 interfaces complètes + mode démo professionnel
 - **Module Admin Users** : **✅ PRODUCTION READY** avec 7 endpoints backend opérationnels
 - **Landing components** : 14 composants production-ready (2400+ lignes)
-- **API Endpoints** : 45+ endpoints REST avec sécurité JWT + Stripe + modules Users et AdminCommandes
+- **API Endpoints** : 46+ endpoints REST avec sécurité JWT + Stripe + modules Users et AdminCommandes complets
 - **Tables DB** : 10 modèles complets avec relations RGPD
 - **Tests** : 28+ tests AdminCommandes (13 unitaires + 15 intégration) + tests Docker validés + tests démo automatisés
 - **Architecture messagerie** : 1000+ lignes React Query (useMessages + useAdminMessages)
@@ -1393,7 +1422,7 @@ npm run build && echo "✅ Build successful"
 - **✅ Authentification JWT** : Inscription/Connexion sécurisée
 - **✅ Gestion des rôles** : USER/ADMIN avec protection routes
 - **✅ Module Admin Users PRODUCTION** : 7 endpoints backend avec CRUD complet et suppression RGPD
-- **✅ Module AdminCommandes COMPLET** : 3 endpoints backend avec filtres avancés, statistiques et tests validés
+- **✅ Module AdminCommandes COMPLET** : 4 endpoints backend avec filtres avancés, récupération détaillée, statistiques et tests validés
 - **✅ Système de facturation React Query** : Cache intelligent, pagination fluide, téléchargement PDF
 - **✅ Architecture messagerie complète** : 1000+ lignes React Query avec hooks spécialisés
 - **✅ Landing Page production-ready** : 14 composants React avec calculateur pricing

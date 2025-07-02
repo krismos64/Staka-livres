@@ -227,4 +227,53 @@ export class AdminCommandeController {
       });
     }
   }
+
+  /**
+   * Récupère une commande spécifique par ID avec toutes les données détaillées
+   */
+  static async getCommandeById(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        res.status(400).json({
+          error: "ID commande requis",
+          message: "Veuillez fournir un ID de commande valide",
+        });
+        return;
+      }
+
+      console.log(
+        `🔍 [ADMIN] ${req.user?.email} récupère la commande détaillée ${id}`
+      );
+
+      const commande = await AdminCommandeService.getCommandeById(id);
+
+      console.log(
+        `✅ [ADMIN] Commande détaillée ${commande.titre} récupérée avec succès`
+      );
+
+      res.status(200).json({
+        message: "Commande récupérée avec succès",
+        data: commande,
+      });
+    } catch (error: any) {
+      console.error(
+        "❌ [ADMIN] Erreur lors de la récupération de la commande:",
+        error
+      );
+
+      if (error.message === "Commande non trouvée") {
+        res.status(404).json({
+          error: "Commande introuvable",
+          message: `Aucune commande trouvée avec l'ID ${req.params.id}`,
+        });
+      } else {
+        res.status(500).json({
+          error: "Erreur interne du serveur",
+          message: "Impossible de récupérer la commande",
+        });
+      }
+    }
+  }
 }

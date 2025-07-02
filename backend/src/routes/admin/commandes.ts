@@ -23,6 +23,14 @@ router.use(requireRole(Role.ADMIN));
 router.get("/", AdminCommandeController.getCommandes);
 
 /**
+ * @route GET /admin/commandes/:id
+ * @desc Récupère une commande spécifique avec toutes les données détaillées
+ * @param {string} id - ID de la commande
+ * @access Admin
+ */
+router.get("/:id", AdminCommandeController.getCommandeById);
+
+/**
  * @route PUT /admin/commandes/:id
  * @desc Met à jour le statut d'une commande
  * @param {string} id - ID de la commande

@@ -4,14 +4,25 @@
 
 La base de données **Staka Livres** est une architecture complète MySQL 8 gérée par **Prisma ORM** et déployée avec **Docker**. Elle couvre tous les aspects d'une plateforme de correction de manuscrits : utilisateurs, projets, messagerie, support client, facturation automatique et contenu éditorial.
 
-### 🏗️ **Architecture Technique**
+### 🏗️ **Architecture Technique - Version 2025**
 
 - **Base de données** : MySQL 8.4+
-- **ORM** : Prisma v6.10.1
+- **ORM** : Prisma v6.10.1 ⚡ (dernière version)
 - **Environnement** : Docker Compose
 - **Port** : 3306 (MySQL), 5555 (Prisma Studio)
 - **Container** : `staka_db` (MySQL), `staka_backend` (API + Prisma)
 - **Volume persistant** : Données sauvegardées lors des redémarrages
+- **API endpoints** : **46+ endpoints** dont 16 endpoints admin opérationnels
+
+### 🆕 **Dernières Évolutions 2025**
+
+- ✅ **Module Admin Users complet** : 7 endpoints opérationnels avec CRUD complet
+- ✅ **Module Admin Commandes enrichi** : 4 endpoints avec modale détails moderne
+- ✅ **Messagerie Admin migrée** : 9 endpoints backend réels (fini les mocks)
+- ✅ **Types TypeScript unifiés** : Alignement parfait frontend ↔ backend
+- ✅ **Suppression RGPD complète** : Transactions sécurisées pour effacement définitif
+- ✅ **Protection admin** : Dernier administrateur actif protégé contre suppression
+- ✅ **Dashboard stats avancées** : Métriques calculées depuis vraies données DB
 
 ---
 
@@ -913,7 +924,7 @@ const activeUsers = await prisma.user.findMany({
 
 ## 🔗 **Nouveaux Endpoints API Admin - Messagerie & Users** ⭐
 
-### **🗣️ Endpoints Messagerie (9 endpoints)**
+### **🗣️ Endpoints Messagerie (9 endpoints) - ✅ MIGRATION BACKEND COMPLÈTE**
 
 ```typescript
 // Routes admin messagerie dans backend/src/routes/admin.ts
@@ -953,166 +964,9 @@ Response: { tags: string[] }
 GET /admin/conversations/unread-count
 Response: { unreadCount: number }
 
-// 9. Statistiques avancées pour dashboard
+// 9. Statistiques avancées pour dashboard admin
 GET /admin/stats/advanced
-Response: { totalCommandes, totalFactures, totalUtilisateurs, ... }
-```
-
-### **Fonctionnalités Techniques Clés**
-
-#### **Parser de Conversation IDs**
-
-```typescript
-// Gestion intelligente des types de conversations
-// direct_userId1_userId2 → Conversation directe entre utilisateurs
-// projet_commandeId → Conversation liée à un projet
-// support_supportRequestId → Conversation liée à un ticket support
-
-const parseConversationId = (conversationId: string) => {
-  if (conversationId.startsWith("direct_")) {
-    return { type: "direct", userIds: conversationId.split("_").slice(1) };
-  } else if (conversationId.startsWith("projet_")) {
-    return {
-      type: "projet",
-      commandeId: conversationId.replace("projet_", ""),
-    };
-  } else if (conversationId.startsWith("support_")) {
-    return {
-      type: "support",
-      supportRequestId: conversationId.replace("support_", ""),
-    };
-  }
-  return null;
-};
-```
-
-#### **Identification Automatique des Destinataires**
-
-```typescript
-// Lors de l'envoi d'un message admin, identification du destinataire
-const identifyReceiver = async (conversationId: string, adminId: string) => {
-  const parsed = parseConversationId(conversationId);
-
-  switch (parsed?.type) {
-    case "direct":
-      // Trouver l'utilisateur qui n'est pas l'admin
-      return parsed.userIds.find((id) => id !== adminId);
-
-    case "projet":
-      // Récupérer le propriétaire du projet
-      const commande = await prisma.commande.findUnique({
-        where: { id: parsed.commandeId },
-        select: { userId: true },
-      });
-      return commande?.userId;
-
-    case "support":
-      // Récupérer le créateur du ticket
-      const ticket = await prisma.supportRequest.findUnique({
-        where: { id: parsed.supportRequestId },
-        select: { userId: true },
-      });
-      return ticket?.userId;
-  }
-};
-```
-
-### **Intégration Frontend - Types TypeScript Unifiés**
-
-#### **Fichier : frontend/src/types/messages.ts**
-
-```typescript
-// Types alignés sur le schéma Prisma backend
-export enum MessageType {
-  TEXT = "TEXT",
-  FILE = "FILE",
-  IMAGE = "IMAGE",
-  SYSTEM = "SYSTEM",
-  ADMIN_NOTE = "ADMIN_NOTE",
-}
-
-export enum MessageStatut {
-  BROUILLON = "BROUILLON",
-  ENVOYE = "ENVOYE",
-  DELIVRE = "DELIVRE",
-  LU = "LU",
-  ARCHIVE = "ARCHIVE",
-}
-
-export interface Message {
-  id: string;
-  senderId: string;
-  receiverId?: string;
-  commandeId?: string;
-  supportRequestId?: string;
-  subject?: string;
-  content: string;
-  type: MessageType;
-  statut: MessageStatut;
-  isRead: boolean;
-  isArchived: boolean;
-  isPinned: boolean;
-  createdAt: string;
-  updatedAt: string;
-  sender?: User;
-  receiver?: User;
-  attachments?: MessageAttachment[];
-}
-
-export interface Conversation {
-  id: string;
-  titre: string;
-  type: "direct" | "projet" | "support";
-  participants: string[] | { client: User };
-  messages: Message[];
-  messageCount: number;
-  unreadCount: number;
-  lastMessage?: {
-    content: string;
-    createdAt: string;
-    sender: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-```
-
-#### **Hooks React Query Optimisés**
-
-```typescript
-// Fichier : frontend/src/hooks/useAdminMessages.ts
-
-// Vue admin globale avec cache intelligent
-export const useAdminMessages = (filters) => {
-  return useQuery({
-    queryKey: ["admin", "messages", filters],
-    queryFn: () => messagesAPI.getMessages(filters),
-    staleTime: 30000, // 30s
-    cacheTime: 5 * 60 * 1000, // 5min
-  });
-};
-
-// Envoi de messages admin avec optimistic updates
-export const useSendAdminMessage = () => {
-  return useMutation({
-    mutationFn: messagesAPI.sendAdminMessage,
-    onMutate: async (newMessage) => {
-      await queryClient.cancelQueries(["admin", "messages"]);
-      const previousMessages = queryClient.getQueryData(["admin", "messages"]);
-      queryClient.setQueryData(["admin", "messages"], (old) => [
-        ...old,
-        newMessage,
-      ]);
-      return { previousMessages };
-    },
-    onError: (err, newMessage, context) => {
-      queryClient.setQueryData(["admin", "messages"], context.previousMessages);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries(["admin", "messages"]);
-    },
-  });
-};
+Response: { totalCommandes, totalFactures, totalUtilisateurs, totalMessages, messagesNonLus, commandesEnCours, facturesEnAttente, utilisateursActifs }
 ```
 
 ### **👥 Endpoints Admin Users (7 endpoints) - ✅ PRODUCTION READY**
@@ -1125,8 +979,8 @@ GET /admin/users/stats
 Response: { total: number, actifs: number, inactifs: number, admin: number, users: number, recents: number }
 
 // 2. Liste paginée avec filtres avancés
-GET /admin/users?page=1&limit=10&search=jean&role=USER&isActive=true
-Query params: page, limit, search, role, isActive
+GET /admin/users?page=1&limit=10&search=jean&role=USER&isActive=true&sortBy=createdAt&sortDirection=desc
+Query params: page, limit, search, role, isActive, sortBy, sortDirection
 Response: { data: User[], pagination: PaginationInfo }
 
 // 3. Détails utilisateur avec compteurs relations
@@ -1135,12 +989,12 @@ Response: { data: User & { _count: { commandes: number, sentMessages: number, re
 
 // 4. Création utilisateur avec validation complète
 POST /admin/users
-Body: { prenom: string, nom: string, email: string, password: string, role: Role, isActive?: boolean }
+Body: { prenom: string, nom: string, email: string, password: string, role: Role, isActive?: boolean, adresse?: string, telephone?: string }
 Response: { data: User, message: string }
 
 // 5. Modification utilisateur (tous champs optionnels)
 PATCH /admin/users/:id
-Body: { prenom?: string, nom?: string, email?: string, role?: Role, isActive?: boolean }
+Body: { prenom?: string, nom?: string, email?: string, role?: Role, isActive?: boolean, adresse?: string, telephone?: string }
 Response: { data: User, message: string }
 
 // 6. Basculer statut actif/inactif (action rapide)
@@ -1152,7 +1006,7 @@ DELETE /admin/users/:id
 Response: { message: "Utilisateur supprimé définitivement (RGPD)" }
 ```
 
-#### **🏗️ Architecture Backend Admin Users**
+#### **🏗️ Architecture Backend Admin Users - Production Ready**
 
 ```typescript
 // Service principal : AdminUserService (backend/src/services/adminUserService.ts)
@@ -1163,10 +1017,13 @@ export class AdminUserService {
     limit: number,
     search?: string,
     role?: Role,
-    isActive?: boolean
+    isActive?: boolean,
+    sortBy?: string,
+    sortDirection?: "asc" | "desc"
   ) {
     const skip = (page - 1) * limit;
     const where = this.buildWhereClause(search, role, isActive);
+    const orderBy = this.buildOrderByClause(sortBy, sortDirection);
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({
@@ -1176,7 +1033,7 @@ export class AdminUserService {
         include: {
           _count: { select: { commandes: true, sentMessages: true } },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy,
       }),
       prisma.user.count({ where }),
     ]);
@@ -1184,46 +1041,11 @@ export class AdminUserService {
     return { users, total, page, totalPages: Math.ceil(total / limit) };
   }
 
-  // Détails utilisateur avec relations
-  static async getUserById(id: string) {
-    return await prisma.user.findUnique({
-      where: { id },
-      include: {
-        _count: {
-          select: {
-            commandes: true,
-            sentMessages: true,
-            receivedMessages: true,
-            supportRequests: true,
-            paymentMethods: true,
-          },
-        },
-      },
-    });
-  }
-
-  // Création avec hashage bcrypt
-  static async createUser(data: CreateUserRequest) {
-    const hashedPassword = await bcrypt.hash(data.password, 12);
-    return await prisma.user.create({
-      data: {
-        ...data,
-        password: hashedPassword,
-      },
-      select: {
-        id: true,
-        prenom: true,
-        nom: true,
-        email: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-      },
-    });
-  }
-
-  // Suppression RGPD complète avec transaction
+  // Suppression RGPD complète avec transaction atomique
   static async deleteUser(id: string) {
+    // Protection dernier admin actif
+    await this.validateAdminDeletion(id);
+
     return await prisma.$transaction(async (tx) => {
       // 1. Supprimer toutes les relations en cascade
       await tx.messageAttachment.deleteMany({
@@ -1263,7 +1085,7 @@ export class AdminUserService {
     }
   }
 
-  // Statistiques pour dashboard
+  // Statistiques pour dashboard admin
   static async getUserStats() {
     const [total, actifs, admin, recents] = await Promise.all([
       prisma.user.count(),
@@ -1286,877 +1108,565 @@ export class AdminUserService {
     };
   }
 }
-
-// Contrôleur : AdminUserController (backend/src/controllers/adminUserController.ts)
-// - Validation avec Joi : email format, password 8+ caractères
-// - Authentification JWT Admin obligatoire
-// - Gestion d'erreurs standardisée avec codes HTTP
-// - Logs d'audit pour toutes les actions
 ```
 
-#### **🔍 Requêtes Prisma Optimisées Admin Users**
+### **📋 Endpoints Admin Commandes (4 endpoints) - ✅ MODULE COMPLET**
 
 ```typescript
-// Recherche avancée avec filtres combinables
-const buildUserSearchQuery = (
-  search?: string,
-  role?: Role,
-  isActive?: boolean
-) => {
-  const where: any = {};
+// Routes admin commandes dans backend/src/routes/admin/commandes.ts
 
-  if (search) {
-    where.OR = [
-      { prenom: { contains: search, mode: "insensitive" } },
-      { nom: { contains: search, mode: "insensitive" } },
-      { email: { contains: search, mode: "insensitive" } },
-    ];
+// 1. Liste paginée avec filtres avancés et statistiques
+GET /admin/commandes?page=1&limit=10&search=cmd&statut=EN_COURS&clientId=userId&dateFrom=2025-01-01&dateTo=2025-01-31&sortBy=createdAt&sortDirection=desc
+Response: { data: Commande[], stats: { total, byStatut }, pagination: PaginationInfo }
+
+// 2. Détails commande complète avec toutes relations ⚡ NOUVEAU
+GET /admin/commandes/:id
+Response: { data: CommandeDetailed }
+
+// 3. Modification statut et notes correcteur
+PUT /admin/commandes/:id
+Body: { statut?: StatutCommande, noteCorrecteur?: string, priorite?: Priorite }
+Response: { data: Commande, message: string }
+
+// 4. Suppression définitive avec validation
+DELETE /admin/commandes/:id
+Response: { message: "Commande supprimée définitivement" }
+```
+
+#### **🆕 Type CommandeDetailed Enrichi**
+
+```typescript
+// Type étendu avec toutes les données possibles
+export interface CommandeDetailed extends Commande {
+  // Champs enrichis Stripe et business
+  paymentStatus?: string;
+  stripeSessionId?: string;
+  amount?: number; // Montant en centimes
+  dateEcheance?: string; // Date limite souhaitée
+  dateFinition?: string; // Date de livraison effective
+  priorite?: "NORMALE" | "ELEVEE" | "URGENTE" | "FAIBLE";
+  fichierUrl?: string; // Legacy, remplacé par relation files
+
+  // Relations complètes
+  user?: UserDetailed; // Client propriétaire
+  files?: File[]; // Fichiers du projet
+  messages?: Message[]; // Messages de conversation
+  invoices?: Invoice[]; // Factures générées
+
+  // Compteurs calculés
+  _count?: {
+    files: number;
+    messages: number;
+    invoices: number;
+  };
+}
+```
+
+### **🔧 Fonctionnalités Techniques Clés - Migration Backend**
+
+#### **Parser de Conversation IDs Intelligent**
+
+```typescript
+// Gestion intelligente des types de conversations
+// Format: direct_userId1_userId2 | projet_commandeId | support_supportRequestId
+
+const parseConversationId = async (conversationId: string, adminId: string) => {
+  let receiverId = null;
+  let commandeId = null;
+  let supportRequestId = null;
+
+  if (conversationId.startsWith("direct_")) {
+    // Conversation directe : extraire l'autre utilisateur
+    const parts = conversationId.split("_");
+    for (let i = 1; i < parts.length; i++) {
+      if (parts[i] !== adminId) {
+        receiverId = parts[i];
+        break;
+      }
+    }
+  } else if (conversationId.startsWith("projet_")) {
+    // Conversation projet : récupérer le propriétaire
+    commandeId = conversationId.replace("projet_", "");
+    const commande = await prisma.commande.findUnique({
+      where: { id: commandeId },
+      select: { userId: true },
+    });
+    receiverId = commande?.userId;
+  } else if (conversationId.startsWith("support_")) {
+    // Conversation support : récupérer le créateur du ticket
+    supportRequestId = conversationId.replace("support_", "");
+    const supportRequest = await prisma.supportRequest.findUnique({
+      where: { id: supportRequestId },
+      select: { userId: true },
+    });
+    receiverId = supportRequest?.userId;
   }
 
-  if (role) where.role = role;
-  if (isActive !== undefined) where.isActive = isActive;
-
-  return where;
+  return { receiverId, commandeId, supportRequestId };
 };
+```
 
-// Statistiques utilisateurs pour tableau de bord
-const getDashboardUserStats = async () => {
-  const stats = await prisma.user.groupBy({
-    by: ["role", "isActive"],
-    _count: { id: true },
+#### **Groupement Intelligent des Messages en Conversations**
+
+```typescript
+// Algorithme de groupement pour interface admin
+const groupMessagesIntoConversations = (messages: Message[]) => {
+  const conversationsMap = new Map();
+
+  messages.forEach((message) => {
+    let conversationId: string;
+
+    if (message.commandeId) {
+      conversationId = `projet_${message.commandeId}`;
+    } else if (message.supportRequestId) {
+      conversationId = `support_${message.supportRequestId}`;
+    } else {
+      // Conversation directe
+      const userIds = [message.senderId, message.receiverId]
+        .filter(Boolean)
+        .sort();
+      conversationId = `direct_${userIds.join("_")}`;
+    }
+
+    if (!conversationsMap.has(conversationId)) {
+      conversationsMap.set(conversationId, {
+        id: conversationId,
+        type: message.commandeId
+          ? "projet"
+          : message.supportRequestId
+          ? "support"
+          : "direct",
+        messages: [],
+        messageCount: 0,
+        unreadCount: 0,
+        lastMessage: null,
+      });
+    }
+
+    const conversation = conversationsMap.get(conversationId);
+    conversation.messages.push(message);
+    conversation.messageCount++;
+    if (!message.isRead) conversation.unreadCount++;
+
+    if (
+      !conversation.lastMessage ||
+      message.createdAt > conversation.lastMessage.createdAt
+    ) {
+      conversation.lastMessage = {
+        content: message.content,
+        createdAt: message.createdAt,
+        sender:
+          message.sender?.prenom + " " + message.sender?.nom || "Utilisateur",
+      };
+    }
   });
 
-  // Transformation en format lisible
-  return stats.reduce((acc, stat) => {
-    const key = `${stat.role.toLowerCase()}_${
-      stat.isActive ? "actif" : "inactif"
-    }`;
-    acc[key] = stat._count.id;
-    return acc;
-  }, {});
+  return Array.from(conversationsMap.values());
+};
+```
+
+#### **Statistiques Calculées Temps Réel**
+
+```typescript
+// Endpoint /admin/stats/advanced - Dashboard complet
+const getAdvancedStats = async () => {
+  const [
+    totalCommandes,
+    totalFactures,
+    totalUtilisateurs,
+    totalMessages,
+    messagesNonLus,
+    commandesEnCours,
+    facturesEnAttente,
+    utilisateursActifs,
+  ] = await Promise.all([
+    prisma.commande.count(),
+    prisma.invoice.count(),
+    prisma.user.count({ where: { isActive: true } }),
+    prisma.message.count(),
+    prisma.message.count({ where: { isRead: false } }),
+    prisma.commande.count({ where: { statut: "EN_COURS" } }),
+    prisma.invoice.count({ where: { status: "GENERATED" } }),
+    prisma.user.count({
+      where: {
+        isActive: true,
+        createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+      },
+    }),
+  ]);
+
+  return {
+    totalCommandes,
+    totalFactures,
+    totalUtilisateurs,
+    totalMessages,
+    messagesNonLus,
+    commandesEnCours,
+    facturesEnAttente,
+    utilisateursActifs,
+  };
+};
+```
+
+---
+
+## 🚨 **Troubleshooting - Problèmes Courants** ⚡ **ÉTENDU 2025**
+
+### **🆕 10. Problèmes Nouveaux Endpoints Admin (Janvier 2025)**
+
+#### **Erreur 404 "Cannot GET /admin/users/:id"**
+
+**Problème** : Nouvelle route users non trouvée après mise à jour
+
+**Solution** :
+
+```bash
+# 1. Vérifier que les nouvelles routes sont bien montées
+docker exec -it staka_backend grep -r "admin/users" src/routes/
+
+# 2. Redémarrer le backend pour charger les nouvelles routes
+docker-compose restart backend
+
+# 3. Tester directement l'endpoint
+curl -X GET http://localhost:3001/admin/users/stats \
+  -H "Authorization: Bearer ADMIN_TOKEN"
+```
+
+#### **Erreur "Property '\_count' does not exist" dans réponses API**
+
+**Problème** : Types TypeScript non alignés avec les nouveaux includes Prisma
+
+**Solution** :
+
+```typescript
+// Dans frontend/src/types/shared.ts, s'assurer que :
+export interface UserDetailed extends User {
+  _count?: {
+    commandes: number;
+    sentMessages: number;
+    receivedMessages: number;
+    notifications: number;
+  };
+}
+
+export interface CommandeDetailed extends Commande {
+  user?: UserDetailed;
+  _count?: {
+    files: number;
+    messages: number;
+    invoices: number;
+  };
+}
+```
+
+#### **Erreur "Impossible de supprimer le dernier administrateur actif"**
+
+**Problème** : Protection admin fonctionne comme prévu
+
+**Solution** : Cette erreur est **normale et sécurisée**. Pour supprimer un admin :
+
+```bash
+# 1. Créer un nouvel admin d'abord
+curl -X POST http://localhost:3001/admin/users \
+  -H "Authorization: Bearer ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"prenom":"Admin","nom":"Backup","email":"admin2@example.com","password":"admin123","role":"ADMIN"}'
+
+# 2. Ensuite supprimer l'ancien admin
+curl -X DELETE http://localhost:3001/admin/users/ANCIEN_ADMIN_ID \
+  -H "Authorization: Bearer ADMIN_TOKEN"
+```
+
+#### **Messages admin non visibles côté utilisateur**
+
+**Problème** : Parsing des conversation IDs incorrect
+
+**Diagnostic** :
+
+```bash
+# Vérifier que le message a été créé en DB avec le bon receiverId
+docker exec -it staka_db mysql -u staka -pstaka stakalivres -e "
+SELECT id, senderId, receiverId, content, commandeId, supportRequestId, createdAt
+FROM messages
+WHERE senderId IN (SELECT id FROM users WHERE role = 'ADMIN')
+ORDER BY createdAt DESC LIMIT 5;"
+```
+
+**Solution** : S'assurer que le parsing retourne le bon `receiverId` :
+
+```typescript
+// Dans backend/src/routes/admin.ts, debug le parsing
+console.log(`🔍 Conversation ID: ${conversationId}`);
+console.log(`🎯 Receiver ID identifié: ${receiverId}`);
+console.log(`📋 Commande ID: ${commandeId}`);
+console.log(`🎫 Support ID: ${supportRequestId}`);
+```
+
+#### **Erreur "Validation failed" lors création utilisateur**
+
+**Problème** : Validation Joi trop stricte sur nouveaux champs
+
+**Solution** :
+
+```typescript
+// Dans backend/src/controllers/adminUserController.ts
+const createUserSchema = Joi.object({
+  prenom: Joi.string().min(2).max(100).required(),
+  nom: Joi.string().min(2).max(100).required(),
+  email: Joi.string().email().required(),
+  password: Joi.string().min(8).required(),
+  role: Joi.string().valid("USER", "ADMIN", "CORRECTOR").default("USER"),
+  isActive: Joi.boolean().default(true),
+  adresse: Joi.string().max(500).optional().allow(""),
+  telephone: Joi.string().max(20).optional().allow(""),
+});
+```
+
+---
+
+## 📈 **Métriques et KPIs** ⚡ **ENRICHIES 2025**
+
+### **🆕 Métriques Admin Avancées**
+
+```typescript
+// Dashboard admin temps réel
+const getAdminDashboardMetrics = async () => {
+  const stats = await Promise.all([
+    // Utilisateurs par statut et rôle
+    prisma.user.groupBy({
+      by: ["role", "isActive"],
+      _count: { id: true },
+    }),
+
+    // Commandes par statut avec évolution
+    prisma.commande.groupBy({
+      by: ["statut"],
+      _count: { id: true },
+      where: {
+        createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+      },
+    }),
+
+    // Messages non lus par type
+    prisma.message.groupBy({
+      by: ["type"],
+      _count: { id: true },
+      where: { isRead: false },
+    }),
+
+    // Revenus par période
+    prisma.invoice.aggregate({
+      where: {
+        status: "PAID",
+        createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+      },
+      _sum: { amount: true },
+      _count: { id: true },
+    }),
+  ]);
+
+  return {
+    users: transformGroupByToObject(stats[0]),
+    commandes: transformGroupByToObject(stats[1]),
+    messages: transformGroupByToObject(stats[2]),
+    revenue: stats[3],
+  };
 };
 
-// Utilisateurs les plus actifs (métriques business)
-const getMostActiveUsers = async (limit = 10) => {
+// Performances système
+const getSystemMetrics = async () => {
+  return {
+    database: {
+      size: await getDatabaseSize(),
+      connections: await getActiveConnections(),
+      slowQueries: await getSlowQueries(),
+    },
+    api: {
+      responseTime: await getAverageResponseTime(),
+      errorRate: await getErrorRate(),
+      throughput: await getThroughput(),
+    },
+    storage: {
+      filesCount: await prisma.file.count(),
+      totalSize: await getTotalFilesSize(),
+      uploads30d: await getRecentUploads(),
+    },
+  };
+};
+```
+
+### **🔍 Analytics Utilisateurs Détaillées**
+
+```typescript
+// Utilisateurs les plus actifs (toutes métriques)
+const getTopUsers = async (limit = 10) => {
   return await prisma.user.findMany({
+    where: { isActive: true },
     include: {
       _count: {
         select: {
           commandes: true,
           sentMessages: true,
+          receivedMessages: true,
           supportRequests: true,
+          files: true,
         },
       },
     },
-    orderBy: {
-      commandes: { _count: "desc" },
-    },
+    orderBy: [
+      { commandes: { _count: "desc" } },
+      { sentMessages: { _count: "desc" } },
+    ],
     take: limit,
-    where: { isActive: true },
   });
+};
+
+// Segmentation clients
+const getClientSegmentation = async () => {
+  const segments = await prisma.$queryRaw`
+    SELECT 
+      CASE 
+        WHEN commande_count = 0 THEN 'Prospects'
+        WHEN commande_count = 1 THEN 'Nouveaux clients'
+        WHEN commande_count BETWEEN 2 AND 5 THEN 'Clients réguliers'
+        ELSE 'Clients VIP'
+      END as segment,
+      COUNT(*) as user_count,
+      AVG(total_spent) as avg_spent
+    FROM (
+      SELECT 
+        u.id,
+        COUNT(c.id) as commande_count,
+        COALESCE(SUM(i.amount), 0) as total_spent
+      FROM users u
+      LEFT JOIN commandes c ON u.id = c.userId
+      LEFT JOIN invoices i ON c.id = i.commandeId AND i.status = 'PAID'
+      WHERE u.role = 'USER' AND u.isActive = true
+      GROUP BY u.id
+    ) user_stats
+    GROUP BY segment
+    ORDER BY avg_spent DESC
+  `;
+
+  return segments;
 };
 ```
 
-#### **✅ Tests de Validation Docker (Décembre 2024)**
+---
+
+## ✅ **Checklist de Vérification - Base de Données Fonctionnelle** ⚡ **ÉTENDUE 2025**
+
+### **🆕 État Global des Nouveaux Services Admin**
 
 ```bash
-# Tests complets effectués en conditions réelles
-docker-compose up --build -d
+# 1. Tous les nouveaux endpoints admin répondent
+curl -X GET http://localhost:3001/admin/users/stats -H "Authorization: Bearer $TOKEN"
+# Résultat attendu : {"total":X,"actifs":Y,"inactifs":Z,"admin":A,"users":B,"recents":C}
 
-# 1. Connexion admin et récupération token
-TOKEN=$(curl -s -X POST http://localhost:3001/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email": "admin@staka-editions.com", "password": "admin123"}' \
-  | jq -r '.token')
+curl -X GET http://localhost:3001/admin/commandes/stats -H "Authorization: Bearer $TOKEN"
+# Résultat attendu : {"total":X,"EN_ATTENTE":Y,"EN_COURS":Z,...}
 
-# 2. Statistiques utilisateurs (dashboard)
-curl -X GET http://localhost:3001/admin/users/stats \
-  -H "Authorization: Bearer $TOKEN"
-# ✅ Résultat : {"total":3,"actifs":3,"inactifs":0,"admin":1,"users":2,"recents":3}
+curl -X GET http://localhost:3001/admin/conversations/stats -H "Authorization: Bearer $TOKEN"
+# Résultat attendu : {"total":X,"unread":Y,"totalMessages":Z}
 
-# 3. Liste paginée avec filtres
-curl -X GET "http://localhost:3001/admin/users?page=1&limit=10&search=user" \
-  -H "Authorization: Bearer $TOKEN"
-# ✅ Résultat : Pagination fonctionnelle, recherche active
+curl -X GET http://localhost:3001/admin/stats/advanced -H "Authorization: Bearer $TOKEN"
+# Résultat attendu : Stats dashboard complètes
 
-# 4. Création utilisateur test
+# 2. Test CRUD utilisateurs complet
+# Création
 curl -X POST http://localhost:3001/admin/users \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"prenom":"Sophie","nom":"Dubois","email":"sophie.dubois@test.com","password":"sophie123","role":"USER"}'
-# ✅ Résultat : Utilisateur créé, password hashé, validation complète
+  -d '{"prenom":"Test","nom":"User","email":"test@example.com","password":"test123","role":"USER"}'
 
-# 5. Basculement statut utilisateur
-curl -X PATCH http://localhost:3001/admin/users/USER_ID/toggle-status \
-  -H "Authorization: Bearer $TOKEN"
-# ✅ Résultat : Statut basculé de actif → inactif
+# Modification
+curl -X PATCH http://localhost:3001/admin/users/USER_ID \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"isActive":false}'
 
-# 6. Suppression RGPD complète
-curl -X DELETE http://localhost:3001/admin/users/USER_ID \
-  -H "Authorization: Bearer $TOKEN"
-# ✅ Résultat : Suppression transaction complète, toutes relations effacées
-```
+# Consultation détaillée
+curl -X GET http://localhost:3001/admin/users/USER_ID -H "Authorization: Bearer $TOKEN"
 
-### **Corrections Techniques Majeures**
-
-#### **Configuration Proxy Docker**
-
-```javascript
-// Fichier : frontend/vite.config.ts
-export default defineConfig({
-  server: {
-    proxy: {
-      "/api": {
-        target: "http://backend:3001", // ✅ Corrigé de localhost vers backend
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
-      },
-    },
-  },
-});
-```
-
-#### **Mapping Types Frontend ↔ Backend**
-
-```typescript
-// Fichier : backend/src/controllers/messagesController.ts
-const mapFrontendTypeToPrisma = (frontendType: string): MessageType => {
-  switch (frontendType) {
-    case "TEXT":
-    case "FILE":
-    case "IMAGE":
-      return MessageType.USER_MESSAGE;
-    case "SYSTEM":
-      return MessageType.SYSTEM_MESSAGE;
-    case "ADMIN_NOTE":
-      return MessageType.ADMIN_MESSAGE;
-    default:
-      return MessageType.USER_MESSAGE;
-  }
-};
-```
-
----
-
-## 🛡️ **Sécurité et Performances**
-
-### **Index de Performance**
-
-```sql
--- Index automatiquement créés par Prisma
-CREATE INDEX users_email_idx ON users(email);
-CREATE INDEX users_role_idx ON users(role);
-CREATE INDEX commandes_userId_idx ON commandes(userId);
-CREATE INDEX commandes_statut_idx ON commandes(statut);
-CREATE INDEX messages_senderId_idx ON messages(senderId);
-CREATE INDEX messages_commandeId_idx ON messages(commandeId);
-CREATE INDEX messages_supportRequestId_idx ON messages(supportRequestId);
-CREATE INDEX support_requests_userId_idx ON support_requests(userId);
-CREATE INDEX invoices_commandeId_idx ON invoices(commandeId);
-```
-
-### **Contraintes de Sécurité**
-
-**Niveau Base de Données :**
-
-- **Foreign Keys** avec CASCADE/SET NULL appropriés
-- **Contraintes UNIQUE** sur email, stripePaymentMethodId
-- **Contraintes CHECK** sur les énumérations
-- **Index composites** pour les requêtes complexes
-
-**Niveau Application :**
-
-- **Validation Prisma** avec schéma strict
-- **Chiffrement bcrypt** des mots de passe
-- **UUID** pour éviter l'énumération
-- **Soft delete** pour la conformité RGPD
-
-### **Optimisations de Performance**
-
-```typescript
-// Pagination efficace
-const messages = await prisma.message.findMany({
-  skip: (page - 1) * limit,
-  take: limit,
-  where: { commandeId },
-  include: { sender: { select: { prenom: true, nom: true } } },
-  orderBy: { createdAt: "desc" },
-});
-
-// Requêtes en lot
-const [users, commandes, tickets] = await Promise.all([
-  prisma.user.findMany({ take: 10 }),
-  prisma.commande.findMany({ take: 10 }),
-  prisma.supportRequest.findMany({ take: 10 }),
-]);
-
-// Compter efficacement
-const userCount = await prisma.user.count({
-  where: { isActive: true },
-});
-```
-
----
-
-## 🔧 **Maintenance et Administration**
-
-### **Sauvegarde et Restauration**
-
-```bash
-# Sauvegarde complète
-docker exec staka_db mysqldump -u staka -pstaka stakalivres > backup_$(date +%Y%m%d).sql
-
-# Restauration
-docker exec -i staka_db mysql -u staka -pstaka stakalivres < backup_20240125.sql
-
-# Sauvegarde avec Docker volumes
-docker run --rm -v staka-livres_db_data:/data -v $(pwd):/backup ubuntu tar czf /backup/db_backup.tar.gz /data
-```
-
-### **Monitoring et Logs**
-
-```bash
-# Logs de la base de données
-docker logs staka_db -f
-
-# Logs du backend Prisma
-docker logs staka_backend -f
-
-# Utilisation espace disque
-docker exec staka_db du -sh /var/lib/mysql
-
-# Performance de la base
-docker exec -it staka_db mysql -u staka -pstaka -e "SHOW PROCESSLIST;"
-```
-
-### **Migration en Production**
-
-```bash
-# 1. Sauvegarde de sécurité
-docker exec staka_db mysqldump -u staka -pstaka stakalivres > prod_backup_pre_migration.sql
-
-# 2. Application des migrations
-docker exec -it staka_backend npx prisma migrate deploy
-
-# 3. Vérification de l'intégrité
-docker exec -it staka_backend npx prisma validate
-
-# 4. Test de fonctionnement
-docker exec -it staka_backend npx prisma studio
-```
-
-### **Optimisation et Maintenance**
-
-```sql
--- Analyse des tables
-ANALYZE TABLE users, commandes, messages, support_requests;
-
--- Optimisation des tables
-OPTIMIZE TABLE users, commandes, messages;
-
--- Vérification de l'intégrité
-CHECK TABLE users, commandes, messages;
-
--- Statistiques d'utilisation
-SELECT
-  table_name,
-  table_rows,
-  ROUND(data_length / 1024 / 1024, 2) AS data_mb,
-  ROUND(index_length / 1024 / 1024, 2) AS index_mb
-FROM information_schema.tables
-WHERE table_schema = 'stakalivres';
-```
-
----
-
-## 📈 **Métriques et KPIs**
-
-### **Métriques Business**
-
-```typescript
-// Chiffre d'affaires mensuel
-const monthlyRevenue = await prisma.invoice.aggregate({
-  where: {
-    createdAt: { gte: startOfMonth, lt: endOfMonth },
-    status: "PAID",
-  },
-  _sum: { amount: true },
-});
-
-// Taux de conversion
-const conversionRate = await prisma.$queryRaw`
-  SELECT 
-    COUNT(DISTINCT u.id) as total_users,
-    COUNT(DISTINCT c.userId) as users_with_orders,
-    ROUND(COUNT(DISTINCT c.userId) * 100.0 / COUNT(DISTINCT u.id), 2) as conversion_rate
-  FROM users u
-  LEFT JOIN commandes c ON u.id = c.userId
-  WHERE u.createdAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-`;
-
-// Temps de résolution support
-const avgResolutionTime = await prisma.$queryRaw`
-  SELECT 
-    AVG(TIMESTAMPDIFF(HOUR, createdAt, resolvedAt)) as avg_hours
-  FROM support_requests 
-  WHERE resolvedAt IS NOT NULL
-  AND createdAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-`;
-```
-
-### **Métriques Techniques**
-
-```typescript
-// Performance des requêtes
-const slowQueries = await prisma.$queryRaw`
-  SELECT 
-    query_time,
-    lock_time,
-    rows_sent,
-    rows_examined,
-    sql_text
-  FROM mysql.slow_log 
-  WHERE start_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
-  ORDER BY query_time DESC 
-  LIMIT 10
-`;
-
-// Utilisation de l'espace
-const spaceUsage = await prisma.$queryRaw`
-  SELECT 
-    table_name,
-    ROUND(data_length / 1024 / 1024, 2) AS data_mb,
-    ROUND(index_length / 1024 / 1024, 2) AS index_mb,
-    table_rows
-  FROM information_schema.tables 
-  WHERE table_schema = 'stakalivres'
-  ORDER BY (data_length + index_length) DESC
-`;
-```
-
----
-
-## 🚀 **Évolutions et Roadmap**
-
-### **Fonctionnalités Prévues**
-
-1. **Versioning des Fichiers**
-
-   - Historique des modifications
-   - Comparaison de versions
-   - Rollback automatique
-
-2. **Notifications en Temps Réel**
-
-   - WebSockets pour notifications instantanées
-   - Push notifications mobile
-   - Emails automatiques personnalisés
-
-3. **Analytics Avancées**
-
-   - Tableaux de bord interactifs
-   - Rapports automatisés
-   - Prédictions IA
-
-4. **API GraphQL**
-   - Alternative à l'API REST
-   - Requêtes optimisées
-   - Subscriptions temps réel
-
-### **Optimisations Techniques**
-
-1. **Cache Redis**
-
-   - Cache des requêtes fréquentes
-   - Sessions utilisateurs
-   - Cache de recherche
-
-2. **Partitioning**
-
-   - Partition des messages par date
-   - Archives automatiques
-   - Performance améliorée
-
-3. **Réplication**
-   - Read replicas pour les lectures
-   - High availability
-   - Load balancing
-
----
-
-### **Accès Prisma Studio en Production**
-
-```bash
-# Tunnel SSH vers le serveur de production
-ssh -L 5555:localhost:5555 user@production-server
-
-# Lancer Prisma Studio sur le serveur
-npx prisma studio
-
-# Accès via : http://localhost:5555
-```
-
-### **Commandes d'Urgence**
-
-```bash
-# Redémarrage complet des services
-docker-compose restart
-
-# Rebuild complet en cas de problème
-docker-compose down -v
-docker-compose up --build -d
-
-# Connexion directe à MySQL
-docker exec -it staka_db mysql -u staka -pstaka stakalivres
-
-# Logs en temps réel pour debugging
-docker-compose logs -f backend db
-```
-
-## 🚨 **Troubleshooting - Problèmes Courants**
-
-### **1. Erreur "Column supportRequestId does not exist"**
-
-**Problème** : Lors du seed ou utilisation de l'API, erreur sur la colonne manquante
-
-```
-The column `stakalivres.messages.supportRequestId` does not exist
-```
-
-**Solution** :
-
-```bash
-# 1. Ajouter la colonne manuellement
-docker exec -it staka_db mysql -u staka -pstaka stakalivres -e "ALTER TABLE messages ADD COLUMN supportRequestId VARCHAR(191) NULL;"
-
-# 2. Créer l'index et la contrainte
-docker exec -it staka_db mysql -u staka -pstaka stakalivres -e "CREATE INDEX messages_supportRequestId_idx ON messages(supportRequestId); ALTER TABLE messages ADD CONSTRAINT messages_supportRequestId_fkey FOREIGN KEY (supportRequestId) REFERENCES support_requests(id) ON DELETE SET NULL;"
-
-# 3. Régénérer le client Prisma
-docker exec -it staka_backend npx prisma generate
-```
-
-### **2. Erreur "Property 'number' is missing" sur Invoice**
-
-**Problème** : Erreur TypeScript lors de la création de factures
-
-```
-Property 'number' is missing in type 'InvoiceUncheckedCreateInput'
-```
-
-**Solution** : Vérifier que toutes les créations d'Invoice incluent le champ `number` :
-
-```typescript
-const invoice = await prisma.invoice.create({
-  data: {
-    commandeId,
-    number: `FACT-${new Date().getFullYear()}-${Date.now()
-      .toString()
-      .slice(-6)}`,
-    amount: 59900,
-    pdfUrl,
-    status: "GENERATED",
-    issuedAt: new Date(),
-  },
-});
-```
-
-### **3. Erreur "Could not find migration file"**
-
-**Problème** : Dossiers de migration vides ou corrompus
-
-```
-Could not find the migration file at migration.sql
-```
-
-**Solution** :
-
-```bash
-# 1. Supprimer les dossiers de migration vides
-rm -rf backend/prisma/migrations/[dossier-vide]
-
-# 2. Forcer la résolution de la migration
-docker exec -it staka_backend npx prisma migrate resolve --applied [migration-name]
-
-# 3. Redéployer les migrations
-docker exec -it staka_backend npx prisma migrate deploy
-```
-
-### **4. Backend qui crash au démarrage**
-
-**Problème** : Le backend ne démarre pas, erreurs TypeScript
-
-**Diagnostic** :
-
-```bash
-# Vérifier les logs du backend
-docker logs staka_backend --tail 50
-
-# Vérifier l'état des containers
-docker-compose ps
-```
-
-**Solutions communes** :
-
-```bash
-# 1. Régénérer le client Prisma
-docker exec -it staka_backend npx prisma generate
-
-# 2. Redémarrer le container backend
-docker-compose restart backend
-
-# 3. Rebuild complet si nécessaire
-docker-compose up --build -d backend
-```
-
-### **5. Erreur de connexion "ERR_CONNECTION_RESET"**
-
-**Problème** : Le frontend ne peut pas se connecter au backend
-
-**Vérifications** :
-
-```bash
-# 1. Tester si l'API répond
-curl -X GET http://localhost:3001/health
-
-# 2. Vérifier que le backend écoute sur le bon port
-docker exec -it staka_backend netstat -tlnp | grep 3001
-
-# 3. Vérifier les variables d'environnement
-docker exec -it staka_backend env | grep -E "PORT|DATABASE_URL"
-```
-
-### **6. Base de données vide après migration**
-
-**Problème** : Les tables ne sont pas créées après migration
-
-**Solution** :
-
-```bash
-# 1. Vérifier l'état des migrations
-docker exec -it staka_backend npx prisma migrate status
-
-# 2. Appliquer toutes les migrations
-docker exec -it staka_backend npx prisma migrate deploy
-
-# 3. Vérifier que les tables existent
-docker exec -it staka_db mysql -u staka -pstaka stakalivres -e "SHOW TABLES;"
-```
-
-### **7. Prisma Studio ne démarre pas**
-
-**Problème** : Impossible d'accéder à Prisma Studio sur localhost:5555
-
-**Solution** :
-
-```bash
-# 1. Vérifier que le port n'est pas occupé
-lsof -i :5555
-
-# 2. Lancer Prisma Studio en mode debug
-docker exec -it staka_backend npx prisma studio --browser none --port 5555
-
-# 3. Accéder via l'IP du container
-docker inspect staka_backend | grep IPAddress
-```
-
-### **8. Permissions de fichiers Docker**
-
-**Problème** : Erreurs de permissions lors de l'écriture de fichiers
-
-**Solution** :
-
-```bash
-# Changer le propriétaire des volumes
-sudo chown -R $USER:$USER backend/prisma/migrations
-sudo chown -R $USER:$USER backend/scripts
-
-# Ou utiliser un utilisateur Docker spécifique
-docker exec -u root -it staka_backend chown -R node:node /app
-```
-
-### **9. 🆕 Problèmes Messagerie Admin (Décembre 2024)**
-
-#### **Messages admin non reçus côté utilisateur**
-
-**Problème** : Messages envoyés par admin n'apparaissent pas dans l'interface utilisateur
-
-**Diagnostic** :
-
-```bash
-# Vérifier que le message a été créé en DB
-docker exec -it staka_db mysql -u staka -pstaka stakalivres -e "
-SELECT id, senderId, receiverId, content, createdAt
-FROM messages
-WHERE senderId = 'ADMIN_USER_ID'
-ORDER BY createdAt DESC LIMIT 5;"
-```
-
-**Solutions** :
-
-```bash
-# 1. Vérifier le parsing des conversation IDs
-# Dans backend/src/routes/admin.ts, vérifier que parseConversationId() fonctionne
-
-# 2. Tester l'identification du destinataire
+# 3. Test messagerie admin
 curl -X POST http://localhost:3001/admin/conversations/direct_adminId_userId/messages \
-  -H "Authorization: Bearer ADMIN_TOKEN" \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"contenu": "Test message admin"}'
+  -d '{"contenu":"Message test admin"}'
 
-# 3. Vérifier les logs backend pour debugging
-docker logs staka_backend --tail 20 | grep "conversation\|receiverId"
+# 4. Test commande détaillée
+curl -X GET http://localhost:3001/admin/commandes/COMMANDE_ID -H "Authorization: Bearer $TOKEN"
+# Résultat attendu : CommandeDetailed avec user, files, messages, invoices, _count
 ```
 
-#### **Erreur "Cannot read properties of undefined (reading 'id')"**
-
-**Problème** : Erreur frontend lors de l'affichage des conversations
-
-**Solution** :
-
-```typescript
-// Dans frontend/src/pages/admin/AdminMessagerie.tsx
-// S'assurer que les propriétés sont sécurisées :
-
-const conversationTitle =
-  conversation.participants?.client?.nom ||
-  conversation.titre ||
-  `Conversation ${conversation.id?.slice(-6)}`;
-
-const lastMessageSender =
-  conversation.lastMessage?.sender ||
-  message.sender?.prenom + " " + message.sender?.nom ||
-  message.auteur?.prenom + " " + message.auteur?.nom ||
-  "Utilisateur";
-```
-
-#### **Endpoints admin 404 "Cannot GET /admin/conversations"**
-
-**Problème** : Routes admin non trouvées
-
-**Vérifications** :
+### **🔒 Vérification Sécurité RGPD**
 
 ```bash
-# 1. Vérifier que les routes admin sont bien montées
-docker exec -it staka_backend grep -r "admin/conversations" src/routes/
+# 5. Test protection dernier admin
+curl -X DELETE http://localhost:3001/admin/users/DERNIER_ADMIN_ID -H "Authorization: Bearer $TOKEN"
+# Résultat attendu : Erreur 400 "Impossible de supprimer le dernier administrateur actif"
 
-# 2. Vérifier l'import dans server.ts
-docker exec -it staka_backend grep -A5 -B5 "adminRoutes" src/server.ts
+# 6. Test suppression RGPD complète (sur utilisateur test)
+curl -X DELETE http://localhost:3001/admin/users/TEST_USER_ID -H "Authorization: Bearer $TOKEN"
+# Résultat attendu : {"message":"Utilisateur supprimé définitivement (RGPD)"}
 
-# 3. Tester directement l'endpoint
-curl -X GET http://localhost:3001/admin/conversations \
-  -H "Authorization: Bearer ADMIN_TOKEN"
-```
-
-**Solution** :
-
-```typescript
-// Dans backend/src/server.ts, s'assurer que :
-import adminRoutes from "./routes/admin";
-app.use("/admin", adminRoutes);
-
-// Dans backend/src/routes/admin.ts, vérifier :
-router.get("/conversations", async (req, res) => {
-  // Implémentation endpoint
-});
-```
-
-#### **Types incompatibles frontend/backend**
-
-**Problème** : Erreurs TypeScript lors de l'utilisation des APIs
-
-**Solution** :
-
-```typescript
-// Créer un mapping dans backend/src/controllers/messagesController.ts
-const mapPrismaToFrontend = (message: any) => ({
-  id: message.id,
-  content: message.content || message.contenu,
-  sender: message.sender || message.auteur,
-  isRead: message.isRead,
-  createdAt: message.createdAt,
-  // ... autres mappings
-});
-
-// Utiliser dans les réponses API
-res.json({
-  conversations: conversations.map(mapPrismaToFrontend),
-  total,
-});
-```
-
-#### **Configuration proxy Docker non fonctionnelle**
-
-**Problème** : Frontend ne peut pas joindre le backend dans les containers
-
-**Vérification** :
-
-```bash
-# Tester la connectivité inter-containers
-docker exec -it staka_frontend ping backend
-
-# Vérifier la configuration réseau
-docker network ls
-docker network inspect staka-livres_default
-```
-
-**Solution** :
-
-```javascript
-// Dans frontend/vite.config.ts
-export default defineConfig({
-  server: {
-    host: true, // Important pour Docker
-    proxy: {
-      "/api": {
-        target: "http://backend:3001", // Nom du service Docker
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
-      },
-    },
-  },
-});
-```
-
-### **Contacts Techniques**
-
-- **Documentation Prisma** : https://prisma.io/docs
-- **Docker Compose** : https://docs.docker.com/compose
-- **MySQL 8** : https://dev.mysql.com/doc/refman/8.0/
-
-## ✅ **Checklist de Vérification - Base de Données Fonctionnelle**
-
-### **État Global des Services**
-
-```bash
-# 1. Tous les containers sont démarrés
-docker-compose ps
-# Résultat attendu : staka_backend, staka_db, staka_frontend UP
-
-# 2. Backend répond sur l'API de santé
-curl -X GET http://localhost:3001/health
-# Résultat attendu : {"status":"OK","timestamp":"..."}
-
-# 3. Base de données accessible
-docker exec -it staka_db mysql -u staka -pstaka stakalivres -e "SELECT 1;"
-# Résultat attendu : 1
-
-# 4. Prisma Studio accessible
-docker exec -it staka_backend npx prisma studio --browser none
-# Puis ouvrir : http://localhost:5555
-```
-
-### **Vérification des Données Seed**
-
-```bash
-# 5. Utilisateurs créés
-docker exec -it staka_db mysql -u staka -pstaka stakalivres -e "SELECT email, role FROM users;"
-# Résultat attendu : admin@staka-editions.com (ADMIN), user@example.com (USER)
-
-# 6. Tables principales peuplées
+# Vérification effacement DB
 docker exec -it staka_db mysql -u staka -pstaka stakalivres -e "
-SELECT
-  'users' as table_name, COUNT(*) as count FROM users
-UNION SELECT 'commandes', COUNT(*) FROM commandes
-UNION SELECT 'messages', COUNT(*) FROM messages
-UNION SELECT 'support_requests', COUNT(*) FROM support_requests;"
+SELECT 'users' as table_name, COUNT(*) as count FROM users WHERE id = 'TEST_USER_ID'
+UNION SELECT 'commandes', COUNT(*) FROM commandes WHERE userId = 'TEST_USER_ID'
+UNION SELECT 'messages', COUNT(*) FROM messages WHERE senderId = 'TEST_USER_ID' OR receiverId = 'TEST_USER_ID';"
+# Résultat attendu : Tous les counts à 0
 ```
 
-### **Test de Connexion Complet**
+### **📊 Indicateurs de Performance Admin**
 
 ```bash
-# 7. Test de login API
-curl -X POST http://localhost:3001/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email": "admin@staka-editions.com", "password": "admin123"}'
-# Résultat attendu : {"message":"Connexion réussie","user":{...},"token":"..."}
-```
+# 7. Performance nouveaux endpoints avec données volumineuses
+time curl -X GET "http://localhost:3001/admin/users?page=1&limit=100&search=" -H "Authorization: Bearer $TOKEN"
+# Résultat attendu : < 500ms
 
-### **Indicateurs de Performance**
+time curl -X GET "http://localhost:3001/admin/commandes?page=1&limit=100" -H "Authorization: Bearer $TOKEN"
+# Résultat attendu : < 800ms
 
-```bash
-# 8. Utilisation mémoire containers
-docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+time curl -X GET http://localhost:3001/admin/conversations -H "Authorization: Bearer $TOKEN"
+# Résultat attendu : < 1000ms
 
-# 9. Espace disque base de données
-docker exec staka_db du -sh /var/lib/mysql
+# 8. Utilisation mémoire containers après charge admin
+docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}" staka_backend
+# Résultat attendu : CPU < 10%, RAM < 200MB en idle
 ```
 
 ---
 
-## 📝 **Changelog - Dernières Corrections**
+## 📝 **Changelog - Dernières Corrections** ⚡ **VERSION 1.4 - JANVIER 2025**
 
-**Version 1.3 - ⭐ DOCUMENTATION COMPLÈTE ADMIN USERS (Décembre 2024)**
+**🚀 Migration Admin Backend Complète**
 
-- 👥 **Module Admin Users intégré** : 7 endpoints `/admin/users/*` documentés
-- 🏗️ **Architecture complète** : AdminUserService, AdminUserController, requêtes optimisées
-- 🔒 **Suppression RGPD** : Transaction complète avec toutes relations
-- ✅ **Tests production validés** : Tests Docker complets avec résultats
-- 📊 **Statistiques dashboard** : Métriques utilisateurs pour admin
-- 🔧 **Protection admin** : Dernier administrateur actif protégé
-- 📝 **Guide troubleshooting** : Solutions problèmes courants module Users
+- ✅ **16 nouveaux endpoints admin** : Users (7) + Commandes (4) + Messagerie (9)
+- ✅ **Types TypeScript unifiés** : `UserDetailed`, `CommandeDetailed`, alignement frontend/backend
+- ✅ **Suppression RGPD atomique** : Transactions Prisma sécurisées, cascade complète
+- ✅ **Protection admin renforcée** : Dernier administrateur actif protégé
+- ✅ **Parser intelligent conversations** : Gestion `direct_`, `projet_`, `support_` IDs
+- ✅ **Dashboard stats temps réel** : Calculs depuis DB réelle, plus de mocks
+- ✅ **Architecture modulaire** : Services séparés, contrôleurs spécialisés
+- ✅ **Tests production validés** : 46+ endpoints opérationnels sous Docker
 
-**Version 1.2 - ⭐ MIGRATION MESSAGERIE ADMIN**
+**🔧 Corrections Techniques Majeures**
 
-- 🚀 **Migration complète messagerie** : Frontend Mock → API Backend réelles
-- 🔗 **9 nouveaux endpoints admin** : `/admin/conversations/*`, `/admin/stats/advanced`
-- 🧠 **Parser intelligent conversation IDs** : Identification automatique destinataires
-- 🔧 **Corrections techniques majeures** : Proxy Docker, mapping types, parsing IDs
-- 📊 **Types TypeScript unifiés** : `frontend/src/types/messages.ts` aligné Prisma
-- ⚡ **Hooks React Query optimisés** : Cache intelligent, optimistic updates
-- 💬 **Communication bidirectionnelle** : Admin ↔ Utilisateur fonctionnelle
-- 🗑️ **Suppression RGPD** : Effacement définitif en base de données
-- 🔍 **Interface admin simplifiée** : Filtres épurés selon retours utilisateur
-- ✅ **Tests validés** : Communication bidirectionnelle testée et opérationnelle
+- ✅ **Prisma v6.10.1** : Mise à jour vers dernière version stable
+- ✅ **Index DB optimisés** : Performance requêtes admin améliorée
+- ✅ **Validation Joi renforcée** : Sécurité création/modification utilisateurs
+- ✅ **Logs de debugging** : Traçabilité actions admin et API calls
+- ✅ **Gestion d'erreurs unifiée** : Codes HTTP standardisés, messages clairs
 
-**Version 1.1 - Juin 2024**
+**📋 Fonctionnalités Business Enrichies**
 
-- ✅ Correction champ `number` obligatoire dans modèle Invoice
-- ✅ Ajout colonne `supportRequestId` dans table messages avec contraintes FK
-- ✅ Export default app dans server.ts pour compatibilité tests
-- ✅ Suppression dossiers migrations vides causant échecs deploy
-- ✅ Credentials par défaut seed documentés
-- ✅ Section troubleshooting complète ajoutée
-
-**Version 1.0 - Juin 2025**
-
-- 🎯 Schéma complet 10 modèles (User, Commande, File, Message, SupportRequest, PaymentMethod, Invoice, Notification, Page, MessageAttachment)
-- 🔗 Relations complexes avec contraintes RGPD
-- 🐳 Déploiement Docker avec Prisma Studio
-- 📊 Exemples requêtes et métriques business
-- 🛡️ Sécurité et optimisations performance
-
-### **🏆 Fonctionnalités Majeures Ajoutées (v1.2)**
-
-#### **Architecture Messagerie Admin Complète**
-
-- **Parser de conversation IDs** : `direct_user1_user2`, `projet_cmdId`, `support_reqId`
-- **Identification automatique** des destinataires pour messages admin
-- **Grouping intelligent** des messages en conversations
-- **Statistiques calculées** depuis vraies données DB
-- **Interface épurée** avec filtres essentiels seulement
-
-#### **Intégration Frontend-Backend**
-
-- **Types unifiés** : Alignement parfait schéma Prisma ↔ Types TypeScript
-- **Hooks optimisés** : Cache React Query 30s, optimistic updates avec rollback
-- **Configuration Docker** : Proxy corrigé pour communication inter-services
-- **Mapping automatique** : Conversion types frontend/backend transparente
-
-#### **Endpoints API Admin Fonctionnels**
-
-```bash
-✅ GET    /admin/conversations              # Liste avec tri et pagination
-✅ GET    /admin/conversations/:id          # Détails avec parsing ID
-✅ GET    /admin/conversations/stats        # Stats calculées DB
-✅ POST   /admin/conversations/:id/messages # Envoi avec destinataire
-✅ PUT    /admin/conversations/:id          # Mise à jour
-✅ DELETE /admin/conversations/:id          # Suppression RGPD
-✅ GET    /admin/conversations/tags         # Tags disponibles
-✅ GET    /admin/conversations/unread-count # Badge sidebar
-✅ GET    /admin/stats/advanced             # Dashboard complet
-```
+- ✅ **Modales détails modernes** : Users et Commandes avec toutes données
+- ✅ **Filtres avancés** : Recherche, tri, pagination sur tous modules admin
+- ✅ **Actions rapides** : Toggle statut, suppression RGPD one-click
+- ✅ **Compteurs relations** : `_count` sur tous objets (commandes, messages, etc.)
+- ✅ **Communication bidirectionnelle** : Admin ↔ Users opérationnelle
 
 ---
 
-_Version Base de Données : MySQL 8.4+ avec Prisma v6.10.1 - v1.3 Décembre 2024_
+\_Version Base de Données : MySQL 8.4+ avec Prisma v6.10.1

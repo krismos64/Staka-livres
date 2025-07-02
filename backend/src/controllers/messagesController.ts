@@ -389,8 +389,8 @@ export const getMessages = async (
     if (search) {
       const searchFilter = {
         OR: [
-          { content: { contains: search, mode: "insensitive" as const } },
-          { subject: { contains: search, mode: "insensitive" as const } },
+          { content: { contains: search } },
+          { subject: { contains: search } },
         ],
       };
 

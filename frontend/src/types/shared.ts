@@ -363,3 +363,34 @@ export interface UpdateConversationRequest {
   tags?: string[];
   titre?: string;
 }
+
+export * from "../../../shared/types";
+
+// Types étendus spécifiques au frontend
+export interface UserDetailed extends User {
+  avatar?: string;
+  telephone?: string;
+  adresse?: string;
+  _count?: {
+    commandes: number;
+    sentMessages: number;
+    receivedMessages: number;
+    notifications: number;
+  };
+}
+
+export interface CommandeDetailed extends Commande {
+  paymentStatus?: string;
+  stripeSessionId?: string;
+  amount?: number;
+  dateEcheance?: string;
+  dateFinition?: string;
+  priorite?: "NORMALE" | "ELEVEE" | "URGENTE";
+  fichierUrl?: string;
+  user?: UserDetailed;
+  _count?: {
+    files: number;
+    messages: number;
+    invoices: number;
+  };
+}

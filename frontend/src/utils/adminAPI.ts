@@ -1,5 +1,6 @@
 import {
   Commande,
+  CommandeDetailed,
   CommandeStats,
   Conversation,
   ConversationStats,
@@ -42,13 +43,27 @@ interface CreateCommandeRequest {
   userId: string;
 }
 
-// FIX: Interface pour les filtres de commandes complets
-interface CommandeFilters {
+// Interfaces unifiées pour les paramètres d'API
+export interface AdminUsersParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: Role;
+  isActive?: boolean;
+  sortBy?: string;
+  sortDirection?: "asc" | "desc";
+}
+
+export interface AdminCommandesParams {
+  page?: number;
+  limit?: number;
   search?: string;
   statut?: StatutCommande;
   clientId?: string;
   dateFrom?: string; // ISO string
   dateTo?: string; // ISO string
+  sortBy?: string;
+  sortDirection?: "asc" | "desc";
 }
 
 interface UpdateFactureRequest {
@@ -148,9 +163,6 @@ class AdaptiveAdminAPI {
   ): Promise<T> {
     const authHeaders = tokenUtils.getAuthHeader();
 
-    console.log(`🔍 [DEBUG FRONTEND] Appel API: ${url}`);
-    console.log(`🔍 [DEBUG FRONTEND] Options:`, options);
-
     const response = await fetch(`${API_BASE_URL}${url}`, {
       headers: {
         "Content-Type": "application/json",
@@ -160,8 +172,6 @@ class AdaptiveAdminAPI {
     });
 
     const data = await response.json();
-
-    console.log(`🔍 [DEBUG FRONTEND] Réponse brute:`, data);
 
     if (!response.ok) {
       console.error(`❌ [DEBUG FRONTEND] Erreur API:`, data);
@@ -229,26 +239,40 @@ class AdaptiveAdminAPI {
   // GESTION UTILISATEURS
   // ===============================
   async getUsers(
-    page = 1,
-    limit = 10,
-    search?: string,
-    role?: Role,
-    isActive?: boolean
+    params: AdminUsersParams = {}
   ): Promise<PaginatedResponse<User>> {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      role,
+      isActive,
+      sortBy,
+      sortDirection,
+    } = params;
+
     if (this.isDemoMode()) {
       return MockDataService.getUsers(page, limit, search, role);
     }
 
-    const params = new URLSearchParams({
+    const urlParams = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
     });
 
-    if (search) params.append("search", search);
-    if (role) params.append("role", role);
-    if (isActive !== undefined) params.append("isActive", isActive.toString());
+    if (search) urlParams.append("search", search);
+    if (role) urlParams.append("role", role);
+    if (isActive !== undefined)
+      urlParams.append("isActive", isActive.toString());
+    if (sortBy) urlParams.append("sortBy", sortBy);
+    if (sortDirection) urlParams.append("sortDirection", sortDirection);
 
-    return this.realApiCall(`/admin/users?${params}`);
+    console.log(
+      "🌐 [adminAPI] URL construite pour getUsers:",
+      `/admin/users?${urlParams}`
+    );
+
+    return this.realApiCall(`/admin/users?${urlParams}`);
   }
 
   async getUserById(id: string): Promise<User> {
@@ -256,7 +280,7 @@ class AdaptiveAdminAPI {
       return MockDataService.getUserById(id);
     }
 
-    return this.realApiCall(`/admin/user/${id}`);
+    return this.realApiCall(`/admin/users/${id}`);
   }
 
   async createUser(userData: CreateUserRequest): Promise<User> {
@@ -271,7 +295,7 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall("/admin/user", {
+    return this.realApiCall("/admin/users", {
       method: "POST",
       body: JSON.stringify(userData),
     });
@@ -288,8 +312,8 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall(`/admin/user/${id}`, {
-      method: "PUT",
+    return this.realApiCall(`/admin/users/${id}`, {
+      method: "PATCH",
       body: JSON.stringify(userData),
     });
   }
@@ -300,7 +324,7 @@ class AdaptiveAdminAPI {
       return;
     }
 
-    await this.realApiCall(`/admin/user/${id}`, {
+    await this.realApiCall(`/admin/users/${id}`, {
       method: "DELETE",
     });
   }
@@ -324,7 +348,7 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall(`/admin/user/${id}/toggle-status`, {
+    return this.realApiCall(`/admin/users/${id}/toggle-status`, {
       method: "PATCH",
     });
   }
@@ -340,7 +364,7 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall(`/admin/user/${id}/activate`, {
+    return this.realApiCall(`/admin/users/${id}/activate`, {
       method: "PATCH",
     });
   }
@@ -356,7 +380,7 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall(`/admin/user/${id}/deactivate`, {
+    return this.realApiCall(`/admin/users/${id}/deactivate`, {
       method: "PATCH",
     });
   }
@@ -365,62 +389,54 @@ class AdaptiveAdminAPI {
   // GESTION COMMANDES
   // ===============================
   async getCommandes(
-    page = 1,
-    limit = 10,
-    filters: CommandeFilters = {}
+    params: AdminCommandesParams = {}
   ): Promise<PaginatedResponse<Commande> & { stats: CommandeStats }> {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      statut,
+      clientId,
+      dateFrom,
+      dateTo,
+      sortBy,
+      sortDirection,
+    } = params;
+
     if (this.isDemoMode()) {
-      return MockDataService.getCommandes(
-        page,
-        limit,
-        filters.statut,
-        filters.search
-      );
+      return MockDataService.getCommandes(page, limit, statut, search);
     }
 
-    // Construction des paramètres URL avec validation
-    const params = new URLSearchParams();
+    const urlParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
 
-    // Toujours inclure page et limit
-    params.append("page", page.toString());
-    params.append("limit", limit.toString());
+    if (search && search.trim()) urlParams.append("search", search.trim());
+    if (statut) urlParams.append("statut", statut);
+    if (clientId && clientId.trim())
+      urlParams.append("clientId", clientId.trim());
+    if (dateFrom) urlParams.append("dateFrom", dateFrom);
+    if (dateTo) urlParams.append("dateTo", dateTo);
+    if (sortBy) urlParams.append("sortBy", sortBy);
+    if (sortDirection) urlParams.append("sortDirection", sortDirection);
 
-    // Ajouter les filtres seulement s'ils ont des valeurs valides
-    if (filters.search && filters.search.trim()) {
-      params.append("search", filters.search.trim());
-    }
+    console.log(
+      `🔍 [DEBUG FRONTEND] Query string construite: ${urlParams.toString()}`
+    );
 
-    if (filters.statut) {
-      params.append("statut", filters.statut);
-    }
-
-    if (filters.clientId && filters.clientId.trim()) {
-      params.append("clientId", filters.clientId.trim());
-    }
-
-    if (filters.dateFrom) {
-      params.append("dateFrom", filters.dateFrom);
-    }
-
-    if (filters.dateTo) {
-      params.append("dateTo", filters.dateTo);
-    }
-
-    const queryString = params.toString();
-    console.log(`🔍 [DEBUG FRONTEND] Query string construite: ${queryString}`);
-
-    return this.realApiCall(`/admin/commandes?${queryString}`);
+    return this.realApiCall(`/admin/commandes?${urlParams}`);
   }
 
-  async getCommandeById(id: string): Promise<Commande> {
+  async getCommandeById(id: string): Promise<CommandeDetailed> {
     if (this.isDemoMode()) {
       const commandes = await MockDataService.getCommandes(1, 100);
       const commande = commandes.data?.find((c) => c.id === id);
       if (!commande) throw new Error("Commande non trouvée");
-      return commande;
+      return commande as CommandeDetailed;
     }
 
-    return this.realApiCall(`/admin/commande/${id}`);
+    return this.realApiCall(`/admin/commandes/${id}`);
   }
 
   async createCommande(commandeData: CreateCommandeRequest): Promise<Commande> {
@@ -1093,9 +1109,12 @@ export const messagesAPI = {
     type?: string;
     priority?: string;
   }) {
-    const response = await fetch(buildApiUrl("/admin/messages"), {
+    const response = await fetch(`${API_BASE_URL}/admin/messages`, {
       method: "POST",
-      headers: getAuthHeaders(),
+      headers: {
+        "Content-Type": "application/json",
+        ...tokenUtils.getAuthHeader(),
+      },
       body: JSON.stringify(data),
     });
 
@@ -1119,9 +1138,12 @@ export const messagesAPI = {
       priority?: string;
     }
   ) {
-    const response = await fetch(buildApiUrl(`/admin/messages/${id}`), {
+    const response = await fetch(`${API_BASE_URL}/admin/messages/${id}`, {
       method: "PATCH",
-      headers: getAuthHeaders(),
+      headers: {
+        "Content-Type": "application/json",
+        ...tokenUtils.getAuthHeader(),
+      },
       body: JSON.stringify(data),
     });
 
@@ -1137,7 +1159,7 @@ export const messagesAPI = {
   async deleteMessage(id: string, hard = false) {
     const params = hard ? "?hard=true" : "";
     const response = await fetch(
-      buildApiUrl(`/admin/messages/${id}${params}`),
+      `${API_BASE_URL}/admin/messages/${id}${params}`,
       {
         method: "DELETE",
         headers: getAuthHeaders(),

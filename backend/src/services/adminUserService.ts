@@ -33,6 +33,8 @@ export interface UserFilters {
 export interface PaginationOptions {
   page: number;
   limit: number;
+  sortBy?: string;
+  sortDirection?: "asc" | "desc";
 }
 
 export interface PaginatedUsers {
@@ -49,19 +51,29 @@ export class AdminUserService {
   // Récupération des utilisateurs avec pagination et filtres
   static async getUsers(
     filters: UserFilters = {},
-    pagination: PaginationOptions = { page: 1, limit: 10 }
+    pagination: PaginationOptions = {
+      page: 1,
+      limit: 10,
+      sortBy: "createdAt",
+      sortDirection: "desc",
+    }
   ): Promise<PaginatedUsers> {
     const { search, role, isActive } = filters;
-    const { page, limit } = pagination;
+    const {
+      page,
+      limit,
+      sortBy = "createdAt",
+      sortDirection = "desc",
+    } = pagination;
 
     // Construction des conditions de recherche
     const whereConditions: any = {};
 
     if (search) {
       whereConditions.OR = [
-        { prenom: { contains: search, mode: "insensitive" } },
-        { nom: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
+        { prenom: { contains: search } },
+        { nom: { contains: search } },
+        { email: { contains: search } },
       ];
     }
 
@@ -72,6 +84,25 @@ export class AdminUserService {
     if (isActive !== undefined) {
       whereConditions.isActive = isActive;
     }
+
+    // Validation simple pour les clés de tri
+    const allowedSortKeys = [
+      "id",
+      "prenom",
+      "nom",
+      "email",
+      "role",
+      "isActive",
+      "createdAt",
+      "updatedAt",
+    ];
+    const sortKey = allowedSortKeys.includes(sortBy) ? sortBy : "createdAt";
+
+    console.log("🔍 [ADMIN_USER_SERVICE] Tri demandé:", {
+      sortBy,
+      sortDirection,
+      sortKey,
+    });
 
     // Calcul de l'offset
     const skip = (page - 1) * limit;
@@ -94,7 +125,7 @@ export class AdminUserService {
           avatar: true,
         },
         orderBy: {
-          createdAt: "desc",
+          [sortKey]: sortDirection,
         },
         skip,
         take: limit,

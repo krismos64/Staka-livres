@@ -15,9 +15,11 @@ Backend REST API pour Staka Livres, une plateforme de correction de livres profe
 
 ### Prérequis
 
-- Node.js 18+
+- Node.js 18.20+
 - Docker & Docker Compose
-- Compte Stripe (test keys)
+- MySQL 8.4+
+- Compte Stripe (test/production keys)
+- AWS S3 (pour stockage factures)
 
 ### Installation avec Docker
 
@@ -955,6 +957,14 @@ export class AdminCommandeService {
     id: string,
     prisma: PrismaClient = defaultPrisma
   ): Promise<void>;
+
+  /**
+   * Récupère une commande par ID avec données détaillées
+   */
+  static async getCommandeById(
+    id: string,
+    prisma: PrismaClient = defaultPrisma
+  ): Promise<any>;
 }
 ```
 
@@ -1029,17 +1039,34 @@ GET /admin/stats
 Authorization: Bearer admin_token
 # → KPIs: utilisateurs, commandes, revenus
 
-# Gestion utilisateurs (pour AdminUtilisateurs)
-GET /admin/users?page=1&limit=10&search=email
+GET /admin/stats/advanced
 Authorization: Bearer admin_token
-PATCH /admin/user/:id/activate
-PATCH /admin/user/:id/deactivate
-DELETE /admin/user/:id
+# → Statistiques avancées avec métriques détaillées et évolution
+
+# Gestion utilisateurs (pour AdminUtilisateurs) - ✅ MODULE COMPLET OPÉRATIONNEL
+GET /admin/users?page=1&limit=10&search=email&role=USER&isActive=true
+Authorization: Bearer admin_token
+GET /admin/users/stats
+Authorization: Bearer admin_token
+GET /admin/users/:id
+Authorization: Bearer admin_token
+POST /admin/users
+Authorization: Bearer admin_token
+PATCH /admin/users/:id
+Authorization: Bearer admin_token
+PATCH /admin/users/:id/toggle-status
+Authorization: Bearer admin_token
+DELETE /admin/users/:id
+Authorization: Bearer admin_token
 
 # Gestion commandes (pour AdminCommandes) - ✅ MODULE COMPLET OPÉRATIONNEL
 GET /admin/commandes?page=1&limit=10&search=jean&statut=EN_COURS&clientId=user-id&dateFrom=2025-01-01&dateTo=2025-01-31
 Authorization: Bearer admin_token
 # Réponse: { data: [], stats: { total, byStatut }, page, totalPages, filters }
+
+GET /admin/commandes/:id
+Authorization: Bearer admin_token
+# Détails complets d'une commande avec relations (user, files, messages, invoices)
 
 PUT /admin/commandes/:id
 Authorization: Bearer admin_token
@@ -1081,12 +1108,15 @@ GET /admin/analytics/projects
 # Logs système (pour AdminLogs)
 GET /admin/logs?type=AUTH&date=2025-01
 
-# Messagerie admin (IMPLÉMENTÉ)
-GET /admin/conversations
+# Messagerie admin (pour AdminMessagerie) - ✅ MODULE COMPLET OPÉRATIONNEL
+GET /admin/conversations?page=1&limit=100&search=client&isRead=false&sortBy=user
+Authorization: Bearer admin_token
 POST /admin/conversations/:id/messages
+Authorization: Bearer admin_token
 DELETE /admin/conversations/:id
+Authorization: Bearer admin_token
 GET /admin/conversations/stats
-GET /admin/stats/advanced
+Authorization: Bearer admin_token
 ```
 
 ## 💳 Intégration Stripe
@@ -1470,37 +1500,42 @@ chore: maintenance
 
 ---
 
-## 🎯 **Intégration Espace Admin - Prochaines Étapes**
+## 🎯 **Intégration Espace Admin - État Actuel 2025**
 
-### 🔧 **Routes Admin à Implémenter (9 modules)**
+### ✅ **Modules Opérationnels (3/9 modules terminés)**
 
-L'espace admin frontend est maintenant **complet avec mock data**. Voici les endpoints backend à développer pour chaque page :
+L'espace admin frontend est maintenant **complet avec mock data**. **3 modules backend sont production-ready** et **6 modules restent à implémenter** :
 
-#### **1. AdminDashboard** - Tableau de Bord
+#### **1. AdminDashboard** - Tableau de Bord ⚠️ À IMPLÉMENTER
 
 ```typescript
 GET /admin/stats
 → { totalUsers, activeUsers, totalCommandes, revenue, monthlyGrowth }
 ```
 
-#### **2. AdminUtilisateurs** - Gestion Utilisateurs
+#### **2. AdminUtilisateurs** - Gestion Utilisateurs ✅ **PRODUCTION READY**
 
 ```typescript
-GET /admin/users?page=1&limit=10&search=email&role=USER
-PATCH /admin/user/:id/activate
-PATCH /admin/user/:id/role { role: "ADMIN" }
-DELETE /admin/user/:id
+GET /admin/users/stats → { total, actifs, inactifs, admin, users, recents }
+GET /admin/users?page=1&limit=10&search=email&role=USER&isActive=true
+GET /admin/users/:id → Détails utilisateur complets
+POST /admin/users → Création avec validation RGPD
+PATCH /admin/users/:id → Mise à jour profil
+PATCH /admin/users/:id/toggle-status → Activer/désactiver
+DELETE /admin/users/:id → Suppression RGPD complète
 ```
 
-#### **3. AdminCommandes** - Gestion Commandes
+#### **3. AdminCommandes** - Gestion Commandes ✅ **PRODUCTION READY**
 
 ```typescript
-GET /admin/commandes?page=1&statut=EN_ATTENTE&sortBy=createdAt
-PATCH /admin/commande/:id/status { statut: "EN_COURS" }
-GET /admin/commande/:id/details
+GET /admin/commandes?page=1&limit=10&search=jean&statut=EN_COURS&clientId=uuid&dateFrom=2025-01-01&dateTo=2025-01-31
+→ { data: [], stats: { total, byStatut }, page, totalPages, filters }
+GET /admin/commandes/:id → Détails complets avec relations
+PUT /admin/commandes/:id → { "statut": "EN_COURS" | "TERMINE" | "ANNULEE" | "SUSPENDUE" | "EN_ATTENTE" }
+DELETE /admin/commandes/:id → Suppression définitive avec validation
 ```
 
-#### **4. AdminFactures** - Interface Facturation
+#### **4. AdminFactures** - Interface Facturation ⚠️ À IMPLÉMENTER
 
 ```typescript
 GET /admin/invoices?page=1&statut=paid&search=client
@@ -1509,7 +1544,7 @@ GET /admin/invoice/:id/download
 DELETE /admin/invoice/:id
 ```
 
-#### **5. AdminFAQ** - Base de Connaissance
+#### **5. AdminFAQ** - Base de Connaissance ⚠️ À IMPLÉMENTER
 
 ```typescript
 GET /admin/faq?category=GENERAL&visible=true
@@ -1518,7 +1553,7 @@ PATCH /admin/faq/:id/reorder { newOrder: 5 }
 DELETE /admin/faq/:id
 ```
 
-#### **6. AdminTarifs** - Configuration Prix
+#### **6. AdminTarifs** - Configuration Prix ⚠️ À IMPLÉMENTER
 
 ```typescript
 GET /admin/tarifs?service=CORRECTION&active=true
@@ -1527,7 +1562,7 @@ PATCH /admin/tarif/:id/activate
 DELETE /admin/tarif/:id
 ```
 
-#### **7. AdminPages** - CMS Pages Statiques
+#### **7. AdminPages** - CMS Pages Statiques ⚠️ À IMPLÉMENTER
 
 ```typescript
 GET /admin/pages?statut=PUBLIEE&search=titre
@@ -1536,7 +1571,7 @@ PATCH /admin/page/:id/publish { statut: "PUBLIEE" }
 GET /admin/page/:id/preview
 ```
 
-#### **8. AdminStatistiques** - Analytics Avancées
+#### **8. AdminStatistiques** - Analytics Avancées ⚠️ À IMPLÉMENTER
 
 ```typescript
 GET /admin/analytics/revenue?period=month
@@ -1545,21 +1580,21 @@ GET /admin/analytics/projects/completion
 GET /admin/analytics/top-clients?limit=10
 ```
 
-#### **9. AdminLogs** - Audit et Sécurité
+#### **9. AdminLogs** - Audit et Sécurité ⚠️ À IMPLÉMENTER
 
 ```typescript
 GET /admin/logs?type=AUTH&userId=uuid&date=2025-01
 GET /admin/logs/export?format=csv&period=week
 ```
 
-#### **10. AdminMessagerie** - **✅ IMPLÉMENTÉ**
+#### **10. AdminMessagerie** - Messagerie Admin ✅ **PRODUCTION READY**
 
 ```typescript
-✅ GET /admin/conversations
-✅ POST /admin/conversations/:id/messages
-✅ DELETE /admin/conversations/:id
-✅ GET /admin/conversations/stats
-✅ GET /admin/stats/advanced
+GET /admin/conversations?page=1&limit=100&search=client&isRead=false&sortBy=user
+→ { conversations: [], total, page } avec parser conversation IDs intelligent
+POST /admin/conversations/:id/messages → { contenu, isNote }
+DELETE /admin/conversations/:id → Suppression RGPD définitive
+GET /admin/conversations/stats → { total, unread, totalMessages }
 ```
 
 ### 🎯 **Frontend Prêt pour Intégration**
@@ -1570,7 +1605,19 @@ GET /admin/logs/export?format=csv&period=week
 - ✅ **Architecture modulaire** : Services facilement remplaçables par vrais appels API
 - ✅ **Messagerie complète** : Interface admin fonctionnelle avec API backend
 
-### 🔄 **Plan d'Intégration**
+### 📊 **Bilan d'Avancement Actuel**
+
+**✅ Terminé (33% - 3/9 modules)** :
+
+- **AdminUtilisateurs** : 7 endpoints + tests + sécurité RGPD
+- **AdminCommandes** : 4 endpoints + filtres + statistiques
+- **AdminMessagerie** : 4 endpoints + parser conversations
+
+**⚠️ À implémenter (67% - 6/9 modules)** :
+
+- AdminDashboard, AdminFactures, AdminFAQ, AdminTarifs, AdminPages, AdminStatistiques, AdminLogs
+
+### 🔄 **Plan d'Intégration Restant**
 
 1. **Créer les contrôleurs** : `adminFacturesController.ts`, `adminFAQController.ts`, etc.
 2. **Ajouter les routes** : Extension du fichier `admin.ts` existant

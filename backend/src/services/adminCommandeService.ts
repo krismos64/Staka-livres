@@ -248,4 +248,89 @@ export class AdminCommandeService {
       where: { id },
     });
   }
+
+  /**
+   * Récupère une commande par ID avec toutes les données détaillées
+   */
+  static async getCommandeById(
+    id: string,
+    prisma: PrismaClient = defaultPrisma
+  ): Promise<any> {
+    console.log(`🔍 [DEBUG] getCommandeById appelé avec id: ${id}`);
+
+    // Récupérer la commande avec toutes les relations
+    const commande = await prisma.commande.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            prenom: true,
+            nom: true,
+            email: true,
+            role: true,
+            isActive: true,
+            telephone: true,
+            adresse: true,
+            avatar: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        files: {
+          select: {
+            id: true,
+            filename: true,
+            url: true,
+            mimeType: true,
+            size: true,
+            createdAt: true,
+          },
+        },
+        messages: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            isRead: true,
+            sender: {
+              select: {
+                prenom: true,
+                nom: true,
+                email: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 5, // Limiter aux 5 messages les plus récents
+        },
+        invoices: {
+          select: {
+            id: true,
+            number: true,
+            amount: true,
+            status: true,
+            createdAt: true,
+          },
+        },
+        _count: {
+          select: {
+            files: true,
+            messages: true,
+            invoices: true,
+          },
+        },
+      },
+    });
+
+    if (!commande) {
+      throw new Error("Commande non trouvée");
+    }
+
+    console.log(`✅ [DEBUG] Commande trouvée: ${commande.titre}`);
+
+    return commande;
+  }
 }

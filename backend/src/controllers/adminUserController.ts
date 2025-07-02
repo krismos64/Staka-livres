@@ -116,6 +116,14 @@ export class AdminUserController {
         req.query.isActive !== undefined
           ? req.query.isActive === "true"
           : undefined;
+      const sortBy = req.query.sortBy as string;
+      const sortDirection = req.query.sortDirection as "asc" | "desc";
+
+      console.log("🔍 [ADMIN_USER_CONTROLLER] Paramètres de tri reçus:", {
+        sortBy,
+        sortDirection,
+        allQueryParams: req.query,
+      });
 
       logAdminAction(adminEmail, "GET_USERS", undefined, {
         page,
@@ -123,6 +131,8 @@ export class AdminUserController {
         search,
         role,
         isActive,
+        sortBy,
+        sortDirection,
       });
 
       // Validation des paramètres
@@ -147,7 +157,7 @@ export class AdminUserController {
       // Récupération des utilisateurs
       const result = await AdminUserService.getUsers(
         { search, role, isActive },
-        { page, limit }
+        { page, limit, sortBy, sortDirection }
       );
 
       logAdminAction(adminEmail, "GET_USERS_SUCCESS", undefined, {

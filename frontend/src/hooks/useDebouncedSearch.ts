@@ -25,15 +25,32 @@ export const useDebouncedSearch = ({
   minLength = 0,
   initialValue = "",
 }: UseDebouncedSearchOptions = {}): UseDebouncedSearchReturn => {
-  const [searchTerm, setSearchTerm] = useState(initialValue);
+  const [searchTerm, setSearchTermState] = useState(initialValue);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(initialValue);
   const [isSearching, setIsSearching] = useState(false);
+
+  // Stabiliser setSearchTerm avec useCallback
+  const setSearchTerm = useCallback((value: string) => {
+    setSearchTermState(value);
+  }, []);
 
   useEffect(() => {
     // Si le terme de recherche est trop court, on vide immédiatement
     if (searchTerm.length < minLength) {
-      setDebouncedSearchTerm("");
-      setIsSearching(false);
+      if (debouncedSearchTerm !== "") {
+        setDebouncedSearchTerm("");
+      }
+      if (isSearching) {
+        setIsSearching(false);
+      }
+      return;
+    }
+
+    // Éviter de déclencher une recherche si le terme est identique
+    if (searchTerm === debouncedSearchTerm) {
+      if (isSearching) {
+        setIsSearching(false);
+      }
       return;
     }
 
@@ -47,10 +64,10 @@ export const useDebouncedSearch = ({
     return () => {
       clearTimeout(timer);
     };
-  }, [searchTerm, delay, minLength]);
+  }, [searchTerm, delay, minLength, debouncedSearchTerm, isSearching]);
 
   const clearSearch = useCallback(() => {
-    setSearchTerm("");
+    setSearchTermState("");
     setDebouncedSearchTerm("");
     setIsSearching(false);
   }, []);
