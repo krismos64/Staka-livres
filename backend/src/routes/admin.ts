@@ -10,6 +10,8 @@ import { authenticateToken } from "../middleware/auth";
 import { requireRole } from "../middleware/requireRole";
 // Import des nouvelles routes utilisateurs
 import userRoutes from "./admin/users";
+// Import des nouvelles routes commandes
+import commandeRoutes from "./admin/commandes";
 
 // Import Prisma pour accéder aux données
 import { PrismaClient } from "@prisma/client";
@@ -40,17 +42,20 @@ router.get("/test", requireRole(Role.ADMIN), (req: Request, res: Response) => {
 router.use("/users", userRoutes);
 
 // 📋 GESTION DES COMMANDES
+// Utilisation du nouveau module dédié pour la gestion complète des commandes
+router.use("/commandes", commandeRoutes);
 
+// ROUTES COMMANDES DEPRECATED - Conserver temporairement pour compatibilité
 // Statistiques des commandes (AVANT /commande/:id pour éviter conflits)
 router.get("/commandes/stats", requireRole(Role.ADMIN), getCommandeStats);
 
-// Liste de toutes les commandes (avec pagination et filtres)
-router.get("/commandes", requireRole(Role.ADMIN), getAllCommandes);
+// Liste de toutes les commandes (avec pagination et filtres) - DEPRECATED
+router.get("/commandes-old", requireRole(Role.ADMIN), getAllCommandes);
 
-// Commande spécifique par ID
+// Commande spécifique par ID - DEPRECATED
 router.get("/commande/:id", requireRole(Role.ADMIN), getCommandeById);
 
-// Mettre à jour le statut d'une commande
+// Mettre à jour le statut d'une commande - DEPRECATED
 router.patch("/commande/:id", requireRole(Role.ADMIN), updateCommandeStatut);
 
 // 💬 GESTION DES MESSAGES (ADMIN)

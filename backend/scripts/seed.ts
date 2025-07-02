@@ -48,46 +48,151 @@ async function main() {
     },
   });
 
-  // 3. Création d'une commande par user
-  const commandeUser = await prisma.commande.create({
+  // 2.5. Création d'utilisateurs supplémentaires pour tests
+  const user2 = await prisma.user.upsert({
+    where: { email: "marie.martin@example.com" },
+    update: {},
+    create: {
+      prenom: "Marie",
+      nom: "Martin",
+      email: "marie.martin@example.com",
+      password: userPassword,
+      role: Role.USER,
+      isActive: true,
+    },
+  });
+
+  const user3 = await prisma.user.upsert({
+    where: { email: "pierre.durand@example.com" },
+    update: {},
+    create: {
+      prenom: "Pierre",
+      nom: "Durand",
+      email: "pierre.durand@example.com",
+      password: userPassword,
+      role: Role.USER,
+      isActive: true,
+    },
+  });
+
+  console.log("✅ Utilisateurs créés/mise à jour:");
+  console.log(`- Admin: ${admin.email} (${admin.id})`);
+  console.log(`- User1: ${user.email} (${user.id})`);
+  console.log(`- User2: ${user2.email} (${user2.id})`);
+  console.log(`- User3: ${user3.email} (${user3.id})`);
+
+  // 3. Création de commandes variées pour tous les statuts
+  const commandes: any[] = [];
+
+  // Commande 1 - EN_ATTENTE
+  const commande1 = await prisma.commande.create({
     data: {
       userId: user.id,
-      titre: "Correction manuscrit - Seed",
-      description: "Commande fictive liée à un client.",
+      titre: "Correction manuscrit - Roman",
+      description:
+        "Correction orthographique et grammaticale d'un roman de 300 pages.",
       statut: StatutCommande.EN_ATTENTE,
       priorite: Priorite.NORMALE,
       amount: 4999,
     },
   });
+  commandes.push(commande1);
 
-  const commandeAdmin = await prisma.commande.create({
+  // Commande 2 - EN_COURS
+  const commande2 = await prisma.commande.create({
     data: {
       userId: admin.id,
-      titre: "Test admin commande",
-      description: "Commande fictive liée à un admin.",
+      titre: "Mise en page livre",
+      description: "Mise en page professionnelle d'un recueil de poésies.",
       statut: StatutCommande.EN_COURS,
       priorite: Priorite.URGENTE,
       amount: 12000,
     },
   });
+  commandes.push(commande2);
 
-  // 4. Création d'un fichier attaché à chaque commande
+  // Commande 3 - TERMINE
+  const commande3 = await prisma.commande.create({
+    data: {
+      userId: user2.id,
+      titre: "Correction essai philosophique",
+      description: "Correction complète d'un essai de 150 pages.",
+      statut: StatutCommande.TERMINE,
+      priorite: Priorite.NORMALE,
+      amount: 3500,
+      createdAt: new Date("2024-01-15"),
+    },
+  });
+  commandes.push(commande3);
+
+  // Commande 4 - ANNULEE
+  const commande4 = await prisma.commande.create({
+    data: {
+      userId: user2.id,
+      titre: "Projet annulé",
+      description: "Commande annulée par le client.",
+      statut: StatutCommande.ANNULEE,
+      priorite: Priorite.FAIBLE,
+      amount: 2000,
+      createdAt: new Date("2024-02-01"),
+    },
+  });
+  commandes.push(commande4);
+
+  // Commande 5 - SUSPENDUE
+  const commande5 = await prisma.commande.create({
+    data: {
+      userId: user3.id,
+      titre: "Correction biographie - En attente infos",
+      description:
+        "Correction suspendue en attente d'informations complémentaires du client.",
+      statut: StatutCommande.SUSPENDUE,
+      priorite: Priorite.NORMALE,
+      amount: 6500,
+      createdAt: new Date("2024-02-15"),
+    },
+  });
+  commandes.push(commande5);
+
+  // Commande 6 - EN_ATTENTE (récente)
+  const commande6 = await prisma.commande.create({
+    data: {
+      userId: user3.id,
+      titre: "Relecture manuscrit thriller",
+      description: "Relecture approfondie d'un thriller de 250 pages.",
+      statut: StatutCommande.EN_ATTENTE,
+      priorite: Priorite.HAUTE,
+      amount: 4200,
+    },
+  });
+  commandes.push(commande6);
+
+  console.log("✅ Commandes créées:");
+  commandes.forEach((cmd, index) => {
+    console.log(
+      `- Commande ${index + 1}: ${cmd.titre} (${cmd.statut}) - User: ${
+        cmd.userId
+      }`
+    );
+  });
+
+  // 4. Création de fichiers attachés à certaines commandes
   const fileUser = await prisma.file.create({
     data: {
-      filename: "exemple_client.pdf",
+      filename: "manuscrit_roman.pdf",
       storedName: "client_1234.pdf",
       mimeType: "application/pdf",
       size: 152500,
       url: "https://exemple.staka.fr/fake.pdf",
       type: FileType.DOCUMENT,
       uploadedById: user.id,
-      commandeId: commandeUser.id,
+      commandeId: commande1.id,
     },
   });
 
   const fileAdmin = await prisma.file.create({
     data: {
-      filename: "exemple_admin.docx",
+      filename: "recueil_poesies.docx",
       storedName: "admin_5678.docx",
       mimeType:
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -95,7 +200,7 @@ async function main() {
       url: "https://exemple.staka.fr/fake_admin.docx",
       type: FileType.DOCUMENT,
       uploadedById: admin.id,
-      commandeId: commandeAdmin.id,
+      commandeId: commande2.id,
     },
   });
 
@@ -104,7 +209,7 @@ async function main() {
     data: {
       senderId: admin.id,
       receiverId: user.id,
-      commandeId: commandeUser.id,
+      commandeId: commande1.id,
       subject: "Bienvenue sur Staka Livres !",
       content: "Ceci est votre première conversation.",
       type: MessageType.USER_MESSAGE,
@@ -173,8 +278,14 @@ async function main() {
   });
 
   console.log(
-    "🌱 Seed complet ! Users, commandes, fichiers, messages, support, notif, paiement prêts pour les tests."
+    "🌱 Seed complet ! 6 commandes avec statuts variés créées pour tests."
   );
+  console.log("📊 Répartition des statuts:");
+  console.log("- EN_ATTENTE: 2 commandes");
+  console.log("- EN_COURS: 1 commande");
+  console.log("- TERMINE: 1 commande");
+  console.log("- ANNULEE: 1 commande");
+  console.log("- SUSPENDUE: 1 commande");
 }
 
 main()

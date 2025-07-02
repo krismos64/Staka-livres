@@ -1090,9 +1090,9 @@ curl -X DELETE http://localhost:3001/admin/users/USER_ID -H "Authorization: Bear
 
 #### 🎯 **Rôle Principal**
 
-Interface administrative complète pour le suivi et la gestion des commandes avec changements de statut.
+Interface administrative complète pour le suivi et la gestion des commandes avec changements de statut et **backend opérationnel**.
 
-- **État** : ✅ **COMPLET** - Interface fonctionnelle avec mock data prête pour API
+- **État** : ✅ **COMPLET** - Module backend opérationnel avec 28 tests validés et API intégrée
 
 #### 🏗️ **Architecture Avancée**
 
@@ -1117,12 +1117,23 @@ interface AdminCommande {
 
 #### 🛠️ **Fonctionnalités de Gestion**
 
-- **Tableau avancé** : Tri, filtres par statut, recherche
-- **Changement de statut** : `CommandeStatusSelect` avec API call
-- **Détails complets** : Modal avec historique modifications
-- **Filtres intelligents** : Par statut paiement et commande
-- **Export données** : CSV, Excel pour comptabilité
-- **Statistiques** : Métriques de performance
+**Interface Frontend :**
+
+- **Tableau avancé** : Tri, filtres par statut, recherche avec pagination optimisée
+- **Changement de statut** : `CommandeStatusSelect` avec validation enum et API calls sécurisés
+- **Détails complets** : Modal avec historique modifications et données utilisateur
+- **Filtres intelligents** : Par statut paiement, commande, client, plages de dates
+- **Export données** : CSV, Excel pour comptabilité avec données filtrées
+- **Statistiques temps réel** : Métriques de performance calculées côté serveur
+
+**Backend Opérationnel :**
+
+- **AdminCommandeService** : Logique métier avec méthodes `getCommandes()`, `updateCommandeStatut()`, `deleteCommande()`
+- **AdminCommandeController** : Gestion HTTP avec logs debugging et validation des entrées
+- **Routes sécurisées** : Protection JWT + middleware requireRole(ADMIN) sur tous endpoints
+- **Tests validés** : 28 tests complets (13 unitaires + 15 intégration) avec mocks Prisma
+- **Filtres avancés** : search (ID/email), statut, clientId, dateFrom/dateTo avec validation serveur
+- **Statistiques calculées** : Total filtré + décompte par StatutCommande avec requêtes Prisma optimisées
 
 #### 🔄 **Gestion des Statuts**
 

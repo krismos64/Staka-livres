@@ -794,7 +794,7 @@ export class MockDataService {
     limit = 10,
     statut?: StatutCommande,
     search?: string
-  ) {
+  ): Promise<PaginatedResponse<Commande> & { stats: CommandeStats }> {
     await new Promise((resolve) => setTimeout(resolve, 250));
 
     const filteredCommandes = this.filterAndSearch(
@@ -804,7 +804,39 @@ export class MockDataService {
       ["titre", "description", "user.prenom", "user.nom", "user.email"]
     );
 
-    return this.paginate(filteredCommandes, page, limit);
+    const paginatedResult = this.paginate(filteredCommandes, page, limit);
+
+    // FIX: Calcul des statistiques pour correspondre à l'API backend
+    const stats: CommandeStats = {
+      total: filteredCommandes.length,
+      enAttente: filteredCommandes.filter(
+        (c) => c.statut === StatutCommande.EN_ATTENTE
+      ).length,
+      enCours: filteredCommandes.filter(
+        (c) => c.statut === StatutCommande.EN_COURS
+      ).length,
+      termine: filteredCommandes.filter(
+        (c) => c.statut === StatutCommande.TERMINE
+      ).length,
+      annulee: filteredCommandes.filter(
+        (c) => c.statut === StatutCommande.ANNULEE
+      ).length,
+      tauxCompletion:
+        filteredCommandes.length > 0
+          ? Math.round(
+              (filteredCommandes.filter(
+                (c) => c.statut === StatutCommande.TERMINE
+              ).length /
+                filteredCommandes.length) *
+                100
+            )
+          : 0,
+    };
+
+    return {
+      ...paginatedResult,
+      stats,
+    };
   }
 
   static async getFactures(
@@ -933,6 +965,19 @@ export class MockDataService {
   static async getStatistiquesAvancees() {
     await new Promise((resolve) => setTimeout(resolve, 300));
     return mockStatistiquesAvancees;
+  }
+
+  // FIX: Ajout des méthodes manquantes getUserById et getUserStats
+  static async getUserById(id: string): Promise<User> {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    const user = mockUsers.find((u) => u.id === id);
+    if (!user) throw new Error("Utilisateur non trouvé");
+    return user;
+  }
+
+  static async getUserStats(): Promise<UserStats> {
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    return calculateStats().userStats;
   }
 
   // Actions de démonstration

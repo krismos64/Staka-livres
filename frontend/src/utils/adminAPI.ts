@@ -42,6 +42,15 @@ interface CreateCommandeRequest {
   userId: string;
 }
 
+// FIX: Interface pour les filtres de commandes complets
+interface CommandeFilters {
+  search?: string;
+  statut?: StatutCommande;
+  clientId?: string;
+  dateFrom?: string; // ISO string
+  dateTo?: string; // ISO string
+}
+
 interface UpdateFactureRequest {
   statut: StatutFacture;
 }
@@ -138,6 +147,10 @@ class AdaptiveAdminAPI {
     options: RequestInit = {}
   ): Promise<T> {
     const authHeaders = tokenUtils.getAuthHeader();
+
+    console.log(`🔍 [DEBUG FRONTEND] Appel API: ${url}`);
+    console.log(`🔍 [DEBUG FRONTEND] Options:`, options);
+
     const response = await fetch(`${API_BASE_URL}${url}`, {
       headers: {
         "Content-Type": "application/json",
@@ -148,8 +161,44 @@ class AdaptiveAdminAPI {
 
     const data = await response.json();
 
+    console.log(`🔍 [DEBUG FRONTEND] Réponse brute:`, data);
+
     if (!response.ok) {
+      console.error(`❌ [DEBUG FRONTEND] Erreur API:`, data);
       throw new Error(data.message || `Erreur API: ${response.status}`);
+    }
+
+    // FIX: Traitement spécial pour l'endpoint /admin/commandes
+    if (url.includes("/admin/commandes") && data.data && data.stats) {
+      // Le backend retourne { message, data, stats: { total, byStatut: { EN_ATTENTE: ..., EN_COURS: ... } }, page, totalPages, filters }
+      // On transforme en format attendu par le frontend
+      const backendStats = data.stats;
+      const frontendStats: CommandeStats = {
+        total: backendStats.total || 0,
+        enAttente: backendStats.byStatut?.EN_ATTENTE || 0,
+        enCours: backendStats.byStatut?.EN_COURS || 0,
+        termine: backendStats.byStatut?.TERMINE || 0,
+        annulee: backendStats.byStatut?.ANNULEE || 0,
+        tauxCompletion:
+          backendStats.total > 0
+            ? Math.round(
+                ((backendStats.byStatut?.TERMINE || 0) / backendStats.total) *
+                  100
+              )
+            : 0,
+      };
+
+      return {
+        data: data.data,
+        stats: frontendStats,
+        pagination: {
+          page: data.page || 1,
+          limit: 10, // Défaut
+          total: backendStats.total || 0,
+          totalPages: Math.ceil((backendStats.total || 0) / 10),
+        },
+        success: true,
+      } as T;
     }
 
     // Pour les endpoints qui retournent une structure avec data/pagination, on retourne tout
@@ -204,13 +253,10 @@ class AdaptiveAdminAPI {
 
   async getUserById(id: string): Promise<User> {
     if (this.isDemoMode()) {
-      const users = await MockDataService.getUsers(1, 100);
-      const user = users.data?.find((u) => u.id === id);
-      if (!user) throw new Error("Utilisateur non trouvé");
-      return user;
+      return MockDataService.getUserById(id);
     }
 
-    return this.realApiCall(`/admin/users/${id}`);
+    return this.realApiCall(`/admin/user/${id}`);
   }
 
   async createUser(userData: CreateUserRequest): Promise<User> {
@@ -225,7 +271,7 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall("/admin/users", {
+    return this.realApiCall("/admin/user", {
       method: "POST",
       body: JSON.stringify(userData),
     });
@@ -242,8 +288,8 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall(`/admin/users/${id}`, {
-      method: "PATCH",
+    return this.realApiCall(`/admin/user/${id}`, {
+      method: "PUT",
       body: JSON.stringify(userData),
     });
   }
@@ -254,21 +300,14 @@ class AdaptiveAdminAPI {
       return;
     }
 
-    await this.realApiCall(`/admin/users/${id}`, {
+    await this.realApiCall(`/admin/user/${id}`, {
       method: "DELETE",
     });
   }
 
-  // Nouvelles méthodes pour les fonctionnalités manquantes
   async getUserStats(): Promise<UserStats> {
     if (this.isDemoMode()) {
-      // Retourner des stats mockées directement
-      return {
-        total: 125,
-        actifs: 118,
-        admin: 3,
-        recents: 15,
-      };
+      return MockDataService.getUserStats();
     }
 
     return this.realApiCall("/admin/users/stats");
@@ -285,7 +324,7 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall(`/admin/users/${id}/toggle-status`, {
+    return this.realApiCall(`/admin/user/${id}/toggle-status`, {
       method: "PATCH",
     });
   }
@@ -301,7 +340,9 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.updateUser(id, { isActive: true });
+    return this.realApiCall(`/admin/user/${id}/activate`, {
+      method: "PATCH",
+    });
   }
 
   async deactivateUser(id: string): Promise<User> {
@@ -315,7 +356,9 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.updateUser(id, { isActive: false });
+    return this.realApiCall(`/admin/user/${id}/deactivate`, {
+      method: "PATCH",
+    });
   }
 
   // ===============================
@@ -324,22 +367,49 @@ class AdaptiveAdminAPI {
   async getCommandes(
     page = 1,
     limit = 10,
-    statut?: StatutCommande,
-    search?: string
-  ): Promise<PaginatedResponse<Commande>> {
+    filters: CommandeFilters = {}
+  ): Promise<PaginatedResponse<Commande> & { stats: CommandeStats }> {
     if (this.isDemoMode()) {
-      return MockDataService.getCommandes(page, limit, statut, search);
+      return MockDataService.getCommandes(
+        page,
+        limit,
+        filters.statut,
+        filters.search
+      );
     }
 
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-    });
+    // Construction des paramètres URL avec validation
+    const params = new URLSearchParams();
 
-    if (statut) params.append("statut", statut);
-    if (search) params.append("search", search);
+    // Toujours inclure page et limit
+    params.append("page", page.toString());
+    params.append("limit", limit.toString());
 
-    return this.realApiCall(`/admin/commandes?${params}`);
+    // Ajouter les filtres seulement s'ils ont des valeurs valides
+    if (filters.search && filters.search.trim()) {
+      params.append("search", filters.search.trim());
+    }
+
+    if (filters.statut) {
+      params.append("statut", filters.statut);
+    }
+
+    if (filters.clientId && filters.clientId.trim()) {
+      params.append("clientId", filters.clientId.trim());
+    }
+
+    if (filters.dateFrom) {
+      params.append("dateFrom", filters.dateFrom);
+    }
+
+    if (filters.dateTo) {
+      params.append("dateTo", filters.dateTo);
+    }
+
+    const queryString = params.toString();
+    console.log(`🔍 [DEBUG FRONTEND] Query string construite: ${queryString}`);
+
+    return this.realApiCall(`/admin/commandes?${queryString}`);
   }
 
   async getCommandeById(id: string): Promise<Commande> {
@@ -385,7 +455,7 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall(`/admin/commande/${id}`, {
+    return this.realApiCall(`/admin/commandes/${id}`, {
       method: "PUT",
       body: JSON.stringify(updateData),
     });
@@ -397,7 +467,7 @@ class AdaptiveAdminAPI {
       return;
     }
 
-    await this.realApiCall(`/admin/commande/${id}`, {
+    await this.realApiCall(`/admin/commandes/${id}`, {
       method: "DELETE",
     });
   }
@@ -979,9 +1049,12 @@ export const messagesAPI = {
     });
 
     const response = await fetch(
-      buildApiUrl(`/admin/messages?${params.toString()}`),
+      `${API_BASE_URL}/admin/messages?${params.toString()}`,
       {
-        headers: getAuthHeaders(),
+        headers: {
+          "Content-Type": "application/json",
+          ...tokenUtils.getAuthHeader(),
+        },
       }
     );
 
@@ -995,8 +1068,11 @@ export const messagesAPI = {
 
   // Détail d'un message avec thread complet
   async getMessageDetail(id: string) {
-    const response = await fetch(buildApiUrl(`/admin/messages/${id}`), {
-      headers: getAuthHeaders(),
+    const response = await fetch(`${API_BASE_URL}/admin/messages/${id}`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...tokenUtils.getAuthHeader(),
+      },
     });
 
     if (!response.ok) {

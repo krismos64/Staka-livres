@@ -919,6 +919,108 @@ stripe trigger payment_intent.payment_failed
 stripe logs tail
 ```
 
+## 📋 **Module AdminCommandes - Architecture Complète**
+
+### Vue d'ensemble
+
+Module complet pour la gestion administrative des commandes avec **architecture backend opérationnelle** et tests validés.
+
+### Service AdminCommandeService
+
+```typescript
+export class AdminCommandeService {
+  /**
+   * Récupère les commandes avec filtres, pagination et statistiques
+   */
+  static async getCommandes(
+    page: number = 1,
+    limit: number = 10,
+    filters: CommandeFilters = {},
+    prisma: PrismaClient = defaultPrisma
+  ): Promise<GetCommandesResponse>;
+
+  /**
+   * Met à jour le statut d'une commande
+   */
+  static async updateCommandeStatut(
+    id: string,
+    statut: StatutCommande,
+    prisma: PrismaClient = defaultPrisma
+  ): Promise<any>;
+
+  /**
+   * Supprime définitivement une commande
+   */
+  static async deleteCommande(
+    id: string,
+    prisma: PrismaClient = defaultPrisma
+  ): Promise<void>;
+}
+```
+
+### Interfaces TypeScript
+
+```typescript
+export interface CommandeFilters {
+  search?: string; // Recherche dans ID ou email client
+  statut?: StatutCommande; // Filtrage par statut
+  clientId?: string; // Filtrage par utilisateur
+  dateFrom?: Date; // Date de début
+  dateTo?: Date; // Date de fin
+}
+
+export interface CommandeStats {
+  total: number;
+  byStatut: Record<StatutCommande, number>;
+}
+
+export interface GetCommandesResponse {
+  data: any[];
+  stats: CommandeStats;
+  page: number;
+  totalPages: number;
+}
+```
+
+### Tests Validés
+
+**Tests unitaires** (`adminCommandeService.test.ts`) - **13 tests** :
+
+- ✅ getCommandes avec différents filtres
+- ✅ Pagination et calcul des statistiques
+- ✅ updateCommandeStatut avec validation
+- ✅ deleteCommande avec vérification existence
+- ✅ Gestion d'erreurs et cas edge
+
+**Tests d'intégration** (`adminCommandeEndpoints.test.ts`) - **15 tests** :
+
+- ✅ GET /admin/commandes avec authentification JWT
+- ✅ PUT /admin/commandes/:id avec validation statut
+- ✅ DELETE /admin/commandes/:id avec autorisation ADMIN
+- ✅ Filtres et pagination en conditions réelles
+- ✅ Codes d'erreur HTTP appropriés
+
+### Fonctionnalités Avancées
+
+**Filtres intelligents :**
+
+- **Recherche textuelle** : ID commande ou email client (insensible casse)
+- **Filtrage par statut** : Validation enum côté serveur
+- **Plages de dates** : Parsing automatique format ISO
+- **Pagination optimisée** : Skip/take Prisma avec calcul totalPages
+
+**Statistiques temps réel :**
+
+- **Total filtré** : Nombre de commandes correspondant aux critères
+- **Répartition par statut** : Comptage pour chaque StatutCommande
+- **Requêtes parallèles** : Optimisation performance avec Promise.all
+
+**Logs de debugging :**
+
+- **Traçabilité complète** : Paramètres, filtres, résultats
+- **Monitoring problèmes** : Identification des bugs frontend
+- **Format structuré** : JSON avec métadonnées pour analyse
+
 ### Routes admin (`/admin`) - **PRÊTES POUR INTÉGRATION**
 
 ```http
@@ -934,11 +1036,18 @@ PATCH /admin/user/:id/activate
 PATCH /admin/user/:id/deactivate
 DELETE /admin/user/:id
 
-# Gestion commandes (pour AdminCommandes)
-GET /admin/commandes?page=1&statut=EN_ATTENTE
+# Gestion commandes (pour AdminCommandes) - ✅ MODULE COMPLET OPÉRATIONNEL
+GET /admin/commandes?page=1&limit=10&search=jean&statut=EN_COURS&clientId=user-id&dateFrom=2025-01-01&dateTo=2025-01-31
 Authorization: Bearer admin_token
-PATCH /admin/commande/:id/status
-Body: { "statut": "EN_COURS" }
+# Réponse: { data: [], stats: { total, byStatut }, page, totalPages, filters }
+
+PUT /admin/commandes/:id
+Authorization: Bearer admin_token
+Body: { "statut": "EN_COURS" | "TERMINE" | "ANNULEE" | "SUSPENDUE" | "EN_ATTENTE" }
+
+DELETE /admin/commandes/:id
+Authorization: Bearer admin_token
+# Suppression définitive d'une commande avec validation
 
 # Gestion factures (pour AdminFactures)
 GET /admin/invoices?page=1&statut=paid

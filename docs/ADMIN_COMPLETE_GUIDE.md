@@ -491,18 +491,18 @@ function App() {
 
 ### ✅ **10 Pages Admin Intégrées**
 
-| Section          | Composant           | API Endpoints | Fonctionnalités                                                                             |
-| ---------------- | ------------------- | ------------- | ------------------------------------------------------------------------------------------- |
-| **Dashboard**    | `AdminDashboard`    | 3 endpoints   | KPIs temps réel, stats générales                                                            |
-| **Utilisateurs** | `AdminUtilisateurs` | 7 endpoints   | CRUD, permissions, recherche - **[📖 Doc complète](./INTEGRATION_ADMIN_USERS_COMPLETE.md)** |
-| **Commandes**    | `AdminCommandes`    | 4 endpoints   | Statuts, historique, assignation                                                            |
-| **Factures**     | `AdminFactures`     | 6 endpoints   | PDF, rappels, stats financières                                                             |
-| **Messagerie**   | `AdminMessagerie`   | 8 endpoints   | Supervision conversations, RGPD, export                                                     |
-| **FAQ**          | `AdminFAQ`          | 4 endpoints   | CRUD, réorganisation, catégories                                                            |
-| **Tarifs**       | `AdminTarifs`       | 7 endpoints   | Prix, services, activation                                                                  |
-| **Pages**        | `AdminPages`        | 6 endpoints   | CMS, SEO, preview, publication                                                              |
-| **Statistiques** | `AdminStatistiques` | 1 endpoint    | Analyses, graphiques, KPIs                                                                  |
-| **Logs**         | `AdminLogs`         | 2 endpoints   | Audit, export, timeline                                                                     |
+| Section          | Composant           | API Endpoints      | Fonctionnalités                                                                             |
+| ---------------- | ------------------- | ------------------ | ------------------------------------------------------------------------------------------- |
+| **Dashboard**    | `AdminDashboard`    | 3 endpoints        | KPIs temps réel, stats générales                                                            |
+| **Utilisateurs** | `AdminUtilisateurs` | 7 endpoints        | CRUD, permissions, recherche - **[📖 Doc complète](./INTEGRATION_ADMIN_USERS_COMPLETE.md)** |
+| **Commandes**    | `AdminCommandes`    | ✅ **3 endpoints** | **Module complet** : filtres avancés, statistiques, logs debugging - **28 tests validés**   |
+| **Factures**     | `AdminFactures`     | 6 endpoints        | PDF, rappels, stats financières                                                             |
+| **Messagerie**   | `AdminMessagerie`   | 8 endpoints        | Supervision conversations, RGPD, export                                                     |
+| **FAQ**          | `AdminFAQ`          | 4 endpoints        | CRUD, réorganisation, catégories                                                            |
+| **Tarifs**       | `AdminTarifs`       | 7 endpoints        | Prix, services, activation                                                                  |
+| **Pages**        | `AdminPages`        | 6 endpoints        | CMS, SEO, preview, publication                                                              |
+| **Statistiques** | `AdminStatistiques` | 1 endpoint         | Analyses, graphiques, KPIs                                                                  |
+| **Logs**         | `AdminLogs`         | 2 endpoints        | Audit, export, timeline                                                                     |
 
 ### 🔧 **Service API Centralisé (adminAPI.ts)**
 
@@ -1034,6 +1034,38 @@ REACT_APP_DEMO_MODE=true
 - **Sécurité audit** : ✅ Conforme + RGPD messagerie
 - **Performance** : ✅ Optimisée + React Query cache intelligent
 - **Documentation** : ✅ Complète + migration technique détaillée
+
+### 🚀 **Module AdminCommandes Complet Développé (Janvier 2025)**
+
+#### **Architecture Backend Opérationnelle**
+
+- **✅ AdminCommandeService** : Service complet avec méthode `getCommandes()` incluant filtres avancés (search, statut, clientId, dateFrom/dateTo), calcul de statistiques par statut, et pagination intelligente
+- **✅ AdminCommandeController** : Contrôleur avec gestion d'erreurs complète, validation des entrées et logs de debugging détaillés pour traçabilité
+- **✅ Routes AdminCommandes** : 3 endpoints REST protégés (`GET /admin/commandes`, `PUT /admin/commandes/:id`, `DELETE /admin/commandes/:id`) avec autorisation ADMIN
+- **✅ Tests complets validés** : 13 tests unitaires + 15 tests d'intégration avec authentification JWT et mocks Prisma
+- **✅ API opérationnelle** : Endpoints testés avec curl et données réelles, intégration frontend-backend validée
+
+#### **Fonctionnalités Complètes**
+
+**Filtres avancés :**
+
+- **search** : Recherche dans ID commande ou email client
+- **statut** : Filtrage par StatutCommande (enum validé)
+- **clientId** : Filtrage par ID utilisateur spécifique
+- **dateFrom/dateTo** : Plage de dates de création (format ISO)
+- **page/limit** : Pagination avec calcul automatique totalPages
+
+**Statistiques en temps réel :**
+
+- Total des commandes avec filtres appliqués
+- Décompte par chaque StatutCommande (EN_ATTENTE, EN_COURS, TERMINE, ANNULEE, SUSPENDUE)
+- Calculs optimisés avec requêtes Prisma parallèles
+
+**Logs de debugging :**
+
+- Traçabilité complète des filtres appliqués
+- Logs des requêtes Prisma avec paramètres
+- Monitoring des résultats pour identification des problèmes frontend
 
 ### 🚀 **Nouvelles Réalisations Majeures (Décembre 2024)**
 

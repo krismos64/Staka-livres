@@ -710,7 +710,7 @@ La gestion des utilisateurs admin a été **entièrement refactorisée** avec 3 
   - **Toast notifications** pour feedback utilisateur
   - **Gestion des permissions** selon le rôle admin
 - **Props** : `currentStatus`, `commandeId`, `onStatusChange`, `disabled`
-- **Integration** : AdminCommandes avec API ready
+- **Integration** : AdminCommandes ✅ MODULE COMPLET avec backend opérationnel (28 tests validés)
 
 ## 💳 Module `billing/` - Facturation et Paiements Stripe
 
@@ -1108,14 +1108,18 @@ La gestion des utilisateurs admin a été **entièrement refactorisée** avec 3 
   - Filtres par rôle et statut
   - Actions admin (activer/désactiver)
 
-#### `AdminCommandes.tsx` - Gestion des Commandes
+#### `AdminCommandes.tsx` - Gestion des Commandes - ✅ MODULE COMPLET
 
-- **Rôle** : Interface complète de gestion des commandes
+- **Rôle** : Interface complète de gestion des commandes avec **backend opérationnel et tests validés**
 - **Features** :
-  - **API `/admin/commandes`** avec données temps réel
-  - **Changement de statut** via `CommandeStatusSelect`
-  - Filtres avancés et recherche
-  - Statistiques et exports
+  - **API `/admin/commandes` complète** : GET, PUT, DELETE avec autorisation ADMIN
+  - **Backend service complet** : AdminCommandeService avec 28 tests validés (13 unitaires + 15 intégration)
+  - **Filtres avancés** : search (ID/email), statut, clientId, plages de dates (dateFrom/dateTo)
+  - **Statistiques temps réel** : total filtré + décompte par chaque StatutCommande
+  - **Changement de statut** via `CommandeStatusSelect` avec validation enum côté serveur
+  - **Pagination optimisée** : Skip/take Prisma avec calcul automatique totalPages
+  - **Logs de debugging** : Traçabilité complète des filtres et requêtes pour monitoring
+  - **Architecture robuste** : Contrôleur, service, routes avec gestion d'erreurs complète
 
 ## 🚀 Patterns et Bonnes Pratiques
 

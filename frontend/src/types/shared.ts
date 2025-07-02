@@ -10,6 +10,7 @@ export enum StatutCommande {
   EN_COURS = "EN_COURS",
   TERMINE = "TERMINE",
   ANNULEE = "ANNULEE",
+  SUSPENDUE = "SUSPENDUE",
 }
 
 export enum StatutFacture {

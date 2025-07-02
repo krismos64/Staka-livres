@@ -34,26 +34,48 @@ const AdminCommandes: React.FC = () => {
     statut?: StatutCommande
   ) => {
     try {
+      console.log(`🔍 [DEBUG FRONTEND] loadCommandes appelé avec:`, {
+        page,
+        search,
+        statut,
+      });
       setIsLoading(page === 1);
       setError(null);
 
-      const searchParam = search.trim() || undefined;
+      // Construction de l'objet filters selon la nouvelle API
+      const filters: any = {};
 
-      const response = await adminAPI.getCommandes(
-        page,
-        10,
-        statut,
-        searchParam
-      );
+      if (search && search.trim()) {
+        filters.search = search.trim();
+      }
+
+      if (statut) {
+        filters.statut = statut;
+      }
+
+      console.log(`🔍 [DEBUG FRONTEND] Filters construits:`, filters);
+
+      const response = await adminAPI.getCommandes(page, 10, filters);
+
+      console.log(`🔍 [DEBUG FRONTEND] Réponse API:`, response);
 
       setCommandes(response.data || []);
-      setTotalPages(response.pagination?.totalPages || 1);
+      setTotalPages(Math.ceil((response.stats?.total || 0) / 10) || 1);
+
+      console.log(
+        `🔍 [DEBUG FRONTEND] Commandes définies:`,
+        response.data || []
+      );
+      console.log(
+        `🔍 [DEBUG FRONTEND] Nombre de commandes:`,
+        (response.data || []).length
+      );
 
       if (page === 1) {
         showToast(
           "success",
           "Données chargées",
-          "Liste des commandes mise à jour"
+          `${response.data?.length || 0} commandes récupérées`
         );
       }
     } catch (err) {
@@ -63,7 +85,7 @@ const AdminCommandes: React.FC = () => {
           : "Erreur de chargement des commandes";
       setError(errorMessage);
       showToast("error", "Erreur", errorMessage);
-      console.error("Erreur chargement commandes:", err);
+      console.error("❌ [DEBUG FRONTEND] Erreur chargement commandes:", err);
     } finally {
       setIsLoading(false);
     }

@@ -147,7 +147,7 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 
 - **Routes d'authentification** : /auth/register, /auth/login, /auth/me
 - **Routes admin utilisateurs** : **7 endpoints production** `/admin/users/*` avec CRUD complet et suppression RGPD
-- **Routes admin commandes** : GET /admin/commandes, PATCH /admin/commande/:id
+- **Routes admin commandes** : ✅ Module complet (GET /admin/commandes avec filtres, PUT /admin/commandes/:id, DELETE /admin/commandes/:id)
 - **Routes client commandes** : POST /commandes, GET /commandes
 - **Routes de facturation** : GET /invoices, GET /invoices/:id, GET /invoices/:id/download
 - **Routes de paiement Stripe** : POST /payments/create-checkout-session, GET /payments/status, POST /payments/webhook
@@ -190,19 +190,22 @@ Staka-livres/
 │   │   ├── controllers/    # Contrôleurs API
 │   │   │   ├── authController.ts      # Authentification
 │   │   │   ├── adminController.ts     # Administration
-│   │   │   ├── commandeController.ts  # Gestion commandes admin
+│   │   │   ├── adminCommandeController.ts  # ✅ Gestion commandes admin (NEW)
 │   │   │   ├── commandeClientController.ts # Commandes client
 │   │   │   └── paymentController.ts   # Paiements Stripe
 │   │   ├── routes/         # Routes Express
 │   │   │   ├── auth.ts     # Routes authentification
 │   │   │   ├── admin.ts    # Routes administration
-│   │   │   ├── commandes.ts # Routes commandes
+│   │   │   ├── admin/
+│   │   │   │   └── commandes.ts # ✅ Routes admin commandes (NEW)
+│   │   │   ├── commandes.ts # Routes commandes client
 │   │   │   ├── invoice.ts  # Routes facturation
 │   │   │   └── payments.ts # Routes paiements Stripe
 │   │   ├── middleware/     # Middlewares Express
 │   │   │   ├── auth.ts     # Middleware JWT
 │   │   │   └── requireRole.ts # Middleware rôles
 │   │   ├── services/       # Services métier
+│   │   │   ├── adminCommandeService.ts  # ✅ Service admin commandes (NEW)
 │   │   │   ├── stripeService.ts    # Service Stripe
 │   │   │   └── invoiceService.ts   # Service factures
 │   │   ├── utils/          # Utilitaires
@@ -215,6 +218,10 @@ Staka-livres/
 │   │   ├── migrations/     # Migrations appliquées
 │   │   └── seed.ts         # Données de test
 │   ├── tests/              # Tests backend avec Jest
+│   │   ├── unit/           # Tests unitaires
+│   │   │   └── adminCommandeService.test.ts  # ✅ Tests service (13 tests)
+│   │   └── integration/    # Tests d'intégration
+│   │       └── adminCommandeEndpoints.test.ts # ✅ Tests endpoints (15 tests)
 │   ├── package.json        # Dépendances backend
 │   ├── Dockerfile          # Container backend
 │   ├── nodemon.json        # Config nodemon
@@ -355,7 +362,15 @@ Staka-livres/
 
 ## 📋 **Changelog Récent**
 
-### ✅ **Version Actuelle (Juin 2025)**
+### ✅ **Version Actuelle (Janvier 2025)**
+
+**🎯 Module AdminCommandes Complet Développé :**
+
+- ✅ **AdminCommandeService** : Service complet avec méthode `getCommandes()` incluant filtres avancés (search, statut, clientId, dateFrom/dateTo), calcul de statistiques par statut, et pagination intelligente
+- ✅ **AdminCommandeController** : Contrôleur avec gestion d'erreurs complète, validation des entrées et logs de debugging
+- ✅ **Routes AdminCommandes** : 3 endpoints REST protégés (`GET /admin/commandes`, `PUT /admin/commandes/:id`, `DELETE /admin/commandes/:id`)
+- ✅ **Tests complets** : 13 tests unitaires + 15 tests d'intégration validés avec authentification JWT et autorisation ADMIN
+- ✅ **Logs de debugging** : Système complet de logs pour traçabilité des requêtes et filtres appliqués
 
 **🗄️ Base de Données Complète Opérationnelle :**
 
@@ -554,7 +569,7 @@ docker exec -it staka_backend npm run db:seed
 
 1. **Créer un compte Stripe** sur https://stripe.com
 2. **Récupérer les clés API** dans le Dashboard > Developers > API Keys
-3. **Mettre à jour le fichier `.env`** avec vos vraies clés
+3. **Mettre à jour le fichier `.env** avec vos vraies clés
 
 ### 🧪 **Mode Test**
 
@@ -771,26 +786,31 @@ DELETE /admin/users/:id
 Headers: Authorization: Bearer <admin_token>
 ```
 
-**Gestion des Commandes :**
+**Gestion des Commandes - ✅ MODULE COMPLET OPÉRATIONNEL :**
 
 ```bash
-# Statistiques commandes
-GET /admin/commandes/stats
+# Liste des commandes avec filtres avancés, pagination et statistiques
+GET /admin/commandes?page=1&limit=10&search=jean&statut=EN_COURS&clientId=user-id&dateFrom=2025-01-01&dateTo=2025-01-31
 Headers: Authorization: Bearer <admin_token>
+# Réponse: { data: [], stats: { total, byStatut }, page, totalPages, filters }
 
-# Liste des commandes (pagination, tri, filtres)
-GET /admin/commandes?page=1&limit=10&sortBy=createdAt&order=desc
+# Modifier le statut d'une commande avec validation stricte
+PUT /admin/commandes/:id
 Headers: Authorization: Bearer <admin_token>
+Body: { statut: "EN_COURS" | "TERMINE" | "ANNULEE" | "SUSPENDUE" | "EN_ATTENTE" }
 
-# Détail d'une commande
-GET /admin/commande/:id
+# Suppression définitive d'une commande avec validation
+DELETE /admin/commandes/:id
 Headers: Authorization: Bearer <admin_token>
-
-# Modifier le statut d'une commande
-PATCH /admin/commande/:id
-Headers: Authorization: Bearer <admin_token>
-Body: { statut: "EN_COURS" }
 ```
+
+**Filtres AdminCommandes Disponibles :**
+
+- **search** : Recherche dans ID commande ou email client
+- **statut** : Filtrage par StatutCommande (enum validé)
+- **clientId** : Filtrage par ID utilisateur spécifique
+- **dateFrom/dateTo** : Plage de dates de création (format ISO)
+- **page/limit** : Pagination avec calcul automatique totalPages
 
 📖 **Documentation API complète** : [Guide Admin Users Production](docs/INTEGRATION_ADMIN_USERS_COMPLETE.md)
 
@@ -862,8 +882,8 @@ JWT_SECRET="dev_secret_key_change_in_production"
 NODE_ENV="development"
 FRONTEND_URL="http://localhost:3000"
 PORT=3001
-STRIPE_SECRET_KEY="sk_test_..."
-STRIPE_WEBHOOK_SECRET="whsec_..."
+STRIPE_SECRET_KEY="sk_test_votre_cle_secrete_ici"
+STRIPE_WEBHOOK_SECRET="whsec_votre_signature_webhook_ici"
 ```
 
 ### 🎨 **Variables d'Environnement Frontend**
@@ -1012,6 +1032,9 @@ npm run test --workspace=backend -- middleware
 # Tests du système de facturation
 npm run test --workspace=backend -- invoice
 
+# Tests du module AdminCommandes (28 tests)
+npm run test --workspace=backend -- adminCommande
+
 # Coverage des tests
 npm run test:coverage --workspace=backend
 ```
@@ -1066,6 +1089,21 @@ curl -X POST http://localhost:3001/payments/create-checkout-session \
   -H "Authorization: Bearer <user_token>" \
   -H "Content-Type: application/json" \
   -d '{"commandeId":"commande-uuid","priceId":"price_1234..."}'
+
+# Test module AdminCommandes (remplacer <admin_token>)
+# Liste des commandes avec filtres
+curl -X GET "http://localhost:3001/admin/commandes?page=1&limit=10&search=jean&statut=EN_COURS" \
+  -H "Authorization: Bearer <admin_token>"
+
+# Modifier statut d'une commande
+curl -X PUT http://localhost:3001/admin/commandes/commande-uuid \
+  -H "Authorization: Bearer <admin_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"statut":"TERMINE"}'
+
+# Supprimer une commande
+curl -X DELETE http://localhost:3001/admin/commandes/commande-uuid \
+  -H "Authorization: Bearer <admin_token>"
 ```
 
 ### ❌ **Erreurs Fréquentes et Solutions**
@@ -1228,9 +1266,9 @@ Body: { commandeId: "uuid", priceId: "price_..." }
 - **Pages admin** : 9 interfaces complètes + mode démo professionnel
 - **Module Admin Users** : **✅ PRODUCTION READY** avec 7 endpoints backend opérationnels
 - **Landing components** : 14 composants production-ready (2400+ lignes)
-- **API Endpoints** : 40+ endpoints REST avec sécurité JWT + Stripe + module Users
+- **API Endpoints** : 45+ endpoints REST avec sécurité JWT + Stripe + modules Users et AdminCommandes
 - **Tables DB** : 10 modèles complets avec relations RGPD
-- **Tests** : Tests Docker validés + tests démo automatisés + validation production
+- **Tests** : 28+ tests AdminCommandes (13 unitaires + 15 intégration) + tests Docker validés + tests démo automatisés
 - **Architecture messagerie** : 1000+ lignes React Query (useMessages + useAdminMessages)
 - **Mode démonstration** : DemoModeProvider + MockDataService + tests complets
 - **Paiements** : Intégration Stripe complète avec webhooks
@@ -1355,6 +1393,7 @@ npm run build && echo "✅ Build successful"
 - **✅ Authentification JWT** : Inscription/Connexion sécurisée
 - **✅ Gestion des rôles** : USER/ADMIN avec protection routes
 - **✅ Module Admin Users PRODUCTION** : 7 endpoints backend avec CRUD complet et suppression RGPD
+- **✅ Module AdminCommandes COMPLET** : 3 endpoints backend avec filtres avancés, statistiques et tests validés
 - **✅ Système de facturation React Query** : Cache intelligent, pagination fluide, téléchargement PDF
 - **✅ Architecture messagerie complète** : 1000+ lignes React Query avec hooks spécialisés
 - **✅ Landing Page production-ready** : 14 composants React avec calculateur pricing
