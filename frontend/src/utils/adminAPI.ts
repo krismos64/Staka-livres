@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
   Commande,
   CommandeDetailed,
@@ -41,6 +42,12 @@ interface CreateCommandeRequest {
   titre: string;
   description?: string;
   userId: string;
+}
+
+// Interface pour la réponse de refresh token
+interface RefreshTokenResponse {
+  token: string;
+  user: User;
 }
 
 // Interfaces unifiées pour les paramètres d'API
@@ -140,6 +147,130 @@ interface UpdatePageRequest {
   statut?: StatutPage;
 }
 
+// Fonction pour gérer la déconnexion automatique
+const handleAutoLogout = () => {
+  tokenUtils.remove();
+  // Rediriger vers la page de login
+  window.location.href = "/login";
+};
+
+// Créer une instance Axios avec intercepteurs
+const createApiInstance = (): any => {
+  const instance = axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  // Variable pour éviter les boucles infinies lors du refresh
+  let isRefreshing = false;
+  let failedQueue: Array<{
+    resolve: (value?: any) => void;
+    reject: (error?: any) => void;
+  }> = [];
+
+  const processQueue = (error: any, token: string | null = null) => {
+    failedQueue.forEach(({ resolve, reject }) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(token);
+      }
+    });
+
+    failedQueue = [];
+  };
+
+  // Intercepteur de requête pour ajouter le token
+  instance.interceptors.request.use(
+    (config: any) => {
+      const token = tokenUtils.get();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error: any) => {
+      return Promise.reject(error);
+    }
+  );
+
+  // Intercepteur de réponse pour gérer les 401
+  instance.interceptors.response.use(
+    (response: any) => response,
+    async (error: any) => {
+      const originalRequest = error.config;
+
+      if (error.response?.status === 401 && !originalRequest._retry) {
+        if (isRefreshing) {
+          // Si un refresh est déjà en cours, ajouter la requête à la file d'attente
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          })
+            .then((token) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              return instance(originalRequest);
+            })
+            .catch((err) => {
+              return Promise.reject(err);
+            });
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+          console.log("[AdminAPI] Token expiré, tentative de refresh...");
+
+          // Appel du endpoint de refresh
+          const refreshResponse = await axios.post<RefreshTokenResponse>(
+            `${API_BASE_URL}/auth/refresh`,
+            {},
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${tokenUtils.get()}`,
+              },
+            }
+          );
+
+          const { token: newToken } = refreshResponse.data;
+
+          // Mettre à jour le token
+          tokenUtils.set(newToken);
+
+          // Traiter la file d'attente
+          processQueue(null, newToken);
+
+          // Rejouer la requête originale avec le nouveau token
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+
+          console.log("[AdminAPI] Token rafraîchi avec succès");
+          return instance(originalRequest);
+        } catch (refreshError) {
+          console.error("[AdminAPI] Échec du refresh token:", refreshError);
+
+          // En cas d'échec du refresh, déconnecter l'utilisateur
+          processQueue(refreshError, null);
+          handleAutoLogout();
+
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
+        }
+      }
+
+      return Promise.reject(error);
+    }
+  );
+
+  return instance;
+};
+
+// Instance Axios configurée
+const apiClient = createApiInstance();
+
 // Service adaptatif qui détecte le mode démo
 class AdaptiveAdminAPI {
   // Vérifier si le mode démo est activé
@@ -156,68 +287,81 @@ class AdaptiveAdminAPI {
     }
   }
 
-  // Wrapper pour les appels API réels
+  // Wrapper pour les appels API réels avec Axios
   private async realApiCall<T>(
     url: string,
-    options: RequestInit = {}
+    method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
+    data?: any
   ): Promise<T> {
-    const authHeaders = tokenUtils.getAuthHeader();
+    try {
+      const response = await apiClient.request({
+        url,
+        method,
+        data,
+      });
 
-    const response = await fetch(`${API_BASE_URL}${url}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-      ...options,
-    });
+      const responseData = response.data;
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error(`❌ [DEBUG FRONTEND] Erreur API:`, data);
-      throw new Error(data.message || `Erreur API: ${response.status}`);
-    }
-
-    // FIX: Traitement spécial pour l'endpoint /admin/commandes
-    if (url.includes("/admin/commandes") && data.data && data.stats) {
-      // Le backend retourne { message, data, stats: { total, byStatut: { EN_ATTENTE: ..., EN_COURS: ... } }, page, totalPages, filters }
-      // On transforme en format attendu par le frontend
-      const backendStats = data.stats;
-      const frontendStats: CommandeStats = {
-        total: backendStats.total || 0,
-        enAttente: backendStats.byStatut?.EN_ATTENTE || 0,
-        enCours: backendStats.byStatut?.EN_COURS || 0,
-        termine: backendStats.byStatut?.TERMINE || 0,
-        annulee: backendStats.byStatut?.ANNULEE || 0,
-        tauxCompletion:
-          backendStats.total > 0
-            ? Math.round(
-                ((backendStats.byStatut?.TERMINE || 0) / backendStats.total) *
-                  100
-              )
-            : 0,
-      };
-
-      return {
-        data: data.data,
-        stats: frontendStats,
-        pagination: {
-          page: data.page || 1,
-          limit: 10, // Défaut
+      // FIX: Traitement spécial pour l'endpoint /admin/commandes
+      if (
+        url.includes("/admin/commandes") &&
+        responseData.data &&
+        responseData.stats
+      ) {
+        // Le backend retourne { message, data, stats: { total, byStatut: { EN_ATTENTE: ..., EN_COURS: ... } }, page, totalPages, filters }
+        // On transforme en format attendu par le frontend
+        const backendStats = responseData.stats;
+        const frontendStats: CommandeStats = {
           total: backendStats.total || 0,
-          totalPages: Math.ceil((backendStats.total || 0) / 10),
-        },
-        success: true,
-      } as T;
-    }
+          enAttente: backendStats.byStatut?.EN_ATTENTE || 0,
+          enCours: backendStats.byStatut?.EN_COURS || 0,
+          termine: backendStats.byStatut?.TERMINE || 0,
+          annulee: backendStats.byStatut?.ANNULEE || 0,
+          tauxCompletion:
+            backendStats.total > 0
+              ? Math.round(
+                  ((backendStats.byStatut?.TERMINE || 0) / backendStats.total) *
+                    100
+                )
+              : 0,
+        };
 
-    // Pour les endpoints qui retournent une structure avec data/pagination, on retourne tout
-    // Pour les autres (getUserById, etc.), on retourne juste les données
-    if (data.data !== undefined && data.pagination !== undefined) {
-      return data; // Retourne l'objet complet { data: [...], pagination: {...} }
-    }
+        return {
+          data: responseData.data,
+          stats: frontendStats,
+          pagination: {
+            page: responseData.page || 1,
+            limit: 10, // Défaut
+            total: backendStats.total || 0,
+            totalPages: Math.ceil((backendStats.total || 0) / 10),
+          },
+          success: true,
+        } as T;
+      }
 
-    return data.data || data; // Pour les autres cas
+      // Pour les endpoints qui retournent une structure avec data/pagination, on retourne tout
+      // Pour les autres (getUserById, etc.), on retourne juste les données
+      if (
+        responseData.data !== undefined &&
+        responseData.pagination !== undefined
+      ) {
+        return responseData; // Retourne l'objet complet { data: [...], pagination: {...} }
+      }
+
+      return responseData.data || responseData; // Pour les autres cas
+    } catch (error) {
+      console.error(`❌ [DEBUG FRONTEND] Erreur API:`, error);
+
+      if (axios.isAxiosError(error)) {
+        const message =
+          error.response?.data?.message ||
+          error.message ||
+          `Erreur API: ${error.response?.status}`;
+        throw new Error(message);
+      }
+
+      throw error;
+    }
   }
 
   // ===============================
@@ -295,10 +439,7 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall("/admin/users", {
-      method: "POST",
-      body: JSON.stringify(userData),
-    });
+    return this.realApiCall("/admin/users", "POST", userData);
   }
 
   async updateUser(id: string, userData: UpdateUserRequest): Promise<User> {
@@ -312,10 +453,7 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall(`/admin/users/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify(userData),
-    });
+    return this.realApiCall(`/admin/users/${id}`, "PUT", userData);
   }
 
   async deleteUser(id: string): Promise<void> {
