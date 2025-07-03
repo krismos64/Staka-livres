@@ -92,6 +92,8 @@ export interface AdminCommandesParams {
   sortDirection?: "asc" | "desc";
 }
 
+// === INTERFACES POUR NOUVELLES API FACTURES ===
+
 interface UpdateFactureRequest {
   statut: StatutFacture;
 }
@@ -653,14 +655,16 @@ class AdaptiveAdminAPI {
       return MockDataService.getFactureStats();
     }
 
-    return this.realApiCall("/admin/invoices/stats");
+    return this.realApiCall("/admin/factures/stats");
   }
 
   async getFactures(
     page = 1,
     limit = 10,
     statut?: StatutFacture,
-    search?: string
+    search?: string,
+    sortBy?: string,
+    sortOrder?: "asc" | "desc"
   ): Promise<PaginatedResponse<Facture>> {
     if (this.isDemoMode()) {
       return MockDataService.getFactures(page, limit, statut, search);
@@ -673,8 +677,10 @@ class AdaptiveAdminAPI {
 
     if (statut) params.append("statut", statut);
     if (search) params.append("search", search);
+    if (sortBy) params.append("sortBy", sortBy);
+    if (sortOrder) params.append("sortOrder", sortOrder);
 
-    return this.realApiCall(`/admin/invoices?${params}`);
+    return this.realApiCall(`/admin/factures?${params}`);
   }
 
   async getFactureById(id: string): Promise<Facture> {
@@ -682,7 +688,7 @@ class AdaptiveAdminAPI {
       return MockDataService.getFactureById(id);
     }
 
-    return this.realApiCall(`/admin/invoice/${id}`);
+    return this.realApiCall(`/admin/factures/${id}`);
   }
 
   async updateFacture(
@@ -699,10 +705,7 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall(`/admin/invoice/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(updateData),
-    });
+    return this.realApiCall(`/admin/factures/${id}`, "PUT", updateData);
   }
 
   async deleteFacture(id: string): Promise<void> {
@@ -711,21 +714,47 @@ class AdaptiveAdminAPI {
       return;
     }
 
-    await this.realApiCall(`/admin/invoice/${id}`, {
-      method: "DELETE",
-    });
+    await this.realApiCall(`/admin/factures/${id}`, "DELETE");
   }
 
   async sendFactureReminder(id: string): Promise<void> {
     if (this.isDemoMode()) {
-      await this.simulateAction("sendFactureReminder", 600);
+      await this.simulateAction("sendFactureReminder");
+      console.log("🔔 [DEMO] Relance facture envoyée:", id);
       return;
     }
 
-    await this.realApiCall(`/admin/invoice/${id}/reminder`, {
-      method: "POST",
-    });
+    try {
+      await this.realApiCall<void>(`/admin/factures/${id}/reminder`, "POST");
+    } catch (error) {
+      console.error("❌ Erreur lors de l'envoi de la relance:", error);
+      throw error;
+    }
   }
+
+  async getFacturePdf(id: string): Promise<Blob> {
+    if (this.isDemoMode()) {
+      await this.simulateAction("getFacturePdf");
+      console.log("📄 [DEMO] Téléchargement PDF facture:", id);
+      // Retourner un blob vide pour le mode démo
+      return new Blob([""], { type: "application/pdf" });
+    }
+
+    try {
+      const response = await this.realApiCall<Blob>(
+        `/admin/factures/${id}/pdf`,
+        "GET"
+      );
+      return response;
+    } catch (error) {
+      console.error("❌ Erreur lors du téléchargement du PDF:", error);
+      throw error;
+    }
+  }
+
+  // ===============================
+  // API FACTURES RÉELLES (NOUVEAUX ENDPOINTS)
+  // ===============================
 
   // ===============================
   // GESTION FAQ
@@ -1196,210 +1225,54 @@ class AdaptiveAdminAPI {
 // Export de l'instance du service adaptatif
 export const adminAPI = new AdaptiveAdminAPI();
 
-// API Messages Admin
-export const messagesAPI = {
-  // Liste des messages avec filtres admin
-  async getMessages(
-    filters: {
-      page?: number;
-      limit?: number;
-      type?: string;
-      statut?: string;
-      isRead?: boolean;
-      isArchived?: boolean;
-      search?: string;
-      commandeId?: string;
-      supportRequestId?: string;
-      senderId?: string;
-      receiverId?: string;
-    } = {}
-  ) {
-    const params = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        params.append(key, value.toString());
-      }
-    });
+// Exports directs des méthodes pour compatibilité
+export const getDashboardStats = () => adminAPI.getDashboardStats();
 
-    const response = await fetch(
-      `${API_BASE_URL}/admin/messages?${params.toString()}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          ...tokenUtils.getAuthHeader(),
-        },
-      }
-    );
+export const getUsers = (params: AdminUsersParams = {}) =>
+  adminAPI.getUsers(params);
+export const getUserById = (id: string) => adminAPI.getUserById(id);
+export const createUser = (userData: CreateUserRequest) =>
+  adminAPI.createUser(userData);
+export const updateUser = (id: string, userData: UpdateUserRequest) =>
+  adminAPI.updateUser(id, userData);
+export const deleteUser = (id: string) => adminAPI.deleteUser(id);
+export const getUserStats = () => adminAPI.getUserStats();
+export const toggleUserStatus = (id: string) => adminAPI.toggleUserStatus(id);
+export const activateUser = (id: string) => adminAPI.activateUser(id);
+export const deactivateUser = (id: string) => adminAPI.deactivateUser(id);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Erreur ${response.status}`);
-    }
+export const getCommandes = (params: AdminCommandesParams = {}) =>
+  adminAPI.getCommandes(params);
+export const getCommandeById = (id: string) => adminAPI.getCommandeById(id);
+export const createCommande = (commandeData: CreateCommandeRequest) =>
+  adminAPI.createCommande(commandeData);
+export const updateCommande = (id: string, updateData: UpdateCommandeRequest) =>
+  adminAPI.updateCommande(id, updateData);
+export const deleteCommande = (id: string) => adminAPI.deleteCommande(id);
 
-    return response.json();
-  },
+export const getFactureStats = () => adminAPI.getFactureStats();
+export const getFactures = (
+  page?: number,
+  limit?: number,
+  statut?: StatutFacture,
+  search?: string,
+  sortBy?: string,
+  sortOrder?: "asc" | "desc"
+) => adminAPI.getFactures(page, limit, statut, search, sortBy, sortOrder);
+export const getFactureById = (id: string) => adminAPI.getFactureById(id);
+export const updateFacture = (id: string, updateData: UpdateFactureRequest) =>
+  adminAPI.updateFacture(id, updateData);
+export const deleteFacture = (id: string) => adminAPI.deleteFacture(id);
+export const sendFactureReminder = (id: string) =>
+  adminAPI.sendFactureReminder(id);
+export const getFacturePdf = (id: string) => adminAPI.getFacturePdf(id);
 
-  // Détail d'un message avec thread complet
-  async getMessageDetail(id: string) {
-    const response = await fetch(`${API_BASE_URL}/admin/messages/${id}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...tokenUtils.getAuthHeader(),
-      },
-    });
+export const getFAQ = (
+  page?: number,
+  limit?: number,
+  search?: string,
+  visible?: boolean
+) => adminAPI.getFAQ(page, limit, search, visible);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Erreur ${response.status}`);
-    }
-
-    return response.json();
-  },
-
-  // Envoyer un message admin
-  async sendMessage(data: {
-    content: string;
-    receiverId?: string;
-    commandeId?: string;
-    supportRequestId?: string;
-    subject?: string;
-    type?: string;
-    priority?: string;
-  }) {
-    const response = await fetch(`${API_BASE_URL}/admin/messages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...tokenUtils.getAuthHeader(),
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Erreur ${response.status}`);
-    }
-
-    return response.json();
-  },
-
-  // Mettre à jour un message (admin)
-  async updateMessage(
-    id: string,
-    data: {
-      isRead?: boolean;
-      isArchived?: boolean;
-      isPinned?: boolean;
-      statut?: string;
-      adminNote?: string;
-      priority?: string;
-    }
-  ) {
-    const response = await fetch(`${API_BASE_URL}/admin/messages/${id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...tokenUtils.getAuthHeader(),
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Erreur ${response.status}`);
-    }
-
-    return response.json();
-  },
-
-  // Supprimer un message (admin)
-  async deleteMessage(id: string, hard = false) {
-    const params = hard ? "?hard=true" : "";
-    const response = await fetch(
-      `${API_BASE_URL}/admin/messages/${id}${params}`,
-      {
-        method: "DELETE",
-        headers: getAuthHeaders(),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Erreur ${response.status}`);
-    }
-
-    return response.json();
-  },
-
-  // Statistiques de messagerie
-  async getStats() {
-    const response = await fetch(buildApiUrl("/admin/messages/stats"), {
-      headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Erreur ${response.status}`);
-    }
-
-    return response.json();
-  },
-
-  // Export des messages
-  async exportMessages(
-    filters: {
-      startDate?: string;
-      endDate?: string;
-      format?: "csv" | "json";
-      commandeId?: string;
-      supportRequestId?: string;
-    } = {}
-  ) {
-    const params = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        params.append(key, value.toString());
-      }
-    });
-
-    const response = await fetch(
-      buildApiUrl(`/admin/messages/export?${params.toString()}`),
-      {
-        headers: getAuthHeaders(),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Erreur ${response.status}`);
-    }
-
-    // Pour les exports, retourner le blob
-    return response.blob();
-  },
-
-  // Marquer plusieurs messages
-  async bulkUpdate(
-    messageIds: string[],
-    action: {
-      type: "read" | "archive" | "delete" | "pin";
-      value?: boolean;
-    }
-  ) {
-    const response = await fetch(buildApiUrl("/admin/messages/bulk"), {
-      method: "POST",
-      headers: getAuthHeaders(),
-      body: JSON.stringify({
-        messageIds,
-        action,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Erreur ${response.status}`);
-    }
-
-    return response.json();
-  },
-};
+// Export de l'API de messagerie admin
+export { adminMessagesAPI };

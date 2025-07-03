@@ -187,6 +187,29 @@ export interface FactureStats {
   montantMensuelFormate: string;
 }
 
+// === TYPES API FACTURES RÉELLES ===
+export interface Invoice {
+  id: number;
+  number: string;
+  amount: number;
+  taxAmount: number;
+  status: string;
+  issuedAt: string;
+  dueAt: string;
+  paidAt?: string;
+  pdfUrl: string;
+  userId: number;
+  commandeId: number;
+}
+
+export interface InvoiceStats {
+  totalInvoices: number;
+  totalAmount: number;
+  paidCount: number;
+  pendingCount: number;
+  overdueCount: number;
+}
+
 export interface StatistiquesAvancees {
   chiffreAffaires: number;
   croissanceCA: number;

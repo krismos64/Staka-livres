@@ -1,5 +1,6 @@
 import {
   FileType,
+  InvoiceStatus,
   MessageStatut,
   MessageType,
   NotificationPriority,
@@ -277,6 +278,58 @@ async function main() {
     },
   });
 
+  // 9. Création d'une facture réelle pour une commande payée
+  console.log("📋 Création d'une facture réelle...");
+
+  // Récupération de l'utilisateur client (adaptation du code original)
+  const clientUser = await prisma.user.findUnique({
+    where: { email: "marie.martin@example.com" },
+  });
+
+  if (!clientUser) {
+    throw new Error("Client non trouvé");
+  }
+
+  // Récupération de la commande terminée (équivalent d'une commande payée)
+  const paidOrder = await prisma.commande.findFirst({
+    where: {
+      userId: clientUser.id,
+      statut: StatutCommande.TERMINE,
+      amount: { not: null },
+    },
+  });
+
+  if (!paidOrder) {
+    throw new Error("Commande payée non trouvée");
+  }
+
+  // Création de la facture réelle
+  const invoice = await prisma.invoice.create({
+    data: {
+      commandeId: paidOrder.id,
+      number: "INV-2025-0001",
+      amount: paidOrder.amount!, // 3500 centimes = 35.00€
+      taxAmount: Math.round(paidOrder.amount! * 0.2), // TVA 20%
+      status: InvoiceStatus.PAID,
+      pdfUrl:
+        "https://staka-s3-bucket.s3.eu-west-3.amazonaws.com/invoices/INV-2025-0001.pdf",
+      issuedAt: new Date("2025-06-30T10:00:00Z"),
+      dueAt: new Date("2025-07-15T23:59:59Z"),
+      paidAt: new Date("2025-06-30T14:30:00Z"),
+    },
+  });
+
+  console.log("✅ Seed invoice INV-2025-0001 created");
+  console.log(
+    `📋 Facture créée: ${invoice.number} pour ${(invoice.amount / 100).toFixed(
+      2
+    )}€`
+  );
+  console.log(
+    `👤 Client: ${clientUser.prenom} ${clientUser.nom} (${clientUser.email})`
+  );
+  console.log(`📦 Commande: ${paidOrder.titre}`);
+
   console.log(
     "🌱 Seed complet ! 6 commandes avec statuts variés créées pour tests."
   );
@@ -286,6 +339,7 @@ async function main() {
   console.log("- TERMINE: 1 commande");
   console.log("- ANNULEE: 1 commande");
   console.log("- SUSPENDUE: 1 commande");
+  console.log("💰 1 facture réelle créée et payée");
 }
 
 main()

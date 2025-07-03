@@ -12,6 +12,8 @@ import { requireRole } from "../middleware/requireRole";
 import userRoutes from "./admin/users";
 // Import des nouvelles routes commandes
 import commandeRoutes from "./admin/commandes";
+// Import des nouvelles routes factures
+import factureRoutes from "./admin/factures";
 
 // Import Prisma pour accéder aux données
 import { PrismaClient } from "@prisma/client";
@@ -44,6 +46,10 @@ router.use("/users", userRoutes);
 // 📋 GESTION DES COMMANDES
 // Utilisation du nouveau module dédié pour la gestion complète des commandes
 router.use("/commandes", commandeRoutes);
+
+// 🧾 GESTION DES FACTURES
+// Utilisation du module dédié pour la gestion complète des factures
+router.use("/factures", factureRoutes);
 
 // ROUTES COMMANDES DEPRECATED - Conserver temporairement pour compatibilité
 // Statistiques des commandes (AVANT /commande/:id pour éviter conflits)
