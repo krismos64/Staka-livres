@@ -1,5 +1,5 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "react-query";
 import EmptyState from "../components/common/EmptyState";
 import MessageInput from "../components/forms/MessageInput";
 import ConversationList from "../components/messages/ConversationList";

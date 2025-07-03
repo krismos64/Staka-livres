@@ -6,6 +6,7 @@ import helmet from "helmet";
 import adminRoutes from "./routes/admin";
 import authRoutes from "./routes/auth";
 import commandesRoutes from "./routes/commandes";
+import faqRoutes from "./routes/faq";
 import invoiceRoutes from "./routes/invoice";
 import messagesRoutes from "./routes/messages";
 import paymentsRoutes from "./routes/payments";
@@ -47,6 +48,9 @@ app.get("/health", (req, res) => {
 
 // Routes d'authentification
 app.use("/auth", authRoutes);
+
+// Routes FAQ publiques
+app.use("/faq", faqRoutes);
 
 // Routes commandes (côté client)
 app.use("/commandes", commandesRoutes);

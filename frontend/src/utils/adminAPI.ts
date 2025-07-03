@@ -116,7 +116,8 @@ interface UpdateUserRequest {
 
 interface CreateFAQRequest {
   question: string;
-  reponse: string;
+  answer: string;
+  details?: string;
   categorie: string;
   ordre: number;
   visible: boolean;
@@ -124,7 +125,8 @@ interface CreateFAQRequest {
 
 interface UpdateFAQRequest {
   question?: string;
-  reponse?: string;
+  answer?: string;
+  details?: string;
   categorie?: string;
   ordre?: number;
   visible?: boolean;
@@ -483,9 +485,7 @@ class AdaptiveAdminAPI {
       return;
     }
 
-    await this.realApiCall(`/admin/users/${id}`, {
-      method: "DELETE",
-    });
+    await this.realApiCall(`/admin/users/${id}`, "DELETE");
   }
 
   async getUserStats(): Promise<UserStats> {
@@ -630,10 +630,7 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall(`/admin/commandes/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(updateData),
-    });
+    return this.realApiCall(`/admin/commandes/${id}`, "PUT", updateData);
   }
 
   async deleteCommande(id: string): Promise<void> {
@@ -642,9 +639,7 @@ class AdaptiveAdminAPI {
       return;
     }
 
-    await this.realApiCall(`/admin/commandes/${id}`, {
-      method: "DELETE",
-    });
+    await this.realApiCall(`/admin/commandes/${id}`, "DELETE");
   }
 
   // ===============================
@@ -791,8 +786,10 @@ class AdaptiveAdminAPI {
     if (typeof visible === "boolean")
       params.append("visible", visible.toString());
 
-    // Pour l'API réelle, on assume qu'elle retourne directement le tableau pour cette interface
-    return this.realApiCall(`/admin/faq?${params}`);
+    const response = await this.realApiCall<{ success: boolean; data: FAQ[] }>(
+      `/admin/faq?${params}`
+    );
+    return response.data || [];
   }
 
   async getFAQById(id: string): Promise<FAQ> {
@@ -803,7 +800,10 @@ class AdaptiveAdminAPI {
       return faq;
     }
 
-    return this.realApiCall(`/admin/faq/${id}`);
+    const response = await this.realApiCall<{ success: boolean; data: FAQ }>(
+      `/admin/faq/${id}`
+    );
+    return response.data;
   }
 
   async createFAQ(faqData: CreateFAQRequest): Promise<FAQ> {
@@ -817,10 +817,12 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall("/admin/faq", {
-      method: "POST",
-      body: JSON.stringify(faqData),
-    });
+    const response = await this.realApiCall<{ success: boolean; data: FAQ }>(
+      "/admin/faq",
+      "POST",
+      faqData
+    );
+    return response.data;
   }
 
   async updateFAQ(id: string, faqData: UpdateFAQRequest): Promise<FAQ> {
@@ -830,10 +832,12 @@ class AdaptiveAdminAPI {
       return { ...currentFAQ, ...faqData, updatedAt: new Date().toISOString() };
     }
 
-    return this.realApiCall(`/admin/faq/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(faqData),
-    });
+    const response = await this.realApiCall<{ success: boolean; data: FAQ }>(
+      `/admin/faq/${id}`,
+      "PUT",
+      faqData
+    );
+    return response.data;
   }
 
   async deleteFAQ(id: string): Promise<void> {
@@ -842,9 +846,15 @@ class AdaptiveAdminAPI {
       return;
     }
 
-    await this.realApiCall(`/admin/faq/${id}`, {
-      method: "DELETE",
-    });
+    await this.realApiCall(`/admin/faq/${id}`, "DELETE");
+  }
+
+  // Méthode pour récupérer les FAQ publiques
+  async getFAQPublic(): Promise<FAQ[]> {
+    const response = await this.realApiCall<{ success: boolean; data: FAQ[] }>(
+      "/faq?visible=true"
+    );
+    return response.data || [];
   }
 
   // ===============================
@@ -1054,10 +1064,6 @@ class AdaptiveAdminAPI {
   // STATISTIQUES AVANCÉES
   // ===============================
   async getStatistiquesAvancees(): Promise<StatistiquesAvancees> {
-    if (this.isDemoMode()) {
-      return MockDataService.getStatistiquesAvancees();
-    }
-
     return this.realApiCall("/admin/stats/advanced");
   }
 
@@ -1091,21 +1097,6 @@ class AdaptiveAdminAPI {
     priorite?: PrioriteConversation,
     userId?: string
   ): Promise<Conversation[]> {
-    if (this.isDemoMode()) {
-      // Service mockData pour messagerie
-      const MockMessageService = (await import("./mockMessageData"))
-        .MockMessageService;
-      const response = await MockMessageService.getConversations(
-        page,
-        limit,
-        search,
-        statut,
-        priorite,
-        userId
-      );
-      return (response.data || []) as Conversation[];
-    }
-
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -1120,22 +1111,10 @@ class AdaptiveAdminAPI {
   }
 
   async getConversationById(id: string): Promise<Conversation> {
-    if (this.isDemoMode()) {
-      const MockMessageService = (await import("./mockMessageData"))
-        .MockMessageService;
-      return MockMessageService.getConversationById(id);
-    }
-
     return this.realApiCall(`/admin/conversations/${id}`);
   }
 
   async getConversationStats(): Promise<ConversationStats> {
-    if (this.isDemoMode()) {
-      const MockMessageService = (await import("./mockMessageData"))
-        .MockMessageService;
-      return MockMessageService.getConversationStats();
-    }
-
     return this.realApiCall(`/admin/conversations/stats`);
   }
 
@@ -1143,53 +1122,25 @@ class AdaptiveAdminAPI {
     conversationId: string,
     messageData: CreateMessageRequest
   ): Promise<Message> {
-    if (this.isDemoMode()) {
-      const MockMessageService = (await import("./mockMessageData"))
-        .MockMessageService;
-      return MockMessageService.createMessage(conversationId, messageData);
-    }
-
-    return this.realApiCall(`/admin/conversations/${conversationId}/messages`, {
-      method: "POST",
-      body: JSON.stringify(messageData),
-    });
+    return this.realApiCall(
+      `/admin/conversations/${conversationId}/messages`,
+      "POST",
+      messageData
+    );
   }
 
   async updateConversation(
     id: string,
     updateData: UpdateConversationRequest
   ): Promise<Conversation> {
-    if (this.isDemoMode()) {
-      const MockMessageService = (await import("./mockMessageData"))
-        .MockMessageService;
-      return MockMessageService.updateConversation(id, updateData);
-    }
-
-    return this.realApiCall(`/admin/conversations/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(updateData),
-    });
+    return this.realApiCall(`/admin/conversations/${id}`, "PUT", updateData);
   }
 
   async deleteConversation(id: string): Promise<void> {
-    if (this.isDemoMode()) {
-      const MockMessageService = (await import("./mockMessageData"))
-        .MockMessageService;
-      return MockMessageService.deleteConversation(id);
-    }
-
-    return this.realApiCall(`/admin/conversations/${id}`, {
-      method: "DELETE",
-    });
+    return this.realApiCall(`/admin/conversations/${id}`, "DELETE");
   }
 
   async exportConversations(format: "csv" | "json" = "csv"): Promise<Blob> {
-    if (this.isDemoMode()) {
-      const MockMessageService = (await import("./mockMessageData"))
-        .MockMessageService;
-      return MockMessageService.exportConversations(format);
-    }
-
     const response = await fetch(
       `${API_BASE_URL}/admin/conversations/export?format=${format}`,
       {
@@ -1208,22 +1159,10 @@ class AdaptiveAdminAPI {
   }
 
   async getConversationTags(): Promise<ConversationTag[]> {
-    if (this.isDemoMode()) {
-      const MockMessageService = (await import("./mockMessageData"))
-        .MockMessageService;
-      return MockMessageService.getConversationTags();
-    }
-
     return this.realApiCall(`/admin/conversations/tags`);
   }
 
   async getUnreadConversationsCount(): Promise<number> {
-    if (this.isDemoMode()) {
-      const MockMessageService = (await import("./mockMessageData"))
-        .MockMessageService;
-      return MockMessageService.getUnreadConversationsCount();
-    }
-
     return this.realApiCall(`/admin/conversations/unread-count`);
   }
 }
@@ -1279,6 +1218,42 @@ export const getFAQ = (
   search?: string,
   visible?: boolean
 ) => adminAPI.getFAQ(page, limit, search, visible);
+export const getFAQById = (id: string) => adminAPI.getFAQById(id);
+export const createFAQ = (faqData: CreateFAQRequest) =>
+  adminAPI.createFAQ(faqData);
+export const updateFAQ = (id: string, faqData: UpdateFAQRequest) =>
+  adminAPI.updateFAQ(id, faqData);
+export const deleteFAQ = (id: string) => adminAPI.deleteFAQ(id);
+export const getFAQPublic = () => adminAPI.getFAQPublic();
 
-// Export de l'API de messagerie admin
-export { adminMessagesAPI };
+// Exports des méthodes de messagerie
+export const getConversations = (
+  page?: number,
+  limit?: number,
+  search?: string,
+  statut?: StatutConversation,
+  priorite?: PrioriteConversation,
+  userId?: string
+) => adminAPI.getConversations(page, limit, search, statut, priorite, userId);
+
+export const getConversationById = (id: string) =>
+  adminAPI.getConversationById(id);
+export const getConversationStats = () => adminAPI.getConversationStats();
+export const createMessage = (
+  conversationId: string,
+  messageData: CreateMessageRequest
+) => adminAPI.createMessage(conversationId, messageData);
+export const updateConversation = (
+  id: string,
+  updateData: UpdateConversationRequest
+) => adminAPI.updateConversation(id, updateData);
+export const deleteConversation = (id: string) =>
+  adminAPI.deleteConversation(id);
+export const exportConversations = (format?: "csv" | "json") =>
+  adminAPI.exportConversations(format);
+export const getConversationTags = () => adminAPI.getConversationTags();
+export const getUnreadConversationsCount = () =>
+  adminAPI.getUnreadConversationsCount();
+
+// Export statistiques avancées
+export const getStatistiquesAvancees = () => adminAPI.getStatistiquesAvancees();

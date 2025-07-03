@@ -281,6 +281,25 @@ model Page {
   @@map("pages")
 }
 
+/// Questions fréquemment posées (FAQ)
+model FAQ {
+  id        String   @id @default(uuid())
+  question  String   @db.Text
+  answer    String   @db.LongText
+  details   String?  @db.Text
+  ordre     Int      @default(0)
+  visible   Boolean  @default(true)
+  categorie String   @db.VarChar(100)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([visible])
+  @@index([ordre])
+  @@index([categorie])
+  @@index([createdAt])
+  @@map("faqs")
+}
+
 /// Énumération des rôles utilisateur
 enum Role {
   USER

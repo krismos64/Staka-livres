@@ -1,98 +1,124 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
+import { FAQ as FAQType } from "../../types/shared";
 
-interface FAQItem {
+interface FAQItemProps {
   id: string;
   icon: string;
   question: string;
   answer: string;
-  details?: React.ReactNode;
+  details?: string;
 }
 
 export default function FAQ() {
   const [openItem, setOpenItem] = useState<string | null>(null);
+  const [faqItems, setFaqItems] = useState<FAQType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
+
+  // Fetch FAQ data from API
+  const fetchFAQs = async () => {
+    try {
+      setIsLoading(true);
+      setIsError(false);
+      const response = await fetch("/api/faq?visible=true");
+      if (!response.ok) {
+        throw new Error("Erreur lors du chargement des FAQ");
+      }
+      const data = await response.json();
+      setFaqItems(data.data || []);
+    } catch (error) {
+      console.error("Erreur FAQ:", error);
+      setIsError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFAQs();
+  }, []);
 
   const toggleItem = (id: string) => {
     setOpenItem(openItem === id ? null : id);
   };
 
-  const faqItems: FAQItem[] = [
-    {
-      id: "types-manuscrits",
-      icon: "fas fa-book-reader",
-      question: "Quels types de manuscrits acceptez-vous ?",
-      answer:
-        "Nous travaillons avec tous les genres littéraires : romans, nouvelles, essais, biographies, mémoires, poésie, guides pratiques, etc. Nous acceptons les fichiers Word (.doc, .docx) et PDF dans toutes les langues avec caractères latins.",
-    },
-    {
-      id: "delais-livraison",
-      icon: "fas fa-clock",
-      question: "Quels sont vos délais de livraison ?",
-      answer:
-        "Le délai moyen est de 7 à 15 jours selon la longueur du manuscrit et le pack choisi. Pour le Pack Intégral, comptez 15 jours pour un manuscrit de 200 pages. Une estimation précise vous est donnée dès réception de votre fichier.",
-      details: (
-        <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-          <strong>Délais par service :</strong>
-          <ul className="mt-2 space-y-1 text-sm">
-            <li>• Correction seule : 7-10 jours</li>
-            <li>• Design + mise en page : 5-7 jours</li>
-            <li>• Pack complet : 10-15 jours</li>
-            <li>• Urgence (48h) : +50% du tarif</li>
-          </ul>
+  // Mapping des catégories vers des icônes
+  const getCategoryIcon = (categorie: string): string => {
+    const iconMap: Record<string, string> = {
+      Général: "fas fa-book-reader",
+      Délais: "fas fa-clock",
+      Tarifs: "fas fa-euro-sign",
+      Correction: "fas fa-handshake",
+      Formats: "fas fa-file-alt",
+      Paiement: "fas fa-credit-card",
+    };
+    return iconMap[categorie] || "fas fa-question-circle";
+  };
+
+  // Convertir les FAQ API en format FAQItem pour l'affichage
+  const transformedFaqItems: FAQItemProps[] = faqItems.map((faq) => ({
+    id: faq.id,
+    icon: getCategoryIcon(faq.categorie),
+    question: faq.question,
+    answer: faq.answer,
+    details: faq.details,
+  }));
+
+  if (isLoading) {
+    return (
+      <section id="faq" className="py-16 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Questions{" "}
+              <span className="bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
+                fréquentes
+              </span>
+            </h2>
+            <p className="text-lg text-gray-600">
+              Tout ce que vous devez savoir sur nos services
+            </p>
+          </div>
+
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
         </div>
-      ),
-    },
-    {
-      id: "tarification-pack",
-      icon: "fas fa-euro-sign",
-      question: "Comment fonctionne la tarification du Pack Intégral ?",
-      answer:
-        "Le Pack Intégral suit notre tarification dégressive : 10 premières pages gratuites, puis 2€ par page jusqu'à 300 pages, et 1€ par page au-delà. Si votre livre fait 150 pages, le total sera de 280€ (10 gratuites + 140 × 2€).",
-      details: (
-        <div className="mt-3 p-3 bg-green-50 rounded-lg">
-          <strong>Exemple concret :</strong>
-          <ul className="mt-2 space-y-1 text-sm">
-            <li>• 100 pages : 180€ (90 pages payantes)</li>
-            <li>• 200 pages : 380€ (190 pages payantes)</li>
-            <li>• 400 pages : 780€ (290 + 100 pages payantes)</li>
-          </ul>
+      </section>
+    );
+  }
+
+  if (isError) {
+    return (
+      <section id="faq" className="py-16 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Questions{" "}
+              <span className="bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
+                fréquentes
+              </span>
+            </h2>
+            <p className="text-lg text-gray-600">
+              Tout ce que vous devez savoir sur nos services
+            </p>
+          </div>
+
+          <div className="text-center">
+            <p className="text-red-600 mb-4">
+              Erreur lors du chargement des FAQ
+            </p>
+            <button
+              onClick={fetchFAQs}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+            >
+              Réessayer
+            </button>
+          </div>
         </div>
-      ),
-    },
-    {
-      id: "modifications-apres-livraison",
-      icon: "fas fa-handshake",
-      question: "Puis-je demander des modifications après livraison ?",
-      answer:
-        "Oui, absolument ! Nous offrons des modifications illimitées jusqu'à votre entière satisfaction. C'est notre garantie \"Satisfait ou corrigé\". Vous pouvez demander autant de retouches que nécessaire sans frais supplémentaires.",
-    },
-    {
-      id: "protection-donnees",
-      icon: "fas fa-shield-alt",
-      question: "Mes données sont-elles protégées ?",
-      answer:
-        "Vos manuscrits et données personnelles sont protégés selon le RGPD. Nous signons un accord de confidentialité et ne partageons jamais vos contenus. Vos fichiers sont stockés de manière sécurisée et supprimés après le projet.",
-    },
-    {
-      id: "parler-conseiller",
-      icon: "fas fa-phone",
-      question: "Puis-je parler à un conseiller avant de commander ?",
-      answer:
-        "Bien sûr ! Contactez-nous via le formulaire, par email ou WhatsApp pour organiser un échange téléphonique gratuit avec un membre de notre équipe éditoriale. Nous répondons à toutes vos questions et vous conseillons le pack le plus adapté.",
-      details: (
-        <div className="mt-3 flex gap-3">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition">
-            <i className="fas fa-comments mr-1"></i> Chat direct
-          </button>
-          <a
-            href="tel:+33615078152"
-            className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition"
-          >
-            <i className="fas fa-phone mr-1"></i> Appeler
-          </a>
-        </div>
-      ),
-    },
-  ];
+      </section>
+    );
+  }
 
   return (
     <section id="faq" className="py-16 bg-gray-50">
@@ -112,7 +138,7 @@ export default function FAQ() {
         </div>
 
         <div className="space-y-4">
-          {faqItems.map((item) => (
+          {transformedFaqItems.map((item) => (
             <div
               key={item.id}
               className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
@@ -144,7 +170,13 @@ export default function FAQ() {
               >
                 <div className="text-gray-700 pl-8">
                   <p>{item.answer}</p>
-                  {item.details && item.details}
+                  {item.details && (
+                    <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                      <div className="text-sm whitespace-pre-line">
+                        {item.details}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

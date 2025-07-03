@@ -14,6 +14,8 @@ import userRoutes from "./admin/users";
 import commandeRoutes from "./admin/commandes";
 // Import des nouvelles routes factures
 import factureRoutes from "./admin/factures";
+// Import des nouvelles routes FAQ
+import faqRoutes from "./admin/faq";
 
 // Import Prisma pour accéder aux données
 import { PrismaClient } from "@prisma/client";
@@ -50,6 +52,10 @@ router.use("/commandes", commandeRoutes);
 // 🧾 GESTION DES FACTURES
 // Utilisation du module dédié pour la gestion complète des factures
 router.use("/factures", factureRoutes);
+
+// ❓ GESTION DES FAQ
+// Utilisation du module dédié pour la gestion complète des FAQ
+router.use("/faq", faqRoutes);
 
 // ROUTES COMMANDES DEPRECATED - Conserver temporairement pour compatibilité
 // Statistiques des commandes (AVANT /commande/:id pour éviter conflits)

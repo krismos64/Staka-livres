@@ -80,7 +80,8 @@ export interface Facture {
 export interface FAQ {
   id: string;
   question: string;
-  reponse: string;
+  answer: string;
+  details?: string;
   categorie: string;
   ordre: number;
   visible: boolean;

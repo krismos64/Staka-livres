@@ -330,6 +330,98 @@ async function main() {
   );
   console.log(`📦 Commande: ${paidOrder.titre}`);
 
+  // 10. Création des FAQ de démonstration
+  console.log("❓ Création des FAQ de démonstration...");
+
+  const faqData = [
+    {
+      question: "Quels types de manuscrits acceptez-vous ?",
+      answer:
+        "Nous travaillons avec tous les genres littéraires : romans, nouvelles, essais, biographies, mémoires, poésie, guides pratiques, etc. Nous acceptons les fichiers Word (.doc, .docx) et PDF dans toutes les langues avec caractères latins.",
+      details: null,
+      categorie: "Général",
+      ordre: 1,
+      visible: true,
+    },
+    {
+      question: "Quels sont vos délais de livraison ?",
+      answer:
+        "Le délai moyen est de 7 à 15 jours selon la longueur du manuscrit et le pack choisi. Pour le Pack Intégral, comptez 15 jours pour un manuscrit de 200 pages. Une estimation précise vous est donnée dès réception de votre fichier.",
+      details:
+        "Délais par service : Correction seule : 7-10 jours • Design + mise en page : 5-7 jours • Pack complet : 10-15 jours • Urgence (48h) : +50% du tarif",
+      categorie: "Délais",
+      ordre: 2,
+      visible: true,
+    },
+    {
+      question: "Comment fonctionne la tarification du Pack Intégral ?",
+      answer:
+        "Le Pack Intégral suit notre tarification dégressive : 10 premières pages gratuites, puis 2€ par page jusqu'à 300 pages, et 1€ par page au-delà. Si votre livre fait 150 pages, le total sera de 280€ (10 gratuites + 140 × 2€).",
+      details:
+        "Exemple concret : 100 pages : 180€ (90 pages payantes) • 200 pages : 380€ (190 pages payantes) • 400 pages : 780€ (290 + 100 pages payantes)",
+      categorie: "Tarifs",
+      ordre: 3,
+      visible: true,
+    },
+    {
+      question: "Puis-je demander des modifications après livraison ?",
+      answer:
+        "Oui, absolument ! Nous offrons des modifications illimitées jusqu'à votre entière satisfaction. C'est notre garantie \"Satisfait ou corrigé\". Vous pouvez demander autant de retouches que nécessaire sans frais supplémentaires.",
+      details: null,
+      categorie: "Correction",
+      ordre: 4,
+      visible: true,
+    },
+    {
+      question: "Mes données sont-elles protégées ?",
+      answer:
+        "Vos manuscrits et données personnelles sont protégés selon le RGPD. Nous signons un accord de confidentialité et ne partageons jamais vos contenus. Vos fichiers sont stockés de manière sécurisée et supprimés après le projet.",
+      details: null,
+      categorie: "Général",
+      ordre: 5,
+      visible: true,
+    },
+    {
+      question: "Puis-je parler à un conseiller avant de commander ?",
+      answer:
+        "Bien sûr ! Contactez-nous via le formulaire, par email ou WhatsApp pour organiser un échange téléphonique gratuit avec un membre de notre équipe éditoriale. Nous répondons à toutes vos questions et vous conseillons le pack le plus adapté.",
+      details: null,
+      categorie: "Général",
+      ordre: 6,
+      visible: true,
+    },
+    {
+      question: "Quelle est la différence entre correction et relecture ?",
+      answer:
+        "La correction traite l'orthographe, la grammaire, la conjugaison et la syntaxe. La relecture va plus loin avec l'amélioration du style, de la cohérence narrative et de la fluidité. Notre Pack Intégral combine les deux pour un résultat optimal.",
+      details: null,
+      categorie: "Correction",
+      ordre: 7,
+      visible: true,
+    },
+    {
+      question: "FAQ cachée pour tests admin",
+      answer:
+        "Cette FAQ n'est pas visible publiquement et sert uniquement aux tests administrateurs.",
+      details: null,
+      categorie: "Test",
+      ordre: 8,
+      visible: false,
+    },
+  ];
+
+  for (const faq of faqData) {
+    await prisma.fAQ.create({
+      data: faq,
+    });
+  }
+
+  console.log(
+    `✅ ${faqData.length} FAQ créées (${
+      faqData.filter((f) => f.visible).length
+    } visibles, ${faqData.filter((f) => !f.visible).length} cachées)`
+  );
+
   console.log(
     "🌱 Seed complet ! 6 commandes avec statuts variés créées pour tests."
   );

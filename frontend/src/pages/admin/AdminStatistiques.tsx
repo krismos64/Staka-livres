@@ -1,8 +1,43 @@
 import React, { useEffect, useState } from "react";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { StatistiquesAvancees } from "../../types/shared";
-import { MockDataService } from "../../utils/mockData";
+import { getStatistiquesAvancees } from "../../utils/adminAPI";
 import { useToasts } from "../../utils/toast";
+
+// Fonction pour transformer les données du backend au format attendu
+const transformBackendData = (backendData: any): StatistiquesAvancees => {
+  return {
+    chiffreAffaires: backendData.chiffreAffaires || 0,
+    croissanceCA: backendData.croissanceCA || 0,
+    nouvellesCommandes: backendData.nouvellesCommandes || 0,
+    croissanceCommandes: backendData.croissanceCommandes || 0,
+    nouveauxClients: backendData.nouveauxClients || 0,
+    croissanceClients: backendData.croissanceClients || 0,
+    tauxSatisfaction: backendData.tauxSatisfaction || 0,
+    nombreAvis: backendData.nombreAvis || 0,
+    // Transformation des données disponibles
+    repartitionServices: backendData.topServices
+      ? backendData.topServices.map((service: any, index: number) => ({
+          type: service.nom || `Service ${index + 1}`,
+          pourcentage: Math.round(
+            (service.commandes / (backendData.nouvellesCommandes || 1)) * 100
+          ),
+          commandes: service.commandes || 0,
+        }))
+      : [],
+    topClients: [], // Non disponible dans le backend pour l'instant
+    tempsTraitementMoyen: backendData.performance?.tempsReponse
+      ? `${backendData.performance.tempsReponse}h`
+      : "N/A",
+    tauxReussite: backendData.performance?.tauxResolution || 0,
+    panierMoyen:
+      backendData.chiffreAffaires && backendData.nouvellesCommandes
+        ? Math.round(
+            backendData.chiffreAffaires / backendData.nouvellesCommandes
+          )
+        : 0,
+  };
+};
 
 const AdminStatistiques: React.FC = () => {
   const [stats, setStats] = useState<StatistiquesAvancees | null>(null);
@@ -16,9 +51,11 @@ const AdminStatistiques: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      // Utilisation des données mockées existantes
-      const response = await MockDataService.getStatistiquesAvancees();
-      setStats(response);
+      // Appel à l'API réelle
+      const response = await getStatistiquesAvancees();
+      // Transformer les données du backend au format attendu
+      const transformedStats = transformBackendData(response);
+      setStats(transformedStats);
 
       showToast("success", "Statistiques chargées", "Données mises à jour");
     } catch (err) {
@@ -130,10 +167,10 @@ const AdminStatistiques: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Chiffre d'affaires</p>
               <p className="text-2xl font-bold text-gray-900">
-                {stats.chiffreAffaires.toLocaleString()}€
+                {(stats.chiffreAffaires || 0).toLocaleString()}€
               </p>
               <p className="text-sm text-green-600">
-                +{stats.croissanceCA}% vs période précédente
+                +{stats.croissanceCA || 0}% vs période précédente
               </p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -147,10 +184,10 @@ const AdminStatistiques: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Nouvelles commandes</p>
               <p className="text-2xl font-bold text-gray-900">
-                {stats.nouvellesCommandes}
+                {stats.nouvellesCommandes || 0}
               </p>
               <p className="text-sm text-blue-600">
-                +{stats.croissanceCommandes}% vs période précédente
+                +{stats.croissanceCommandes || 0}% vs période précédente
               </p>
             </div>
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -164,10 +201,10 @@ const AdminStatistiques: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Nouveaux clients</p>
               <p className="text-2xl font-bold text-gray-900">
-                {stats.nouveauxClients}
+                {stats.nouveauxClients || 0}
               </p>
               <p className="text-sm text-purple-600">
-                +{stats.croissanceClients}% vs période précédente
+                +{stats.croissanceClients || 0}% vs période précédente
               </p>
             </div>
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -181,10 +218,10 @@ const AdminStatistiques: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Taux de satisfaction</p>
               <p className="text-2xl font-bold text-gray-900">
-                {stats.tauxSatisfaction}%
+                {stats.tauxSatisfaction || 0}%
               </p>
               <p className="text-sm text-yellow-600">
-                {stats.nombreAvis} avis clients
+                {stats.nombreAvis || 0} avis clients
               </p>
             </div>
             <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
@@ -206,8 +243,8 @@ const AdminStatistiques: React.FC = () => {
               <i className="fas fa-chart-line text-gray-400 text-4xl mb-2"></i>
               <p className="text-gray-500">Graphique du chiffre d'affaires</p>
               <p className="text-sm text-gray-400">
-                CA actuel: {stats.chiffreAffaires.toLocaleString()}€ (+
-                {stats.croissanceCA}%)
+                CA actuel: {(stats.chiffreAffaires || 0).toLocaleString()}€ (+
+                {stats.croissanceCA || 0}%)
               </p>
             </div>
           </div>
@@ -223,8 +260,8 @@ const AdminStatistiques: React.FC = () => {
               <i className="fas fa-shopping-cart text-gray-400 text-4xl mb-2"></i>
               <p className="text-gray-500">Graphique des commandes</p>
               <p className="text-sm text-gray-400">
-                Nouvelles: {stats.nouvellesCommandes} (+
-                {stats.croissanceCommandes}%)
+                Nouvelles: {stats.nouvellesCommandes || 0} (+
+                {stats.croissanceCommandes || 0}%)
               </p>
             </div>
           </div>
@@ -237,21 +274,33 @@ const AdminStatistiques: React.FC = () => {
           Répartition par type de service
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {stats.repartitionServices.map((service, index) => (
-            <div key={index} className="text-center">
-              <div className="relative w-24 h-24 mx-auto mb-3">
-                <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
-                  <div className="text-2xl font-bold text-gray-700">
-                    {service.pourcentage}%
+          {stats.repartitionServices && stats.repartitionServices.length > 0 ? (
+            stats.repartitionServices.map((service, index) => (
+              <div key={index} className="text-center">
+                <div className="relative w-24 h-24 mx-auto mb-3">
+                  <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
+                    <div className="text-2xl font-bold text-gray-700">
+                      {service.pourcentage}%
+                    </div>
                   </div>
                 </div>
+                <h4 className="font-semibold text-gray-900">{service.type}</h4>
+                <p className="text-sm text-gray-600">
+                  {service.commandes} commandes
+                </p>
               </div>
-              <h4 className="font-semibold text-gray-900">{service.type}</h4>
-              <p className="text-sm text-gray-600">
-                {service.commandes} commandes
+            ))
+          ) : (
+            <div className="col-span-3 text-center py-8">
+              <i className="fas fa-chart-pie text-gray-400 text-4xl mb-2"></i>
+              <p className="text-gray-500">
+                Données de répartition non disponibles
+              </p>
+              <p className="text-sm text-gray-400">
+                Les statistiques de services seront disponibles prochainement
               </p>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
@@ -263,32 +312,44 @@ const AdminStatistiques: React.FC = () => {
             Top 5 clients
           </h3>
           <div className="space-y-3">
-            {stats.topClients.map((client, index) => (
-              <div
-                key={client.id}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-semibold text-sm">
-                      {client.nom.charAt(0)}
-                    </span>
+            {stats.topClients && stats.topClients.length > 0 ? (
+              stats.topClients.map((client, index) => (
+                <div
+                  key={client.id || index}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <span className="text-blue-600 font-semibold text-sm">
+                        {(client.nom || "N/A").charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {client.nom || "Client inconnu"}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {client.commandes || 0} commandes
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{client.nom}</p>
-                    <p className="text-sm text-gray-600">
-                      {client.commandes} commandes
+                  <div className="text-right">
+                    <p className="font-semibold text-gray-900">
+                      {(client.chiffreAffaires || 0).toLocaleString()}€
                     </p>
+                    <p className="text-sm text-gray-600">CA total</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-semibold text-gray-900">
-                    {client.chiffreAffaires.toLocaleString()}€
-                  </p>
-                  <p className="text-sm text-gray-600">CA total</p>
-                </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <i className="fas fa-users text-gray-400 text-4xl mb-2"></i>
+                <p className="text-gray-500">Top clients non disponible</p>
+                <p className="text-sm text-gray-400">
+                  Les données clients seront disponibles prochainement
+                </p>
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -301,25 +362,25 @@ const AdminStatistiques: React.FC = () => {
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Temps de traitement moyen</span>
               <span className="font-semibold text-gray-900">
-                {stats.tempsTraitementMoyen}
+                {stats.tempsTraitementMoyen || "N/A"}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Taux de réussite</span>
               <span className="font-semibold text-green-600">
-                {stats.tauxReussite}%
+                {stats.tauxReussite || 0}%
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Panier moyen</span>
               <span className="font-semibold text-blue-600">
-                {stats.panierMoyen.toLocaleString()}€
+                {(stats.panierMoyen || 0).toLocaleString()}€
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Satisfaction client</span>
               <span className="font-semibold text-yellow-600">
-                {stats.tauxSatisfaction}%
+                {stats.tauxSatisfaction || 0}%
               </span>
             </div>
           </div>
