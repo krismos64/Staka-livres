@@ -119,15 +119,15 @@ export function useFactureDetails(id: string) {
 // Hook pour télécharger le PDF d'une facture
 export function useDownloadFacture() {
   return useMutation((id: string) => adminAPI.getFacturePdf(id), {
-    onSuccess: (blob: Blob, id: string) => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `facture-${id}-${Date.now()}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+    onSuccess: (
+      response: { message: string; factureNumber: string; info: string },
+      id: string
+    ) => {
+      // Afficher un message à l'utilisateur au lieu de télécharger
+      alert(
+        `${response.message}\n\nFacture: ${response.factureNumber}\n\n${response.info}`
+      );
+      console.log("📄 Réponse PDF:", response);
     },
     onError: (error: any) => {
       console.error("❌ Erreur lors du téléchargement:", error);

@@ -511,10 +511,16 @@ export class AdminFactureController {
         });
       }
 
-      console.log(`🔄 [Admin Factures] Redirection vers: ${facture.pdfUrl}`);
+      console.log(`📄 [Admin Factures] PDF demandé pour: ${facture.number}`);
 
-      // Rediriger vers l'URL du PDF
-      res.redirect(facture.pdfUrl);
+      // Pour l'instant, retourner une réponse JSON avec l'URL
+      // TODO: Implémenter la génération/téléchargement réel de PDF
+      res.json({
+        message: "PDF temporairement indisponible",
+        factureNumber: facture.number,
+        info: "La génération de PDF sera implémentée prochainement",
+        // pdfUrl: facture.pdfUrl, // Commenté car l'URL cause des erreurs CORS
+      });
     } catch (error) {
       console.error("❌ [Admin Factures] Erreur récupération PDF:", error);
       res.status(500).json({

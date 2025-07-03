@@ -732,19 +732,25 @@ class AdaptiveAdminAPI {
     }
   }
 
-  async getFacturePdf(id: string): Promise<Blob> {
+  async getFacturePdf(
+    id: string
+  ): Promise<{ message: string; factureNumber: string; info: string }> {
     if (this.isDemoMode()) {
       await this.simulateAction("getFacturePdf");
       console.log("📄 [DEMO] Téléchargement PDF facture:", id);
-      // Retourner un blob vide pour le mode démo
-      return new Blob([""], { type: "application/pdf" });
+      return {
+        message: "PDF généré en mode démo",
+        factureNumber: "INV-DEMO-001",
+        info: "Téléchargement simulé en mode démo",
+      };
     }
 
     try {
-      const response = await this.realApiCall<Blob>(
-        `/admin/factures/${id}/pdf`,
-        "GET"
-      );
+      const response = await this.realApiCall<{
+        message: string;
+        factureNumber: string;
+        info: string;
+      }>(`/admin/factures/${id}/pdf`, "GET");
       return response;
     } catch (error) {
       console.error("❌ Erreur lors du téléchargement du PDF:", error);
