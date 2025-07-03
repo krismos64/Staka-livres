@@ -256,16 +256,23 @@ export class AdminFactureController {
 
       res.json({
         id: facture.id,
+        numero: facture.number,
         number: facture.number,
         amount: facture.amount,
+        montant: facture.amount, // Montant en centimes
+        montantFormate: `${(facture.amount / 100).toFixed(2)} €`, // Montant formaté
         taxAmount: facture.taxAmount,
+        statut: facture.status,
         status: facture.status,
         issuedAt: facture.issuedAt,
         dueAt: facture.dueAt,
+        dateEcheance: facture.dueAt,
         paidAt: facture.paidAt,
+        datePaiement: facture.paidAt,
         createdAt: facture.createdAt,
         updatedAt: facture.updatedAt,
         pdfUrl: facture.pdfUrl,
+        user: facture.commande.user,
         commande: {
           id: facture.commande.id,
           titre: facture.commande.titre,
@@ -349,19 +356,27 @@ export class AdminFactureController {
 
       res.json({
         id: facture.id,
+        numero: facture.number,
         number: facture.number,
         amount: facture.amount,
+        montant: facture.amount, // Montant en centimes
+        montantFormate: `${(facture.amount / 100).toFixed(2)} €`, // Montant formaté
         taxAmount: facture.taxAmount,
+        statut: facture.status,
         status: facture.status,
         issuedAt: facture.issuedAt,
         dueAt: facture.dueAt,
+        dateEcheance: facture.dueAt,
         paidAt: facture.paidAt,
+        datePaiement: facture.paidAt,
         createdAt: facture.createdAt,
         updatedAt: facture.updatedAt,
         pdfUrl: facture.pdfUrl,
+        user: facture.commande.user,
         commande: {
           id: facture.commande.id,
           titre: facture.commande.titre,
+          description: facture.commande.description,
           statut: facture.commande.statut,
           user: facture.commande.user,
         },
