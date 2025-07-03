@@ -30,8 +30,27 @@ import {
 import { tokenUtils } from "./auth";
 import { MockDataService } from "./mockData";
 
-const API_BASE_URL =
-  (import.meta as any).env?.VITE_API_URL || "http://localhost:3001";
+const API_BASE_URL = (() => {
+  // Pour Jest et tests
+  if (typeof process !== "undefined" && process.env.NODE_ENV === "test") {
+    return (global as any).API_BASE_URL || "http://backend:3001";
+  }
+
+  // Pour Vite en développement/production
+  try {
+    return (
+      (import.meta as any).env?.VITE_API_URL ||
+      (typeof window !== "undefined"
+        ? "http://localhost:3001"
+        : "http://backend:3001")
+    );
+  } catch {
+    // Fallback pour Jest si import.meta n'est pas disponible
+    return typeof window !== "undefined"
+      ? "http://localhost:3001"
+      : "http://backend:3001";
+  }
+})();
 
 interface UpdateCommandeRequest {
   statut: StatutCommande;

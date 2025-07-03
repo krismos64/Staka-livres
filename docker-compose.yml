@@ -8,12 +8,41 @@ services:
       - "3000:3000"
     environment:
       - VITE_API_URL=http://localhost:3001
+      - DISPLAY=:99
     volumes:
       - ./frontend:/app/frontend
       - ./shared:/app/shared
     depends_on:
       - backend
     restart: unless-stopped
+
+  cypress:
+    image: cypress/included:13.6.0
+    container_name: staka_cypress
+    working_dir: /e2e
+    volumes:
+      - ./frontend:/e2e
+    environment:
+      - CYPRESS_baseUrl=http://host.docker.internal:3000
+      - CYPRESS_video=false
+      - CYPRESS_screenshotOnRunFailure=false
+    depends_on:
+      - db
+      - backend
+      - frontend
+    command:
+      [
+        "npx",
+        "cypress",
+        "run",
+        "--browser",
+        "electron",
+        "--headless",
+        "--config-file",
+        "cypress.config.cjs",
+      ]
+    profiles:
+      - test
 
   backend:
     build:
