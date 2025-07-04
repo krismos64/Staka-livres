@@ -16,16 +16,16 @@ Le système de messagerie de **Staka Livres** est une solution complète unifié
 
 ### **✅ État Final - Migration Terminée**
 
-La messagerie frontend a été **entièrement migrée** de mock vers l'API REST backend avec une architecture optimisée et des fonctionnalités avancées.
+La messagerie frontend a été **entièrement migrée** de mock vers l'API REST backend avec une architecture optimisée et des fonctionnalités avancées. Le fichier `useMessages.ts` est devenu un module complet de gestion de la messagerie.
 
 ### **🎯 Réalisations Principales**
 
 #### **1. Types Unifiés & Architecture**
 
-**Nouveau fichier** : `frontend/src/types/messages.ts`
+**Fichier central** : `frontend/src/types/messages.ts`
 
 ```typescript
-// Types alignés sur le schéma Prisma backend
+// Types alignés sur le schéma Prisma backend, servant de source de vérité.
 export enum MessageType {
   TEXT = "TEXT",
   FILE = "FILE",
@@ -65,16 +65,12 @@ export interface Message {
 export interface Conversation {
   id: string;
   titre: string;
-  type: "direct" | "projet" | "support";
-  participants: string[] | { client: User };
+  type: "direct" | "project" | "support";
+  participants: User[];
   messages: Message[];
   messageCount: number;
   unreadCount: number;
-  lastMessage?: {
-    content: string;
-    createdAt: string;
-    sender: string;
-  };
+  lastMessage?: Message;
   createdAt: string;
   updatedAt: string;
 }
@@ -85,48 +81,38 @@ export interface Conversation {
 **Refactorisé** : `frontend/src/hooks/useMessages.ts`
 
 ```typescript
-// Pagination infinie avec optimistic updates
-export const useMessages = () => {
-  return useInfiniteQuery({
-    queryKey: ["messages"],
-    queryFn: ({ pageParam = 1 }) =>
-      messagesAPI.getMessages({ page: pageParam }),
-    staleTime: 30000, // 30s
-    cacheTime: 5 * 60 * 1000, // 5min
-  });
-};
+// Récupère une liste de messages avec filtres (pagination, etc.)
+export function useMessages(filters: MessageFilters = {});
 
-// Envoi avec rollback automatique
-export const useSendMessage = () => {
-  return useMutation({
-    mutationFn: sendMessage,
-    onMutate: async (newMessage) => {
-      // Optimistic update avec snapshot
-      await queryClient.cancelQueries(["messages"]);
-      const previousMessages = queryClient.getQueryData(["messages"]);
-      queryClient.setQueryData(["messages"], (old) => [...old, newMessage]);
-      return { previousMessages };
-    },
-    onError: (err, newMessage, context) => {
-      // Rollback automatique
-      queryClient.setQueryData(["messages"], context.previousMessages);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries(["messages"]);
-    },
-  });
-};
+// Récupère les détails d'un message spécifique et son fil de discussion
+export function useMessage(id: string);
 
-// Upload de fichiers avec progress
-export const useUploadAttachment = () => {
-  return useMutation({
-    mutationFn: uploadAttachment,
-    onMutate: (uploadData) => {
-      // Show progress bar
-      return { uploadData };
-    },
-  });
-};
+// Récupère les statistiques de messagerie de l'utilisateur
+export function useMessageStats();
+
+// Gère l'envoi d'un nouveau message avec optimistic update
+export function useSendMessage(): UseSendMessageReturn;
+
+// Met à jour un message (ex: marquer comme lu, archiver)
+export function useUpdateMessage();
+
+// Supprime un message (soft delete par défaut)
+export function useDeleteMessage();
+
+// Marque un seul message comme lu
+export function useMarkAsRead();
+
+// Marque tous les messages d'une conversation comme lus
+export function useMarkConversationAsRead();
+
+// Gère l'upload d'une pièce jointe à un message
+export function useUploadAttachment();
+
+// Récupère les messages pour une conversation spécifique
+export function useConversationMessages(
+  conversationId: string,
+  filters?: MessageFilters
+);
 ```
 
 **Production Ready** : `frontend/src/hooks/useAdminMessages.ts`
@@ -134,37 +120,7 @@ export const useUploadAttachment = () => {
 ```typescript
 // Vue admin globale avec filtres
 export const useAdminMessages = (filters) => {
-  return useInfiniteQuery({
-    queryKey: ["admin-messages", filters],
-    queryFn: ({ pageParam = 1 }) =>
-      messagesAPI.getMessages({ ...filters, page: pageParam }),
-    enabled: !!user && user.role === "ADMIN",
-    staleTime: 30 * 1000,
-    cacheTime: 5 * 60 * 1000,
-  });
-};
-
-// Actions en lot pour admin
-export const useBulkUpdateMessages = () => {
-  return useMutation({
-    mutationFn: messagesAPI.bulkUpdate,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["admin-messages"]);
-      queryClient.invalidateQueries(["admin-messages", "stats"]);
-      queryClient.invalidateQueries(["messages"]);
-    },
-  });
-};
-
-// Envoi message admin
-export const useSendAdminMessage = () => {
-  return useMutation({
-    mutationFn: ({ conversationId, messageData }) =>
-      adminMessagesAPI.sendAdminMessage(conversationId, messageData),
-    onSuccess: () => {
-      queryClient.invalidateQueries(["admin-messages"]);
-    },
-  });
+  // ... existing code ...
 };
 ```
 

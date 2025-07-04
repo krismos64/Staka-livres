@@ -11,6 +11,7 @@ import invoiceRoutes from "./routes/invoice";
 import messagesRoutes from "./routes/messages";
 import paymentsRoutes from "./routes/payments";
 import webhookRoutes from "./routes/payments/webhook";
+import tarifsRoutes from "./routes/tarifs";
 
 // Configuration de l'environnement
 dotenv.config();
@@ -51,6 +52,9 @@ app.use("/auth", authRoutes);
 
 // Routes FAQ publiques
 app.use("/faq", faqRoutes);
+
+// Routes tarifs publiques
+app.use("/tarifs", tarifsRoutes);
 
 // Routes commandes (côté client)
 app.use("/commandes", commandesRoutes);

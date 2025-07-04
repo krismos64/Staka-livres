@@ -34,6 +34,9 @@ export const apiConfig = {
       stats: "/messages/stats",
       attachments: "/messages",
     },
+    tarifs: {
+      list: "/tarifs",
+    },
   },
 };
 
@@ -51,6 +54,13 @@ export const getAuthHeaders = (): HeadersInit => {
   };
 };
 
+// Helper pour les requêtes publiques
+export const getPublicHeaders = (): HeadersInit => {
+  return {
+    "Content-Type": "application/json",
+  };
+};
+
 // Configuration Stripe (prix par type de service)
 export const stripeConfig = {
   priceIds: {
@@ -59,6 +69,27 @@ export const stripeConfig = {
     correction_premium: "price_1122334455", // À remplacer par le vrai ID Stripe
   },
 };
+
+// Types pour les tarifs
+export interface TarifAPI {
+  id: string;
+  nom: string;
+  description: string;
+  prix: number;
+  prixFormate: string;
+  typeService: string;
+  dureeEstimee?: string;
+  actif: boolean;
+  ordre: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TarifsResponse {
+  success: boolean;
+  data: TarifAPI[];
+  message: string;
+}
 
 // Types pour les factures
 export interface InvoiceAPI {
@@ -91,6 +122,24 @@ export interface InvoicesResponse {
     hasNextPage: boolean;
     hasPreviousPage: boolean;
   };
+}
+
+// API Helpers pour les tarifs publics
+export async function fetchTarifs(): Promise<TarifAPI[]> {
+  const response = await fetch(buildApiUrl(apiConfig.endpoints.tarifs.list), {
+    method: "GET",
+    headers: getPublicHeaders(),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.error || `HTTP ${response.status}: ${response.statusText}`
+    );
+  }
+
+  const result: TarifsResponse = await response.json();
+  return result.data;
 }
 
 // API Helpers pour les factures

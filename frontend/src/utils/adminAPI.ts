@@ -507,9 +507,7 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall(`/admin/users/${id}/toggle-status`, {
-      method: "PATCH",
-    });
+    return this.realApiCall(`/admin/users/${id}/toggle-status`, "PUT");
   }
 
   async activateUser(id: string): Promise<User> {
@@ -523,9 +521,7 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall(`/admin/users/${id}/activate`, {
-      method: "PATCH",
-    });
+    return this.realApiCall(`/admin/users/${id}/activate`, "PUT");
   }
 
   async deactivateUser(id: string): Promise<User> {
@@ -539,9 +535,7 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall(`/admin/users/${id}/deactivate`, {
-      method: "PATCH",
-    });
+    return this.realApiCall(`/admin/users/${id}/deactivate`, "PUT");
   }
 
   // ===============================
@@ -610,10 +604,7 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall("/admin/commande", {
-      method: "POST",
-      body: JSON.stringify(commandeData),
-    });
+    return this.realApiCall("/admin/commande", "POST", commandeData);
   }
 
   async updateCommande(
@@ -885,8 +876,12 @@ class AdaptiveAdminAPI {
     if (search) params.append("search", search);
     if (typeof actif === "boolean") params.append("actif", actif.toString());
 
-    // Pour l'API réelle, on assume qu'elle retourne directement le tableau pour cette interface
-    return this.realApiCall(`/admin/tarifs?${params}`);
+    // API réelle - récupérer directement les données
+    const response = await this.realApiCall<{
+      success: boolean;
+      data: Tarif[];
+    }>(`/admin/tarifs?${params}`);
+    return response.data || [];
   }
 
   async getTarifById(id: string): Promise<Tarif> {
@@ -897,7 +892,10 @@ class AdaptiveAdminAPI {
       return tarif;
     }
 
-    return this.realApiCall(`/admin/tarif/${id}`);
+    const response = await this.realApiCall<{ success: boolean; data: Tarif }>(
+      `/admin/tarifs/${id}`
+    );
+    return response.data;
   }
 
   async createTarif(tarifData: CreateTarifRequest): Promise<Tarif> {
@@ -911,10 +909,12 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall("/admin/tarif", {
-      method: "POST",
-      body: JSON.stringify(tarifData),
-    });
+    const response = await this.realApiCall<{ success: boolean; data: Tarif }>(
+      "/admin/tarifs",
+      "POST",
+      tarifData
+    );
+    return response.data;
   }
 
   async updateTarif(id: string, tarifData: UpdateTarifRequest): Promise<Tarif> {
@@ -928,10 +928,12 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall(`/admin/tarif/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(tarifData),
-    });
+    const response = await this.realApiCall<{ success: boolean; data: Tarif }>(
+      `/admin/tarifs/${id}`,
+      "PUT",
+      tarifData
+    );
+    return response.data;
   }
 
   async deleteTarif(id: string): Promise<void> {
@@ -940,9 +942,7 @@ class AdaptiveAdminAPI {
       return;
     }
 
-    await this.realApiCall(`/admin/tarif/${id}`, {
-      method: "DELETE",
-    });
+    await this.realApiCall(`/admin/tarifs/${id}`, "DELETE");
   }
 
   // ===============================
@@ -999,10 +999,7 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall("/admin/page", {
-      method: "POST",
-      body: JSON.stringify(pageData),
-    });
+    return this.realApiCall("/admin/page", "POST", pageData);
   }
 
   async updatePage(
@@ -1019,10 +1016,7 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall(`/admin/page/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(pageData),
-    });
+    return this.realApiCall(`/admin/page/${id}`, "PUT", pageData);
   }
 
   async deletePage(id: string): Promise<void> {
@@ -1031,9 +1025,7 @@ class AdaptiveAdminAPI {
       return;
     }
 
-    await this.realApiCall(`/admin/page/${id}`, {
-      method: "DELETE",
-    });
+    await this.realApiCall(`/admin/page/${id}`, "DELETE");
   }
 
   // ===============================
@@ -1225,6 +1217,20 @@ export const updateFAQ = (id: string, faqData: UpdateFAQRequest) =>
   adminAPI.updateFAQ(id, faqData);
 export const deleteFAQ = (id: string) => adminAPI.deleteFAQ(id);
 export const getFAQPublic = () => adminAPI.getFAQPublic();
+
+// Export tarifs
+export const getTarifs = (
+  page?: number,
+  limit?: number,
+  search?: string,
+  actif?: boolean
+) => adminAPI.getTarifs(page, limit, search, actif);
+export const getTarifById = (id: string) => adminAPI.getTarifById(id);
+export const createTarif = (tarifData: CreateTarifRequest) =>
+  adminAPI.createTarif(tarifData);
+export const updateTarif = (id: string, tarifData: UpdateTarifRequest) =>
+  adminAPI.updateTarif(id, tarifData);
+export const deleteTarif = (id: string) => adminAPI.deleteTarif(id);
 
 // Exports des méthodes de messagerie
 export const getConversations = (

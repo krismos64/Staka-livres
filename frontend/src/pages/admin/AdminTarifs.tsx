@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useState } from "react";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
@@ -28,6 +29,8 @@ const AdminTarifs: React.FC = () => {
   });
   const { showToast } = useToasts();
 
+  const queryClient = useQueryClient();
+
   const typesService = [
     "Correction",
     "Relecture",
@@ -55,6 +58,10 @@ const AdminTarifs: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const invalidatePublicTarifs = () => {
+    queryClient.invalidateQueries({ queryKey: ["tarifs", "public"] });
   };
 
   useEffect(() => {
@@ -124,6 +131,7 @@ const AdminTarifs: React.FC = () => {
       setShowTarifModal(false);
       setSelectedTarif(null);
       await loadTarifs();
+      invalidatePublicTarifs();
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Erreur de sauvegarde du tarif";
@@ -145,6 +153,7 @@ const AdminTarifs: React.FC = () => {
       );
 
       await loadTarifs();
+      invalidatePublicTarifs();
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Erreur de modification du statut";
@@ -166,6 +175,7 @@ const AdminTarifs: React.FC = () => {
       );
 
       await loadTarifs();
+      invalidatePublicTarifs();
     } catch (err) {
       const errorMessage =
         err instanceof Error
@@ -198,6 +208,7 @@ const AdminTarifs: React.FC = () => {
       setShowDeleteModal(false);
       setTarifToDelete(null);
       await loadTarifs();
+      invalidatePublicTarifs();
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Erreur de suppression du tarif";
@@ -322,7 +333,8 @@ const AdminTarifs: React.FC = () => {
       </div>
 
       {/* Liste des tarifs */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      {/* Version desktop - Tableau */}
+      <div className="hidden md:block bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
@@ -450,7 +462,6 @@ const AdminTarifs: React.FC = () => {
             </tbody>
           </table>
         </div>
-
         {/* État vide */}
         {tarifs.length === 0 && !isLoading && (
           <div className="text-center py-12">
@@ -472,6 +483,143 @@ const AdminTarifs: React.FC = () => {
         )}
       </div>
 
+      {/* Version mobile - Cartes */}
+      <div className="md:hidden space-y-4">
+        {tarifs
+          .sort((a, b) => a.ordre - b.ordre)
+          .map((tarif) => (
+            <div
+              key={tarif.id}
+              className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1">
+                  <h3 className="text-lg font-medium text-gray-900">
+                    {tarif.nom}
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {tarif.description}
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleToggleActivation(tarif)}
+                  disabled={isOperationLoading}
+                  className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full transition-colors ${
+                    tarif.actif
+                      ? "bg-green-100 text-green-800 hover:bg-green-200"
+                      : "bg-red-100 text-red-800 hover:bg-red-200"
+                  }`}
+                >
+                  <i
+                    className={`fas ${
+                      tarif.actif ? "fa-check-circle" : "fa-pause-circle"
+                    } mr-1`}
+                  ></i>
+                  {tarif.actif ? "Actif" : "Inactif"}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label className="text-xs text-gray-500 uppercase tracking-wider">
+                    Ordre
+                  </label>
+                  <input
+                    type="number"
+                    value={tarif.ordre}
+                    onChange={(e) =>
+                      handleUpdateOrder(tarif, parseInt(e.target.value) || 1)
+                    }
+                    disabled={isOperationLoading}
+                    className="w-full mt-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                    min="1"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 uppercase tracking-wider">
+                    Type
+                  </label>
+                  <div className="mt-1">
+                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                      {tarif.typeService}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 uppercase tracking-wider">
+                    Prix
+                  </label>
+                  <div className="text-sm font-medium text-gray-900 mt-1">
+                    {tarif.prixFormate}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 uppercase tracking-wider">
+                    Durée
+                  </label>
+                  <div className="text-sm text-gray-900 mt-1">
+                    {tarif.dureeEstimee || "Non défini"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-gray-200">
+                {/* Voir */}
+                <button
+                  onClick={() => handleViewTarif(tarif)}
+                  className="flex items-center px-3 py-1 text-sm text-blue-600 hover:text-blue-900 transition-colors"
+                  title="Voir les détails"
+                >
+                  <i className="fas fa-eye mr-1"></i>
+                  Voir
+                </button>
+
+                {/* Modifier */}
+                <button
+                  onClick={() => handleEditTarif(tarif)}
+                  disabled={isOperationLoading}
+                  className="flex items-center px-3 py-1 text-sm text-green-600 hover:text-green-900 transition-colors"
+                  title="Modifier"
+                >
+                  <i className="fas fa-edit mr-1"></i>
+                  Modifier
+                </button>
+
+                {/* Supprimer */}
+                <button
+                  onClick={() => handleDeleteTarif(tarif)}
+                  disabled={isOperationLoading}
+                  className="flex items-center px-3 py-1 text-sm text-red-600 hover:text-red-900 transition-colors"
+                  title="Supprimer"
+                >
+                  <i className="fas fa-trash mr-1"></i>
+                  Supprimer
+                </button>
+              </div>
+            </div>
+          ))}
+
+        {/* État vide mobile */}
+        {tarifs.length === 0 && !isLoading && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+            <i className="fas fa-euro-sign text-gray-400 text-4xl mb-4"></i>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Aucun tarif trouvé
+            </h3>
+            <p className="text-gray-500 mb-4">
+              Commencez par créer votre premier tarif
+            </p>
+            <button
+              onClick={handleCreateTarif}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <i className="fas fa-plus mr-2"></i>
+              Créer un tarif
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Modal Tarif */}
       <Modal
         isOpen={showTarifModal}
@@ -485,148 +633,252 @@ const AdminTarifs: React.FC = () => {
         }
         size="lg"
       >
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {/* En-tête moderne avec icône */}
+          <div className="flex items-center space-x-4 pb-4 border-b border-gray-200">
+            <div
+              className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                isEditing
+                  ? selectedTarif
+                    ? "bg-gradient-to-br from-blue-100 to-blue-200"
+                    : "bg-gradient-to-br from-green-100 to-green-200"
+                  : "bg-gradient-to-br from-purple-100 to-purple-200"
+              }`}
+            >
+              <i
+                className={`fas text-lg ${
+                  isEditing
+                    ? selectedTarif
+                      ? "fa-edit text-blue-600"
+                      : "fa-plus text-green-600"
+                    : "fa-eye text-purple-600"
+                }`}
+              ></i>
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">
+                {isEditing
+                  ? selectedTarif
+                    ? "Modifier le tarif"
+                    : "Nouveau tarif"
+                  : "Détails du tarif"}
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                {isEditing
+                  ? selectedTarif
+                    ? "Modifiez les informations du tarif"
+                    : "Créez un nouveau tarif pour vos services"
+                  : "Consultez les détails de ce tarif"}
+              </p>
+            </div>
+          </div>
+
           {isEditing ? (
             <>
-              {/* Mode édition */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nom du service
-                </label>
-                <input
-                  type="text"
-                  value={editFormData.nom}
-                  onChange={(e) =>
-                    setEditFormData({ ...editFormData, nom: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ex: Correction orthographique..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
-                <textarea
-                  value={editFormData.description}
-                  onChange={(e) =>
-                    setEditFormData({
-                      ...editFormData,
-                      description: e.target.value,
-                    })
-                  }
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Description détaillée du service..."
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Prix (€)
-                  </label>
-                  <input
-                    type="number"
-                    value={editFormData.prix}
-                    onChange={(e) =>
-                      setEditFormData({
-                        ...editFormData,
-                        prix: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    min="0"
-                    step="0.01"
-                  />
+              {/* Section Informations générales */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                    <i className="fas fa-info-circle text-blue-600"></i>
+                  </div>
+                  <h4 className="text-lg font-semibold text-gray-900">
+                    Informations générales
+                  </h4>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Type de service
-                  </label>
-                  <select
-                    value={editFormData.typeService}
-                    onChange={(e) =>
-                      setEditFormData({
-                        ...editFormData,
-                        typeService: e.target.value,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    {typesService.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
+                <div className="space-y-4">
+                  <div>
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                      <i className="fas fa-tag text-gray-400 mr-2"></i>
+                      Nom du service
+                    </label>
+                    <input
+                      type="text"
+                      value={editFormData.nom}
+                      onChange={(e) =>
+                        setEditFormData({
+                          ...editFormData,
+                          nom: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 bg-white/70 backdrop-blur-sm"
+                      placeholder="Ex: Correction orthographique..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                      <i className="fas fa-align-left text-gray-400 mr-2"></i>
+                      Description
+                    </label>
+                    <textarea
+                      value={editFormData.description}
+                      onChange={(e) =>
+                        setEditFormData({
+                          ...editFormData,
+                          description: e.target.value,
+                        })
+                      }
+                      rows={4}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-100 focus:border-blue-400 transition-all duration-200 resize-none bg-white/70 backdrop-blur-sm"
+                      placeholder="Description détaillée du service..."
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Durée estimée
-                  </label>
-                  <input
-                    type="text"
-                    value={editFormData.dureeEstimee}
-                    onChange={(e) =>
-                      setEditFormData({
-                        ...editFormData,
-                        dureeEstimee: e.target.value,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Ex: 2-3 jours"
-                  />
+              {/* Section Tarification */}
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                    <i className="fas fa-euro-sign text-green-600"></i>
+                  </div>
+                  <h4 className="text-lg font-semibold text-gray-900">
+                    Tarification
+                  </h4>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ordre
-                  </label>
-                  <input
-                    type="number"
-                    value={editFormData.ordre}
-                    onChange={(e) =>
-                      setEditFormData({
-                        ...editFormData,
-                        ordre: parseInt(e.target.value) || 1,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    min="1"
-                  />
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                      <i className="fas fa-money-bill text-gray-400 mr-2"></i>
+                      Prix (€)
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <span className="text-gray-500 text-sm">€</span>
+                      </div>
+                      <input
+                        type="number"
+                        value={editFormData.prix}
+                        onChange={(e) =>
+                          setEditFormData({
+                            ...editFormData,
+                            prix: parseFloat(e.target.value) || 0,
+                          })
+                        }
+                        className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-3 focus:ring-green-100 focus:border-green-400 transition-all duration-200 bg-white/70 backdrop-blur-sm"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Statut
-                  </label>
-                  <select
-                    value={editFormData.actif.toString()}
-                    onChange={(e) =>
-                      setEditFormData({
-                        ...editFormData,
-                        actif: e.target.value === "true",
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="true">Actif</option>
-                    <option value="false">Inactif</option>
-                  </select>
+                  <div>
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                      <i className="fas fa-list text-gray-400 mr-2"></i>
+                      Type de service
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={editFormData.typeService}
+                        onChange={(e) =>
+                          setEditFormData({
+                            ...editFormData,
+                            typeService: e.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-3 focus:ring-green-100 focus:border-green-400 transition-all duration-200 bg-white/70 backdrop-blur-sm appearance-none"
+                      >
+                        {typesService.map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                        <i className="fas fa-chevron-down text-gray-400"></i>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-4">
+              {/* Section Configuration */}
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                    <i className="fas fa-cogs text-purple-600"></i>
+                  </div>
+                  <h4 className="text-lg font-semibold text-gray-900">
+                    Configuration
+                  </h4>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                      <i className="fas fa-clock text-gray-400 mr-2"></i>
+                      Durée estimée
+                    </label>
+                    <input
+                      type="text"
+                      value={editFormData.dureeEstimee}
+                      onChange={(e) =>
+                        setEditFormData({
+                          ...editFormData,
+                          dureeEstimee: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-3 focus:ring-purple-100 focus:border-purple-400 transition-all duration-200 bg-white/70 backdrop-blur-sm"
+                      placeholder="Ex: 2-3 jours"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                      <i className="fas fa-sort-numeric-up text-gray-400 mr-2"></i>
+                      Ordre d'affichage
+                    </label>
+                    <input
+                      type="number"
+                      value={editFormData.ordre}
+                      onChange={(e) =>
+                        setEditFormData({
+                          ...editFormData,
+                          ordre: parseInt(e.target.value) || 1,
+                        })
+                      }
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-3 focus:ring-purple-100 focus:border-purple-400 transition-all duration-200 bg-white/70 backdrop-blur-sm"
+                      min="1"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                      <i className="fas fa-toggle-on text-gray-400 mr-2"></i>
+                      Statut
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={editFormData.actif.toString()}
+                        onChange={(e) =>
+                          setEditFormData({
+                            ...editFormData,
+                            actif: e.target.value === "true",
+                          })
+                        }
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-3 focus:ring-purple-100 focus:border-purple-400 transition-all duration-200 bg-white/70 backdrop-blur-sm appearance-none"
+                      >
+                        <option value="true">✅ Actif</option>
+                        <option value="false">⏸️ Inactif</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                        <i className="fas fa-chevron-down text-gray-400"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Boutons d'action */}
+              <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
                 <button
                   onClick={() => setShowTarifModal(false)}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-6 py-3 text-gray-700 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 font-medium"
                 >
+                  <i className="fas fa-times mr-2"></i>
                   Annuler
                 </button>
                 <button
@@ -636,12 +888,18 @@ const AdminTarifs: React.FC = () => {
                     !editFormData.nom ||
                     !editFormData.description
                   }
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400"
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isOperationLoading ? (
-                    <LoadingSpinner size="sm" color="white" />
+                    <>
+                      <LoadingSpinner size="sm" color="white" />
+                      <span className="ml-2">Sauvegarde...</span>
+                    </>
                   ) : (
-                    "Sauvegarder"
+                    <>
+                      <i className="fas fa-save mr-2"></i>
+                      Sauvegarder
+                    </>
                   )}
                 </button>
               </div>
@@ -649,80 +907,123 @@ const AdminTarifs: React.FC = () => {
           ) : (
             selectedTarif && (
               <>
-                {/* Mode visualisation */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nom du service
-                    </label>
-                    <p className="text-gray-900 font-medium">
-                      {selectedTarif.nom}
+                {/* Mode visualisation moderne */}
+                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-100">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4 border border-white/50">
+                        <div className="flex items-center mb-2">
+                          <i className="fas fa-tag text-indigo-500 mr-2"></i>
+                          <label className="text-sm font-medium text-gray-600">
+                            Nom du service
+                          </label>
+                        </div>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {selectedTarif?.nom}
+                        </p>
+                      </div>
+
+                      <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4 border border-white/50">
+                        <div className="flex items-center mb-2">
+                          <i className="fas fa-list text-indigo-500 mr-2"></i>
+                          <label className="text-sm font-medium text-gray-600">
+                            Type de service
+                          </label>
+                        </div>
+                        <span className="inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border border-blue-200">
+                          <i className="fas fa-dot-circle mr-1 text-xs"></i>
+                          {selectedTarif?.typeService}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4 border border-white/50">
+                        <div className="flex items-center mb-2">
+                          <i className="fas fa-euro-sign text-green-500 mr-2"></i>
+                          <label className="text-sm font-medium text-gray-600">
+                            Prix
+                          </label>
+                        </div>
+                        <p className="text-2xl font-bold text-green-600">
+                          {selectedTarif?.prixFormate}
+                        </p>
+                      </div>
+
+                      <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4 border border-white/50">
+                        <div className="flex items-center mb-2">
+                          <i
+                            className={`fas ${
+                              selectedTarif?.actif
+                                ? "fa-check-circle text-green-500"
+                                : "fa-pause-circle text-red-500"
+                            } mr-2`}
+                          ></i>
+                          <label className="text-sm font-medium text-gray-600">
+                            Statut
+                          </label>
+                        </div>
+                        <span
+                          className={`inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full ${
+                            selectedTarif?.actif
+                              ? "bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200"
+                              : "bg-gradient-to-r from-red-100 to-pink-100 text-red-800 border border-red-200"
+                          }`}
+                        >
+                          {selectedTarif?.actif ? "✅ Actif" : "⏸️ Inactif"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 bg-white/70 backdrop-blur-sm rounded-lg p-4 border border-white/50">
+                    <div className="flex items-center mb-3">
+                      <i className="fas fa-align-left text-indigo-500 mr-2"></i>
+                      <label className="text-sm font-medium text-gray-600">
+                        Description
+                      </label>
+                    </div>
+                    <p className="text-gray-800 leading-relaxed">
+                      {selectedTarif?.description}
                     </p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Type
-                    </label>
-                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                      {selectedTarif.typeService}
-                    </span>
+
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4 border border-white/50">
+                      <div className="flex items-center mb-2">
+                        <i className="fas fa-clock text-purple-500 mr-2"></i>
+                        <label className="text-sm font-medium text-gray-600">
+                          Durée estimée
+                        </label>
+                      </div>
+                      <p className="text-gray-800 font-medium">
+                        {selectedTarif?.dureeEstimee || "Non défini"}
+                      </p>
+                    </div>
+
+                    <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4 border border-white/50">
+                      <div className="flex items-center mb-2">
+                        <i className="fas fa-sort-numeric-up text-purple-500 mr-2"></i>
+                        <label className="text-sm font-medium text-gray-600">
+                          Ordre d'affichage
+                        </label>
+                      </div>
+                      <p className="text-gray-800 font-medium">
+                        #{selectedTarif?.ordre}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
-                  </label>
-                  <p className="text-gray-900">{selectedTarif.description}</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Prix
-                    </label>
-                    <p className="text-gray-900 font-semibold text-lg">
-                      {selectedTarif.prixFormate}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Durée estimée
-                    </label>
-                    <p className="text-gray-900">
-                      {selectedTarif.dureeEstimee || "Non défini"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Statut
-                    </label>
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        selectedTarif.actif
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      <i
-                        className={`fas ${
-                          selectedTarif.actif
-                            ? "fa-check-circle"
-                            : "fa-pause-circle"
-                        } mr-1`}
-                      ></i>
-                      {selectedTarif.actif ? "Actif" : "Inactif"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-3 pt-4">
+                <div className="flex justify-end pt-6 border-t border-gray-200">
                   <button
-                    onClick={() => handleEditTarif(selectedTarif)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    onClick={() =>
+                      selectedTarif && handleEditTarif(selectedTarif)
+                    }
+                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
                   >
                     <i className="fas fa-edit mr-2"></i>
-                    Modifier
+                    Modifier ce tarif
                   </button>
                 </div>
               </>

@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { usePricing } from "./hooks/usePricing";
 
 export default function PricingCalculator() {
-  const { pages, setPages, pricing, getComparisonPrices } = usePricing(150);
+  const { pages, setPages, pricing, getComparisonPrices, isLoading, error } =
+    usePricing(150);
   const [selectedPreset, setSelectedPreset] = useState(150);
 
   const comparisonPrices = getComparisonPrices();
@@ -60,6 +61,21 @@ export default function PricingCalculator() {
               tarification dégressive
             </p>
           </div>
+
+          {/* Indicateur de chargement ou erreur */}
+          {isLoading && (
+            <div className="mt-4 text-blue-600 flex items-center justify-center gap-2">
+              <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+              <span>Chargement des tarifs...</span>
+            </div>
+          )}
+
+          {error && (
+            <div className="mt-4 bg-yellow-100 border border-yellow-300 text-yellow-800 px-4 py-2 rounded-lg inline-block">
+              <i className="fas fa-exclamation-triangle mr-2"></i>
+              Tarifs indisponibles, utilisation des tarifs par défaut
+            </div>
+          )}
         </div>
 
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
@@ -252,9 +268,12 @@ export default function PricingCalculator() {
                   <button
                     onClick={handleOrderClick}
                     className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white py-4 rounded-xl font-semibold text-lg transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                    disabled={isLoading}
                   >
                     <i className="fas fa-shopping-cart mr-2"></i>
-                    Commander pour {pricing.total}€
+                    {isLoading
+                      ? "Chargement..."
+                      : `Commander pour ${pricing.total}€`}
                   </button>
                   <button
                     onClick={handleFreeTestClick}

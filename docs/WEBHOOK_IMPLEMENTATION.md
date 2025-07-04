@@ -1,24 +1,69 @@
-# 🎯 Implémentation Webhook Stripe - État Actuel 2025
+# 🚨 ACTION REQUISE - Duplication Critique du Webhook Stripe
+
+## ⚠️ **Avertissement - Problème Toujours Présent (État Actuel 2025)**
+
+Ce document confirme qu'il existe **TOUJOURS DEUX implémentations du webhook Stripe** en parallèle dans le code. Cette duplication est une source de bugs potentiels et de confusion.
+
+**Action immédiate recommandée :** Supprimer l'ancienne implémentation pour ne conserver que la version moderne et complète qui gère la facturation.
+
+---
+
+### **Les Deux Webhooks en Conflit :**
+
+1.  **✅ `src/routes/payments/webhook.ts` - Le Bon Webhook (À CONSERVER)**
+
+    - Architecture moderne, testée et utilisée en production.
+    - **Intègre la génération automatique et complète des factures.**
+
+2.  **❌ `src/controllers/paymentController.handleWebhook` - L'Ancien Webhook (À SUPPRIMER)**
+    - Logique basique, non utilisée par la configuration actuelle mais toujours présente.
+    - **Ne gère PAS la facturation.**
+    - Route déclarée dans `src/routes/payments.ts`.
+
+---
+
+## ✅ **Partie 1 : Nettoyage Recommandé**
+
+### **1. Supprimer la Route dupliquée**
+
+Dans `src/routes/payments.ts`, supprimez la déclaration du webhook :
+
+```typescript
+// Fichier : src/routes/payments.ts
+
+// ... (garder create-checkout-session et getPaymentStatus)
+
+// Supprimer cette section (lignes 18-24) :
+/*
+router.post(
+  "/webhook",
+  express.raw({ type: "application/json" }),
+  paymentController.handleWebhook // ← À SUPPRIMER
+);
+*/
+```
+
+### **2. Supprimer la Logique dupliquée**
+
+Dans `src/controllers/paymentController.ts`, supprimez la méthode `handleWebhook` :
+
+```typescript
+// Fichier : src/controllers/paymentController.ts
+
+export const paymentController = {
+  createCheckoutSession, // ← Garder
+  getPaymentStatus, // ← Garder
+  // handleWebhook,      // ← SUPPRIMER la méthode entière
+};
+```
+
+---
+
+## 🎯 **Partie 2 : Documentation de l'Implémentation Correcte (À Conserver)**
+
+Le reste de ce document décrit le fonctionnement du **bon webhook** (`src/routes/payments/webhook.ts`), qui est l'implémentation de référence.
 
 ## ⚠️ **Architecture Actuelle - CONFIRMÉ**
-
-### Duplication de Routes Webhook - ⚠️ TOUJOURS PRÉSENTE
-
-**État actuel** : Il existe TOUJOURS DEUX implémentations de webhook en parallèle :
-
-1. **`src/routes/payments/webhook.ts`** (237 lignes) - ✅ **UTILISÉ EN PRODUCTION**
-
-   - Routeur séparé avec architecture complète et moderne
-   - **Génération automatique de factures** avec `InvoiceService` ✅
-   - Logging détaillé et gestion d'erreurs robuste
-   - Tests complets (webhook.test.ts + webhookWithInvoice.test.ts)
-   - **Processus facturation complet** : PDF + S3 + Email + Base
-
-2. **`src/controllers/paymentController.handleWebhook`** (65 lignes) - ⚠️ **TOUJOURS PRÉSENT - NON UTILISÉ**
-   - Implémentation basique sans génération de factures
-   - Gestion simple des événements checkout.session.completed et payment_intent.payment_failed
-   - **IMPORTANT** : N'inclut PAS la génération automatique de factures
-   - Route déclarée dans `src/routes/payments.ts` mais ignorée
 
 ### Configuration Serveur Actuelle - ✅ VALIDÉE
 

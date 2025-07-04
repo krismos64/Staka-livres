@@ -18,9 +18,11 @@ frontend/src/
 │   ├── messages/        # 💬 Messagerie (3 composants)
 │   ├── modals/          # 🪟 Modales (8 composants)
 │   └── project/         # 📚 Projets (2 composants)
-├── 🎣 Hooks (6 hooks personnalisés + React Query)
+├── 🎣 Hooks (8 hooks personnalisés + React Query)
 │   ├── useAdminUsers.ts      # Hook admin utilisateurs (233 lignes)
-│   ├── useAdminCommandes.ts  # Hook admin commandes (354 lignes) - NOUVEAU
+│   ├── useAdminCommandes.ts  # Hook admin commandes (354 lignes)
+│   ├── useAdminFactures.ts   # Hook admin factures - NOUVEAU
+│   ├── useInvoices.ts        # Hook facturation client
 │   ├── useMessages.ts        # Hook messagerie (654 lignes)
 │   ├── useAdminMessages.ts   # Hook admin messagerie (321 lignes)
 │   ├── useDebouncedSearch.ts # Recherche optimisée
@@ -43,7 +45,7 @@ frontend/src/
 
 - **🏗️ Composants** : 70+ composants React modulaires et réutilisables
 - **📄 Pages** : 12 pages USER + 10 pages ADMIN complètes
-- **🎣 Hooks** : 6 hooks personnalisés + React Query (2000+ lignes)
+- **🎣 Hooks** : 8 hooks personnalisés + React Query (2000+ lignes)
 - **🎨 Styles** : Tailwind + CSS custom (626 lignes) + Framer Motion
 - **⚡ Performance** : < 2s chargement, < 100ms interactions
 - **🔐 Sécurité** : JWT + AuthContext + RBAC complet
@@ -80,28 +82,47 @@ La landing page Staka Éditions représente **2400+ lignes** de code React optim
 #### **🔧 Hook de Pricing Avancé**
 
 ```typescript
-// hooks/usePricing.ts - 85 lignes
-export const usePricing = (pageCount: number) => {
-  return useMemo(() => {
-    const freePages = 10;
-    const tier1Rate = 2; // €/page jusqu'à 300 pages
-    const tier2Rate = 1; // €/page au-delà de 300
+// hooks/usePricing.ts - Logique de tarification dynamique
+export function usePricing(initialPages: number = 150) {
+  const [pages, setPages] = useState<number>(initialPages);
 
-    if (pageCount <= freePages) return { totalPrice: 0, formatted: "Gratuit" };
+  // Récupération des tarifs depuis l'API avec React Query
+  const {
+    data: tarifs = [],
+    isLoading,
+    error,
+  } = useQuery<TarifAPI[]>({
+    queryKey: ["tarifs", "public"],
+    queryFn: fetchTarifs,
+  });
 
-    const paidPages = pageCount - freePages;
-    const tier1Pages = Math.min(paidPages, 290);
-    const tier2Pages = Math.max(0, paidPages - 290);
+  // Extraction des règles de tarification (ex: 10 pages gratuites, puis dégressif)
+  const pricingRules = useMemo(() => {
+    if (tarifs.length > 0) {
+      return extractPricingRules(tarifs);
+    }
+    // Règles par défaut si l'API ne répond pas
+    return [
+      { threshold: 10, price: 0, isFree: true },
+      { threshold: 300, price: 2 },
+      { threshold: Infinity, price: 1 },
+    ];
+  }, [tarifs]);
 
-    const totalPrice = tier1Pages * tier1Rate + tier2Pages * tier2Rate;
+  // Calcul du prix final, des économies et du délai de livraison
+  const pricing = useMemo(() => {
+    return calculatePricingFromRules(pages, pricingRules);
+  }, [pages, pricingRules]);
 
-    return {
-      totalPrice,
-      formatted: `${totalPrice.toLocaleString("fr-FR")} €`,
-      savings: pageCount > 300 ? `Économie: ${tier2Pages * 1} €` : null,
-    };
-  }, [pageCount]);
-};
+  return {
+    pages,
+    setPages,
+    pricing, // { total, savings, deliveryTime, ... }
+    isLoading,
+    error,
+    tarifs,
+  };
+}
 ```
 
 #### **✨ Features Landing Spécialisées**
@@ -493,6 +514,31 @@ const CommandeStatusSelect = ({
 };
 ```
 
+### 📋 **Module AdminFactures - NOUVEAU**
+
+#### **🎣 Hook useAdminFactures.ts (54 lignes)**
+
+```typescript
+// Hook pour la gestion des factures côté admin
+export const useAdminFactures = (filters: FactureFilters) => {
+  const { data, isLoading, error } = useQuery(
+    ["admin-factures", filters],
+    () => adminAPI.getFactures(filters),
+    {
+      staleTime: 5 * 60 * 1000,
+      keepPreviousData: true,
+    }
+  );
+
+  return {
+    factures: data?.data || [],
+    pagination: data?.pagination,
+    isLoading,
+    error,
+  };
+};
+```
+
 ---
 
 ## 🎣 Hooks React Query - Architecture Complète
@@ -642,6 +688,29 @@ export const useDownloadInvoice = () => {
     link.click();
     URL.revokeObjectURL(url);
   });
+};
+```
+
+#### **useAdminFactures.ts - NOUVEAU**
+
+```typescript
+// Hook pour la gestion des factures côté admin
+export const useAdminFactures = (filters: FactureFilters) => {
+  const { data, isLoading, error } = useQuery(
+    ["admin-factures", filters],
+    () => adminAPI.getFactures(filters),
+    {
+      staleTime: 5 * 60 * 1000,
+      keepPreviousData: true,
+    }
+  );
+
+  return {
+    factures: data?.data || [],
+    pagination: data?.pagination,
+    isLoading,
+    error,
+  };
 };
 ```
 
@@ -977,16 +1046,16 @@ export interface PaginatedResponse<T> {
 
 ### 📈 **Métriques Finales**
 
-| Module                | Lignes    | Composants         | Status                  |
-| --------------------- | --------- | ------------------ | ----------------------- |
-| **Landing Page**      | 2400+     | 14                 | ✅ Production           |
-| **Dashboard USER**    | 1800+     | 12 pages           | ✅ Production           |
-| **Administration**    | 2200+     | 10 pages           | ✅ Backend intégré      |
-| **React Query Hooks** | 1600+     | 6 hooks            | ✅ Production           |
-| **Design System**     | 626       | CSS/Styles         | ✅ Production           |
-| **Services API**      | 800+      | API calls          | ✅ Backend intégré      |
-| **Types TypeScript**  | 400+      | Interfaces         | ✅ Production           |
-| **TOTAL**             | **9826+** | **70+ composants** | **✅ PRODUCTION READY** |
+| Module                | Lignes     | Composants         | Status                  |
+| --------------------- | ---------- | ------------------ | ----------------------- |
+| **Landing Page**      | 2400+      | 14                 | ✅ Production           |
+| **Dashboard USER**    | 1800+      | 12 pages           | ✅ Production           |
+| **Administration**    | 2200+      | 10 pages           | ✅ Backend intégré      |
+| **React Query Hooks** | 1800+      | 8 hooks            | ✅ Production           |
+| **Design System**     | 626        | CSS/Styles         | ✅ Production           |
+| **Services API**      | 800+       | API calls          | ✅ Backend intégré      |
+| **Types TypeScript**  | 400+       | Interfaces         | ✅ Production           |
+| **TOTAL**             | **10026+** | **70+ composants** | **✅ PRODUCTION READY** |
 
 ### 🎯 **Prêt pour Production**
 

@@ -529,7 +529,7 @@ L'espace admin dispose maintenant d'une **section Messagerie entièrement foncti
 - **✅ Intervention directe** : Messages admin envoyés vers vrais utilisateurs
 - **✅ Notes administratives** : Messages internes avec checkbox dédiée
 - **✅ Suppression RGPD** : Effacement définitif en base de données
-- **🔧 Parsing intelligent** : Identification automatique des destinataires
+- 🔧 **Parsing intelligent** : Identification automatique des destinataires
 
 ---
 
@@ -660,6 +660,44 @@ export const RequireAdmin: React.FC = ({ children }) => {
 - ✅ **Gestion erreurs** et validation données
 - ✅ **Tests suppression RGPD** avec vérification
 
+#### Tests E2E avec Playwright
+
+En complément, des tests End-to-End (E2E) avec Playwright sont mis en place pour valider les parcours utilisateurs directement dans un navigateur, simulant ainsi des conditions réelles d'utilisation.
+
+**Exemple de test pour le formulaire de la messagerie :**
+
+```typescript
+import { test, expect } from "@playwright/test";
+
+test.describe("Messagerie Admin E2E", () => {
+  test("Le formulaire de réponse doit s'afficher et être fonctionnel", async ({
+    page,
+  }) => {
+    // L'authentification est généralement gérée dans un setup global (ex: state.json)
+    await page.goto("/admin/messagerie");
+
+    // Cliquer sur la première conversation pour afficher le formulaire
+    await page.locator(".conversation-list-item").first().click();
+
+    // Vérifier que le champ de saisie et le bouton d'envoi sont visibles
+    const messageInput = page.getByPlaceholder(/Écrire un message/i);
+    await expect(messageInput).toBeVisible();
+
+    const sendButton = page.getByRole("button", { name: /Envoyer/i });
+    await expect(sendButton).toBeVisible();
+
+    // Simuler la saisie et l'envoi d'un message
+    await messageInput.fill("Ceci est un message de test E2E.");
+    await sendButton.click();
+
+    // Vérifier que le message envoyé apparaît dans la conversation
+    await expect(
+      page.locator("text=Ceci est un message de test E2E.")
+    ).toBeVisible();
+  });
+});
+```
+
 ## Métriques de Performance
 
 | Seuil     | Limite  | Description                    |
@@ -762,162 +800,3 @@ export interface CommandeDetailed extends Commande {
   };
 }
 ```
-
----
-
-# 🏗️ Architecture & Routing
-
-## Structure des modes d'application
-
-```typescript
-type AppMode =
-  | "landing" // Page d'accueil publique
-  | "login" // Connexion utilisateur
-  | "signup" // Inscription utilisateur
-  | "app" // Interface utilisateur standard
-  | "admin" // Espace admin (ADMIN uniquement)
-  | "payment-success" // Retour paiement réussi
-  | "payment-cancel"; // Retour paiement annulé
-```
-
-## Hiérarchie des providers
-
-```tsx
-function App() {
-  return (
-    <AuthProvider>
-      {" "}
-      // 🔐 Authentification globale
-      <ToastProvider>
-        {" "}
-        // 🔔 Notifications globales
-        <DemoModeProvider>
-          {" "}
-          // 🎭 Gestion mode démo
-          <QueryClientProvider>
-            {" "}
-            // 📊 React Query
-            <AppContent />
-          </QueryClientProvider>
-        </DemoModeProvider>
-      </ToastProvider>
-    </AuthProvider>
-  );
-}
-```
-
-## Gestion des États et Navigation
-
-### Protection des Routes Admin
-
-```tsx
-<RequireAdmin
-  onAccessDenied={(reason) => console.log(reason)}
-  fallback={<AccessDeniedPage />}
->
-  <AdminInterface />
-</RequireAdmin>
-```
-
-### Navigation Intelligente
-
-- **User → Admin** : `handleGoToAdmin()` (si role ADMIN)
-- **Admin → User** : `handleBackToApp()` (bouton dans AdminLayout)
-- **Protection automatique** : Redirection selon rôle et permissions
-- **Session expirée** : Reconnexion automatique avec état sauvegardé
-
----
-
-# 📊 Métriques de Livraison Finales
-
-## ✅ **Complétude Fonctionnelle**
-
-- **Interface** : 100% (10/10 pages) - **Messagerie migrée + Modales modernes**
-- **API Integration** : 100% (57/57 endpoints) - **+9 endpoints messagerie admin**
-- **Sécurité** : 100% (protection complète + RGPD)
-- **Tests** : 100% (suite automatisée + tests communication bidirectionnelle)
-- **Documentation** : 100% (guide unifié complet)
-
-## ✅ **Qualité Technique**
-
-- **Performance** : ⚡ Excellent (< 2s partout)
-- **Sécurité** : 🔒 Renforcée (multi-niveaux + audit)
-- **UX/UI** : 🎨 Professionnel (design cohérent + modales modernes)
-- **Maintenabilité** : 🛠️ Excellente (TypeScript strict + architecture modulaire)
-- **Évolutivité** : 📈 Prête (patterns réutilisables)
-
-## ✅ **Prêt pour Déploiement**
-
-- **Recette métier** : ✅ Validée + messagerie admin + modales détails
-- **Tests charge** : ✅ Passés + tests bidirectionnels
-- **Sécurité audit** : ✅ Conforme + RGPD messagerie
-- **Performance** : ✅ Optimisée + React Query cache + tri serveur
-- **Documentation** : ✅ Complète + guide unifié
-
----
-
-# 🚀 Guide de Déploiement Client
-
-## Mode Démo pour Présentations
-
-```bash
-# URL démo complète pour client
-https://staka-livres.com/admin?demo=true&duration=45
-
-# URL démo lecture seule pour investisseurs
-https://staka-livres.com/admin?demo=true&readonly=true&duration=60
-```
-
-## Configuration Production
-
-```env
-# Variables d'environnement production
-NODE_ENV=production
-REACT_APP_API_BASE_URL=https://api.staka-livres.com
-REACT_APP_SECURITY_AUDIT=true
-REACT_APP_DEMO_MODE=true
-```
-
-## Monitoring et Maintenance
-
-- **Logs sécurité** automatiques vers serveur
-- **Métriques performance** en temps réel
-- **Détection erreurs** avec alertes
-- **Backup états** utilisateur automatique
-
----
-
-# 🎯 Conclusion
-
-## ✅ Intégration 100% Fonctionnelle
-
-L'espace admin de **Staka Livres** est maintenant **prêt pour la livraison client** avec toutes les **nouvelles fonctionnalités** :
-
-- 🔐 **Sécurité renforcée** avec audit temps réel + conformité RGPD
-- 🎭 **Mode démo professionnel** pour présentations client
-- 🧪 **Tests automatisés** pour la maintenance + validation complète
-- 📱 **Interface complète** et intuitive + modales détails modernes
-- ⚡ **Performance optimisée** pour la production + tri côté serveur
-- 🛠️ **Architecture robuste** pour l'évolutivité + 57 endpoints API
-- 💬 **Messagerie admin fonctionnelle** avec vraies données backend
-- 📊 **Gestion commandes complète** avec statistiques temps réel
-
-## 🏆 **Valeur Ajoutée**
-
-- **Supervision complète** : Utilisateurs et commandes dans interfaces unifiées
-- **Communication bidirectionnelle** : Admin peut intervenir dans toute conversation
-- **Performance optimale** : Pagination infinie, cache intelligent, tri serveur
-- **Interface moderne** : Modales détails élégantes avec toutes les données
-- **Architecture évolutive** : Types TypeScript stricts, hooks modulaires
-
-## 📈 **Évolutions Possibles**
-
-- **Notifications temps réel** : WebSocket pour alertes instantanées
-
----
-
-**✨ Espace Admin Staka Livres - Guide Complet Unifié**
-
-_Documentation technique complète pour une expérience administrateur exceptionnelle_
-
-> **Note technique** : Application stable, sécurisée et prête pour la mise en production immédiate. Architecture unifiée avec patterns cohérents pour maintenance optimale.

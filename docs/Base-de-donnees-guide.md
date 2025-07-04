@@ -471,6 +471,63 @@ enum PageType {
 }
 ```
 
+### ❓ **11. FAQ - Foire Aux Questions**
+
+**Table** : `faqs`
+
+```prisma
+model FAQ {
+  id        String   @id @default(uuid())
+  question  String   @db.VarChar(255)
+  reponse   String   @db.Text
+  categorie String   @db.VarChar(100)
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categorie])
+  @@index([isActive])
+  @@map("faqs")
+}
+```
+
+**Utilisation :**
+
+- Permet de construire une section FAQ dynamique sur le site.
+- Les catégories permettent de regrouper les questions.
+- Le `sortOrder` contrôle l'ordre d'affichage.
+
+### 💰 **12. Tarif - Grille Tarifaire**
+
+**Table** : `tarifs`
+
+```prisma
+model Tarif {
+  id          String   @id @default(uuid())
+  nom         String   @db.VarChar(255)
+  description String?  @db.Text
+  type        String   @db.VarChar(100) // "CORRECTION", "RELECTURE", "TRADUCTION"
+  prixBase    Float    @default(0)
+  prixParMot  Float?
+  prixParPage Float?
+  devises     String   @default("EUR") @db.VarChar(10)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type])
+  @@index([isActive])
+  @@map("tarifs")
+}
+```
+
+**Logique de tarification :**
+
+- Le champ `type` permet de différencier les services.
+- La tarification peut être un forfait (`prixBase`), ou variable (`prixParMot`, `prixParPage`).
+- Permet de construire un calculateur de prix dynamique.
+
 ---
 
 ## 🔗 **Relations et Contraintes**
@@ -1162,150 +1219,52 @@ export interface CommandeDetailed extends Commande {
 }
 ```
 
-### **🔧 Fonctionnalités Techniques Clés - Migration Backend**
-
-#### **Parser de Conversation IDs Intelligent**
+### **❓ Endpoints Admin FAQ (4 endpoints) - ✅ NOUVEAU**
 
 ```typescript
-// Gestion intelligente des types de conversations
-// Format: direct_userId1_userId2 | projet_commandeId | support_supportRequestId
+// Routes admin FAQ dans backend/src/routes/admin/faq.ts
 
-const parseConversationId = async (conversationId: string, adminId: string) => {
-  let receiverId = null;
-  let commandeId = null;
-  let supportRequestId = null;
+// 1. Liste complète des FAQs
+GET /admin/faq
+Response: { data: FAQ[] }
 
-  if (conversationId.startsWith("direct_")) {
-    // Conversation directe : extraire l'autre utilisateur
-    const parts = conversationId.split("_");
-    for (let i = 1; i < parts.length; i++) {
-      if (parts[i] !== adminId) {
-        receiverId = parts[i];
-        break;
-      }
-    }
-  } else if (conversationId.startsWith("projet_")) {
-    // Conversation projet : récupérer le propriétaire
-    commandeId = conversationId.replace("projet_", "");
-    const commande = await prisma.commande.findUnique({
-      where: { id: commandeId },
-      select: { userId: true },
-    });
-    receiverId = commande?.userId;
-  } else if (conversationId.startsWith("support_")) {
-    // Conversation support : récupérer le créateur du ticket
-    supportRequestId = conversationId.replace("support_", "");
-    const supportRequest = await prisma.supportRequest.findUnique({
-      where: { id: supportRequestId },
-      select: { userId: true },
-    });
-    receiverId = supportRequest?.userId;
-  }
+// 2. Création d'une nouvelle FAQ
+POST /admin/faq
+Body: { question: string, reponse: string, categorie: string, isActive?: boolean }
+Response: { data: FAQ }
 
-  return { receiverId, commandeId, supportRequestId };
-};
+// 3. Modification d'une FAQ
+PATCH /admin/faq/:id
+Body: { question?: string, reponse?: string, categorie?: string, isActive?: boolean, sortOrder?: number }
+Response: { data: FAQ }
+
+// 4. Suppression d'une FAQ
+DELETE /admin/faq/:id
+Response: { message: "FAQ supprimée avec succès" }
 ```
 
-#### **Groupement Intelligent des Messages en Conversations**
+### **💰 Endpoints Admin Tarifs (4 endpoints) - ✅ NOUVEAU**
 
 ```typescript
-// Algorithme de groupement pour interface admin
-const groupMessagesIntoConversations = (messages: Message[]) => {
-  const conversationsMap = new Map();
+// Routes admin tarifs dans backend/src/routes/admin/tarifs.ts
 
-  messages.forEach((message) => {
-    let conversationId: string;
+// 1. Liste complète des tarifs
+GET /admin/tarifs
+Response: { data: Tarif[] }
 
-    if (message.commandeId) {
-      conversationId = `projet_${message.commandeId}`;
-    } else if (message.supportRequestId) {
-      conversationId = `support_${message.supportRequestId}`;
-    } else {
-      // Conversation directe
-      const userIds = [message.senderId, message.receiverId]
-        .filter(Boolean)
-        .sort();
-      conversationId = `direct_${userIds.join("_")}`;
-    }
+// 2. Création d'un nouveau tarif
+POST /admin/tarifs
+Body: { nom: string, description?: string, type: string, prixBase?: number, prixParMot?: number, prixParPage?: number, isActive?: boolean }
+Response: { data: Tarif }
 
-    if (!conversationsMap.has(conversationId)) {
-      conversationsMap.set(conversationId, {
-        id: conversationId,
-        type: message.commandeId
-          ? "projet"
-          : message.supportRequestId
-          ? "support"
-          : "direct",
-        messages: [],
-        messageCount: 0,
-        unreadCount: 0,
-        lastMessage: null,
-      });
-    }
+// 3. Modification d'un tarif
+PATCH /admin/tarifs/:id
+Body: { nom?: string, description?: string, type?: string, prixBase?: number, prixParMot?: number, prixParPage?: number, isActive?: boolean }
+Response: { data: Tarif }
 
-    const conversation = conversationsMap.get(conversationId);
-    conversation.messages.push(message);
-    conversation.messageCount++;
-    if (!message.isRead) conversation.unreadCount++;
-
-    if (
-      !conversation.lastMessage ||
-      message.createdAt > conversation.lastMessage.createdAt
-    ) {
-      conversation.lastMessage = {
-        content: message.content,
-        createdAt: message.createdAt,
-        sender:
-          message.sender?.prenom + " " + message.sender?.nom || "Utilisateur",
-      };
-    }
-  });
-
-  return Array.from(conversationsMap.values());
-};
-```
-
-#### **Statistiques Calculées Temps Réel**
-
-```typescript
-// Endpoint /admin/stats/advanced - Dashboard complet
-const getAdvancedStats = async () => {
-  const [
-    totalCommandes,
-    totalFactures,
-    totalUtilisateurs,
-    totalMessages,
-    messagesNonLus,
-    commandesEnCours,
-    facturesEnAttente,
-    utilisateursActifs,
-  ] = await Promise.all([
-    prisma.commande.count(),
-    prisma.invoice.count(),
-    prisma.user.count({ where: { isActive: true } }),
-    prisma.message.count(),
-    prisma.message.count({ where: { isRead: false } }),
-    prisma.commande.count({ where: { statut: "EN_COURS" } }),
-    prisma.invoice.count({ where: { status: "GENERATED" } }),
-    prisma.user.count({
-      where: {
-        isActive: true,
-        createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
-      },
-    }),
-  ]);
-
-  return {
-    totalCommandes,
-    totalFactures,
-    totalUtilisateurs,
-    totalMessages,
-    messagesNonLus,
-    commandesEnCours,
-    facturesEnAttente,
-    utilisateursActifs,
-  };
-};
+// 4. Suppression d'un tarif
+DELETE /admin/tarifs/:id
+Response: { message: "Tarif supprimé avec succès" }
 ```
 
 ---

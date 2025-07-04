@@ -62,28 +62,29 @@ npm run dev
 ```
 backend/
 ├── src/
-│   ├── controllers/          # Logique métier
-│   │   ├── authController.ts      # Authentification
-│   │   ├── adminController.ts     # Administration
-│   │   ├── commandeController.ts  # Gestion commandes (admin)
-│   │   ├── commandeClientController.ts  # Commandes côté client
-│   │   ├── messagesController.ts  # Système de messagerie
-│   │   └── paymentController.ts   # Paiements Stripe
-│   ├── middleware/           # Middlewares de sécurité
-│   │   ├── auth.ts               # Authentification JWT
-│   │   └── requireRole.ts        # Contrôle d'accès par rôle
-│   ├── routes/              # Définition des routes
-│   │   ├── auth.ts              # Routes d'authentification
-│   │   ├── admin.ts             # Routes administrateur
-│   │   ├── commandes.ts         # Routes commandes client
-│   │   ├── messages.ts          # Routes messagerie
-│   │   └── payments.ts          # Routes paiements
-│   ├── services/            # Services externes
-│   │   └── stripeService.ts     # Intégration Stripe
-│   ├── utils/               # Utilitaires
-│   │   └── token.ts             # Gestion tokens JWT
-│   ├── types/               # Types TypeScript
-│   ├── config/              # Configuration
+│   ├── controllers/          # Logique métier (10+ fichiers)
+│   ├── middleware/           # Middlewares (auth, rôles)
+│   ├── routes/               # Définition des routes Express
+│   │   ├── admin/            # Routes espace admin
+│   │   │   ├── users.ts      # ✅ Gestion utilisateurs
+│   │   │   ├── commandes.ts  # ✅ Gestion commandes
+│   │   │   ├── factures.ts   # ✅ Gestion factures (NOUVEAU)
+│   │   │   ├── faq.ts        # ✅ Gestion FAQ (NOUVEAU)
+│   │   │   └── tarifs.ts     # ✅ Gestion tarifs (NOUVEAU)
+│   │   ├── admin.ts          # Routeur principal admin
+│   │   ├── auth.ts           # Authentification
+│   │   ├── commandes.ts      # Commandes client
+│   │   ├── faq.ts            # FAQ publique
+│   │   ├── invoice.ts        # Factures client
+│   │   ├── messages.ts       # Messagerie
+│   │   ├── payments/         # Routes paiements
+│   │   │   └── webhook.ts    # Webhook Stripe
+│   │   ├── payments.ts       # Création session paiement
+│   │   └── tarifs.ts         # Tarifs publics
+│   ├── services/             # Services (Stripe, S3, etc.)
+│   ├── utils/                # Utilitaires (mailer, tokens)
+│   ├── types/                # Types TypeScript partagés
+│   ├── config/               # Configuration
 │   └── server.ts            # Point d'entrée principal
 ├── prisma/
 │   ├── schema.prisma        # Modèle de données
@@ -162,6 +163,33 @@ Message {
   parent?: Message
   replies: Message[]
   attachments: MessageAttachment[]
+}
+
+// FAQ (NOUVEAU)
+FAQ {
+  id: string (UUID)
+  question: string
+  reponse: string
+  categorie: string
+  isActive: boolean
+  sortOrder: number
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+// Tarif (NOUVEAU)
+Tarif {
+  id: string (UUID)
+  nom: string
+  description: string
+  prix: number
+  prixFormate: string
+  typeService: string
+  dureeEstimee?: string
+  actif: boolean
+  ordre: number
+  createdAt: DateTime
+  updatedAt: DateTime
 }
 ```
 
@@ -1502,9 +1530,9 @@ chore: maintenance
 
 ## 🎯 **Intégration Espace Admin - État Actuel 2025**
 
-### ✅ **Modules Opérationnels (3/9 modules terminés)**
+### ✅ **Modules Opérationnels (6/9 modules terminés)**
 
-L'espace admin frontend est maintenant **complet avec mock data**. **3 modules backend sont production-ready** et **6 modules restent à implémenter** :
+L'espace admin frontend est maintenant **complet avec mock data**. **6 modules backend sont production-ready** et **3 modules restent à implémenter** :
 
 #### **1. AdminDashboard** - Tableau de Bord ⚠️ À IMPLÉMENTER
 
@@ -1535,31 +1563,36 @@ PUT /admin/commandes/:id → { "statut": "EN_COURS" | "TERMINE" | "ANNULEE" | "S
 DELETE /admin/commandes/:id → Suppression définitive avec validation
 ```
 
-#### **4. AdminFactures** - Interface Facturation ⚠️ À IMPLÉMENTER
+#### **4. AdminFactures** - Interface Facturation ✅ **PRODUCTION READY (NOUVEAU)**
 
 ```typescript
-GET /admin/invoices?page=1&statut=paid&search=client
-POST /admin/invoice/:id/reminder
-GET /admin/invoice/:id/download
-DELETE /admin/invoice/:id
+GET /admin/factures/stats → { total, paid, unpaid, overdue, totalRevenue }
+GET /admin/factures?page=1&limit=10&search=client&statut=PAID
+GET /admin/factures/:id → Détails facture avec client et commande
+PUT /admin/factures/:id → { "statut": "PAID" | "UNPAID" }
+POST /admin/factures/:id/reminder → Envoi rappel de paiement
+GET /admin/factures/:id/pdf → Téléchargement PDF sécurisé
+DELETE /admin/factures/:id → Suppression facture
 ```
 
-#### **5. AdminFAQ** - Base de Connaissance ⚠️ À IMPLÉMENTER
+#### **5. AdminFAQ** - Base de Connaissance ✅ **PRODUCTION READY (NOUVEAU)**
 
 ```typescript
-GET /admin/faq?category=GENERAL&visible=true
-POST /admin/faq { question, answer, category, order }
-PATCH /admin/faq/:id/reorder { newOrder: 5 }
-DELETE /admin/faq/:id
+GET /admin/faq?page=1&limit=10&search=question&visible=true&categorie=GENERAL
+GET /admin/faq/:id → Détails d'une FAQ
+POST /admin/faq → { question, reponse, categorie, isActive, sortOrder }
+PUT /admin/faq/:id → Mise à jour complète
+DELETE /admin/faq/:id → Suppression FAQ
 ```
 
-#### **6. AdminTarifs** - Configuration Prix ⚠️ À IMPLÉMENTER
+#### **6. AdminTarifs** - Configuration Prix ✅ **PRODUCTION READY (NOUVEAU)**
 
 ```typescript
-GET /admin/tarifs?service=CORRECTION&active=true
-POST /admin/tarif { service, price, description, features }
-PATCH /admin/tarif/:id/activate
-DELETE /admin/tarif/:id
+GET /admin/tarifs?page=1&limit=10&search=nom&actif=true&typeService=CORRECTION
+GET /admin/tarifs/:id → Détails d'un tarif
+POST /admin/tarifs → { nom, description, prix, typeService, actif, ordre }
+PUT /admin/tarifs/:id → Mise à jour complète
+DELETE /admin/tarifs/:id → Suppression tarif
 ```
 
 #### **7. AdminPages** - CMS Pages Statiques ⚠️ À IMPLÉMENTER
@@ -1607,19 +1640,22 @@ GET /admin/conversations/stats → { total, unread, totalMessages }
 
 ### 📊 **Bilan d'Avancement Actuel**
 
-**✅ Terminé (33% - 3/9 modules)** :
+**✅ Terminé (67% - 6/9 modules)** :
 
 - **AdminUtilisateurs** : 7 endpoints + tests + sécurité RGPD
 - **AdminCommandes** : 4 endpoints + filtres + statistiques
+- **AdminFactures**: 7 endpoints + stats + PDF (NOUVEAU)
+- **AdminFAQ**: 5 endpoints + filtres (NOUVEAU)
+- **AdminTarifs**: 5 endpoints + filtres (NOUVEAU)
 - **AdminMessagerie** : 4 endpoints + parser conversations
 
-**⚠️ À implémenter (67% - 6/9 modules)** :
+**⚠️ À implémenter (33% - 3/9 modules)** :
 
-- AdminDashboard, AdminFactures, AdminFAQ, AdminTarifs, AdminPages, AdminStatistiques, AdminLogs
+- AdminDashboard, AdminPages, AdminStatistiques, AdminLogs
 
 ### 🔄 **Plan d'Intégration Restant**
 
-1. **Créer les contrôleurs** : `adminFacturesController.ts`, `adminFAQController.ts`, etc.
+1. **Créer les contrôleurs** : `adminDashboardController.ts`, `adminFAQController.ts`, etc.
 2. **Ajouter les routes** : Extension du fichier `admin.ts` existant
 3. **Implémenter la logique métier** : CRUD avec validation et sécurité
 4. **Remplacer les mock services** frontend par vrais appels API
