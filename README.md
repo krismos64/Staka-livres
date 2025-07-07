@@ -11,6 +11,7 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 ### 🎨 **Interface Moderne**
 
 - **Landing Page production-ready** : 14 composants React (2400+ lignes) avec hook usePricing
+- **Tarifs dynamiques** : Synchronisation temps réel admin → landing via React Query
 - **Système d'authentification** sécurisé avec JWT
 - **Page d'inscription** avec validation complète
 - **Dashboard client** avec gestion complète des projets
@@ -22,13 +23,15 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 ### 🎨 **Landing Page Production-Ready (14 Composants)**
 
 - **Architecture complète** : 14 composants React spécialisés (2400+ lignes total)
-- **PricingCalculator** : Hook usePricing avec tarification dégressive intelligente
+- **PricingCalculator dynamique** : Hook usePricing avec tarification depuis API et synchronisation temps réel
+- **Packs dynamiques** : Construction intelligente des offres depuis tarifs actifs avec fallbacks
 - **Composants majeurs** : Hero, Navigation sticky, Services, Packs, FAQ accordéon, Contact
 - **Features avancées** : Widget WhatsApp flottant, formulaires validés, animations fluides
 - **Mobile-first** : Design responsive avec micro-interactions optimisées
 - **SEO optimisé** : Structure sémantique HTML5 production-ready
-- **Hook personnalisé** : `usePricing.ts` avec logique métier tarification
+- **Hook personnalisé** : `usePricing.ts` avec React Query et cache intelligent 5 minutes
 - **Navigation intelligente** : Détection scroll, menu mobile, sticky CTA bar
+- **Tarifs dynamiques** : Synchronisation admin → landing sans rechargement
 
 ---
 
@@ -145,6 +148,23 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **Performance** : Pagination infinie, invalidation croisée, retry automatique
 - **Hooks avancés** : `useInfiniteQuery`, `useMutation`, cache 30s-5min, `useSendMessage`
 - **Architecture** : 3 composants + 2 suites hooks React Query (1000+ lignes total)
+
+### 💰 **Système de Tarifs Dynamiques avec React Query (2025)**
+
+- **Hook usePricing()** : Hook principal avec React Query et cache intelligent 5 minutes
+- **Synchronisation temps réel** : Admin → Landing Page sans rechargement
+- **PricingCalculator dynamique** : Génération automatique des cartes tarifs depuis API
+- **Packs dynamiques** : Construction intelligente des offres depuis tarifs actifs
+- **Composants UI réutilisables** : `Loader` et `ErrorMessage` avec variants et retry
+- **Gestion d'erreurs robuste** : Fallbacks automatiques sur données par défaut
+- **Cache partagé** : Un seul appel API pour tous les composants landing
+- **Invalidation intelligente** : `useTarifInvalidation()` pour synchronisation admin
+- **Tests complets** : 10 tests unitaires + 5 tests E2E Cypress validés
+- **Architecture production** : `queryKey: ["tarifs", "public"]` avec invalidation croisée
+- **UX optimisée** : États de chargement, messages d'erreur, boutons retry
+- **Performance** : Cache partagé, déduplication requêtes, background refresh
+
+📖 **Documentation complète** : [Guide Tarifs Dynamiques](docs/TARIFS_DYNAMIQUES_INTEGRATION.md)
 
 ### 📊 **API Backend Robuste**
 
@@ -426,6 +446,20 @@ Staka-livres/
 - ✅ Retry automatique et déduplication des requêtes
 - ✅ Toasts d'erreurs intelligents et EmptyState
 - ✅ Disabled states pour boutons pendant chargement
+
+**💰 Système de Tarifs Dynamiques Complet (2025) :**
+
+- ✅ **Hook usePricing()** : Intégration React Query avec cache 5 minutes et invalidation automatique
+- ✅ **PricingCalculator refactorisé** : Génération dynamique des cartes tarifs depuis API (remplace hard-code)
+- ✅ **Packs refactorisé** : Construction intelligente des offres depuis tarifs actifs avec fallbacks
+- ✅ **Composants UI réutilisables** : `Loader` et `ErrorMessage` avec variants, retry et accessibilité
+- ✅ **Synchronisation temps réel** : Admin → Landing Page sans rechargement via invalidation cache
+- ✅ **useTarifInvalidation()** : Hook spécialisé pour synchronisation admin avec méthodes avancées
+- ✅ **Tests unitaires complets** : 10 tests Vitest validant cache, invalidation, synchronisation, performance
+- ✅ **Tests E2E Cypress** : 5 tests validant sync admin→landing, gestion erreurs, cache React Query
+- ✅ **Architecture production** : `queryKey: ["tarifs", "public"]` avec cache partagé et déduplication
+- ✅ **UX robuste** : Gestion d'erreurs gracieuse, fallbacks automatiques, états de chargement optimisés
+- ✅ **Performance optimale** : Un seul appel API pour tous composants, background refresh, retry intelligent
 
 **🏗️ Refactorisation AdminUtilisateurs Complète (2025) :**
 

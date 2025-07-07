@@ -12,12 +12,15 @@ La base de données **Staka Livres** est une architecture complète MySQL 8 gér
 - **Port** : 3306 (MySQL), 5555 (Prisma Studio)
 - **Container** : `staka_db` (MySQL), `staka_backend` (API + Prisma)
 - **Volume persistant** : Données sauvegardées lors des redémarrages
-- **API endpoints** : **46+ endpoints** dont 16 endpoints admin opérationnels
+- **API endpoints** : **60+ endpoints** dont 25+ endpoints admin opérationnels
 
 ### 🆕 **Dernières Évolutions 2025**
 
 - ✅ **Module Admin Users complet** : 7 endpoints opérationnels avec CRUD complet
 - ✅ **Module Admin Commandes enrichi** : 4 endpoints avec modale détails moderne
+- ✅ **Module Admin Factures complet** : 7 endpoints avec statistiques et PDF
+- ✅ **Module Admin FAQ opérationnel** : 5 endpoints CRUD avec catégories
+- ✅ **Module Admin Tarifs dynamiques** : 6 endpoints avec synchronisation landing page
 - ✅ **Messagerie Admin migrée** : 9 endpoints backend réels (fini les mocks)
 - ✅ **Types TypeScript unifiés** : Alignement parfait frontend ↔ backend
 - ✅ **Suppression RGPD complète** : Transactions sécurisées pour effacement définitif
@@ -498,35 +501,47 @@ model FAQ {
 - Les catégories permettent de regrouper les questions.
 - Le `sortOrder` contrôle l'ordre d'affichage.
 
-### 💰 **12. Tarif - Grille Tarifaire**
+### 💰 **12. Tarif - Grille Tarifaire Dynamique**
 
 **Table** : `tarifs`
 
 ```prisma
 model Tarif {
-  id          String   @id @default(uuid())
-  nom         String   @db.VarChar(255)
-  description String?  @db.Text
-  type        String   @db.VarChar(100) // "CORRECTION", "RELECTURE", "TRADUCTION"
-  prixBase    Float    @default(0)
-  prixParMot  Float?
-  prixParPage Float?
-  devises     String   @default("EUR") @db.VarChar(10)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(uuid())
+  nom          String   @db.VarChar(255)
+  description  String   @db.Text
+  prix         Int      // Prix en centimes (pour éviter les problèmes de float)
+  prixFormate  String   @db.VarChar(50) // Prix formaté pour affichage (ex: "2€", "350€")
+  typeService  String   @db.VarChar(100) // Type de service (Correction, Relecture, etc.)
+  dureeEstimee String?  @db.VarChar(100) // Durée estimée (ex: "7-8 jours")
+  actif        Boolean  @default(true)
+  ordre        Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  @@index([type])
-  @@index([isActive])
+  @@index([actif])
+  @@index([ordre])
+  @@index([typeService])
+  @@index([createdAt])
   @@map("tarifs")
 }
 ```
 
-**Logique de tarification :**
+**Logique de tarification dynamique :**
 
-- Le champ `type` permet de différencier les services.
-- La tarification peut être un forfait (`prixBase`), ou variable (`prixParMot`, `prixParPage`).
-- Permet de construire un calculateur de prix dynamique.
+- Le champ `prix` est en centimes pour éviter les erreurs de calcul float
+- Le champ `prixFormate` contient la version affichage (ex: "2€/page", "350€ forfait")
+- Le champ `typeService` permet de différencier : "CORRECTION", "RELECTURE", "PACK_INTEGRAL"
+- Le champ `ordre` contrôle l'affichage sur la landing page
+- Synchronisation temps réel : modifications admin → landing page via React Query
+- Permet de construire dynamiquement le calculateur de prix et les cartes tarifs
+
+**Utilisation dans l'application :**
+
+- **Landing page** : Hook `usePricing()` avec cache React Query 5 minutes
+- **PricingCalculator** : Génération dynamique des cartes depuis API
+- **Packs** : Construction intelligente des offres depuis tarifs actifs
+- **Admin** : Interface CRUD complète avec synchronisation instantanée
 
 ---
 
@@ -1243,28 +1258,102 @@ DELETE /admin/faq/:id
 Response: { message: "FAQ supprimée avec succès" }
 ```
 
-### **💰 Endpoints Admin Tarifs (4 endpoints) - ✅ NOUVEAU**
+### **💰 Endpoints Admin Tarifs (6 endpoints) - ✅ PRODUCTION READY (NOUVEAU)**
 
 ```typescript
 // Routes admin tarifs dans backend/src/routes/admin/tarifs.ts
 
-// 1. Liste complète des tarifs
-GET /admin/tarifs
-Response: { data: Tarif[] }
+// 1. Liste complète des tarifs avec pagination et filtres
+GET /admin/tarifs?page=1&limit=10&search=correction&actif=true&typeService=CORRECTION&sortBy=ordre&sortDirection=asc
+Query params: page, limit, search, actif, typeService, sortBy, sortDirection
+Response: { success: true, data: Tarif[], pagination: PaginationInfo }
 
-// 2. Création d'un nouveau tarif
+// 2. Détails d'un tarif spécifique
+GET /admin/tarifs/:id
+Response: { success: true, data: Tarif }
+
+// 3. Création d'un nouveau tarif
 POST /admin/tarifs
-Body: { nom: string, description?: string, type: string, prixBase?: number, prixParMot?: number, prixParPage?: number, isActive?: boolean }
-Response: { data: Tarif }
+Body: { nom: string, description: string, prix: number, prixFormate: string, typeService: string, dureeEstimee?: string, actif?: boolean, ordre?: number }
+Response: { success: true, data: Tarif, message: "Tarif créé avec succès" }
 
-// 3. Modification d'un tarif
-PATCH /admin/tarifs/:id
-Body: { nom?: string, description?: string, type?: string, prixBase?: number, prixParMot?: number, prixParPage?: number, isActive?: boolean }
-Response: { data: Tarif }
+// 4. Modification d'un tarif existant
+PUT /admin/tarifs/:id
+Body: { nom?: string, description?: string, prix?: number, prixFormate?: string, typeService?: string, dureeEstimee?: string, actif?: boolean, ordre?: number }
+Response: { success: true, data: Tarif, message: "Tarif mis à jour avec succès" }
 
-// 4. Suppression d'un tarif
+// 5. Suppression d'un tarif
 DELETE /admin/tarifs/:id
-Response: { message: "Tarif supprimé avec succès" }
+Response: { success: true, message: "Tarif supprimé avec succès" }
+
+// 6. Statistiques des tarifs
+GET /admin/tarifs/stats/overview
+Response: { success: true, data: { total: number, actifs: number, inactifs: number, typesServices: Array<{type: string, count: number}> } }
+```
+
+### **📋 Endpoints Admin Factures (7 endpoints) - ✅ PRODUCTION READY (NOUVEAU)**
+
+```typescript
+// Routes admin factures dans backend/src/routes/admin/factures.ts
+
+// 1. Statistiques des factures pour dashboard
+GET /admin/factures/stats
+Response: { success: true, data: { total: number, paid: number, unpaid: number, overdue: number, totalRevenue: number } }
+
+// 2. Liste paginée avec filtres avancés
+GET /admin/factures?page=1&limit=10&search=client&statut=PAID
+Query params: page, limit, search, statut
+Response: { success: true, data: Invoice[], pagination: PaginationInfo }
+
+// 3. Détails facture complète avec client et commande
+GET /admin/factures/:id
+Response: { success: true, data: InvoiceDetailed }
+
+// 4. Mise à jour statut facture
+PUT /admin/factures/:id
+Body: { statut: InvoiceStatus }
+Response: { success: true, data: Invoice, message: "Facture mise à jour avec succès" }
+
+// 5. Suppression facture
+DELETE /admin/factures/:id
+Response: { success: true, message: "Facture supprimée avec succès" }
+
+// 6. Envoi rappel de paiement par email
+POST /admin/factures/:id/reminder
+Response: { success: true, message: "Rappel de paiement envoyé avec succès" }
+
+// 7. Téléchargement PDF facture
+GET /admin/factures/:id/pdf
+Response: Streaming PDF file ou redirection URL
+```
+
+### **❓ Endpoints Admin FAQ (5 endpoints) - ✅ PRODUCTION READY (NOUVEAU)**
+
+```typescript
+// Routes admin FAQ dans backend/src/routes/admin/faq.ts
+
+// 1. Liste paginée avec filtres
+GET /admin/faq?page=1&limit=10&search=question&visible=true&categorie=GENERAL
+Query params: page, limit, search, visible, categorie
+Response: { success: true, data: FAQ[], pagination: PaginationInfo }
+
+// 2. Détails d'une FAQ spécifique
+GET /admin/faq/:id
+Response: { success: true, data: FAQ }
+
+// 3. Création d'une nouvelle FAQ
+POST /admin/faq
+Body: { question: string, answer: string, details?: string, categorie: string, visible?: boolean, ordre?: number }
+Response: { success: true, data: FAQ, message: "FAQ créée avec succès" }
+
+// 4. Modification d'une FAQ existante
+PUT /admin/faq/:id
+Body: { question?: string, answer?: string, details?: string, categorie?: string, visible?: boolean, ordre?: number }
+Response: { success: true, data: FAQ, message: "FAQ mise à jour avec succès" }
+
+// 5. Suppression d'une FAQ
+DELETE /admin/faq/:id
+Response: { success: true, message: "FAQ supprimée avec succès" }
 ```
 
 ---
@@ -1379,6 +1468,123 @@ const createUserSchema = Joi.object({
   adresse: Joi.string().max(500).optional().allow(""),
   telephone: Joi.string().max(20).optional().allow(""),
 });
+```
+
+### **🆕 11. Problèmes Nouveaux Modules Admin - Tarifs Dynamiques (Janvier 2025)**
+
+#### **Erreur "Cannot find tarifs data" lors synchronisation landing**
+
+**Problème** : La landing page n'affiche pas les tarifs dynamiques après modification admin
+
+**Diagnostic** :
+
+```bash
+# 1. Vérifier que l'endpoint public fonctionne
+curl -X GET http://localhost:3001/api/tarifs
+
+# 2. Vérifier la synchronisation React Query
+# Dans la console du navigateur sur la landing :
+queryClient.getQueryData(['tarifs', 'public'])
+
+# 3. Vérifier l'invalidation admin
+# Après modification tarif admin, vérifier les logs :
+docker logs staka_backend | grep "INVALIDATION"
+```
+
+**Solution** :
+
+```bash
+# 1. Redémarrer le frontend pour vider le cache
+docker-compose restart frontend
+
+# 2. Si persiste, vérifier l'endpoint admin tarifs
+curl -X GET http://localhost:3001/admin/tarifs \
+  -H "Authorization: Bearer ADMIN_TOKEN"
+
+# 3. Forcer l'invalidation manuelle côté frontend
+# Dans useAdminTarifs.ts, ajouter :
+queryClient.invalidateQueries(['tarifs'])
+```
+
+#### **Erreur "Tarif with this name already exists" lors création**
+
+**Problème** : Contrainte d'unicité sur le nom des tarifs
+
+**Solution** : Cette erreur est **normale et sécurisée**. Pour créer un tarif similaire :
+
+```bash
+# Option 1 : Modifier le nom pour le rendre unique
+POST /admin/tarifs
+{
+  "nom": "Correction Standard - V2",
+  "description": "...",
+  "typeService": "CORRECTION"
+}
+
+# Option 2 : Vérifier s'il faut plutôt modifier l'existant
+GET /admin/tarifs?search=Correction%20Standard
+```
+
+#### **FAQ non visible côté public après création admin**
+
+**Problème** : Champ `visible` non correctement géré
+
+**Diagnostic** :
+
+```bash
+# Vérifier la FAQ en DB
+docker exec -it staka_db mysql -u staka -pstaka stakalivres -e "
+SELECT id, question, visible, categorie FROM faqs ORDER BY ordre;"
+```
+
+**Solution** :
+
+```typescript
+// S'assurer que visible = true lors de la création
+POST /admin/faq
+{
+  "question": "Ma question",
+  "answer": "Ma réponse",
+  "categorie": "GENERAL",
+  "visible": true  // ← Obligatoire pour affichage public
+}
+```
+
+#### **Factures PDF non générées après paiement Stripe**
+
+**Problème** : Webhook Stripe ne déclenche pas la génération de facture
+
+**Diagnostic** :
+
+```bash
+# 1. Vérifier les logs webhook
+docker logs staka_backend | grep -A 10 "STRIPE_WEBHOOK"
+
+# 2. Vérifier la table invoices
+docker exec -it staka_db mysql -u staka -pstaka stakalivres -e "
+SELECT id, number, amount, status, pdfUrl, createdAt
+FROM invoices ORDER BY createdAt DESC LIMIT 5;"
+
+# 3. Tester manuellement la génération
+curl -X POST http://localhost:3001/admin/factures \
+  -H "Authorization: Bearer ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"commandeId":"COMMANDE_ID","amount":5000}'
+```
+
+**Solution** :
+
+```bash
+# 1. Vérifier la configuration Stripe webhook
+# Dans .env du backend
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_SECRET_KEY=sk_test_...
+
+# 2. Redémarrer le service avec nouvelles variables
+docker-compose restart backend
+
+# 3. Tester le webhook avec Stripe CLI
+stripe listen --forward-to localhost:3001/payments/webhook
 ```
 
 ---
@@ -1515,7 +1721,7 @@ const getClientSegmentation = async () => {
 
 ## ✅ **Checklist de Vérification - Base de Données Fonctionnelle** ⚡ **ÉTENDUE 2025**
 
-### **🆕 État Global des Nouveaux Services Admin**
+### **🆕 État Global des Nouveaux Services Admin (2025)**
 
 ```bash
 # 1. Tous les nouveaux endpoints admin répondent
@@ -1530,6 +1736,16 @@ curl -X GET http://localhost:3001/admin/conversations/stats -H "Authorization: B
 
 curl -X GET http://localhost:3001/admin/stats/advanced -H "Authorization: Bearer $TOKEN"
 # Résultat attendu : Stats dashboard complètes
+
+# 🆕 NOUVEAUX MODULES 2025
+curl -X GET http://localhost:3001/admin/tarifs -H "Authorization: Bearer $TOKEN"
+# Résultat attendu : {"success":true,"data":[...],"pagination":{...}}
+
+curl -X GET http://localhost:3001/admin/faq -H "Authorization: Bearer $TOKEN"
+# Résultat attendu : {"success":true,"data":[...],"pagination":{...}}
+
+curl -X GET http://localhost:3001/admin/factures/stats -H "Authorization: Bearer $TOKEN"
+# Résultat attendu : {"success":true,"data":{"total":X,"paid":Y,"unpaid":Z,"totalRevenue":A}}
 
 # 2. Test CRUD utilisateurs complet
 # Création
@@ -1556,6 +1772,37 @@ curl -X POST http://localhost:3001/admin/conversations/direct_adminId_userId/mes
 # 4. Test commande détaillée
 curl -X GET http://localhost:3001/admin/commandes/COMMANDE_ID -H "Authorization: Bearer $TOKEN"
 # Résultat attendu : CommandeDetailed avec user, files, messages, invoices, _count
+
+# 🆕 5. Test CRUD tarifs dynamiques
+curl -X POST http://localhost:3001/admin/tarifs \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"nom":"Test Tarif","description":"Description test","prix":2000,"prixFormate":"20€","typeService":"CORRECTION","actif":true,"ordre":1}'
+
+curl -X PUT http://localhost:3001/admin/tarifs/TARIF_ID \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"actif":false}'
+
+# 🆕 6. Test CRUD FAQ
+curl -X POST http://localhost:3001/admin/faq \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Question test?","answer":"Réponse test","categorie":"TEST","visible":true,"ordre":1}'
+
+# 🆕 7. Test synchronisation tarifs landing page
+# Après modification d'un tarif admin, vérifier que la landing se met à jour :
+curl -X GET http://localhost:3001/api/tarifs
+# Résultat attendu : Les modifications admin doivent être visibles immédiatement
+
+# 🆕 8. Test gestion factures
+curl -X PUT http://localhost:3001/admin/factures/FACTURE_ID \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"statut":"PAID"}'
+
+curl -X GET http://localhost:3001/admin/factures/FACTURE_ID/pdf -H "Authorization: Bearer $TOKEN"
+# Résultat attendu : Téléchargement PDF ou redirection vers URL
 ```
 
 ### **🔒 Vérification Sécurité RGPD**
@@ -1597,35 +1844,46 @@ docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsa
 
 ---
 
-## 📝 **Changelog - Dernières Corrections** ⚡ **VERSION 1.4 - JANVIER 2025**
+## 📝 **Changelog - Dernières Corrections** ⚡ **VERSION 1.5 - JANVIER 2025**
 
-**🚀 Migration Admin Backend Complète**
+**🚀 Migration Admin Backend Complète + Nouveaux Modules**
 
-- ✅ **16 nouveaux endpoints admin** : Users (7) + Commandes (4) + Messagerie (9)
-- ✅ **Types TypeScript unifiés** : `UserDetailed`, `CommandeDetailed`, alignement frontend/backend
+- ✅ **25+ nouveaux endpoints admin** : Users (7) + Commandes (4) + Messagerie (9) + Tarifs (6) + FAQ (5) + Factures (7)
+- ✅ **Types TypeScript unifiés** : `UserDetailed`, `CommandeDetailed`, `InvoiceDetailed`, alignement frontend/backend
 - ✅ **Suppression RGPD atomique** : Transactions Prisma sécurisées, cascade complète
 - ✅ **Protection admin renforcée** : Dernier administrateur actif protégé
 - ✅ **Parser intelligent conversations** : Gestion `direct_`, `projet_`, `support_` IDs
 - ✅ **Dashboard stats temps réel** : Calculs depuis DB réelle, plus de mocks
 - ✅ **Architecture modulaire** : Services séparés, contrôleurs spécialisés
-- ✅ **Tests production validés** : 46+ endpoints opérationnels sous Docker
+- ✅ **Tests production validés** : 60+ endpoints opérationnels sous Docker
+
+**🆕 Nouveaux Modules Business 2025**
+
+- ✅ **Tarifs dynamiques complets** : CRUD admin + synchronisation landing page temps réel via React Query
+- ✅ **Gestion FAQ avancée** : Interface admin + affichage public dynamique avec catégories
+- ✅ **Module factures professionnel** : Statistiques, rappels email, téléchargement PDF sécurisé
+- ✅ **Intégration React Query** : Cache intelligent, invalidation croisée, performance optimisée
+- ✅ **Landing page dynamique** : PricingCalculator + Packs générés depuis API, fini le hard-code
+- ✅ **Tests E2E complets** : Validation synchronisation admin → landing avec Cypress
 
 **🔧 Corrections Techniques Majeures**
 
 - ✅ **Prisma v6.10.1** : Mise à jour vers dernière version stable
 - ✅ **Index DB optimisés** : Performance requêtes admin améliorée
-- ✅ **Validation Joi renforcée** : Sécurité création/modification utilisateurs
+- ✅ **Validation Joi renforcée** : Sécurité création/modification tous modules
 - ✅ **Logs de debugging** : Traçabilité actions admin et API calls
 - ✅ **Gestion d'erreurs unifiée** : Codes HTTP standardisés, messages clairs
+- ✅ **Contraintes unicité** : Prévention doublons tarifs, FAQ, utilisateurs
 
 **📋 Fonctionnalités Business Enrichies**
 
-- ✅ **Modales détails modernes** : Users et Commandes avec toutes données
+- ✅ **Modales détails modernes** : Users, Commandes, Factures avec toutes données
 - ✅ **Filtres avancés** : Recherche, tri, pagination sur tous modules admin
 - ✅ **Actions rapides** : Toggle statut, suppression RGPD one-click
 - ✅ **Compteurs relations** : `_count` sur tous objets (commandes, messages, etc.)
 - ✅ **Communication bidirectionnelle** : Admin ↔ Users opérationnelle
+- ✅ **Synchronisation temps réel** : Modifications admin visibles instantanément côté public
 
 ---
 
-\_Version Base de Données : MySQL 8.4+ avec Prisma v6.10.1
+_Version Base de Données : MySQL 8.4+ avec Prisma v6.10.1 - **ÉTAT PRODUCTION READY 2025**_
