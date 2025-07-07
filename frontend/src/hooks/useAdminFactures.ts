@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { adminAPI } from "../utils/adminAPI";
 
 /**
@@ -72,9 +77,9 @@ export interface AdminFacturesParams {
 export function useAdminFactures(params: AdminFacturesParams) {
   const queryClient = useQueryClient();
 
-  return useQuery(
-    ["admin-factures", params],
-    async () => {
+  return useQuery({
+    queryKey: ["admin-factures", params],
+    queryFn: async () => {
       const response = await adminAPI.getFactures(
         params.page,
         params.limit,
@@ -85,21 +90,21 @@ export function useAdminFactures(params: AdminFacturesParams) {
       );
       return response;
     },
-    {
-      keepPreviousData: true,
-      staleTime: 2 * 60 * 1000, // 2 minutes
-      cacheTime: 5 * 60 * 1000, // 5 minutes
-      retry: 2,
-      refetchOnWindowFocus: false,
-    }
-  );
+    placeholderData: keepPreviousData,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+    refetchOnWindowFocus: false,
+  });
 }
 
 // Hook pour récupérer les statistiques des factures
 export function useFactureStats() {
-  return useQuery("admin-facture-stats", () => adminAPI.getFactureStats(), {
+  return useQuery({
+    queryKey: ["admin-facture-stats"],
+    queryFn: () => adminAPI.getFactureStats(),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 2,
     refetchOnWindowFocus: false,
   });
@@ -107,10 +112,12 @@ export function useFactureStats() {
 
 // Hook pour récupérer les détails d'une facture spécifique
 export function useFactureDetails(id: string) {
-  return useQuery(["admin-facture", id], () => adminAPI.getFactureById(id), {
+  return useQuery({
+    queryKey: ["admin-facture", id],
+    queryFn: () => adminAPI.getFactureById(id),
     enabled: !!id,
     staleTime: 2 * 60 * 1000, // 2 minutes
-    cacheTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
     retry: 2,
     refetchOnWindowFocus: false,
   });
@@ -118,7 +125,8 @@ export function useFactureDetails(id: string) {
 
 // Hook pour télécharger le PDF d'une facture
 export function useDownloadFacture() {
-  return useMutation((id: string) => adminAPI.getFacturePdf(id), {
+  return useMutation({
+    mutationFn: (id: string) => adminAPI.getFacturePdf(id),
     onSuccess: (
       response: { message: string; factureNumber: string; info: string },
       id: string
@@ -139,11 +147,12 @@ export function useDownloadFacture() {
 export function useSendReminder() {
   const queryClient = useQueryClient();
 
-  return useMutation((id: string) => adminAPI.sendFactureReminder(id), {
+  return useMutation({
+    mutationFn: (id: string) => adminAPI.sendFactureReminder(id),
     onSuccess: () => {
       // Invalider le cache des factures pour refléter les changements
-      queryClient.invalidateQueries("admin-factures");
-      queryClient.invalidateQueries("admin-facture-stats");
+      queryClient.invalidateQueries({ queryKey: ["admin-factures"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-facture-stats"] });
     },
     onError: (error: any) => {
       console.error("❌ Erreur lors de l'envoi du rappel:", error);
@@ -155,11 +164,12 @@ export function useSendReminder() {
 export function useDeleteFacture() {
   const queryClient = useQueryClient();
 
-  return useMutation((id: string) => adminAPI.deleteFacture(id), {
+  return useMutation({
+    mutationFn: (id: string) => adminAPI.deleteFacture(id),
     onSuccess: () => {
       // Invalider le cache des factures et des stats
-      queryClient.invalidateQueries("admin-factures");
-      queryClient.invalidateQueries("admin-facture-stats");
+      queryClient.invalidateQueries({ queryKey: ["admin-factures"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-facture-stats"] });
     },
     onError: (error: any) => {
       console.error("❌ Erreur lors de la suppression:", error);
@@ -171,21 +181,19 @@ export function useDeleteFacture() {
 export function useUpdateFactureStatus() {
   const queryClient = useQueryClient();
 
-  return useMutation(
-    ({ id, statut }: { id: string; statut: any }) =>
+  return useMutation({
+    mutationFn: ({ id, statut }: { id: string; statut: any }) =>
       adminAPI.updateFacture(id, { statut }),
-    {
-      onSuccess: (_, { id }) => {
-        // Invalider le cache pour cette facture spécifique et la liste
-        queryClient.invalidateQueries(["admin-facture", id]);
-        queryClient.invalidateQueries("admin-factures");
-        queryClient.invalidateQueries("admin-facture-stats");
-      },
-      onError: (error: any) => {
-        console.error("❌ Erreur lors de la mise à jour du statut:", error);
-      },
-    }
-  );
+    onSuccess: (_, { id }) => {
+      // Invalider le cache pour cette facture spécifique et la liste
+      queryClient.invalidateQueries({ queryKey: ["admin-facture", id] });
+      queryClient.invalidateQueries({ queryKey: ["admin-factures"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-facture-stats"] });
+    },
+    onError: (error: any) => {
+      console.error("❌ Erreur lors de la mise à jour du statut:", error);
+    },
+  });
 }
 
 // Hook utilitaire pour invalider manuellement le cache des factures
@@ -194,17 +202,17 @@ export function useInvalidateFactures() {
 
   return {
     invalidateAll: () => {
-      queryClient.invalidateQueries("admin-factures");
-      queryClient.invalidateQueries("admin-facture-stats");
+      queryClient.invalidateQueries({ queryKey: ["admin-factures"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-facture-stats"] });
     },
     invalidateFacture: (id: string) => {
-      queryClient.invalidateQueries(["admin-facture", id]);
+      queryClient.invalidateQueries({ queryKey: ["admin-facture", id] });
     },
     invalidateList: () => {
-      queryClient.invalidateQueries("admin-factures");
+      queryClient.invalidateQueries({ queryKey: ["admin-factures"] });
     },
     invalidateStats: () => {
-      queryClient.invalidateQueries("admin-facture-stats");
+      queryClient.invalidateQueries({ queryKey: ["admin-facture-stats"] });
     },
   };
 }
@@ -214,12 +222,10 @@ export function usePrefetchFacture() {
   const queryClient = useQueryClient();
 
   return (id: string) => {
-    queryClient.prefetchQuery(
-      ["admin-facture", id],
-      () => adminAPI.getFactureById(id),
-      {
-        staleTime: 2 * 60 * 1000, // 2 minutes
-      }
-    );
+    queryClient.prefetchQuery({
+      queryKey: ["admin-facture", id],
+      queryFn: () => adminAPI.getFactureById(id),
+      staleTime: 2 * 60 * 1000, // 2 minutes
+    });
   };
 }
