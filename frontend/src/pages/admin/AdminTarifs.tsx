@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Modal from "../../components/common/Modal";
+import { useTarifInvalidation } from "../../hooks/useTarifInvalidation";
 import { Tarif } from "../../types/shared";
 import { adminAPI } from "../../utils/adminAPI";
 import { useToasts } from "../../utils/toast";
@@ -16,6 +17,9 @@ const AdminTarifs: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [tarifToDelete, setTarifToDelete] = useState<Tarif | null>(null);
   const [isOperationLoading, setIsOperationLoading] = useState(false);
+  const [loadingTarifIds, setLoadingTarifIds] = useState<Set<string>>(
+    new Set()
+  );
   const [isEditing, setIsEditing] = useState(false);
   const [editFormData, setEditFormData] = useState({
     nom: "",
@@ -30,6 +34,8 @@ const AdminTarifs: React.FC = () => {
   const { showToast } = useToasts();
 
   const queryClient = useQueryClient();
+  const { invalidatePublicTarifs, refetchPublicTarifs } =
+    useTarifInvalidation();
 
   const typesService = [
     "Correction",
@@ -40,7 +46,7 @@ const AdminTarifs: React.FC = () => {
     "Traduction",
   ];
 
-  const loadTarifs = async () => {
+  const loadTarifs = async (showSuccessToast = false) => {
     try {
       setIsLoading(true);
       setError(null);
@@ -48,7 +54,9 @@ const AdminTarifs: React.FC = () => {
       const response = await adminAPI.getTarifs();
       setTarifs(response);
 
-      showToast("success", "Tarifs chargés", "Liste des tarifs mise à jour");
+      if (showSuccessToast) {
+        showToast("success", "Tarifs chargés", "Liste des tarifs mise à jour");
+      }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Erreur de chargement des tarifs";
@@ -59,14 +67,6 @@ const AdminTarifs: React.FC = () => {
       setIsLoading(false);
     }
   };
-
-  const invalidatePublicTarifs = () => {
-    queryClient.invalidateQueries({ queryKey: ["tarifs", "public"] });
-  };
-
-  useEffect(() => {
-    loadTarifs();
-  }, []);
 
   const handleCreateTarif = () => {
     setEditFormData({
@@ -110,9 +110,22 @@ const AdminTarifs: React.FC = () => {
     try {
       setIsOperationLoading(true);
 
+      let updatedTarif: Tarif;
+
       if (selectedTarif) {
         // Mise à jour
-        await adminAPI.updateTarif(selectedTarif.id, editFormData);
+        updatedTarif = await adminAPI.updateTarif(
+          selectedTarif.id,
+          editFormData
+        );
+
+        // Mise à jour optimiste de l'état local
+        setTarifs((prevTarifs) =>
+          prevTarifs.map((tarif) =>
+            tarif.id === selectedTarif.id ? updatedTarif : tarif
+          )
+        );
+
         showToast(
           "success",
           "Tarif modifié",
@@ -120,7 +133,11 @@ const AdminTarifs: React.FC = () => {
         );
       } else {
         // Création
-        await adminAPI.createTarif(editFormData);
+        updatedTarif = await adminAPI.createTarif(editFormData);
+
+        // Ajout optimiste à l'état local
+        setTarifs((prevTarifs) => [...prevTarifs, updatedTarif]);
+
         showToast(
           "success",
           "Tarif créé",
@@ -130,12 +147,17 @@ const AdminTarifs: React.FC = () => {
 
       setShowTarifModal(false);
       setSelectedTarif(null);
+
+      // Recharger les données pour s'assurer de la cohérence
       await loadTarifs();
-      invalidatePublicTarifs();
+      await invalidatePublicTarifs();
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Erreur de sauvegarde du tarif";
       showToast("error", "Erreur", errorMessage);
+
+      // En cas d'erreur, recharger les données pour restaurer l'état cohérent
+      await loadTarifs();
     } finally {
       setIsOperationLoading(false);
     }
@@ -143,47 +165,85 @@ const AdminTarifs: React.FC = () => {
 
   const handleToggleActivation = async (tarif: Tarif) => {
     try {
-      setIsOperationLoading(true);
+      // Marquer ce tarif comme en cours de chargement
+      setLoadingTarifIds((prev) => new Set([...prev, tarif.id]));
 
-      await adminAPI.updateTarif(tarif.id, { actif: !tarif.actif });
+      const updatedData = { actif: !tarif.actif };
+      const updatedTarif = await adminAPI.updateTarif(tarif.id, updatedData);
+
+      // Mise à jour optimiste de l'état local
+      setTarifs((prevTarifs) =>
+        prevTarifs.map((t) =>
+          t.id === tarif.id ? { ...t, ...updatedData } : t
+        )
+      );
+
       showToast(
         "success",
         "Statut modifié",
         `Tarif ${!tarif.actif ? "activé" : "désactivé"}`
       );
 
+      // Recharger pour s'assurer de la cohérence
       await loadTarifs();
-      invalidatePublicTarifs();
+      await invalidatePublicTarifs();
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Erreur de modification du statut";
       showToast("error", "Erreur", errorMessage);
+
+      // En cas d'erreur, recharger les données
+      await loadTarifs();
     } finally {
-      setIsOperationLoading(false);
+      // Retirer ce tarif de la liste des chargements
+      setLoadingTarifIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(tarif.id);
+        return newSet;
+      });
     }
   };
 
   const handleUpdateOrder = async (tarif: Tarif, newOrder: number) => {
     try {
-      setIsOperationLoading(true);
+      // Marquer ce tarif comme en cours de chargement
+      setLoadingTarifIds((prev) => new Set([...prev, tarif.id]));
 
-      await adminAPI.updateTarif(tarif.id, { ordre: newOrder });
+      const updatedData = { ordre: newOrder };
+      await adminAPI.updateTarif(tarif.id, updatedData);
+
+      // Mise à jour optimiste de l'état local
+      setTarifs((prevTarifs) =>
+        prevTarifs.map((t) =>
+          t.id === tarif.id ? { ...t, ordre: newOrder } : t
+        )
+      );
+
       showToast(
         "success",
         "Ordre modifié",
         "L'ordre du tarif a été mis à jour"
       );
 
+      // Recharger pour s'assurer de la cohérence et du tri
       await loadTarifs();
-      invalidatePublicTarifs();
+      await invalidatePublicTarifs();
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
           : "Erreur de modification de l'ordre";
       showToast("error", "Erreur", errorMessage);
+
+      // En cas d'erreur, recharger les données
+      await loadTarifs();
     } finally {
-      setIsOperationLoading(false);
+      // Retirer ce tarif de la liste des chargements
+      setLoadingTarifIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(tarif.id);
+        return newSet;
+      });
     }
   };
 
@@ -196,9 +256,16 @@ const AdminTarifs: React.FC = () => {
     if (!tarifToDelete) return;
 
     try {
-      setIsOperationLoading(true);
+      // Marquer ce tarif comme en cours de chargement
+      setLoadingTarifIds((prev) => new Set([...prev, tarifToDelete.id]));
 
       await adminAPI.deleteTarif(tarifToDelete.id);
+
+      // Suppression optimiste de l'état local
+      setTarifs((prevTarifs) =>
+        prevTarifs.filter((t) => t.id !== tarifToDelete.id)
+      );
+
       showToast(
         "success",
         "Tarif supprimé",
@@ -207,20 +274,35 @@ const AdminTarifs: React.FC = () => {
 
       setShowDeleteModal(false);
       setTarifToDelete(null);
+
+      // Recharger pour s'assurer de la cohérence
       await loadTarifs();
-      invalidatePublicTarifs();
+      await invalidatePublicTarifs();
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Erreur de suppression du tarif";
       showToast("error", "Erreur", errorMessage);
+
+      // En cas d'erreur, recharger les données
+      await loadTarifs();
     } finally {
-      setIsOperationLoading(false);
+      // Retirer ce tarif de la liste des chargements
+      setLoadingTarifIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(tarifToDelete.id);
+        return newSet;
+      });
     }
   };
 
   const handleRefresh = () => {
-    loadTarifs();
+    loadTarifs(true); // Afficher le toast lors du refresh manuel
   };
+
+  // Chargement initial des tarifs
+  useEffect(() => {
+    loadTarifs();
+  }, []);
 
   if (isLoading && tarifs.length === 0) {
     return (
@@ -297,7 +379,7 @@ const AdminTarifs: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Actifs</p>
               <p className="text-xl font-bold text-gray-900">
-                {tarifs.filter((t) => t.actif).length}
+                {tarifs.filter((t) => t && t.actif).length}
               </p>
             </div>
           </div>
@@ -311,7 +393,7 @@ const AdminTarifs: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Inactifs</p>
               <p className="text-xl font-bold text-gray-900">
-                {tarifs.filter((t) => !t.actif).length}
+                {tarifs.filter((t) => t && !t.actif).length}
               </p>
             </div>
           </div>
@@ -325,7 +407,10 @@ const AdminTarifs: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Services</p>
               <p className="text-xl font-bold text-gray-900">
-                {new Set(tarifs.map((t) => t.typeService)).size}
+                {
+                  new Set(tarifs.filter((t) => t).map((t) => t.typeService))
+                    .size
+                }
               </p>
             </div>
           </div>
@@ -364,101 +449,121 @@ const AdminTarifs: React.FC = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {tarifs
+                .filter((tarif) => tarif) // Filtrer les éléments null/undefined
                 .sort((a, b) => a.ordre - b.ordre)
-                .map((tarif) => (
-                  <tr key={tarif.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <input
-                        type="number"
-                        value={tarif.ordre}
-                        onChange={(e) =>
-                          handleUpdateOrder(
-                            tarif,
-                            parseInt(e.target.value) || 1
-                          )
-                        }
-                        disabled={isOperationLoading}
-                        className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
-                        min="1"
-                      />
-                    </td>
-                    <td className="px-6 py-4">
-                      <div>
+                .map((tarif) => {
+                  const isRowLoading = loadingTarifIds.has(tarif.id);
+                  return (
+                    <tr
+                      key={tarif.id}
+                      className={`hover:bg-gray-50 ${
+                        isRowLoading ? "bg-blue-50 opacity-75" : ""
+                      }`}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <input
+                            type="number"
+                            value={tarif.ordre}
+                            onChange={(e) =>
+                              handleUpdateOrder(
+                                tarif,
+                                parseInt(e.target.value) || 1
+                              )
+                            }
+                            disabled={isRowLoading}
+                            className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100"
+                            min="1"
+                          />
+                          {isRowLoading && (
+                            <LoadingSpinner size="sm" className="ml-2" />
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {tarif.nom}
+                          </div>
+                          <div className="text-sm text-gray-500 truncate max-w-xs">
+                            {tarif.description}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                          {tarif.typeService}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          {tarif.nom}
+                          {tarif.prixFormate}
                         </div>
-                        <div className="text-sm text-gray-500 truncate max-w-xs">
-                          {tarif.description}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {tarif.dureeEstimee || "Non défini"}
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                        {tarif.typeService}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {tarif.prixFormate}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {tarif.dureeEstimee || "Non défini"}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handleToggleActivation(tarif)}
-                        disabled={isOperationLoading}
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full transition-colors ${
-                          tarif.actif
-                            ? "bg-green-100 text-green-800 hover:bg-green-200"
-                            : "bg-red-100 text-red-800 hover:bg-red-200"
-                        }`}
-                      >
-                        <i
-                          className={`fas ${
-                            tarif.actif ? "fa-check-circle" : "fa-pause-circle"
-                          } mr-1`}
-                        ></i>
-                        {tarif.actif ? "Actif" : "Inactif"}
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end space-x-2">
-                        {/* Voir */}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <button
-                          onClick={() => handleViewTarif(tarif)}
-                          className="text-blue-600 hover:text-blue-900 transition-colors"
-                          title="Voir les détails"
+                          onClick={() => handleToggleActivation(tarif)}
+                          disabled={isRowLoading}
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full transition-colors disabled:opacity-50 ${
+                            tarif.actif
+                              ? "bg-green-100 text-green-800 hover:bg-green-200"
+                              : "bg-red-100 text-red-800 hover:bg-red-200"
+                          }`}
                         >
-                          <i className="fas fa-eye"></i>
+                          {isRowLoading ? (
+                            <LoadingSpinner size="sm" className="mr-1" />
+                          ) : (
+                            <i
+                              className={`fas ${
+                                tarif.actif
+                                  ? "fa-check-circle"
+                                  : "fa-pause-circle"
+                              } mr-1`}
+                            ></i>
+                          )}
+                          {tarif.actif ? "Actif" : "Inactif"}
                         </button>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end space-x-2">
+                          {/* Voir */}
+                          <button
+                            onClick={() => handleViewTarif(tarif)}
+                            className="text-blue-600 hover:text-blue-900 transition-colors"
+                            title="Voir les détails"
+                          >
+                            <i className="fas fa-eye"></i>
+                          </button>
 
-                        {/* Modifier */}
-                        <button
-                          onClick={() => handleEditTarif(tarif)}
-                          disabled={isOperationLoading}
-                          className="text-green-600 hover:text-green-900 transition-colors"
-                          title="Modifier"
-                        >
-                          <i className="fas fa-edit"></i>
-                        </button>
+                          {/* Modifier */}
+                          <button
+                            onClick={() => handleEditTarif(tarif)}
+                            disabled={isRowLoading}
+                            className="text-green-600 hover:text-green-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Modifier"
+                          >
+                            <i className="fas fa-edit"></i>
+                          </button>
 
-                        {/* Supprimer */}
-                        <button
-                          onClick={() => handleDeleteTarif(tarif)}
-                          disabled={isOperationLoading}
-                          className="text-red-600 hover:text-red-900 transition-colors"
-                          title="Supprimer"
-                        >
-                          <i className="fas fa-trash"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {/* Supprimer */}
+                          <button
+                            onClick={() => handleDeleteTarif(tarif)}
+                            disabled={isRowLoading}
+                            className="text-red-600 hover:text-red-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Supprimer"
+                          >
+                            <i className="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>
@@ -486,118 +591,138 @@ const AdminTarifs: React.FC = () => {
       {/* Version mobile - Cartes */}
       <div className="md:hidden space-y-4">
         {tarifs
+          .filter((tarif) => tarif) // Filtrer les éléments null/undefined
           .sort((a, b) => a.ordre - b.ordre)
-          .map((tarif) => (
-            <div
-              key={tarif.id}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <h3 className="text-lg font-medium text-gray-900">
-                    {tarif.nom}
-                  </h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {tarif.description}
-                  </p>
+          .map((tarif) => {
+            const isRowLoading = loadingTarifIds.has(tarif.id);
+            return (
+              <div
+                key={tarif.id}
+                className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 ${
+                  isRowLoading ? "bg-blue-50 opacity-75" : ""
+                }`}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-medium text-gray-900">
+                      {tarif.nom}
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {tarif.description}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleToggleActivation(tarif)}
+                    disabled={isRowLoading}
+                    className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full transition-colors disabled:opacity-50 ${
+                      tarif.actif
+                        ? "bg-green-100 text-green-800 hover:bg-green-200"
+                        : "bg-red-100 text-red-800 hover:bg-red-200"
+                    }`}
+                  >
+                    {isRowLoading ? (
+                      <LoadingSpinner size="sm" className="mr-1" />
+                    ) : (
+                      <i
+                        className={`fas ${
+                          tarif.actif
+                            ? "fa-check-circle text-green-800"
+                            : "fa-pause-circle text-red-800"
+                        } mr-1`}
+                      ></i>
+                    )}
+                    {tarif.actif ? "Actif" : "Inactif"}
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleToggleActivation(tarif)}
-                  disabled={isOperationLoading}
-                  className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full transition-colors ${
-                    tarif.actif
-                      ? "bg-green-100 text-green-800 hover:bg-green-200"
-                      : "bg-red-100 text-red-800 hover:bg-red-200"
-                  }`}
-                >
-                  <i
-                    className={`fas ${
-                      tarif.actif ? "fa-check-circle" : "fa-pause-circle"
-                    } mr-1`}
-                  ></i>
-                  {tarif.actif ? "Actif" : "Inactif"}
-                </button>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div>
-                  <label className="text-xs text-gray-500 uppercase tracking-wider">
-                    Ordre
-                  </label>
-                  <input
-                    type="number"
-                    value={tarif.ordre}
-                    onChange={(e) =>
-                      handleUpdateOrder(tarif, parseInt(e.target.value) || 1)
-                    }
-                    disabled={isOperationLoading}
-                    className="w-full mt-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
-                    min="1"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 uppercase tracking-wider">
-                    Type
-                  </label>
-                  <div className="mt-1">
-                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                      {tarif.typeService}
-                    </span>
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div>
+                    <label className="text-xs text-gray-500 uppercase tracking-wider">
+                      Ordre
+                    </label>
+                    <div className="flex items-center">
+                      <input
+                        type="number"
+                        value={tarif.ordre}
+                        onChange={(e) =>
+                          handleUpdateOrder(
+                            tarif,
+                            parseInt(e.target.value) || 1
+                          )
+                        }
+                        disabled={isRowLoading}
+                        className="flex-1 mt-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100"
+                        min="1"
+                      />
+                      {isRowLoading && (
+                        <LoadingSpinner size="sm" className="ml-2 mt-1" />
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 uppercase tracking-wider">
+                      Type
+                    </label>
+                    <div className="mt-1">
+                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                        {tarif.typeService}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 uppercase tracking-wider">
+                      Prix
+                    </label>
+                    <div className="text-sm font-medium text-gray-900 mt-1">
+                      {tarif.prixFormate}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-500 uppercase tracking-wider">
+                      Durée
+                    </label>
+                    <div className="text-sm text-gray-900 mt-1">
+                      {tarif.dureeEstimee || "Non défini"}
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <label className="text-xs text-gray-500 uppercase tracking-wider">
-                    Prix
-                  </label>
-                  <div className="text-sm font-medium text-gray-900 mt-1">
-                    {tarif.prixFormate}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 uppercase tracking-wider">
-                    Durée
-                  </label>
-                  <div className="text-sm text-gray-900 mt-1">
-                    {tarif.dureeEstimee || "Non défini"}
-                  </div>
+
+                <div className="flex items-center justify-end space-x-3 pt-3 border-t border-gray-200">
+                  {/* Voir */}
+                  <button
+                    onClick={() => handleViewTarif(tarif)}
+                    className="flex items-center px-3 py-1 text-sm text-blue-600 hover:text-blue-900 transition-colors"
+                    title="Voir les détails"
+                  >
+                    <i className="fas fa-eye mr-1"></i>
+                    Voir
+                  </button>
+
+                  {/* Modifier */}
+                  <button
+                    onClick={() => handleEditTarif(tarif)}
+                    disabled={isRowLoading}
+                    className="flex items-center px-3 py-1 text-sm text-green-600 hover:text-green-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Modifier"
+                  >
+                    <i className="fas fa-edit mr-1"></i>
+                    Modifier
+                  </button>
+
+                  {/* Supprimer */}
+                  <button
+                    onClick={() => handleDeleteTarif(tarif)}
+                    disabled={isRowLoading}
+                    className="flex items-center px-3 py-1 text-sm text-red-600 hover:text-red-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Supprimer"
+                  >
+                    <i className="fas fa-trash mr-1"></i>
+                    Supprimer
+                  </button>
                 </div>
               </div>
-
-              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-gray-200">
-                {/* Voir */}
-                <button
-                  onClick={() => handleViewTarif(tarif)}
-                  className="flex items-center px-3 py-1 text-sm text-blue-600 hover:text-blue-900 transition-colors"
-                  title="Voir les détails"
-                >
-                  <i className="fas fa-eye mr-1"></i>
-                  Voir
-                </button>
-
-                {/* Modifier */}
-                <button
-                  onClick={() => handleEditTarif(tarif)}
-                  disabled={isOperationLoading}
-                  className="flex items-center px-3 py-1 text-sm text-green-600 hover:text-green-900 transition-colors"
-                  title="Modifier"
-                >
-                  <i className="fas fa-edit mr-1"></i>
-                  Modifier
-                </button>
-
-                {/* Supprimer */}
-                <button
-                  onClick={() => handleDeleteTarif(tarif)}
-                  disabled={isOperationLoading}
-                  className="flex items-center px-3 py-1 text-sm text-red-600 hover:text-red-900 transition-colors"
-                  title="Supprimer"
-                >
-                  <i className="fas fa-trash mr-1"></i>
-                  Supprimer
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
 
         {/* État vide mobile */}
         {tarifs.length === 0 && !isLoading && (

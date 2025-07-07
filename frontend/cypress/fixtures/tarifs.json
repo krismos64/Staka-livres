@@ -1,0 +1,32 @@
+{
+  "success": true,
+  "data": [
+    {
+      "id": "tarif-1",
+      "nom": "Correction Standard",
+      "description": "Correction orthographique, grammaticale et typographique complète",
+      "prix": 299,
+      "prixFormate": "2,99 €",
+      "typeService": "Correction",
+      "dureeEstimee": "5-7 jours",
+      "actif": true,
+      "ordre": 1,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "tarif-2",
+      "nom": "Correction Premium",
+      "description": "Correction + amélioration du style et de la structure",
+      "prix": 499,
+      "prixFormate": "4,99 €",
+      "typeService": "Correction",
+      "dureeEstimee": "7-10 jours",
+      "actif": true,
+      "ordre": 2,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "message": "Tarifs récupérés avec succès"
+}

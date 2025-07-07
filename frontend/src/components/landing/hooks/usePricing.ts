@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useMemo, useState } from "react";
 import { fetchTarifs, TarifAPI } from "../../../utils/api";
 
 interface PricingBreakdown {
@@ -20,54 +20,182 @@ interface PricingRule {
   isFree?: boolean;
 }
 
-export function usePricing(initialPages: number = 150) {
+interface UsePricingOptions {
+  /** Configuration du cache React Query */
+  staleTime?: number;
+  /** Pages initiales du calculateur */
+  initialPages?: number;
+  /** Active les logs de débogage */
+  enableDebugLogs?: boolean;
+}
+
+export function usePricing(options: UsePricingOptions = {}) {
+  const {
+    staleTime = 5 * 60 * 1000, // 5 minutes par défaut
+    initialPages = 150,
+    enableDebugLogs = false,
+  } = options;
+
   const [pages, setPages] = useState<number>(initialPages);
+  const queryClient = useQueryClient();
 
   const {
     data: tarifs = [],
     isLoading,
     error,
+    refetch,
   } = useQuery<TarifAPI[]>({
     queryKey: ["tarifs", "public"],
-    queryFn: fetchTarifs,
+    queryFn: async () => {
+      if (enableDebugLogs) {
+        console.log("🔄 Fetching tarifs publics...");
+      }
+      const data = await fetchTarifs();
+      if (enableDebugLogs) {
+        console.log("✅ Tarifs publics récupérés:", data.length, "tarifs");
+      }
+      return data;
+    },
+    staleTime,
+    gcTime: 10 * 60 * 1000, // 10 minutes en cache
+    retry: 2,
+    refetchOnWindowFocus: false,
   });
 
+  // Gestion des erreurs avec un effet séparé
+  if (error && enableDebugLogs) {
+    console.error("❌ Erreur lors du fetch des tarifs:", error);
+  }
+
   const pricingRules = useMemo(() => {
-    if (tarifs.length > 0) {
-      return extractPricingRules(tarifs);
+    const tarifsArray = Array.isArray(tarifs) ? tarifs : [];
+    if (tarifsArray.length > 0) {
+      if (enableDebugLogs) {
+        console.log(
+          "📊 Calcul des règles de pricing depuis",
+          tarifsArray.length,
+          "tarifs"
+        );
+      }
+      return extractPricingRules(tarifsArray);
     }
     // Fallback sur les règles par défaut si les tarifs ne sont pas disponibles
+    if (enableDebugLogs) {
+      console.log("⚠️ Utilisation des règles de pricing par défaut");
+    }
     return [
       { threshold: 10, price: 0, isFree: true },
       { threshold: 300, price: 2 },
       { threshold: Infinity, price: 1 },
     ];
-  }, [tarifs]);
+  }, [tarifs, enableDebugLogs]);
 
   const pricing = useMemo(() => {
     return calculatePricingFromRules(pages, pricingRules);
   }, [pages, pricingRules]);
 
-  const calculatePrice = (pageCount: number): number => {
-    return calculatePriceFromRules(pageCount, pricingRules);
-  };
+  const calculatePrice = useCallback(
+    (pageCount: number): number => {
+      return calculatePriceFromRules(pageCount, pricingRules);
+    },
+    [pricingRules]
+  );
 
-  const getComparisonPrices = () => ({
-    100: calculatePrice(100),
-    200: calculatePrice(200),
-    300: calculatePrice(300),
-    500: calculatePrice(500),
-  });
+  const getComparisonPrices = useCallback(
+    () => ({
+      100: calculatePrice(100),
+      200: calculatePrice(200),
+      300: calculatePrice(300),
+      500: calculatePrice(500),
+    }),
+    [calculatePrice]
+  );
+
+  /**
+   * Force le refetch des tarifs sans attendre l'expiration du cache
+   * Utile après mise à jour en admin
+   */
+  const refreshTarifs = useCallback(async () => {
+    if (enableDebugLogs) {
+      console.log("🔄 Force refresh des tarifs publics...");
+    }
+    try {
+      await refetch();
+      if (enableDebugLogs) {
+        console.log("✅ Tarifs publics rafraîchis avec succès");
+      }
+    } catch (error) {
+      if (enableDebugLogs) {
+        console.error("❌ Erreur lors du refresh des tarifs:", error);
+      }
+    }
+  }, [refetch, enableDebugLogs]);
+
+  /**
+   * Invalide manuellement le cache des tarifs
+   * Pour forcer un nouveau fetch à la prochaine utilisation
+   */
+  const invalidateCache = useCallback(async () => {
+    if (enableDebugLogs) {
+      console.log("🗑️ Invalidation du cache des tarifs publics...");
+    }
+    await queryClient.invalidateQueries({
+      queryKey: ["tarifs", "public"],
+      exact: true,
+    });
+  }, [queryClient, enableDebugLogs]);
+
+  /**
+   * Vérifie si le cache est périmé
+   */
+  const isCacheStale = useCallback(() => {
+    const queryState = queryClient.getQueryState(["tarifs", "public"]);
+    if (!queryState) return true;
+
+    const now = Date.now();
+    const dataUpdatedAt = queryState.dataUpdatedAt || 0;
+    const isStale = now - dataUpdatedAt > staleTime;
+
+    if (enableDebugLogs && isStale) {
+      console.log(
+        "⏰ Cache des tarifs périmé, âge:",
+        (now - dataUpdatedAt) / 1000,
+        "secondes"
+      );
+    }
+
+    return isStale;
+  }, [queryClient, staleTime, enableDebugLogs]);
+
+  const tarifsArray = Array.isArray(tarifs) ? tarifs : [];
 
   return {
+    // États principaux
     pages,
     setPages,
     pricing,
-    calculatePrice,
-    getComparisonPrices,
+    tarifs: tarifsArray,
     isLoading,
     error: error instanceof Error ? error.message : null,
-    tarifs,
+
+    // Fonctions de calcul
+    calculatePrice,
+    getComparisonPrices,
+
+    // Gestion du cache
+    refreshTarifs,
+    invalidateCache,
+    isCacheStale,
+
+    // Debug
+    debugInfo: enableDebugLogs
+      ? {
+          cacheAge: queryClient.getQueryState(["tarifs", "public"])
+            ?.dataUpdatedAt,
+          rulesCount: pricingRules.length,
+          tarifsCount: tarifsArray.length,
+        }
+      : undefined,
   };
 }
 

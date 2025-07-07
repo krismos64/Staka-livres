@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react";
-import { fetchTarifs, TarifAPI } from "../../utils/api";
+import React from "react";
+import { TarifAPI } from "../../utils/api";
+import ErrorMessage from "../ui/ErrorMessage";
+import Loader from "../ui/Loader";
+import { usePricing } from "./hooks/usePricing";
 
 interface Pack {
   id: string;
@@ -13,30 +16,10 @@ interface Pack {
 }
 
 export default function Packs() {
-  const [packs, setPacks] = useState<Pack[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const loadPacks = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const tarifs = await fetchTarifs();
-        const dynamicPacks = buildPacksFromTarifs(tarifs);
-        setPacks(dynamicPacks);
-      } catch (err) {
-        console.error("Erreur chargement packs:", err);
-        setError(err instanceof Error ? err.message : "Erreur de chargement");
-        // Fallback sur les packs par défaut
-        setPacks(getDefaultPacks());
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadPacks();
-  }, []);
+  // Utilisation du hook usePricing au lieu de useState+useEffect
+  const { tarifs, isLoading, error, refreshTarifs } = usePricing({
+    enableDebugLogs: process.env.NODE_ENV === "development",
+  });
 
   const handlePackClick = (packId: string) => {
     console.log(`Pack sélectionné: ${packId}`);
@@ -50,15 +33,21 @@ export default function Packs() {
     }
   };
 
+  // Générer les packs depuis les tarifs ou utiliser les fallbacks
+  const packs = React.useMemo(() => {
+    if (!tarifs || tarifs.length === 0) {
+      return getDefaultPacks();
+    }
+    return buildPacksFromTarifs(tarifs);
+  }, [tarifs]);
+
+  // État de chargement
   if (isLoading) {
     return (
       <section id="packs" className="py-16 bg-white">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center">
-            <div className="flex items-center justify-center gap-2 text-blue-600">
-              <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-              <span>Chargement des offres...</span>
-            </div>
+            <Loader message="Chargement des offres..." size="lg" />
           </div>
         </div>
       </section>
@@ -66,7 +55,7 @@ export default function Packs() {
   }
 
   return (
-    <section id="packs" className="py-16 bg-white">
+    <section id="packs" data-testid="packs-section" className="py-16 bg-white">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -81,11 +70,15 @@ export default function Packs() {
             </p>
           </div>
 
+          {/* Message d'erreur avec bouton retry */}
           {error && (
-            <div className="mt-4 bg-yellow-100 border border-yellow-300 text-yellow-800 px-4 py-2 rounded-lg inline-block">
-              <i className="fas fa-exclamation-triangle mr-2"></i>
-              Offres indisponibles, affichage des offres par défaut
-            </div>
+            <ErrorMessage
+              message="Offres indisponibles, affichage des offres par défaut"
+              onRetry={refreshTarifs}
+              retryLabel="Recharger"
+              variant="warning"
+              className="mt-4"
+            />
           )}
         </div>
 
@@ -171,23 +164,30 @@ export default function Packs() {
 function buildPacksFromTarifs(tarifs: TarifAPI[]): Pack[] {
   const packs: Pack[] = [];
 
+  // Filtrer les tarifs actifs et les ordonner
+  const activeTarifs = tarifs
+    .filter((t) => t.actif)
+    .sort((a, b) => a.ordre - b.ordre);
+
   // Chercher des tarifs spécifiques pour construire les packs
-  const correctionTarifs = tarifs.filter(
+  const correctionTarifs = activeTarifs.filter(
     (t) =>
       t.typeService === "Correction" ||
       t.nom.toLowerCase().includes("correction")
   );
-  const maquetteTarifs = tarifs.filter(
+  const maquetteTarifs = activeTarifs.filter(
     (t) =>
       t.typeService === "Mise en forme" ||
       t.nom.toLowerCase().includes("maquette")
   );
-  const couvertureTarifs = tarifs.filter((t) =>
-    t.nom.toLowerCase().includes("couverture")
+  const reecritureTarifs = activeTarifs.filter(
+    (t) =>
+      t.typeService === "Réécriture" ||
+      t.nom.toLowerCase().includes("réécriture")
   );
 
   // Pack KDP - Tarif fixe s'il existe
-  const kdpTarif = tarifs.find(
+  const kdpTarif = activeTarifs.find(
     (t) =>
       t.nom.toLowerCase().includes("kdp") ||
       t.nom.toLowerCase().includes("autoédition")
@@ -199,174 +199,181 @@ function buildPacksFromTarifs(tarifs: TarifAPI[]): Pack[] {
       prix: kdpTarif.prixFormate,
       description: kdpTarif.description || "Idéal pour débuter",
       services: [
-        "Maquette intérieure",
-        "Conception couverture",
-        "Fichiers ePub & Mobi",
-        "Accompagnement KDP",
+        "Maquette intérieure professionnelle",
+        "Couverture personnalisée",
+        "Format Kindle (.mobi)",
+        "Format ePub optimisé",
+        "Fichiers print-ready",
+        "Guide de publication inclus",
       ],
       delai: kdpTarif.dureeEstimee || "5-7 jours",
+      featured: false,
       buttonStyle:
-        "w-full bg-gray-100 text-gray-800 py-3 rounded-xl font-semibold hover:bg-gray-200 transition",
-    });
-  } else {
-    // Pack KDP par défaut
-    packs.push({
-      id: "pack-kdp",
-      nom: "Pack KDP",
-      prix: "350€",
-      description: "Idéal pour débuter",
-      services: [
-        "Maquette intérieure",
-        "Conception couverture",
-        "Fichiers ePub & Mobi",
-        "Accompagnement KDP",
-      ],
-      delai: "5-7 jours",
-      buttonStyle:
-        "w-full bg-gray-100 text-gray-800 py-3 rounded-xl font-semibold hover:bg-gray-200 transition",
+        "w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold transition",
     });
   }
 
-  // Pack Intégral - Utiliser les tarifs de correction s'ils existent
-  const correctionPrincipal =
-    correctionTarifs.find((t) => t.actif) || correctionTarifs[0];
-  if (correctionPrincipal) {
+  // Pack Correction Standard
+  const correctionStandard =
+    correctionTarifs.find(
+      (t) =>
+        t.nom.toLowerCase().includes("standard") ||
+        t.typeService === "Correction"
+    ) || correctionTarifs[0];
+
+  if (correctionStandard) {
     packs.push({
-      id: correctionPrincipal.id,
-      nom: "Pack Intégral",
-      prix: `${correctionPrincipal.prix}€/page`,
-      description: "Solution complète",
+      id: correctionStandard.id,
+      nom: correctionStandard.nom || "Correction Standard",
+      prix: correctionStandard.prixFormate,
+      description:
+        correctionStandard.description ||
+        "Correction complète de votre manuscrit",
       services: [
-        "Correction complète",
-        "Maquette intérieure",
-        "Conception couverture",
-        "Fichiers ePub & Mobi",
-        "Support prioritaire",
+        "Correction orthographique",
+        "Correction grammaticale",
+        "Correction syntaxique",
+        "Amélioration du style",
+        "Rapport de correction détaillé",
+        "2 révisions incluses",
       ],
-      delai: correctionPrincipal.dureeEstimee || "10-15 jours",
+      delai: correctionStandard.dureeEstimee || "7-10 jours",
       featured: true,
       buttonStyle:
-        "w-full bg-white text-blue-600 py-3 rounded-xl font-semibold hover:bg-gray-50 transition",
-    });
-  } else {
-    // Pack Intégral par défaut
-    packs.push({
-      id: "pack-integral",
-      nom: "Pack Intégral",
-      prix: "2€/page",
-      description: "Solution complète",
-      services: [
-        "Correction complète",
-        "Maquette intérieure",
-        "Conception couverture",
-        "Fichiers ePub & Mobi",
-        "Support prioritaire",
-      ],
-      delai: "10-15 jours",
-      featured: true,
-      buttonStyle:
-        "w-full bg-white text-blue-600 py-3 rounded-xl font-semibold hover:bg-gray-50 transition",
+        "w-full bg-white text-blue-600 py-3 px-6 rounded-xl font-semibold hover:bg-blue-50 transition border-2 border-white",
     });
   }
 
-  // Pack Rédaction - Chercher un tarif spécifique ou utiliser par défaut
-  const redactionTarif = tarifs.find(
-    (t) =>
-      t.nom.toLowerCase().includes("rédaction") ||
-      t.nom.toLowerCase().includes("coaching") ||
-      t.typeService === "Rédaction"
-  );
+  // Pack Réécriture/Relecture Avancée
+  const reecritureAvancee =
+    reecritureTarifs.find(
+      (t) =>
+        t.nom.toLowerCase().includes("avancée") ||
+        t.nom.toLowerCase().includes("complète")
+    ) ||
+    reecritureTarifs[0] ||
+    activeTarifs.find(
+      (t) =>
+        t.typeService === "Relecture" ||
+        t.nom.toLowerCase().includes("relecture")
+    );
 
-  if (redactionTarif) {
+  if (reecritureAvancee) {
     packs.push({
-      id: redactionTarif.id,
-      nom: redactionTarif.nom,
-      prix: redactionTarif.prixFormate,
-      description: redactionTarif.description || "Coaching complet",
+      id: reecritureAvancee.id,
+      nom: reecritureAvancee.nom || "Réécriture Avancée",
+      prix: reecritureAvancee.prixFormate,
+      description:
+        reecritureAvancee.description ||
+        "Réécriture professionnelle avec suggestions",
       services: [
-        "Coaching rédactionnel",
-        "Correction complète",
-        "Maquette intérieure",
-        "Conception couverture",
-        "Fichiers ePub & Mobi",
+        "Réécriture approfondie",
+        "Restructuration des passages",
+        "Amélioration du rythme",
+        "Renforcement de la cohérence",
+        "Suggestions d'amélioration",
+        "Coaching rédactionnel inclus",
       ],
-      delai: redactionTarif.dureeEstimee || "3-6 semaines",
+      delai: reecritureAvancee.dureeEstimee || "10-14 jours",
+      featured: false,
       buttonStyle:
-        "w-full bg-gray-100 text-gray-800 py-3 rounded-xl font-semibold hover:bg-gray-200 transition",
-    });
-  } else {
-    // Pack Rédaction par défaut
-    packs.push({
-      id: "pack-redaction",
-      nom: "Pack Rédaction",
-      prix: "1450€",
-      description: "Coaching complet",
-      services: [
-        "Coaching rédactionnel",
-        "Correction complète",
-        "Maquette intérieure",
-        "Conception couverture",
-        "Fichiers ePub & Mobi",
-      ],
-      delai: "3-6 semaines",
-      buttonStyle:
-        "w-full bg-gray-100 text-gray-800 py-3 rounded-xl font-semibold hover:bg-gray-200 transition",
+        "w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-semibold transition",
     });
   }
 
-  return packs;
+  // Si moins de 3 packs, ajouter des tarifs supplémentaires
+  if (packs.length < 3) {
+    const missingCount = 3 - packs.length;
+    const usedIds = new Set(packs.map((p) => p.id));
+    const remainingTarifs = activeTarifs
+      .filter((t) => !usedIds.has(t.id))
+      .slice(0, missingCount);
+
+    remainingTarifs.forEach((tarif, index) => {
+      packs.push({
+        id: tarif.id,
+        nom: tarif.nom,
+        prix: tarif.prixFormate,
+        description: tarif.description || `Service ${tarif.typeService}`,
+        services: [
+          `${tarif.typeService} professionnelle`,
+          "Travail soigné et personnalisé",
+          "Suivi client dédié",
+          "Garantie satisfaction",
+          "Support inclus",
+        ],
+        delai: tarif.dureeEstimee || "5-7 jours",
+        featured: false,
+        buttonStyle:
+          "w-full bg-gray-600 hover:bg-gray-700 text-white py-3 px-6 rounded-xl font-semibold transition",
+      });
+    });
+  }
+
+  // Si toujours pas assez de packs, utiliser les packs par défaut
+  if (packs.length === 0) {
+    return getDefaultPacks();
+  }
+
+  return packs.slice(0, 3); // Limiter à 3 packs maximum
 }
 
-// Packs par défaut en cas d'erreur
+// Fonction pour les packs par défaut (fallback)
 function getDefaultPacks(): Pack[] {
   return [
     {
       id: "pack-kdp-default",
-      nom: "Pack KDP",
+      nom: "Pack KDP Autoédition",
       prix: "350€",
       description: "Idéal pour débuter",
       services: [
-        "Maquette intérieure",
-        "Conception couverture",
-        "Fichiers ePub & Mobi",
-        "Accompagnement KDP",
+        "Maquette intérieure professionnelle",
+        "Couverture personnalisée",
+        "Format Kindle (.mobi)",
+        "Format ePub optimisé",
+        "Fichiers print-ready",
+        "Guide de publication inclus",
       ],
       delai: "5-7 jours",
+      featured: false,
       buttonStyle:
-        "w-full bg-gray-100 text-gray-800 py-3 rounded-xl font-semibold hover:bg-gray-200 transition",
+        "w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold transition",
     },
     {
-      id: "pack-integral-default",
-      nom: "Pack Intégral",
+      id: "pack-correction-default",
+      nom: "Correction Standard",
       prix: "2€/page",
-      description: "Solution complète",
+      description: "Correction complète de votre manuscrit",
       services: [
-        "Correction complète",
-        "Maquette intérieure",
-        "Conception couverture",
-        "Fichiers ePub & Mobi",
-        "Support prioritaire",
+        "Correction orthographique",
+        "Correction grammaticale",
+        "Correction syntaxique",
+        "Amélioration du style",
+        "Rapport de correction détaillé",
+        "2 révisions incluses",
       ],
-      delai: "10-15 jours",
+      delai: "7-10 jours",
       featured: true,
       buttonStyle:
-        "w-full bg-white text-blue-600 py-3 rounded-xl font-semibold hover:bg-gray-50 transition",
+        "w-full bg-white text-blue-600 py-3 px-6 rounded-xl font-semibold hover:bg-blue-50 transition border-2 border-white",
     },
     {
-      id: "pack-redaction-default",
-      nom: "Pack Rédaction",
+      id: "pack-reecriture-default",
+      nom: "Réécriture Avancée",
       prix: "1450€",
-      description: "Coaching complet",
+      description: "Réécriture professionnelle avec suggestions",
       services: [
-        "Coaching rédactionnel",
-        "Correction complète",
-        "Maquette intérieure",
-        "Conception couverture",
-        "Fichiers ePub & Mobi",
+        "Réécriture approfondie",
+        "Restructuration des passages",
+        "Amélioration du rythme",
+        "Renforcement de la cohérence",
+        "Suggestions d'amélioration",
+        "Coaching rédactionnel inclus",
       ],
-      delai: "3-6 semaines",
+      delai: "10-14 jours",
+      featured: false,
       buttonStyle:
-        "w-full bg-gray-100 text-gray-800 py-3 rounded-xl font-semibold hover:bg-gray-200 transition",
+        "w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-semibold transition",
     },
   ];
 }

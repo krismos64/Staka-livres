@@ -1,9 +1,23 @@
 import React, { useState } from "react";
+import ErrorMessage from "../ui/ErrorMessage";
+import Loader from "../ui/Loader";
 import { usePricing } from "./hooks/usePricing";
 
 export default function PricingCalculator() {
-  const { pages, setPages, pricing, getComparisonPrices, isLoading, error } =
-    usePricing(150);
+  const {
+    pages,
+    setPages,
+    pricing,
+    tarifs,
+    getComparisonPrices,
+    isLoading,
+    error,
+    refreshTarifs,
+    isCacheStale,
+  } = usePricing({
+    initialPages: 150,
+    enableDebugLogs: process.env.NODE_ENV === "development",
+  });
   const [selectedPreset, setSelectedPreset] = useState(150);
 
   const comparisonPrices = getComparisonPrices();
@@ -42,9 +56,85 @@ export default function PricingCalculator() {
     // TODO: Ouvrir le chat ou rediriger vers contact
   };
 
+  // Fonction pour générer les cartes de tarification depuis les tarifs
+  const getPricingCards = () => {
+    if (!tarifs || tarifs.length === 0) {
+      // Fallback sur les cartes par défaut
+      return [
+        {
+          id: "free",
+          value: "10",
+          unit: "premières pages",
+          label: "GRATUITES",
+          color: "green-300",
+          description: "Offre découverte",
+        },
+        {
+          id: "tier2",
+          value: "2€",
+          unit: "pages 11 à 300",
+          label: "par page",
+          color: "yellow-300",
+          description: "Tarif standard",
+        },
+        {
+          id: "tier3",
+          value: "1€",
+          unit: "au-delà de 300",
+          label: "par page",
+          color: "orange-300",
+          description: "Tarif dégressif",
+        },
+      ];
+    }
+
+    // Générer les cartes depuis les tarifs actifs de type "Correction"
+    const correctionTarifs = tarifs
+      .filter(
+        (t) =>
+          t.actif &&
+          (t.typeService === "Correction" ||
+            t.nom.toLowerCase().includes("correction"))
+      )
+      .sort((a, b) => a.ordre - b.ordre)
+      .slice(0, 3); // Limiter à 3 cartes
+
+    if (correctionTarifs.length === 0) {
+      // Si pas de tarifs de correction, prendre les 3 premiers tarifs actifs
+      const fallbackTarifs = tarifs
+        .filter((t) => t.actif)
+        .sort((a, b) => a.ordre - b.ordre)
+        .slice(0, 3);
+
+      return fallbackTarifs.map((tarif, index) => ({
+        id: tarif.id,
+        value: tarif.prixFormate,
+        unit: tarif.typeService,
+        label: tarif.nom,
+        color:
+          index === 0 ? "green-300" : index === 1 ? "yellow-300" : "orange-300",
+        description: tarif.description || "",
+      }));
+    }
+
+    // Mapper les tarifs de correction en cartes
+    return correctionTarifs.map((tarif, index) => ({
+      id: tarif.id,
+      value: tarif.prixFormate,
+      unit: tarif.dureeEstimee || `${tarif.typeService}`,
+      label: tarif.nom,
+      color:
+        index === 0 ? "green-300" : index === 1 ? "yellow-300" : "orange-300",
+      description: tarif.description || "",
+    }));
+  };
+
+  const pricingCards = getPricingCards();
+
   return (
     <section
       id="calculateur-prix"
+      data-testid="pricing-calculator"
       className="py-16 bg-gradient-to-br from-green-50 to-blue-50"
     >
       <div className="max-w-4xl mx-auto px-6">
@@ -62,44 +152,70 @@ export default function PricingCalculator() {
             </p>
           </div>
 
-          {/* Indicateur de chargement ou erreur */}
+          {/* Indicateur de chargement */}
           {isLoading && (
-            <div className="mt-4 text-blue-600 flex items-center justify-center gap-2">
-              <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-              <span>Chargement des tarifs...</span>
-            </div>
+            <Loader message="Chargement des tarifs..." className="mt-4" />
           )}
 
+          {/* Message d'erreur */}
           {error && (
-            <div className="mt-4 bg-yellow-100 border border-yellow-300 text-yellow-800 px-4 py-2 rounded-lg inline-block">
-              <i className="fas fa-exclamation-triangle mr-2"></i>
-              Tarifs indisponibles, utilisation des tarifs par défaut
-            </div>
+            <ErrorMessage
+              message="Tarifs indisponibles, utilisation des tarifs par défaut"
+              onRetry={refreshTarifs}
+              retryLabel="Retry"
+              variant="warning"
+              className="mt-4"
+            />
           )}
+
+          {/* Indicateur cache périmé (dev only) */}
+          {process.env.NODE_ENV === "development" &&
+            !isLoading &&
+            !error &&
+            isCacheStale() && (
+              <ErrorMessage
+                message="Cache des tarifs périmé"
+                onRetry={refreshTarifs}
+                retryLabel="Refresh"
+                variant="info"
+                className="mt-4"
+              />
+            )}
         </div>
 
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-          {/* Pricing Rules Display */}
+          {/* Pricing Rules Display - Version Dynamique */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-8">
             <h3 className="text-xl font-bold mb-6 text-center">
               🎯 Notre tarification intelligente
             </h3>
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="text-center bg-white/10 backdrop-blur rounded-2xl p-4">
-                <div className="text-3xl font-bold text-green-300">10</div>
-                <div className="text-sm">premières pages</div>
-                <div className="text-lg font-semibold mt-2">GRATUITES</div>
-              </div>
-              <div className="text-center bg-white/10 backdrop-blur rounded-2xl p-4">
-                <div className="text-3xl font-bold text-yellow-300">2€</div>
-                <div className="text-sm">pages 11 à 300</div>
-                <div className="text-lg font-semibold mt-2">par page</div>
-              </div>
-              <div className="text-center bg-white/10 backdrop-blur rounded-2xl p-4">
-                <div className="text-3xl font-bold text-orange-300">1€</div>
-                <div className="text-sm">au-delà de 300</div>
-                <div className="text-lg font-semibold mt-2">par page</div>
-              </div>
+            <div
+              className={`grid gap-6 ${
+                pricingCards.length === 3
+                  ? "md:grid-cols-3"
+                  : pricingCards.length === 2
+                  ? "md:grid-cols-2"
+                  : "md:grid-cols-1"
+              }`}
+            >
+              {pricingCards.map((card) => (
+                <div
+                  key={card.id}
+                  className="text-center bg-white/10 backdrop-blur rounded-2xl p-4"
+                  title={card.description}
+                >
+                  <div className={`text-3xl font-bold text-${card.color}`}>
+                    {card.value}
+                  </div>
+                  <div className="text-sm">{card.unit}</div>
+                  <div className="text-lg font-semibold mt-2">{card.label}</div>
+                  {card.description && (
+                    <div className="text-xs text-white/80 mt-1 truncate">
+                      {card.description}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
@@ -230,7 +346,10 @@ export default function PricingCalculator() {
                   {/* Total Price */}
                   <div className="bg-white rounded-xl p-4 text-center border-2 border-blue-200">
                     <div className="text-sm text-gray-600 mb-1">Prix total</div>
-                    <div className="text-4xl font-bold text-blue-600">
+                    <div
+                      className="text-4xl font-bold text-blue-600"
+                      data-testid="total-price"
+                    >
                       {pricing.total}€
                     </div>
                     <div className="text-sm text-gray-500 mt-2">
