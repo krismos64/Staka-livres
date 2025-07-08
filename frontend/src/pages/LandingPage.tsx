@@ -1,4 +1,3 @@
-import React from "react";
 import About from "../components/landing/About";
 import Blog from "../components/landing/Blog";
 import Contact from "../components/landing/Contact";
@@ -13,7 +12,6 @@ import PricingCalculator from "../components/landing/PricingCalculator";
 import Services from "../components/landing/Services";
 import Testimonials from "../components/landing/Testimonials";
 import TrustIndicators from "../components/landing/TrustIndicators";
-import LayoutLanding from "../components/layout/LayoutLanding";
 
 interface LandingPageProps {
   onLoginClick?: () => void;
@@ -21,73 +19,71 @@ interface LandingPageProps {
 
 export default function LandingPage({ onLoginClick }: LandingPageProps) {
   return (
-    <LayoutLanding>
-      <div className="bg-gray-50 text-gray-800 font-sans leading-relaxed">
-        {/* Navigation */}
-        <Navigation onLoginClick={onLoginClick} />
+    <div className="bg-gray-50 text-gray-800 font-sans leading-relaxed">
+      {/* Navigation */}
+      <Navigation onLoginClick={onLoginClick} />
 
-        <main id="main-content">
-          {/* Hero Section */}
-          <Hero />
+      <main id="main-content">
+        {/* Hero Section */}
+        <Hero />
 
-          {/* Trust Indicators Section */}
-          <TrustIndicators />
+        {/* Trust Indicators Section */}
+        <TrustIndicators />
 
-          {/* Testimonials Section */}
-          <Testimonials />
+        {/* Testimonials Section */}
+        <Testimonials />
 
-          {/* Excellence Section */}
-          <Excellence />
+        {/* Excellence Section */}
+        <Excellence />
 
-          {/* Services Section */}
-          <Services />
+        {/* Services Section */}
+        <Services />
 
-          {/* Pricing Calculator Section */}
-          <PricingCalculator />
+        {/* Pricing Calculator Section */}
+        <PricingCalculator />
 
-          {/* Packs Section */}
-          <Packs />
+        {/* Packs Section */}
+        <Packs />
 
-          {/* Blog Section */}
-          <Blog />
+        {/* Blog Section */}
+        <Blog />
 
-          {/* Free Sample Section */}
-          <FreeSample />
+        {/* Free Sample Section */}
+        <FreeSample />
 
-          {/* About Section */}
-          <About />
+        {/* About Section */}
+        <About />
 
-          {/* FAQ Section */}
-          <FAQ />
+        {/* FAQ Section */}
+        <FAQ />
 
-          {/* Contact Section */}
-          <Contact />
+        {/* Contact Section */}
+        <Contact />
 
-          {/* Footer Section */}
-          <Footer />
-        </main>
+        {/* Footer Section */}
+        <Footer />
+      </main>
 
-        {/* Floating WhatsApp Button */}
-        <div className="fixed bottom-6 left-6 z-50">
-          <a
-            href="https://wa.me/33615078152?text=Bonjour,%20j'aimerais%20des%20informations%20sur%20vos%20services%20de%20correction%20de%20manuscrit"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110 group relative"
-          >
-            <i className="fab fa-whatsapp text-2xl"></i>
+      {/* Floating WhatsApp Button */}
+      <div className="fixed bottom-6 left-6 z-50">
+        <a
+          href="https://wa.me/33615078152?text=Bonjour,%20j'aimerais%20des%20informations%20sur%20vos%20services%20de%20correction%20de%20manuscrit"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110 group relative"
+        >
+          <i className="fab fa-whatsapp text-2xl"></i>
 
-            {/* Tooltip */}
-            <div className="absolute left-16 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-              Chattez avec nous sur WhatsApp
-              <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-gray-900"></div>
-            </div>
+          {/* Tooltip */}
+          <div className="absolute left-16 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            Chattez avec nous sur WhatsApp
+            <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-gray-900"></div>
+          </div>
 
-            {/* Pulse animation */}
-            <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-25"></div>
-          </a>
-        </div>
+          {/* Pulse animation */}
+          <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-25"></div>
+        </a>
       </div>
-    </LayoutLanding>
+    </div>
   );
 }

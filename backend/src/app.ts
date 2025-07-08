@@ -9,6 +9,7 @@ import commandesRoutes from "./routes/commandes";
 import faqRoutes from "./routes/faq";
 import invoiceRoutes from "./routes/invoice";
 import messagesRoutes from "./routes/messages";
+import pagesRoutes from "./routes/pages";
 import paymentsRoutes from "./routes/payments";
 import webhookRoutes from "./routes/payments/webhook";
 import tarifsRoutes from "./routes/tarifs";
@@ -55,6 +56,9 @@ app.use("/faq", faqRoutes);
 
 // Routes tarifs publiques
 app.use("/tarifs", tarifsRoutes);
+
+// Routes publiques pour les pages
+app.use("/pages", pagesRoutes);
 
 // Routes commandes (côté client)
 app.use("/commandes", commandesRoutes);

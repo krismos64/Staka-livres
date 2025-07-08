@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 
 export default function Footer() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
@@ -275,23 +276,26 @@ export default function Footer() {
       {/* Bottom Footer */}
       <div className="border-t border-gray-800 py-6">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400">
-            <div className="flex flex-wrap justify-center md:justify-start gap-6">
-              <span>© 2025 Staka Éditions. Tous droits réservés.</span>
-            </div>
-            <div className="flex flex-wrap justify-center gap-6">
-              <a href="#" className="hover:text-blue-400 transition">
+          <div className="mt-8 border-t border-gray-700 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
+            <p>
+              &copy; {new Date().getFullYear()} Staka. Tous droits réservés.
+            </p>
+            <div className="flex space-x-4 mt-4 md:mt-0">
+              <Link to="/pages/mentions-legales" className="hover:text-white">
                 Mentions légales
-              </a>
-              <a href="#" className="hover:text-blue-400 transition">
+              </Link>
+              <Link
+                to="/pages/politique-confidentialite"
+                className="hover:text-white"
+              >
                 Politique de confidentialité
-              </a>
-              <a href="#" className="hover:text-blue-400 transition">
+              </Link>
+              <Link to="/pages/cgv" className="hover:text-white">
                 CGV
-              </a>
-              <a href="#" className="hover:text-blue-400 transition">
+              </Link>
+              <Link to="/pages/rgpd" className="hover:text-white">
                 RGPD
-              </a>
+              </Link>
             </div>
           </div>
         </div>

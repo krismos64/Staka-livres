@@ -5,6 +5,8 @@ import {
   MessageType,
   NotificationPriority,
   NotificationType,
+  PageStatus,
+  PageType,
   Priorite,
   PrismaClient,
   Role,
@@ -82,12 +84,21 @@ async function main() {
   console.log(`- User2: ${user2.email} (${user2.id})`);
   console.log(`- User3: ${user3.email} (${user3.id})`);
 
-  // 3. Création de commandes variées pour tous les statuts
-  const commandes: any[] = [];
+  // Purge des tables pour un seed propre
+  await prisma.commande.deleteMany({});
+  await prisma.file.deleteMany({});
+  await prisma.message.deleteMany({});
+  await prisma.notification.deleteMany({});
+  await prisma.paymentMethod.deleteMany({});
+  await prisma.invoice.deleteMany({});
+  await prisma.supportRequest.deleteMany({});
+  await prisma.fAQ.deleteMany({});
+  console.log("✅ Anciennes données purgées.");
 
-  // Commande 1 - EN_ATTENTE
-  const commande1 = await prisma.commande.create({
-    data: {
+  // 3. Création de commandes variées pour tous les statuts
+  const commandesData = [
+    // Commande 1 - EN_ATTENTE
+    {
       userId: user.id,
       titre: "Correction manuscrit - Roman",
       description:
@@ -96,12 +107,8 @@ async function main() {
       priorite: Priorite.NORMALE,
       amount: 4999,
     },
-  });
-  commandes.push(commande1);
-
-  // Commande 2 - EN_COURS
-  const commande2 = await prisma.commande.create({
-    data: {
+    // Commande 2 - EN_COURS
+    {
       userId: admin.id,
       titre: "Mise en page livre",
       description: "Mise en page professionnelle d'un recueil de poésies.",
@@ -109,12 +116,8 @@ async function main() {
       priorite: Priorite.URGENTE,
       amount: 12000,
     },
-  });
-  commandes.push(commande2);
-
-  // Commande 3 - TERMINE
-  const commande3 = await prisma.commande.create({
-    data: {
+    // Commande 3 - TERMINE
+    {
       userId: user2.id,
       titre: "Correction essai philosophique",
       description: "Correction complète d'un essai de 150 pages.",
@@ -123,12 +126,8 @@ async function main() {
       amount: 3500,
       createdAt: new Date("2024-01-15"),
     },
-  });
-  commandes.push(commande3);
-
-  // Commande 4 - ANNULEE
-  const commande4 = await prisma.commande.create({
-    data: {
+    // Commande 4 - ANNULEE
+    {
       userId: user2.id,
       titre: "Projet annulé",
       description: "Commande annulée par le client.",
@@ -137,12 +136,8 @@ async function main() {
       amount: 2000,
       createdAt: new Date("2024-02-01"),
     },
-  });
-  commandes.push(commande4);
-
-  // Commande 5 - SUSPENDUE
-  const commande5 = await prisma.commande.create({
-    data: {
+    // Commande 5 - SUSPENDUE
+    {
       userId: user3.id,
       titre: "Correction biographie - En attente infos",
       description:
@@ -152,12 +147,8 @@ async function main() {
       amount: 6500,
       createdAt: new Date("2024-02-15"),
     },
-  });
-  commandes.push(commande5);
-
-  // Commande 6 - EN_ATTENTE (récente)
-  const commande6 = await prisma.commande.create({
-    data: {
+    // Commande 6 - EN_ATTENTE (récente)
+    {
       userId: user3.id,
       titre: "Relecture manuscrit thriller",
       description: "Relecture approfondie d'un thriller de 250 pages.",
@@ -165,8 +156,19 @@ async function main() {
       priorite: Priorite.HAUTE,
       amount: 4200,
     },
+  ];
+
+  await prisma.commande.createMany({
+    data: commandesData,
   });
-  commandes.push(commande6);
+
+  const commandes = await prisma.commande.findMany();
+  const commande1 = commandes.find((c) => c.titre.includes("Roman"));
+  const commande2 = commandes.find((c) => c.titre.includes("Mise en page"));
+  if (!commande1 || !commande2) {
+    console.error("Erreur: Commandes de base non trouvées après création.");
+    return;
+  }
 
   console.log("✅ Commandes créées:");
   commandes.forEach((cmd, index) => {
@@ -519,6 +521,66 @@ async function main() {
     console.log(`✅ Tarif créé: ${tarif.nom} (${tarif.prixFormate})`);
   }
   console.log(`🎉 ${tarifsDeTest.length} tarifs ajoutés avec succès !`);
+
+  // 12. Seed des pages légales (fixes, non supprimables)
+  // Purge la table Page avant de reseeder les pages légales
+  await prisma.page.deleteMany({});
+
+  const legalPages = [
+    {
+      slug: "mentions-legales",
+      title: "Mentions légales",
+      content: "<p>Mentions légales à compléter...</p>",
+      metaTitle: "Mentions légales",
+      metaDescription: "Mentions légales du site Staka.",
+      type: PageType.PAGE,
+      status: PageStatus.PUBLISHED,
+      isPublic: true,
+      sortOrder: 1,
+    },
+    {
+      slug: "politique-confidentialite",
+      title: "Politique de confidentialité",
+      content: "<p>Politique de confidentialité à compléter...</p>",
+      metaTitle: "Politique de confidentialité",
+      metaDescription: "Politique de confidentialité du site Staka.",
+      type: PageType.PAGE,
+      status: PageStatus.PUBLISHED,
+      isPublic: true,
+      sortOrder: 2,
+    },
+    {
+      slug: "cgv",
+      title: "Conditions Générales de Vente",
+      content: "<p>CGV à compléter...</p>",
+      metaTitle: "CGV",
+      metaDescription: "Conditions Générales de Vente du site Staka.",
+      type: PageType.PAGE,
+      status: PageStatus.PUBLISHED,
+      isPublic: true,
+      sortOrder: 3,
+    },
+    {
+      slug: "rgpd",
+      title: "RGPD",
+      content: "<p>RGPD à compléter...</p>",
+      metaTitle: "RGPD",
+      metaDescription: "Informations RGPD du site Staka.",
+      type: PageType.PAGE,
+      status: PageStatus.PUBLISHED,
+      isPublic: true,
+      sortOrder: 4,
+    },
+  ];
+
+  for (const page of legalPages) {
+    await prisma.page.upsert({
+      where: { slug: page.slug },
+      update: page,
+      create: page,
+    });
+    console.log(`✅ Page légale seedée : ${page.title}`);
+  }
 }
 
 main()

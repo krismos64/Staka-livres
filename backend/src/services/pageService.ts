@@ -154,97 +154,38 @@ export class PageService {
     return page;
   }
 
-  // POST /admin/pages - Création d'une nouvelle page
-  static async createPage(data: CreatePageData): Promise<Page> {
-    // Vérification de l'unicité du slug
-    const existingPage = await prisma.page.findUnique({
-      where: { slug: data.slug },
-    });
-
-    if (existingPage) {
-      throw new Error("Une page avec ce slug existe déjà");
-    }
-
-    // Préparation des données
-    const pageData = {
-      ...data,
-      publishedAt: data.status === "PUBLISHED" ? new Date() : data.publishedAt,
-    };
-
-    const page = await prisma.page.create({
-      data: pageData,
-    });
-
-    console.log(`📄 [PAGE_SERVICE] Page créée: ${page.title} (${page.id})`);
-    return page;
-  }
-
-  // PUT /admin/pages/:id - Mise à jour complète d'une page
-  static async updatePage(id: string, data: UpdatePageData): Promise<Page> {
-    // Vérification de l'existence de la page
-    const existingPage = await prisma.page.findUnique({
-      where: { id },
-    });
-
+  // PATCH /admin/pages/:id - Mise à jour partielle d'une page
+  static async patchPage(id: string, data: UpdatePageData): Promise<Page> {
+    const existingPage = await prisma.page.findUnique({ where: { id } });
     if (!existingPage) {
       throw new Error("Page non trouvée");
-    }
-
-    // Vérification de l'unicité du slug si modifié
-    if (data.slug && data.slug !== existingPage.slug) {
-      const slugExists = await prisma.page.findUnique({
-        where: { slug: data.slug },
-      });
-
-      if (slugExists) {
-        throw new Error("Une page avec ce slug existe déjà");
-      }
-    }
-
-    // Gestion de la date de publication
-    let publishedAt = data.publishedAt;
-    if (data.status === "PUBLISHED" && existingPage.status !== "PUBLISHED") {
-      publishedAt = new Date();
-    } else if (data.status !== "PUBLISHED") {
-      publishedAt = undefined;
     }
 
     const updatedPage = await prisma.page.update({
       where: { id },
-      data: {
-        ...data,
-        publishedAt,
-      },
+      data,
     });
 
     console.log(
-      `📄 [PAGE_SERVICE] Page mise à jour: ${updatedPage.title} (${id})`
+      `[PAGE_SERVICE] Page mise à jour (patch): ${updatedPage.title} (${id})`
     );
     return updatedPage;
   }
 
-  // PATCH /admin/pages/:id - Mise à jour partielle d'une page
-  static async patchPage(id: string, data: UpdatePageData): Promise<Page> {
-    return this.updatePage(id, data);
-  }
-
-  // DELETE /admin/pages/:id - Suppression d'une page
-  static async deletePage(id: string): Promise<void> {
-    const existingPage = await prisma.page.findUnique({
-      where: { id },
+  static async getPublicPageBySlug(slug: string): Promise<Page> {
+    const page = await prisma.page.findFirst({
+      where: {
+        slug,
+        status: "PUBLISHED",
+        isPublic: true,
+      },
     });
 
-    if (!existingPage) {
-      throw new Error("Page non trouvée");
+    if (!page) {
+      throw new Error("Page non trouvée ou non publiée");
     }
 
-    await prisma.page.delete({
-      where: { id },
-    });
-
-    console.log(
-      `📄 [PAGE_SERVICE] Page supprimée: ${existingPage.title} (${id})`
-    );
+    return page;
   }
 
   // PATCH /admin/pages/:id/publish - Publication d'une page
@@ -324,65 +265,5 @@ export class PageService {
       archived,
       scheduled,
     };
-  }
-
-  // Validation des données de page
-  static validatePageData(data: any): { isValid: boolean; errors: string[] } {
-    const errors: string[] = [];
-
-    if (
-      !data.title ||
-      typeof data.title !== "string" ||
-      data.title.trim().length < 1
-    ) {
-      errors.push("Le titre est requis et doit faire au moins 1 caractère");
-    }
-
-    if (
-      !data.slug ||
-      typeof data.slug !== "string" ||
-      data.slug.trim().length < 1
-    ) {
-      errors.push("Le slug est requis et doit faire au moins 1 caractère");
-    }
-
-    if (data.slug && !/^[a-z0-9-]+$/.test(data.slug)) {
-      errors.push(
-        "Le slug doit contenir uniquement des lettres minuscules, chiffres et tirets"
-      );
-    }
-
-    if (
-      !data.content ||
-      typeof data.content !== "string" ||
-      data.content.trim().length < 1
-    ) {
-      errors.push("Le contenu est requis et doit faire au moins 1 caractère");
-    }
-
-    if (data.title && data.title.length > 255) {
-      errors.push("Le titre ne peut pas dépasser 255 caractères");
-    }
-
-    if (data.slug && data.slug.length > 255) {
-      errors.push("Le slug ne peut pas dépasser 255 caractères");
-    }
-
-    if (data.metaTitle && data.metaTitle.length > 255) {
-      errors.push("Le meta title ne peut pas dépasser 255 caractères");
-    }
-
-    if (data.category && data.category.length > 100) {
-      errors.push("La catégorie ne peut pas dépasser 100 caractères");
-    }
-
-    if (
-      data.sortOrder !== undefined &&
-      (typeof data.sortOrder !== "number" || data.sortOrder < 0)
-    ) {
-      errors.push("L'ordre de tri doit être un nombre positif");
-    }
-
-    return { isValid: errors.length === 0, errors };
   }
 }

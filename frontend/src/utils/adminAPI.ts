@@ -28,6 +28,7 @@ import {
   UserStats,
 } from "../types/shared";
 import { tokenUtils } from "./auth";
+import { debugLog } from "./debug";
 import { MockDataService } from "./mockData";
 
 // Correction radicale : toujours /api côté navigateur, backend:3001 côté Node
@@ -142,6 +143,9 @@ interface CreatePageRequest {
   contenu: string;
   description?: string;
   statut: StatutPage;
+  type?: string;
+  isPublic?: boolean;
+  sortOrder?: number;
 }
 
 interface UpdatePageRequest {
@@ -150,6 +154,9 @@ interface UpdatePageRequest {
   contenu?: string;
   description?: string;
   statut?: StatutPage;
+  type?: string;
+  isPublic?: boolean;
+  sortOrder?: number;
 }
 
 // Fonction pour gérer la déconnexion automatique
@@ -277,6 +284,20 @@ const createApiInstance = (): any => {
 
 // Instance Axios configurée
 const apiClient = createApiInstance();
+
+// Mapping des statuts français -> Prisma (hors classe)
+const mapStatutToStatus = (statut: string | undefined) => {
+  switch (statut) {
+    case "BROUILLON":
+      return "DRAFT";
+    case "PUBLIEE":
+      return "PUBLISHED";
+    case "ARCHIVEE":
+      return "ARCHIVED";
+    default:
+      return undefined;
+  }
+};
 
 // Service adaptatif qui détecte le mode démo
 class AdaptiveAdminAPI {
@@ -1027,7 +1048,7 @@ class AdaptiveAdminAPI {
       return page;
     }
 
-    return this.realApiCall(`/admin/page/${id}`);
+    return this.realApiCall(`/admin/pages/${id}`);
   }
 
   async createPage(pageData: CreatePageRequest): Promise<PageStatique> {
@@ -1041,7 +1062,21 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall("/admin/page", "POST", pageData);
+    // Mapping explicite des champs frontend -> backend
+    const payload = {
+      title: pageData.titre,
+      slug: pageData.slug,
+      content: pageData.contenu,
+      status: mapStatutToStatus(pageData.statut),
+      metaDescription: pageData.description, // mapping SEO
+      metaTitle: pageData.titre, // mapping SEO
+      type: pageData.type || "PAGE", // valeur par défaut
+      isPublic: pageData.isPublic !== undefined ? pageData.isPublic : true,
+      sortOrder: pageData.sortOrder !== undefined ? pageData.sortOrder : 0,
+      // Ajoute ici d'autres mappings si besoin (type, category, etc.)
+    };
+
+    return this.realApiCall("/admin/pages", "POST", payload);
   }
 
   async updatePage(
@@ -1058,7 +1093,23 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall(`/admin/page/${id}`, "PUT", pageData);
+    // Mapping explicite pour update aussi
+    const payload = {
+      title: pageData.titre,
+      slug: pageData.slug,
+      content: pageData.contenu,
+      status: mapStatutToStatus(pageData.statut),
+      metaDescription: pageData.description,
+      metaTitle: pageData.titre,
+      type: pageData.type || "PAGE",
+      isPublic: pageData.isPublic !== undefined ? pageData.isPublic : true,
+      sortOrder: pageData.sortOrder !== undefined ? pageData.sortOrder : 0,
+      // autres champs...
+    };
+
+    debugLog("Mise à jour de la page", { id, pageData });
+    const response = await apiClient.patch(`/admin/pages/${id}`, payload);
+    return response.data.data;
   }
 
   async deletePage(id: string): Promise<void> {
@@ -1067,7 +1118,7 @@ class AdaptiveAdminAPI {
       return;
     }
 
-    await this.realApiCall(`/admin/page/${id}`, "DELETE");
+    await this.realApiCall(`/admin/pages/${id}`, "DELETE");
   }
 
   async publishPage(id: string): Promise<PageStatique> {

@@ -1,8 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageStatique, StatutPage } from "../types/shared";
 import {
-  createPage,
-  deletePage,
   getPageById,
   getPages,
   publishPage,
@@ -17,14 +15,6 @@ export interface AdminPagesParams {
   limit?: number;
   search?: string;
   statut?: StatutPage;
-}
-
-export interface CreatePageData {
-  titre: string;
-  slug: string;
-  contenu: string;
-  description?: string;
-  statut: StatutPage;
 }
 
 export interface UpdatePageData {
@@ -67,38 +57,6 @@ export const useAdminPage = (id: string) => {
   });
 };
 
-// Hook pour créer une page
-export const useCreatePage = () => {
-  const queryClient = useQueryClient();
-  const { showToast } = useToasts();
-
-  return useMutation({
-    mutationFn: (pageData: CreatePageData) => createPage(pageData),
-    onSuccess: (newPage) => {
-      // Invalider et refetch la liste des pages
-      queryClient.invalidateQueries({ queryKey: pageKeys.lists() });
-
-      // Ajouter la nouvelle page au cache localement pour un update optimiste
-      queryClient.setQueryData(
-        pageKeys.list({}),
-        (oldData: PageStatique[] | undefined) => {
-          if (!oldData) return [newPage];
-          return [newPage, ...oldData];
-        }
-      );
-
-      showToast("success", "Page créée", "La page a été créée avec succès");
-    },
-    onError: (error: Error) => {
-      showToast(
-        "error",
-        "Erreur",
-        error.message || "Erreur lors de la création de la page"
-      );
-    },
-  });
-};
-
 // Hook pour mettre à jour une page
 export const useUpdatePage = () => {
   const queryClient = useQueryClient();
@@ -138,44 +96,6 @@ export const useUpdatePage = () => {
         "error",
         "Erreur",
         error.message || "Erreur lors de la modification de la page"
-      );
-    },
-  });
-};
-
-// Hook pour supprimer une page
-export const useDeletePage = () => {
-  const queryClient = useQueryClient();
-  const { showToast } = useToasts();
-
-  return useMutation({
-    mutationFn: (id: string) => deletePage(id),
-    onSuccess: (_, deletedId) => {
-      // Invalider les listes
-      queryClient.invalidateQueries({ queryKey: pageKeys.lists() });
-
-      // Supprimer du cache localement
-      queryClient.removeQueries({ queryKey: pageKeys.detail(deletedId) });
-
-      queryClient.setQueryData(
-        pageKeys.list({}),
-        (oldData: PageStatique[] | undefined) => {
-          if (!oldData) return [];
-          return oldData.filter((page) => page.id !== deletedId);
-        }
-      );
-
-      showToast(
-        "success",
-        "Page supprimée",
-        "La page a été supprimée avec succès"
-      );
-    },
-    onError: (error: Error) => {
-      showToast(
-        "error",
-        "Erreur",
-        error.message || "Erreur lors de la suppression de la page"
       );
     },
   });

@@ -1,4 +1,5 @@
 import React, { ReactNode, useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { adminAPI } from "../../utils/adminAPI";
 import { DemoBanner, useDemoMode } from "./DemoModeProvider";
@@ -6,7 +7,7 @@ import { SecurityAuditPanel } from "./RequireAdmin";
 
 export type AdminSection =
   | "dashboard"
-  | "utilisateurs"
+  | "users"
   | "commandes"
   | "factures"
   | "faq"
@@ -18,8 +19,6 @@ export type AdminSection =
 
 interface AdminLayoutProps {
   children: ReactNode;
-  activeSection: AdminSection;
-  onSectionChange: (section: AdminSection) => void;
   onLogout: () => void;
 }
 
@@ -55,90 +54,94 @@ const useUnreadConversationsCount = () => {
 
 // Composant pour les liens de la barre latérale
 const SidebarLink: React.FC<{
-  item: { id: AdminSection; label: string; icon: string };
+  to: string;
+  label: string;
+  icon: string;
   isActive: boolean;
-  onClick: () => void;
   badge?: number;
-}> = ({ item, isActive, onClick, badge }) => (
+}> = ({ to, label, icon, isActive, badge }) => (
   <li>
-    <button
-      onClick={onClick}
+    <Link
+      to={to}
       className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg text-left text-base transition-all duration-200 ease-in-out transform hover:translate-x-2 ${
         isActive
           ? "bg-blue-600 text-white shadow-lg"
           : "text-gray-300 hover:bg-gray-700 hover:text-white"
       }`}
     >
-      <i className={`${item.icon} w-6 text-center text-lg`}></i>
-      <span className="font-semibold flex-1">{item.label}</span>
+      <i className={`${icon} w-6 text-center text-lg`}></i>
+      <span className="font-semibold flex-1">{label}</span>
       {badge && badge > 0 && (
         <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full min-w-[20px] text-center">
           {badge > 99 ? "99+" : badge}
         </span>
       )}
-    </button>
+    </Link>
   </li>
 );
 
-const AdminLayout: React.FC<AdminLayoutProps> = ({
-  children,
-  activeSection,
-  onSectionChange,
-  onLogout,
-}) => {
+const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth();
   const { isDemo } = useDemoMode();
   const unreadConversationsCount = useUnreadConversationsCount();
+  const location = useLocation();
+
+  const getActiveSection = () => {
+    const path = location.pathname.split("/").pop() || "dashboard";
+    if (path === "admin") return "dashboard";
+    return path;
+  };
+  const activeSection = getActiveSection();
 
   const sidebarItems = [
     {
-      id: "dashboard" as AdminSection,
+      id: "dashboard",
       label: "Dashboard",
       icon: "fas fa-tachometer-alt",
     },
     {
-      id: "utilisateurs" as AdminSection,
+      id: "users",
       label: "Utilisateurs",
       icon: "fas fa-users-cog",
     },
     {
-      id: "commandes" as AdminSection,
+      id: "commandes",
       label: "Commandes",
       icon: "fas fa-file-invoice-dollar",
     },
     {
-      id: "factures" as AdminSection,
+      id: "factures",
       label: "Factures",
       icon: "fas fa-receipt",
     },
     {
-      id: "messagerie" as AdminSection,
+      id: "messagerie",
       label: "Messagerie",
       icon: "fas fa-comments",
     },
     {
-      id: "statistiques" as AdminSection,
+      id: "statistiques",
       label: "Statistiques",
       icon: "fas fa-chart-line",
     },
     {
-      id: "faq" as AdminSection,
+      id: "faq",
       label: "FAQ",
       icon: "fas fa-question-circle",
     },
     {
-      id: "tarifs" as AdminSection,
+      id: "tarifs",
       label: "Tarifs",
       icon: "fas fa-euro-sign",
     },
     {
-      id: "pages" as AdminSection,
+      id: "pages",
       label: "Pages statiques",
       icon: "fas fa-file-alt",
     },
     {
-      id: "logs" as AdminSection,
+      id: "logs",
       label: "Logs & Audit",
       icon: "fas fa-history",
     },
@@ -148,7 +151,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
     const baseTitle =
       {
         dashboard: "Dashboard Admin",
-        utilisateurs: "Gestion des utilisateurs",
+        users: "Gestion des utilisateurs",
         commandes: "Gestion des commandes",
         factures: "Gestion des factures",
         messagerie: "Messagerie Admin",
@@ -166,7 +169,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
     return (
       {
         dashboard: "Tableau de bord et aperçu général",
-        utilisateurs: "Gérer les comptes et permissions",
+        users: "Gérer les comptes et permissions",
         commandes: "Suivi des corrections et projets",
         factures: "Gestion de la facturation et paiements",
         messagerie: "Superviser les conversations client-correcteur",
@@ -220,9 +223,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
                 {sidebarItems.map((item) => (
                   <SidebarLink
                     key={item.id}
-                    item={item}
+                    to={`/admin/${item.id}`}
+                    label={item.label}
+                    icon={item.icon}
                     isActive={activeSection === item.id}
-                    onClick={() => onSectionChange(item.id)}
                     badge={
                       item.id === "messagerie"
                         ? unreadConversationsCount
