@@ -56,77 +56,85 @@ export default function PricingCalculator() {
     // TODO: Ouvrir le chat ou rediriger vers contact
   };
 
-  // Fonction pour générer les cartes de tarification depuis les tarifs
+  // Fonction pour générer les cartes de tarification depuis les règles de pricing
   const getPricingCards = () => {
-    if (!tarifs || tarifs.length === 0) {
-      // Fallback sur les cartes par défaut
-      return [
-        {
-          id: "free",
-          value: "10",
-          unit: "premières pages",
-          label: "GRATUITES",
-          color: "green-300",
-          description: "Offre découverte",
-        },
-        {
-          id: "tier2",
-          value: "2€",
-          unit: "pages 11 à 300",
-          label: "par page",
-          color: "yellow-300",
-          description: "Tarif standard",
-        },
-        {
-          id: "tier3",
-          value: "1€",
-          unit: "au-delà de 300",
-          label: "par page",
-          color: "orange-300",
-          description: "Tarif dégressif",
-        },
-      ];
+    // Utiliser les règles de pricing pour construire les cartes selon la maquette
+    // La structure doit toujours être : GRATUIT | TIER2 | TIER3
+
+    // Récupérer les règles depuis le hook usePricing
+    const { debugInfo } = usePricing({
+      enableDebugLogs: process.env.NODE_ENV === "development",
+    });
+
+    // Si on a accès aux règles de pricing via les tarifs
+    if (tarifs && tarifs.length > 0) {
+      const correctionTarifs = tarifs
+        .filter(
+          (t) =>
+            t.actif &&
+            (t.typeService === "Correction" ||
+              t.nom.toLowerCase().includes("correction"))
+        )
+        .sort((a, b) => a.ordre - b.ordre);
+
+      if (correctionTarifs.length > 0) {
+        // Utiliser le prix du premier tarif de correction pour le tier2
+        const prixTier2 = correctionTarifs[0].prix / 100; // Convertir centimes → euros
+        const prixTier3 =
+          correctionTarifs.length > 1
+            ? correctionTarifs[1].prix / 100
+            : Math.max(1, prixTier2 - 1); // Prix dégressif ou fallback à prixTier2 - 1
+
+        return [
+          {
+            id: "free",
+            value: "10",
+            unit: "premières pages",
+            label: "GRATUITES",
+            description: "Offre découverte",
+          },
+          {
+            id: "tier2",
+            value: `${prixTier2}€`,
+            unit: "pages 11 à 300",
+            label: "par page",
+            description: "Tarif standard",
+          },
+          {
+            id: "tier3",
+            value: `${prixTier3}€`,
+            unit: "au-delà de 300",
+            label: "par page",
+            description: "Tarif dégressif",
+          },
+        ];
+      }
     }
 
-    // Générer les cartes depuis les tarifs actifs de type "Correction"
-    const correctionTarifs = tarifs
-      .filter(
-        (t) =>
-          t.actif &&
-          (t.typeService === "Correction" ||
-            t.nom.toLowerCase().includes("correction"))
-      )
-      .sort((a, b) => a.ordre - b.ordre)
-      .slice(0, 3); // Limiter à 3 cartes
-
-    if (correctionTarifs.length === 0) {
-      // Si pas de tarifs de correction, prendre les 3 premiers tarifs actifs
-      const fallbackTarifs = tarifs
-        .filter((t) => t.actif)
-        .sort((a, b) => a.ordre - b.ordre)
-        .slice(0, 3);
-
-      return fallbackTarifs.map((tarif, index) => ({
-        id: tarif.id,
-        value: tarif.prixFormate,
-        unit: tarif.typeService,
-        label: tarif.nom,
-        color:
-          index === 0 ? "green-300" : index === 1 ? "yellow-300" : "orange-300",
-        description: tarif.description || "",
-      }));
-    }
-
-    // Mapper les tarifs de correction en cartes
-    return correctionTarifs.map((tarif, index) => ({
-      id: tarif.id,
-      value: tarif.prixFormate,
-      unit: tarif.dureeEstimee || `${tarif.typeService}`,
-      label: tarif.nom,
-      color:
-        index === 0 ? "green-300" : index === 1 ? "yellow-300" : "orange-300",
-      description: tarif.description || "",
-    }));
+    // Fallback sur les cartes par défaut (selon la maquette)
+    return [
+      {
+        id: "free",
+        value: "10",
+        unit: "premières pages",
+        label: "GRATUITES",
+        description: "Offre découverte",
+      },
+      {
+        id: "tier2",
+        value: "2€",
+        unit: "pages 11 à 300",
+        label: "par page",
+        description: "Tarif standard",
+      },
+      {
+        id: "tier3",
+        value: "1€",
+        unit: "au-delà de 300",
+        label: "par page",
+        description: "Tarif dégressif",
+      },
+    ];
   };
 
   const pricingCards = getPricingCards();
@@ -204,7 +212,15 @@ export default function PricingCalculator() {
                   className="text-center bg-white/10 backdrop-blur rounded-2xl p-4"
                   title={card.description}
                 >
-                  <div className={`text-3xl font-bold text-${card.color}`}>
+                  <div
+                    className={`text-3xl font-bold ${
+                      card.id === "free"
+                        ? "text-green-300"
+                        : card.id === "tier2"
+                        ? "text-yellow-300"
+                        : "text-orange-300"
+                    }`}
+                  >
                     {card.value}
                   </div>
                   <div className="text-sm">{card.unit}</div>

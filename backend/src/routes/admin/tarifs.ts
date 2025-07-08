@@ -225,12 +225,15 @@ router.put(
       const { id } = req.params;
       const tarifData: UpdateTarifRequest = req.body;
 
+      console.log(`🔄 [ADMIN_TARIFS] Mise à jour tarif ID: ${id}`, tarifData);
+
       // Vérifier que le tarif existe
       const existingTarif = await prisma.tarif.findUnique({
         where: { id },
       });
 
       if (!existingTarif) {
+        console.log(`❌ [ADMIN_TARIFS] Tarif non trouvé: ${id}`);
         return res.status(404).json({
           success: false,
           error: "Tarif non trouvé",
@@ -245,6 +248,7 @@ router.put(
         });
 
         if (conflictTarif) {
+          console.log(`❌ [ADMIN_TARIFS] Conflit nom: ${tarifData.nom}`);
           return res.status(409).json({
             success: false,
             error: "Conflit",
@@ -253,12 +257,42 @@ router.put(
         }
       }
 
+      // ✅ CORRECTION: Recalculer automatiquement prixFormate si prix modifié
+      const updateData = { ...tarifData };
+      if (
+        tarifData.prix !== undefined &&
+        tarifData.prix !== existingTarif.prix
+      ) {
+        // Calculer le nouveau prixFormate basé sur le nouveau prix
+        if (tarifData.prix % 100 === 0) {
+          // Prix rond (ex: 200 centimes = 2€)
+          updateData.prixFormate = `${tarifData.prix / 100}€`;
+        } else {
+          // Prix avec décimales (ex: 250 centimes = 2,50€)
+          updateData.prixFormate = `${(tarifData.prix / 100)
+            .toFixed(2)
+            .replace(".", ",")}€`;
+        }
+        console.log(
+          `💰 [ADMIN_TARIFS] Prix recalculé: ${tarifData.prix} centimes → ${updateData.prixFormate}`
+        );
+      }
+
       const tarifMisAJour = await prisma.tarif.update({
         where: { id },
-        data: tarifData,
+        data: updateData,
       });
 
-      console.log(`✅ [ADMIN_TARIFS] Tarif mis à jour: ${tarifMisAJour.nom}`);
+      // ✅ CORRECTION : Log détaillé de la mise à jour effectuée en base
+      console.log(`🛠️ Tarif modifié en base:`, {
+        id: tarifMisAJour.id,
+        nom: tarifMisAJour.nom,
+        prix: tarifMisAJour.prix,
+        prixFormate: tarifMisAJour.prixFormate,
+        actif: tarifMisAJour.actif,
+        ordre: tarifMisAJour.ordre,
+        updatedAt: tarifMisAJour.updatedAt,
+      });
 
       res.status(200).json({
         success: true,

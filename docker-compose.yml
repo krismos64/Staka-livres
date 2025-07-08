@@ -7,8 +7,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - VITE_API_URL=http://localhost:3001
+      - VITE_API_URL=http://backend:3001
       - DISPLAY=:99
+      - DOCKER_ENV=true
     volumes:
       - ./frontend:/app/frontend
       - ./shared:/app/shared

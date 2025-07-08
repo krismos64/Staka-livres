@@ -20,6 +20,17 @@ router.get("/", async (req, res) => {
     });
 
     console.log(`✅ [TARIFS] ${tarifs.length} tarifs actifs récupérés`);
+    console.log(
+      "📋 [TARIFS] Détail des tarifs publics:",
+      tarifs.map((t) => ({
+        id: t.id,
+        nom: t.nom,
+        prix: t.prix,
+        prixFormate: t.prixFormate,
+        actif: t.actif,
+        ordre: t.ordre,
+      }))
+    );
 
     res.status(200).json({
       success: true,

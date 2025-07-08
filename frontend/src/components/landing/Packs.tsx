@@ -101,13 +101,25 @@ export default function Packs() {
               )}
 
               <div className="text-center mb-6">
-                <h3 className="text-2xl font-bold mb-2">{pack.nom}</h3>
-                <div className="text-3xl font-bold mb-2">{pack.prix}</div>
-                <p
-                  className={pack.featured ? "text-blue-100" : "text-gray-500"}
+                <h3 className="text-lg font-bold mb-2">{pack.nom}</h3>
+                <div
+                  className={`text-4xl font-bold mb-2 ${
+                    pack.featured ? "text-white" : "text-blue-600"
+                  }`}
+                >
+                  {pack.prix}
+                </div>
+                <div
+                  className={`inline-block px-3 py-1 rounded-md text-sm ${
+                    pack.featured
+                      ? "bg-white/20 text-white"
+                      : pack.id === "pack-redaction-default"
+                      ? "bg-blue-100 text-blue-600"
+                      : "bg-gray-100 text-gray-600"
+                  }`}
                 >
                   {pack.description}
-                </p>
+                </div>
               </div>
 
               <ul className="space-y-3 mb-8">
@@ -118,7 +130,7 @@ export default function Packs() {
                         pack.featured ? "text-green-300" : "text-green-500"
                       }`}
                     ></i>
-                    <span>{service}</span>
+                    <span className="text-sm">{service}</span>
                   </li>
                 ))}
               </ul>
@@ -132,11 +144,12 @@ export default function Packs() {
 
               <div className="mt-4 text-center">
                 <span
-                  className={`text-sm ${
-                    pack.featured ? "text-blue-100" : "text-gray-500"
+                  className={`text-sm flex items-center justify-center gap-1 ${
+                    pack.featured ? "text-white/80" : "text-gray-500"
                   }`}
                 >
-                  🕒 Délai: {pack.delai}
+                  <i className="fas fa-clock"></i>
+                  Délai: {pack.delai}
                 </span>
               </div>
             </div>
@@ -199,12 +212,10 @@ function buildPacksFromTarifs(tarifs: TarifAPI[]): Pack[] {
       prix: kdpTarif.prixFormate,
       description: kdpTarif.description || "Idéal pour débuter",
       services: [
-        "Maquette intérieure professionnelle",
-        "Couverture personnalisée",
-        "Format Kindle (.mobi)",
-        "Format ePub optimisé",
-        "Fichiers print-ready",
-        "Guide de publication inclus",
+        "Maquette intérieure",
+        "Conception couverture",
+        "Fichiers ePub & Mobi",
+        "Accompagnement KDP",
       ],
       delai: kdpTarif.dureeEstimee || "5-7 jours",
       featured: false,
@@ -230,12 +241,11 @@ function buildPacksFromTarifs(tarifs: TarifAPI[]): Pack[] {
         correctionStandard.description ||
         "Correction complète de votre manuscrit",
       services: [
-        "Correction orthographique",
-        "Correction grammaticale",
-        "Correction syntaxique",
-        "Amélioration du style",
-        "Rapport de correction détaillé",
-        "2 révisions incluses",
+        "Correction complète",
+        "Maquette intérieure",
+        "Conception couverture",
+        "Fichiers ePub & Mobi",
+        "Support prioritaire",
       ],
       delai: correctionStandard.dureeEstimee || "7-10 jours",
       featured: true,
@@ -296,11 +306,11 @@ function buildPacksFromTarifs(tarifs: TarifAPI[]): Pack[] {
         prix: tarif.prixFormate,
         description: tarif.description || `Service ${tarif.typeService}`,
         services: [
-          `${tarif.typeService} professionnelle`,
-          "Travail soigné et personnalisé",
-          "Suivi client dédié",
-          "Garantie satisfaction",
-          "Support inclus",
+          "Coaching rédactionnel",
+          "Correction complète",
+          "Maquette intérieure",
+          "Conception couverture",
+          "Fichiers ePub & Mobi",
         ],
         delai: tarif.dureeEstimee || "5-7 jours",
         featured: false,
@@ -327,7 +337,7 @@ function getDefaultPacks(): Pack[] {
       prix: "350€",
       description: "Idéal pour débuter",
       services: [
-        "Maquette intérieure professionnelle",
+        "Maquette intérieure",
         "Couverture personnalisée",
         "Format Kindle (.mobi)",
         "Format ePub optimisé",
@@ -340,10 +350,10 @@ function getDefaultPacks(): Pack[] {
         "w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold transition",
     },
     {
-      id: "pack-correction-default",
-      nom: "Correction Standard",
+      id: "pack-integral-default",
+      nom: "Pack Intégral",
       prix: "2€/page",
-      description: "Correction complète de votre manuscrit",
+      description: "Solution complète",
       services: [
         "Correction orthographique",
         "Correction grammaticale",
@@ -352,28 +362,27 @@ function getDefaultPacks(): Pack[] {
         "Rapport de correction détaillé",
         "2 révisions incluses",
       ],
-      delai: "7-10 jours",
+      delai: "10-15 jours",
       featured: true,
       buttonStyle:
-        "w-full bg-white text-blue-600 py-3 px-6 rounded-xl font-semibold hover:bg-blue-50 transition border-2 border-white",
+        "w-full bg-white text-blue-600 py-3 px-6 rounded-xl font-semibold hover:bg-blue-50 transition",
     },
     {
-      id: "pack-reecriture-default",
-      nom: "Réécriture Avancée",
+      id: "pack-redaction-default",
+      nom: "Pack Rédaction Complète",
       prix: "1450€",
-      description: "Réécriture professionnelle avec suggestions",
+      description: "Coaching complet",
       services: [
-        "Réécriture approfondie",
-        "Restructuration des passages",
-        "Amélioration du rythme",
-        "Renforcement de la cohérence",
-        "Suggestions d'amélioration",
-        "Coaching rédactionnel inclus",
+        "Coaching rédactionnel",
+        "Correction complète",
+        "Maquette intérieure",
+        "Conception couverture",
+        "Fichiers ePub & Mobi",
       ],
-      delai: "10-14 jours",
+      delai: "3-6 semaines",
       featured: false,
       buttonStyle:
-        "w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-semibold transition",
+        "w-full bg-gray-600 hover:bg-gray-700 text-white py-3 px-6 rounded-xl font-semibold transition",
     },
   ];
 }

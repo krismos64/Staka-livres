@@ -48,11 +48,25 @@ export function usePricing(options: UsePricingOptions = {}) {
     queryKey: ["tarifs", "public"],
     queryFn: async () => {
       if (enableDebugLogs) {
-        console.log("🔄 Fetching tarifs publics...");
+        console.log("🔄 [usePricing] Fetching tarifs publics...");
       }
       const data = await fetchTarifs();
       if (enableDebugLogs) {
-        console.log("✅ Tarifs publics récupérés:", data.length, "tarifs");
+        console.log(
+          "✅ [usePricing] Tarifs publics récupérés:",
+          data.length,
+          "tarifs"
+        );
+        console.log(
+          "📋 [usePricing] Détail des tarifs reçus:",
+          data.map((t) => ({
+            id: t.id,
+            nom: t.nom,
+            prix: t.prix,
+            prixFormate: t.prixFormate,
+            actif: t.actif,
+          }))
+        );
       }
       return data;
     },
@@ -262,10 +276,25 @@ function extractPricingRules(tarifs: TarifAPI[]): PricingRule[] {
       t.nom.toLowerCase().includes("page")
   );
 
+  console.log(
+    "🔍 [extractPricingRules] Tarifs de correction trouvés:",
+    correctionTarifs.length
+  );
+
   // Si on trouve des tarifs spécifiques, les utiliser
   if (correctionTarifs.length > 0) {
     // Organiser par prix croissant pour détecter la progressivité
     const sortedTarifs = correctionTarifs.sort((a, b) => a.prix - b.prix);
+
+    console.log(
+      "📊 [extractPricingRules] Tarifs triés par prix:",
+      sortedTarifs.map((t) => ({
+        nom: t.nom,
+        prixCentimes: t.prix,
+        prixEuros: t.prix / 100,
+        prixFormate: t.prixFormate,
+      }))
+    );
 
     // Construire les règles basées sur les tarifs trouvés
     const rules: PricingRule[] = [
@@ -274,25 +303,47 @@ function extractPricingRules(tarifs: TarifAPI[]): PricingRule[] {
 
     // Ajouter les règles basées sur les tarifs récupérés
     if (sortedTarifs.length > 0) {
-      rules.push({ threshold: 300, price: sortedTarifs[0].prix });
+      // ✅ CORRECTION: Convertir centimes → euros pour le calcul par page
+      const prixEnEuros = sortedTarifs[0].prix / 100;
+      rules.push({ threshold: 300, price: prixEnEuros });
+      console.log(
+        `💰 [extractPricingRules] Règle tier2: ${sortedTarifs[0].prix} centimes → ${prixEnEuros}€/page`
+      );
+
       if (sortedTarifs.length > 1) {
-        rules.push({ threshold: Infinity, price: sortedTarifs[1].prix });
+        // ✅ CORRECTION: Convertir centimes → euros pour le calcul par page
+        const prixTier3EnEuros = sortedTarifs[1].prix / 100;
+        rules.push({ threshold: Infinity, price: prixTier3EnEuros });
+        console.log(
+          `💰 [extractPricingRules] Règle tier3: ${sortedTarifs[1].prix} centimes → ${prixTier3EnEuros}€/page`
+        );
       } else {
+        const prixTier3 = Math.max(1, prixEnEuros - 1);
         rules.push({
           threshold: Infinity,
-          price: Math.max(1, sortedTarifs[0].prix - 1),
+          price: prixTier3,
         });
+        console.log(
+          `💰 [extractPricingRules] Règle tier3 calculée: ${prixTier3}€/page`
+        );
       }
     } else {
-      // Fallback
+      // Fallback sur les règles par défaut
       rules.push({ threshold: 300, price: 2 });
       rules.push({ threshold: Infinity, price: 1 });
+      console.log(
+        "⚠️ [extractPricingRules] Utilisation des règles par défaut (pas de tarifs correction)"
+      );
     }
 
+    console.log("✅ [extractPricingRules] Règles finales:", rules);
     return rules;
   }
 
   // Fallback sur les règles par défaut
+  console.log(
+    "⚠️ [extractPricingRules] Aucun tarif de correction trouvé - règles par défaut"
+  );
   return [
     { threshold: 10, price: 0, isFree: true },
     { threshold: 300, price: 2 },

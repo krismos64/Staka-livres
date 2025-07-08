@@ -325,6 +325,17 @@ class AdaptiveAdminAPI {
 
       const responseData = response.data;
 
+      // 🔍 DEBUG pour les endpoints tarifs
+      if (url.includes("/admin/tarifs")) {
+        console.log(`🔍 [realApiCall] URL: ${method} ${url}`);
+        console.log(`🔍 [realApiCall] Réponse brute:`, responseData);
+        console.log(`🔍 [realApiCall] responseData.data:`, responseData.data);
+        console.log(
+          `🔍 [realApiCall] responseData.success:`,
+          responseData.success
+        );
+      }
+
       // FIX: Traitement spécial pour l'endpoint /admin/commandes
       if (
         url.includes("/admin/commandes") &&
@@ -362,6 +373,28 @@ class AdaptiveAdminAPI {
         } as T;
       }
 
+      // ✅ CORRECTION SPÉCIFIQUE POUR LES TARIFS
+      // Le backend tarifs retourne toujours { success: true, data: Tarif|Tarif[], message?: "..." }
+      if (
+        url.includes("/admin/tarifs") &&
+        responseData.success &&
+        responseData.data !== undefined
+      ) {
+        console.log(`✅ [realApiCall] Retour data tarif:`, responseData.data);
+
+        // Pour GET /admin/tarifs (liste), on retourne l'objet complet pour que getTarifs puisse faire .data
+        if (url.includes("/admin/tarifs?") || url.endsWith("/admin/tarifs")) {
+          console.log(
+            `✅ [realApiCall] Liste tarifs - Retour objet complet:`,
+            responseData
+          );
+          return responseData; // Retourne { success: true, data: Tarif[] }
+        }
+
+        // Pour les autres endpoints tarifs (PUT, POST, GET /:id), on retourne directement les données
+        return responseData.data; // Retourne directement le tarif
+      }
+
       // Pour les endpoints qui retournent une structure avec data/pagination, on retourne tout
       // Pour les autres (getUserById, etc.), on retourne juste les données
       if (
@@ -371,7 +404,16 @@ class AdaptiveAdminAPI {
         return responseData; // Retourne l'objet complet { data: [...], pagination: {...} }
       }
 
-      return responseData.data || responseData; // Pour les autres cas
+      // 🔍 Extraction de data avec logs pour debug
+      const extractedData = responseData.data || responseData;
+      if (url.includes("/admin/tarifs")) {
+        console.log(
+          `🔍 [realApiCall] Données extraites (fallback):`,
+          extractedData
+        );
+      }
+
+      return extractedData; // Pour les autres cas
     } catch (error) {
       console.error(`❌ [DEBUG FRONTEND] Erreur API:`, error);
 
@@ -857,6 +899,8 @@ class AdaptiveAdminAPI {
     search?: string,
     actif?: boolean
   ): Promise<Tarif[]> {
+    console.log("🔍 [getTarifs] Début - Mode démo:", this.isDemoMode());
+
     if (this.isDemoMode()) {
       // Retour direct du tableau pour compatibilité avec les pages admin existantes
       const response = await MockDataService.getTarifs(
@@ -865,6 +909,7 @@ class AdaptiveAdminAPI {
         search,
         actif
       );
+      console.log("🔍 [getTarifs] Mode démo - Réponse:", response);
       return response.data || [];
     }
 
@@ -876,12 +921,25 @@ class AdaptiveAdminAPI {
     if (search) params.append("search", search);
     if (typeof actif === "boolean") params.append("actif", actif.toString());
 
+    console.log("🔍 [getTarifs] API réelle - URL:", `/admin/tarifs?${params}`);
+
     // API réelle - récupérer directement les données
     const response = await this.realApiCall<{
       success: boolean;
       data: Tarif[];
     }>(`/admin/tarifs?${params}`);
-    return response.data || [];
+
+    console.log("🔍 [getTarifs] API réelle - Réponse complète:", response);
+    console.log("🔍 [getTarifs] API réelle - response.data:", response.data);
+    console.log(
+      "🔍 [getTarifs] API réelle - Type response.data:",
+      typeof response.data,
+      Array.isArray(response.data)
+    );
+
+    const result = response.data || [];
+    console.log("🔍 [getTarifs] API réelle - Résultat final:", result);
+    return result;
   }
 
   async getTarifById(id: string): Promise<Tarif> {

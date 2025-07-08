@@ -51,8 +51,20 @@ const AdminTarifs: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
+      console.log("🔄 Chargement des tarifs depuis adminAPI...");
       const response = await adminAPI.getTarifs();
+      console.log("📦 Réponse getTarifs reçue:", response);
+      console.log(
+        "📦 Type de la réponse:",
+        typeof response,
+        Array.isArray(response)
+      );
+
       setTarifs(response);
+      console.log(
+        "✅ État tarifs mis à jour, nombre de tarifs:",
+        response?.length || 0
+      );
 
       if (showSuccessToast) {
         showToast("success", "Tarifs chargés", "Liste des tarifs mise à jour");
@@ -62,7 +74,7 @@ const AdminTarifs: React.FC = () => {
         err instanceof Error ? err.message : "Erreur de chargement des tarifs";
       setError(errorMessage);
       showToast("error", "Erreur", errorMessage);
-      console.error("Erreur chargement tarifs:", err);
+      console.error("❌ Erreur chargement tarifs:", err);
     } finally {
       setIsLoading(false);
     }
@@ -88,7 +100,7 @@ const AdminTarifs: React.FC = () => {
     setEditFormData({
       nom: tarif.nom,
       description: tarif.description,
-      prix: tarif.prix,
+      prix: tarif.prix / 100, // ✅ CORRECTION: Convertir centimes → euros pour affichage
       prixFormate: tarif.prixFormate,
       typeService: tarif.typeService,
       dureeEstimee: tarif.dureeEstimee || "",
@@ -111,46 +123,71 @@ const AdminTarifs: React.FC = () => {
       setIsOperationLoading(true);
 
       let updatedTarif: Tarif;
+      const isUpdate = selectedTarif !== null;
+      const currentTarifId = selectedTarif?.id;
 
-      if (selectedTarif) {
+      // ✅ CORRECTION: Convertir le prix de euros → centimes avant envoi
+      const dataToSend = {
+        ...editFormData,
+        prix: Math.round(editFormData.prix * 100), // Convertir euros → centimes
+      };
+
+      if (isUpdate && currentTarifId) {
         // Mise à jour
-        updatedTarif = await adminAPI.updateTarif(
-          selectedTarif.id,
-          editFormData
+        console.log("🔄 Mise à jour tarif:", currentTarifId);
+        console.log(
+          "📝 Données à envoyer (prix converti en centimes):",
+          dataToSend
         );
-
-        // Mise à jour optimiste de l'état local
-        setTarifs((prevTarifs) =>
-          prevTarifs.map((tarif) =>
-            tarif.id === selectedTarif.id ? updatedTarif : tarif
-          )
-        );
-
-        showToast(
-          "success",
-          "Tarif modifié",
-          "Le tarif a été mis à jour avec succès"
-        );
+        console.log("📝 Tarif original sélectionné:", selectedTarif);
+        updatedTarif = await adminAPI.updateTarif(currentTarifId, dataToSend);
+        console.log("✅ Tarif mis à jour reçu du backend:", updatedTarif);
       } else {
         // Création
-        updatedTarif = await adminAPI.createTarif(editFormData);
-
-        // Ajout optimiste à l'état local
-        setTarifs((prevTarifs) => [...prevTarifs, updatedTarif]);
-
-        showToast(
-          "success",
-          "Tarif créé",
-          "Le nouveau tarif a été ajouté avec succès"
+        console.log("🆕 Création nouveau tarif:");
+        console.log(
+          "📝 Données à envoyer (prix converti en centimes):",
+          dataToSend
         );
+        updatedTarif = await adminAPI.createTarif(dataToSend);
+        console.log("✅ Nouveau tarif créé reçu du backend:", updatedTarif);
       }
 
+      // Fermer la modale immédiatement après succès API
       setShowTarifModal(false);
       setSelectedTarif(null);
 
-      // Recharger les données pour s'assurer de la cohérence
+      // Recharger les données depuis le backend (autorité de vérité)
+      console.log("🔄 Rechargement des tarifs depuis le backend...");
       await loadTarifs();
+      console.log("✅ Tarifs rechargés depuis le backend");
+
+      // Invalidation du cache public pour synchronisation landing page
       await invalidatePublicTarifs();
+      console.log("✅ Cache public des tarifs invalidé (landing à jour)");
+
+      // Force refetch immédiat pour synchronisation instantanée
+      await refetchPublicTarifs();
+      console.log("🔄 Refetch forcé des tarifs publics effectué");
+
+      // Afficher le toast de succès APRÈS que tout soit synchronisé
+      if (isUpdate) {
+        showToast(
+          "success",
+          "Tarif modifié",
+          updatedTarif?.nom
+            ? `Le tarif "${updatedTarif.nom}" a été mis à jour avec succès`
+            : "Le tarif a été mis à jour avec succès"
+        );
+      } else {
+        showToast(
+          "success",
+          "Tarif créé",
+          updatedTarif?.nom
+            ? `Le nouveau tarif "${updatedTarif.nom}" a été ajouté avec succès`
+            : "Le nouveau tarif a été ajouté avec succès"
+        );
+      }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Erreur de sauvegarde du tarif";
@@ -158,6 +195,7 @@ const AdminTarifs: React.FC = () => {
 
       // En cas d'erreur, recharger les données pour restaurer l'état cohérent
       await loadTarifs();
+      console.error("❌ Erreur lors de la sauvegarde du tarif:", err);
     } finally {
       setIsOperationLoading(false);
     }
@@ -187,6 +225,9 @@ const AdminTarifs: React.FC = () => {
       // Recharger pour s'assurer de la cohérence
       await loadTarifs();
       await invalidatePublicTarifs();
+      console.log("✅ Cache public des tarifs invalidé (landing à jour)");
+      await refetchPublicTarifs();
+      console.log("🔄 Refetch forcé des tarifs publics effectué");
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Erreur de modification du statut";
@@ -194,6 +235,7 @@ const AdminTarifs: React.FC = () => {
 
       // En cas d'erreur, recharger les données
       await loadTarifs();
+      console.error("❌ Erreur lors de la modification du statut:", err);
     } finally {
       // Retirer ce tarif de la liste des chargements
       setLoadingTarifIds((prev) => {
@@ -228,6 +270,9 @@ const AdminTarifs: React.FC = () => {
       // Recharger pour s'assurer de la cohérence et du tri
       await loadTarifs();
       await invalidatePublicTarifs();
+      console.log("✅ Cache public des tarifs invalidé (landing à jour)");
+      await refetchPublicTarifs();
+      console.log("🔄 Refetch forcé des tarifs publics effectué");
     } catch (err) {
       const errorMessage =
         err instanceof Error
@@ -237,6 +282,7 @@ const AdminTarifs: React.FC = () => {
 
       // En cas d'erreur, recharger les données
       await loadTarifs();
+      console.error("❌ Erreur lors de la modification de l'ordre:", err);
     } finally {
       // Retirer ce tarif de la liste des chargements
       setLoadingTarifIds((prev) => {
@@ -278,6 +324,9 @@ const AdminTarifs: React.FC = () => {
       // Recharger pour s'assurer de la cohérence
       await loadTarifs();
       await invalidatePublicTarifs();
+      console.log("✅ Cache public des tarifs invalidé (landing à jour)");
+      await refetchPublicTarifs();
+      console.log("🔄 Refetch forcé des tarifs publics effectué");
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Erreur de suppression du tarif";
@@ -285,6 +334,7 @@ const AdminTarifs: React.FC = () => {
 
       // En cas d'erreur, recharger les données
       await loadTarifs();
+      console.error("❌ Erreur lors de la suppression du tarif:", err);
     } finally {
       // Retirer ce tarif de la liste des chargements
       setLoadingTarifIds((prev) => {

@@ -8,12 +8,11 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@shared": path.resolve(__dirname, "../shared/dist"),
+      "@shared": path.resolve(__dirname, "../shared/types"),
     },
   },
   optimizeDeps: {
-    include: ["react-query"],
-    force: true, // Force la re-optimisation des dépendances
+    include: ["@tanstack/react-query"],
   },
   server: {
     host: "0.0.0.0",
@@ -26,7 +25,7 @@ export default defineConfig({
     },
     proxy: {
       "/api": {
-        target: "http://localhost:3001",
+        target: "http://backend:3001",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ""),
       },
