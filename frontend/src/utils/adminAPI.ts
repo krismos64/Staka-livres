@@ -30,27 +30,9 @@ import {
 import { tokenUtils } from "./auth";
 import { MockDataService } from "./mockData";
 
-const API_BASE_URL = (() => {
-  // Pour Jest et tests
-  if (typeof process !== "undefined" && process.env.NODE_ENV === "test") {
-    return (global as any).API_BASE_URL || "http://backend:3001";
-  }
-
-  // Pour Vite en développement/production
-  try {
-    return (
-      (import.meta as any).env?.VITE_API_URL ||
-      (typeof window !== "undefined"
-        ? "http://localhost:3001"
-        : "http://backend:3001")
-    );
-  } catch {
-    // Fallback pour Jest si import.meta n'est pas disponible
-    return typeof window !== "undefined"
-      ? "http://localhost:3001"
-      : "http://backend:3001";
-  }
-})();
+// Correction radicale : toujours /api côté navigateur, backend:3001 côté Node
+const API_BASE_URL =
+  typeof window !== "undefined" ? "/api" : "http://backend:3001";
 
 interface UpdateCommandeRequest {
   statut: StatutCommande;
@@ -179,6 +161,8 @@ const handleAutoLogout = () => {
 
 // Créer une instance Axios avec intercepteurs
 const createApiInstance = (): any => {
+  // DEBUG: log de la valeur API_BASE_URL à chaque création d'instance axios
+  console.log("[adminAPI] API_BASE_URL utilisé:", API_BASE_URL);
   const instance = axios.create({
     baseURL: API_BASE_URL,
     headers: {
@@ -1086,6 +1070,34 @@ class AdaptiveAdminAPI {
     await this.realApiCall(`/admin/page/${id}`, "DELETE");
   }
 
+  async publishPage(id: string): Promise<PageStatique> {
+    if (this.isDemoMode()) {
+      await this.simulateAction("publishPage", 300);
+      const currentPage = await this.getPageById(id);
+      return {
+        ...currentPage,
+        statut: StatutPage.PUBLIEE,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    return this.realApiCall(`/admin/pages/${id}/publish`, "PUT");
+  }
+
+  async unpublishPage(id: string): Promise<PageStatique> {
+    if (this.isDemoMode()) {
+      await this.simulateAction("unpublishPage", 300);
+      const currentPage = await this.getPageById(id);
+      return {
+        ...currentPage,
+        statut: StatutPage.BROUILLON,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    return this.realApiCall(`/admin/pages/${id}/unpublish`, "PUT");
+  }
+
   // ===============================
   // GESTION LOGS
   // ===============================
@@ -1289,6 +1301,22 @@ export const createTarif = (tarifData: CreateTarifRequest) =>
 export const updateTarif = (id: string, tarifData: UpdateTarifRequest) =>
   adminAPI.updateTarif(id, tarifData);
 export const deleteTarif = (id: string) => adminAPI.deleteTarif(id);
+
+// Exports des méthodes de pages
+export const getPages = (
+  page?: number,
+  limit?: number,
+  search?: string,
+  statut?: StatutPage
+) => adminAPI.getPages(page, limit, search, statut);
+export const getPageById = (id: string) => adminAPI.getPageById(id);
+export const createPage = (pageData: CreatePageRequest) =>
+  adminAPI.createPage(pageData);
+export const updatePage = (id: string, pageData: UpdatePageRequest) =>
+  adminAPI.updatePage(id, pageData);
+export const deletePage = (id: string) => adminAPI.deletePage(id);
+export const publishPage = (id: string) => adminAPI.publishPage(id);
+export const unpublishPage = (id: string) => adminAPI.unpublishPage(id);
 
 // Exports des méthodes de messagerie
 export const getConversations = (

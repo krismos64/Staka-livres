@@ -5,8 +5,9 @@ import {
   User,
 } from "../types/shared";
 
+// Correction radicale : toujours /api côté navigateur, backend:3001 côté Node
 const API_BASE_URL =
-  (import.meta as any).env?.VITE_API_URL || "http://localhost:3001";
+  typeof window !== "undefined" ? "/api" : "http://backend:3001";
 
 export interface AuthContextType {
   user: User | null;
@@ -32,6 +33,8 @@ export const tokenUtils = {
 // Utilitaires API
 export const authAPI = {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
+    // DEBUG: log de la valeur API_BASE_URL à chaque login
+    console.log("[auth] API_BASE_URL utilisé:", API_BASE_URL);
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
       headers: {

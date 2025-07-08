@@ -18,6 +18,8 @@ import factureRoutes from "./admin/factures";
 import faqRoutes from "./admin/faq";
 // Import des nouvelles routes tarifs
 import tarifsRoutes from "./admin/tarifs";
+// Import des nouvelles routes pages
+import pagesRoutes from "./admin/pages";
 
 // Import Prisma pour accéder aux données
 import { PrismaClient } from "@prisma/client";
@@ -62,6 +64,10 @@ router.use("/faq", faqRoutes);
 // 🏷️ GESTION DES TARIFS
 // Utilisation du module dédié pour la gestion complète des tarifs
 router.use("/tarifs", tarifsRoutes);
+
+// 📄 GESTION DES PAGES STATIQUES
+// Utilisation du module dédié pour la gestion complète des pages
+router.use("/pages", pagesRoutes);
 
 // ROUTES COMMANDES DEPRECATED - Conserver temporairement pour compatibilité
 // Statistiques des commandes (AVANT /commande/:id pour éviter conflits)

@@ -432,6 +432,93 @@ async function main() {
   console.log("- ANNULEE: 1 commande");
   console.log("- SUSPENDUE: 1 commande");
   console.log("💰 1 facture réelle créée et payée");
+
+  // 11. Seed des tarifs de test (fusion seed-tarifs.ts)
+  console.log("🌱 Ajout des tarifs de test...");
+
+  const tarifsDeTest = [
+    {
+      nom: "Correction Standard",
+      description:
+        "Correction orthographique, grammaticale et typographique de votre manuscrit",
+      prix: 200,
+      prixFormate: "2€",
+      typeService: "Correction",
+      dureeEstimee: "7-10 jours",
+      actif: true,
+      ordre: 1,
+    },
+    {
+      nom: "Correction Express",
+      description: "Correction rapide en 3-5 jours pour les manuscrits urgents",
+      prix: 300,
+      prixFormate: "3€",
+      typeService: "Correction",
+      dureeEstimee: "3-5 jours",
+      actif: true,
+      ordre: 2,
+    },
+    {
+      nom: "Pack KDP Autoédition",
+      description:
+        "Maquette intérieure + couverture + formats ePub/Mobi pour Amazon KDP",
+      prix: 35000,
+      prixFormate: "350€",
+      typeService: "Mise en forme",
+      dureeEstimee: "5-7 jours",
+      actif: true,
+      ordre: 3,
+    },
+    {
+      nom: "Relecture Avancée",
+      description:
+        "Relecture approfondie avec suggestions stylistiques et structurelles",
+      prix: 250,
+      prixFormate: "2,50€",
+      typeService: "Relecture",
+      dureeEstimee: "10-12 jours",
+      actif: true,
+      ordre: 4,
+    },
+    {
+      nom: "Pack Rédaction Complète",
+      description:
+        "Coaching rédactionnel + correction + mise en forme + couverture",
+      prix: 145000,
+      prixFormate: "1450€",
+      typeService: "Rédaction",
+      dureeEstimee: "3-6 semaines",
+      actif: true,
+      ordre: 5,
+    },
+    {
+      nom: "Traduction Français-Anglais",
+      description:
+        "Traduction professionnelle de votre manuscrit vers l'anglais",
+      prix: 120,
+      prixFormate: "1,20€",
+      typeService: "Traduction",
+      dureeEstimee: "2-3 semaines",
+      actif: false,
+      ordre: 6,
+    },
+  ];
+
+  // Suppression des tarifs existants
+  const existingTarifs = await prisma.tarif.count();
+  if (existingTarifs > 0) {
+    console.log(`⚠️  ${existingTarifs} tarifs existent déjà. Suppression...`);
+    await prisma.tarif.deleteMany();
+  }
+
+  // Ajout des nouveaux tarifs
+  for (const tarifData of tarifsDeTest) {
+    const tarif = await prisma.tarif.create({
+      data: tarifData,
+    });
+    console.log(`✅ Tarif créé: ${tarif.nom} (${tarif.prixFormate})`);
+  }
+  console.log(`🎉 ${tarifsDeTest.length} tarifs ajoutés avec succès !`);
 }
 
 main()

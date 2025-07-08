@@ -1,15 +1,19 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Modal from "../../components/common/Modal";
+import {
+  useAdminPages,
+  useCreatePage,
+  useDeletePage,
+  usePageStats,
+  useTogglePageStatus,
+  useUpdatePage,
+} from "../../hooks/useAdminPages";
 import { PageStatique, StatutPage } from "../../types/shared";
-import { adminAPI } from "../../utils/adminAPI";
 import { useToasts } from "../../utils/toast";
 
 const AdminPages: React.FC = () => {
-  const [loading, setLoading] = useState(true);
-  const [pages, setPages] = useState<PageStatique[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [filtreStatut, setFiltreStatut] = useState<StatutPage | "tous">("tous");
   const [recherche, setRecherche] = useState("");
   const [selectedPage, setSelectedPage] = useState<PageStatique | null>(null);
@@ -17,46 +21,40 @@ const AdminPages: React.FC = () => {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingPage, setEditingPage] = useState<Partial<PageStatique>>({});
-  const [saveLoading, setSaveLoading] = useState(false);
-  const [isOperationLoading, setIsOperationLoading] = useState(false);
   const { showToast } = useToasts();
 
-  const loadPages = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  // Hooks React Query
+  const {
+    data: rawPages,
+    isLoading,
+    error,
+    refetch,
+  } = useAdminPages({
+    search: recherche || undefined,
+    statut: filtreStatut !== "tous" ? filtreStatut : undefined,
+  });
 
-      const response = await adminAPI.getPages(
-        filtreStatut !== "tous" ? filtreStatut : undefined,
-        recherche || undefined
-      );
-      setPages(response);
+  // Fallback robuste : extrait la liste de pages quel que soit le format
+  const pages = Array.isArray(rawPages)
+    ? rawPages
+    : rawPages && Array.isArray((rawPages as any).data)
+    ? (rawPages as any).data
+    : [];
 
-      showToast("success", "Pages chargées", "Liste des pages mise à jour");
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Erreur de chargement des pages";
-      setError(errorMessage);
-      showToast("error", "Erreur", errorMessage);
-      console.error("Erreur chargement pages:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // DEBUG : log la valeur de pages pour traquer les bugs d'API
+  console.log("[AdminPages] pages:", pages, "rawPages:", rawPages);
 
-  useEffect(() => {
-    loadPages();
-  }, []);
+  const createPageMutation = useCreatePage();
+  const updatePageMutation = useUpdatePage();
+  const deletePageMutation = useDeletePage();
+  const toggleStatusMutation = useTogglePageStatus();
 
-  // Recharger quand les filtres changent
-  useEffect(() => {
-    if (!loading) {
-      loadPages();
-    }
-  }, [filtreStatut, recherche]);
+  // Statistiques calculées
+  const stats = usePageStats(pages);
 
+  // Pages filtrées localement (pour la recherche côté client)
   const pagesFiltrees = useMemo(() => {
-    return pages.filter((page) => {
+    return pages.filter((page: PageStatique) => {
       const matchRecherche =
         page.titre.toLowerCase().includes(recherche.toLowerCase()) ||
         page.slug.toLowerCase().includes(recherche.toLowerCase());
@@ -66,21 +64,6 @@ const AdminPages: React.FC = () => {
       return matchRecherche && matchStatut;
     });
   }, [pages, recherche, filtreStatut]);
-
-  const stats = useMemo(() => {
-    const total = pages.length;
-    const publiees = pages.filter(
-      (p) => p.statut === StatutPage.PUBLIEE
-    ).length;
-    const brouillons = pages.filter(
-      (p) => p.statut === StatutPage.BROUILLON
-    ).length;
-    const archivees = pages.filter(
-      (p) => p.statut === StatutPage.ARCHIVEE
-    ).length;
-
-    return { total, publiees, brouillons, archivees };
-  }, [pages]);
 
   const handleEdit = (page?: PageStatique) => {
     if (page) {
@@ -99,136 +82,64 @@ const AdminPages: React.FC = () => {
     setShowEditModal(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!editingPage.titre || !editingPage.slug || !editingPage.contenu) {
       showToast("error", "Erreur", "Veuillez remplir tous les champs requis");
       return;
     }
 
-    setSaveLoading(true);
+    const pageData = {
+      titre: editingPage.titre,
+      slug: editingPage.slug,
+      contenu: editingPage.contenu,
+      description: editingPage.description,
+      statut: editingPage.statut as StatutPage,
+    };
 
-    try {
-      if (selectedPage) {
-        // Modification
-        const updatedPage = await adminAPI.updatePage(selectedPage.id, {
-          titre: editingPage.titre,
-          slug: editingPage.slug,
-          contenu: editingPage.contenu,
-          description: editingPage.description,
-          statut: editingPage.statut as StatutPage,
-        });
-
-        setPages(
-          pages.map((p) => (p.id === selectedPage.id ? updatedPage : p))
-        );
-        showToast(
-          "success",
-          "Page modifiée",
-          "La page a été mise à jour avec succès"
-        );
-      } else {
-        // Création
-        const nouvellePage = await adminAPI.createPage({
-          titre: editingPage.titre!,
-          slug: editingPage.slug!,
-          contenu: editingPage.contenu!,
-          statut: editingPage.statut as StatutPage,
-          description: editingPage.description || "",
-        });
-
-        setPages([nouvellePage, ...pages]);
-        showToast(
-          "success",
-          "Page créée",
-          "La nouvelle page a été ajoutée avec succès"
-        );
-      }
-
-      setShowEditModal(false);
-      setEditingPage({});
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Erreur de sauvegarde de la page";
-      showToast("error", "Erreur", errorMessage);
-      console.error("Erreur sauvegarde page:", err);
-    } finally {
-      setSaveLoading(false);
+    if (selectedPage) {
+      // Modification
+      updatePageMutation.mutate(
+        { id: selectedPage.id, pageData },
+        {
+          onSuccess: () => {
+            setShowEditModal(false);
+            setEditingPage({});
+          },
+        }
+      );
+    } else {
+      // Création
+      createPageMutation.mutate(pageData, {
+        onSuccess: () => {
+          setShowEditModal(false);
+          setEditingPage({});
+        },
+      });
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!selectedPage) return;
 
-    setSaveLoading(true);
-
-    try {
-      await adminAPI.deletePage(selectedPage.id);
-      setPages(pages.filter((p) => p.id !== selectedPage.id));
-      setShowDeleteModal(false);
-      setSelectedPage(null);
-      showToast(
-        "success",
-        "Page supprimée",
-        "La page a été supprimée avec succès"
-      );
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Erreur de suppression de la page";
-      showToast("error", "Erreur", errorMessage);
-      console.error("Erreur suppression page:", err);
-    } finally {
-      setSaveLoading(false);
-    }
+    deletePageMutation.mutate(selectedPage.id, {
+      onSuccess: () => {
+        setShowDeleteModal(false);
+        setSelectedPage(null);
+      },
+    });
   };
 
-  const toggleStatut = async (page: PageStatique) => {
-    try {
-      setIsOperationLoading(true);
-
-      const nouveauStatut: StatutPage =
-        page.statut === StatutPage.PUBLIEE
-          ? StatutPage.BROUILLON
-          : StatutPage.PUBLIEE;
-
-      let updatedPage: PageStatique;
-
-      if (nouveauStatut === StatutPage.PUBLIEE) {
-        updatedPage = await adminAPI.publishPage(page.id);
-        showToast("success", "Page publiée", "La page est maintenant visible");
-      } else {
-        updatedPage = await adminAPI.unpublishPage(page.id);
-        showToast(
-          "success",
-          "Page dépubliée",
-          "La page est maintenant en brouillon"
-        );
-      }
-
-      setPages(pages.map((p) => (p.id === page.id ? updatedPage : p)));
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Erreur de modification du statut";
-      showToast("error", "Erreur", errorMessage);
-      console.error("Erreur changement statut:", err);
-    } finally {
-      setIsOperationLoading(false);
-    }
+  const toggleStatut = (page: PageStatique) => {
+    toggleStatusMutation.toggleStatus(page);
   };
 
-  const handlePreview = async (page: PageStatique) => {
-    try {
-      const pageDetails = await adminAPI.getPageById(page.id);
-      setSelectedPage(pageDetails);
-      setShowPreviewModal(true);
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Erreur de chargement de la page";
-      showToast("error", "Erreur", errorMessage);
-    }
+  const handlePreview = (page: PageStatique) => {
+    setSelectedPage(page);
+    setShowPreviewModal(true);
   };
 
   const handleRefresh = () => {
-    loadPages();
+    refetch();
   };
 
   const generateSlug = (titre: string) => {
@@ -279,7 +190,7 @@ const AdminPages: React.FC = () => {
     );
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="p-6">
         <div className="mb-6">
@@ -307,7 +218,9 @@ const AdminPages: React.FC = () => {
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             Erreur de chargement
           </h3>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <p className="text-gray-600 mb-4">
+            {error?.message || "Erreur inconnue"}
+          </p>
           <button
             onClick={handleRefresh}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -322,30 +235,7 @@ const AdminPages: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Pages statiques</h1>
-          <p className="text-gray-600">Contenu éditorial et pages marketing</p>
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={handleRefresh}
-            disabled={isOperationLoading}
-            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
-          >
-            <i className="fas fa-redo mr-2"></i>
-            Actualiser
-          </button>
-          <button
-            onClick={() => handleEdit()}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <i className="fas fa-plus mr-2"></i>
-            Nouvelle page
-          </button>
-        </div>
-      </div>
+      {/* Header supprimé (titre et sous-titre) */}
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -482,7 +372,7 @@ const AdminPages: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {pagesFiltrees.map((page) => (
+                {pagesFiltrees.map((page: PageStatique, idx: number) => (
                   <tr key={page.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div>
@@ -525,7 +415,7 @@ const AdminPages: React.FC = () => {
                         </button>
                         <button
                           onClick={() => toggleStatut(page)}
-                          disabled={isOperationLoading}
+                          disabled={toggleStatusMutation.isLoading}
                           className={`text-sm ${
                             page.statut === StatutPage.PUBLIEE
                               ? "text-yellow-600 hover:text-yellow-800"
@@ -659,7 +549,9 @@ const AdminPages: React.FC = () => {
           <div className="flex justify-end gap-3 pt-4 border-t">
             <button
               onClick={() => setShowEditModal(false)}
-              disabled={saveLoading}
+              disabled={
+                createPageMutation.isPending || updatePageMutation.isPending
+              }
               className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
             >
               Annuler
@@ -667,14 +559,18 @@ const AdminPages: React.FC = () => {
             <button
               onClick={handleSave}
               disabled={
-                saveLoading ||
+                createPageMutation.isPending ||
+                updatePageMutation.isPending ||
                 !editingPage.titre ||
                 !editingPage.slug ||
                 !editingPage.contenu
               }
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center"
             >
-              {saveLoading && <LoadingSpinner size="sm" className="mr-2" />}
+              {(createPageMutation.isPending ||
+                updatePageMutation.isPending) && (
+                <LoadingSpinner size="sm" className="mr-2" />
+              )}
               {selectedPage ? "Modifier" : "Créer"}
             </button>
           </div>
@@ -718,7 +614,7 @@ const AdminPages: React.FC = () => {
         title="Supprimer la page"
         message={`Êtes-vous sûr de vouloir supprimer la page "${selectedPage?.titre}" ? Cette action est irréversible.`}
         confirmText="Supprimer"
-        isLoading={saveLoading}
+        isLoading={deletePageMutation.isPending}
         type="danger"
       />
     </div>
