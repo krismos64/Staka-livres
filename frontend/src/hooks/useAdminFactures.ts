@@ -4,7 +4,15 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { adminAPI } from "../utils/adminAPI";
+import {
+  deleteFacture,
+  getFactureById,
+  getFacturePdf,
+  getFactures,
+  getFactureStats,
+  sendFactureReminder,
+  updateFacture,
+} from "../utils/adminAPI";
 
 /**
  * Hook pour la gestion des factures dans l'espace admin
@@ -80,7 +88,7 @@ export function useAdminFactures(params: AdminFacturesParams) {
   return useQuery({
     queryKey: ["admin-factures", params],
     queryFn: async () => {
-      const response = await adminAPI.getFactures(
+      const response = await getFactures(
         params.page,
         params.limit,
         params.status as any,
@@ -102,7 +110,7 @@ export function useAdminFactures(params: AdminFacturesParams) {
 export function useFactureStats() {
   return useQuery({
     queryKey: ["admin-facture-stats"],
-    queryFn: () => adminAPI.getFactureStats(),
+    queryFn: () => getFactureStats(),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 2,
@@ -114,7 +122,7 @@ export function useFactureStats() {
 export function useFactureDetails(id: string) {
   return useQuery({
     queryKey: ["admin-facture", id],
-    queryFn: () => adminAPI.getFactureById(id),
+    queryFn: () => getFactureById(id),
     enabled: !!id,
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
@@ -126,7 +134,7 @@ export function useFactureDetails(id: string) {
 // Hook pour télécharger le PDF d'une facture
 export function useDownloadFacture() {
   return useMutation({
-    mutationFn: (id: string) => adminAPI.getFacturePdf(id),
+    mutationFn: (id: string) => getFacturePdf(id),
     onSuccess: (
       response: { message: string; factureNumber: string; info: string },
       id: string
@@ -148,7 +156,7 @@ export function useSendReminder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => adminAPI.sendFactureReminder(id),
+    mutationFn: (id: string) => sendFactureReminder(id),
     onSuccess: () => {
       // Invalider le cache des factures pour refléter les changements
       queryClient.invalidateQueries({ queryKey: ["admin-factures"] });
@@ -165,7 +173,7 @@ export function useDeleteFacture() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => adminAPI.deleteFacture(id),
+    mutationFn: (id: string) => deleteFacture(id),
     onSuccess: () => {
       // Invalider le cache des factures et des stats
       queryClient.invalidateQueries({ queryKey: ["admin-factures"] });
@@ -183,7 +191,7 @@ export function useUpdateFactureStatus() {
 
   return useMutation({
     mutationFn: ({ id, statut }: { id: string; statut: any }) =>
-      adminAPI.updateFacture(id, { statut }),
+      updateFacture(id, { statut }),
     onSuccess: (_, { id }) => {
       // Invalider le cache pour cette facture spécifique et la liste
       queryClient.invalidateQueries({ queryKey: ["admin-facture", id] });
@@ -224,7 +232,7 @@ export function usePrefetchFacture() {
   return (id: string) => {
     queryClient.prefetchQuery({
       queryKey: ["admin-facture", id],
-      queryFn: () => adminAPI.getFactureById(id),
+      queryFn: () => getFactureById(id),
       staleTime: 2 * 60 * 1000, // 2 minutes
     });
   };

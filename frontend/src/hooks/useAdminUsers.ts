@@ -1,6 +1,12 @@
 import { useCallback, useRef, useState } from "react";
 import { Role, User, UserDetailed, UserStats } from "../types/shared";
-import { adminAPI, AdminUsersParams } from "../utils/adminAPI";
+import {
+  AdminUsersParams,
+  getUserById,
+  getUsers,
+  getUserStats,
+  updateUser,
+} from "../utils/adminAPI";
 import { useToasts } from "../utils/toast";
 
 export interface UserFilters {
@@ -80,7 +86,7 @@ export const useAdminUsers = (options: UseAdminUsersOptions = {}) => {
       console.log("📡 [useAdminUsers] Appel API avec params:", params);
 
       try {
-        const response = await adminAPI.getUsers(params);
+        const response = await getUsers(params);
         setUsers(response.data || []);
         setTotalPages(response.pagination?.totalPages || 1);
         setTotalUsers(response.pagination?.total || 0);
@@ -97,7 +103,7 @@ export const useAdminUsers = (options: UseAdminUsersOptions = {}) => {
 
   const loadUserStats = useCallback(async () => {
     try {
-      const userStats = await adminAPI.getUserStats();
+      const userStats = await getUserStats();
       setStats(userStats);
     } catch (err) {
       handleError(err, "Erreur de chargement des statistiques");
@@ -122,7 +128,7 @@ export const useAdminUsers = (options: UseAdminUsersOptions = {}) => {
     async (userId: string) => {
       setIsOperationLoading(true);
       try {
-        const updatedUser = await adminAPI.toggleUserStatus(userId);
+        const updatedUser: User = await toggleUserStatus(userId);
         setUsers((prev) =>
           prev.map((u) => (u.id === userId ? updatedUser : u))
         );
@@ -142,19 +148,20 @@ export const useAdminUsers = (options: UseAdminUsersOptions = {}) => {
   const deleteUser = useCallback(
     async (userId: string) => {
       setIsOperationLoading(true);
+      let success = false;
       try {
-        await adminAPI.deleteUser(userId);
+        await deleteUser(userId);
         setUsers((prev) => prev.filter((u) => u.id !== userId));
         setTotalUsers((prev) => prev - 1);
         handleSuccess("Utilisateur supprimé avec succès.");
-        return true;
+        success = true;
       } catch (err) {
         handleError(err, "Erreur lors de la suppression de l'utilisateur");
         refreshUsers();
-        return false;
       } finally {
         setIsOperationLoading(false);
       }
+      return success;
     },
     [handleError, handleSuccess, refreshUsers]
   );
@@ -163,7 +170,7 @@ export const useAdminUsers = (options: UseAdminUsersOptions = {}) => {
     async (userId: string): Promise<UserDetailed | null> => {
       try {
         setIsOperationLoading(true);
-        const user = await adminAPI.getUserById(userId);
+        const user = await getUserById(userId);
         return user;
       } catch (err) {
         handleError(err, "Erreur de récupération de l'utilisateur");
@@ -179,7 +186,7 @@ export const useAdminUsers = (options: UseAdminUsersOptions = {}) => {
     async (userId: string, newRole: Role): Promise<boolean> => {
       setIsOperationLoading(true);
       try {
-        const updatedUser = await adminAPI.updateUser(userId, {
+        const updatedUser: User = await updateUser(userId, {
           role: newRole,
         });
         setUsers((prev) =>

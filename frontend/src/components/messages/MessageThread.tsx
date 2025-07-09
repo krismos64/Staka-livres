@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useInView } from "../../hooks/useIntersectionObserver";
 import { Message as BaseMessage } from "../../types/messages";
@@ -176,6 +177,11 @@ const MessageThread: React.FC<MessageThreadProps<BaseMessage>> = ({
     );
   }
 
+  const messageVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
+
   return (
     <div
       ref={containerRef}
@@ -237,19 +243,28 @@ const MessageThread: React.FC<MessageThreadProps<BaseMessage>> = ({
                   !nextMessage || nextMessage.senderId !== message.senderId;
 
                 return (
-                  <MessageItem
+                  <motion.div
                     key={message.id}
-                    message={message}
-                    user={user}
-                    isOwn={isOwn}
-                    isLastInGroup={isLastInGroup}
-                    onVisible={() => handleMessageVisible(message.id)}
-                    className={`transition-all duration-200 ${
-                      visibleMessages.has(message.id)
-                        ? "opacity-100"
-                        : "opacity-90"
-                    }`}
-                  />
+                    custom={index}
+                    variants={messageVariants}
+                    initial="hidden"
+                    animate="visible"
+                    transition={{ delay: index * 0.05, duration: 0.3 }}
+                  >
+                    <MessageItem
+                      key={message.id}
+                      message={message}
+                      user={user}
+                      isOwn={isOwn}
+                      isLastInGroup={isLastInGroup}
+                      onVisible={() => handleMessageVisible(message.id)}
+                      className={`transition-all duration-200 ${
+                        visibleMessages.has(message.id)
+                          ? "opacity-100"
+                          : "opacity-90"
+                      }`}
+                    />
+                  </motion.div>
                 );
               })}
             </div>

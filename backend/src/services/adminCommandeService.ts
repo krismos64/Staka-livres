@@ -287,25 +287,6 @@ export class AdminCommandeService {
             createdAt: true,
           },
         },
-        messages: {
-          select: {
-            id: true,
-            content: true,
-            createdAt: true,
-            isRead: true,
-            sender: {
-              select: {
-                prenom: true,
-                nom: true,
-                email: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-          take: 5, // Limiter aux 5 messages les plus récents
-        },
         invoices: {
           select: {
             id: true,
@@ -318,7 +299,6 @@ export class AdminCommandeService {
         _count: {
           select: {
             files: true,
-            messages: true,
             invoices: true,
           },
         },

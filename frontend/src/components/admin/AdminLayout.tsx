@@ -1,7 +1,7 @@
 import React, { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { adminAPI } from "../../utils/adminAPI";
+import { getUnreadConversationsCount } from "../../utils/adminAPI";
 import { DemoBanner, useDemoMode } from "./DemoModeProvider";
 import { SecurityAuditPanel } from "./RequireAdmin";
 
@@ -29,7 +29,7 @@ const useUnreadConversationsCount = () => {
   useEffect(() => {
     const fetchUnreadCount = async () => {
       try {
-        const count = await adminAPI.getUnreadConversationsCount();
+        const count = await getUnreadConversationsCount();
         setUnreadCount(count);
       } catch (error) {
         console.error(

@@ -1,3 +1,4 @@
+import ChatWidget from "../components/common/ChatWidget"; // Importer le nouveau composant
 import About from "../components/landing/About";
 import Blog from "../components/landing/Blog";
 import Contact from "../components/landing/Contact";
@@ -26,42 +27,31 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
       <main id="main-content">
         {/* Hero Section */}
         <Hero />
-
         {/* Trust Indicators Section */}
         <TrustIndicators />
-
         {/* Testimonials Section */}
         <Testimonials />
-
         {/* Excellence Section */}
         <Excellence />
-
         {/* Services Section */}
         <Services />
-
         {/* Pricing Calculator Section */}
         <PricingCalculator />
-
         {/* Packs Section */}
         <Packs />
-
         {/* Blog Section */}
         <Blog />
-
         {/* Free Sample Section */}
         <FreeSample />
-
         {/* About Section */}
         <About />
-
         {/* FAQ Section */}
         <FAQ />
-
         {/* Contact Section */}
         <Contact />
-
         {/* Footer Section */}
         <Footer />
+        <ChatWidget /> {/* Ajouter le widget ici */}
       </main>
 
       {/* Floating WhatsApp Button */}

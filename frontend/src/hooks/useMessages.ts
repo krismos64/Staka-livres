@@ -304,10 +304,16 @@ function transformToConversations(
 
       return options.sortOrder === "asc" ? -compareValue : compareValue;
     });
+  } else {
+    // Tri par défaut: messages les plus récents en premier
+    conversations.sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
   }
 
   // Filtrer les archivés si nécessaire
-  if (!options?.includeArchived) {
+  if (options && options.includeArchived === false) {
     conversations = conversations.filter((c) => !c.isArchived);
   }
 
@@ -551,9 +557,22 @@ export function useDeleteMessage() {
         // Remove from cache
         queryClient.removeQueries(["message", variables.id]);
 
-        // Invalidate messages list
+        // Invalidate messages list and stats
         queryClient.invalidateQueries(["messages"]);
         queryClient.invalidateQueries(["messages", "stats"]);
+
+        // Invalider les conversations qui pourraient contenir ce message
+        queryClient.invalidateQueries({
+          predicate: (query) => {
+            const queryKey = query.queryKey;
+            return (
+              Array.isArray(queryKey) &&
+              queryKey.length > 1 &&
+              queryKey[0] === "messages" &&
+              typeof queryKey[1] === "object"
+            );
+          },
+        });
       },
     }
   );
@@ -586,8 +605,29 @@ export function useMarkConversationAsRead() {
     try {
       await Promise.all(promises);
 
-      // Invalidate conversation data
+      // Invalider toutes les requêtes pertinentes
       queryClient.invalidateQueries(["messages"]);
+      queryClient.invalidateQueries(["messages", "stats"]);
+
+      // Invalider spécifiquement la conversation
+      if (conversationId.startsWith("cmd_")) {
+        queryClient.invalidateQueries([
+          "messages",
+          { commandeId: conversationId },
+        ]);
+      } else if (conversationId.startsWith("sup_")) {
+        queryClient.invalidateQueries([
+          "messages",
+          { supportRequestId: conversationId },
+        ]);
+      }
+
+      // Invalider les messages individuels
+      messageIds.forEach((id) => {
+        queryClient.invalidateQueries(["message", id]);
+      });
+
+      return true;
     } catch (error) {
       console.error("Erreur lors du marquage comme lu:", error);
       throw error;

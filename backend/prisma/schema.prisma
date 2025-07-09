@@ -57,7 +57,7 @@ model Commande {
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   files           File[]         @relation("CommandeFiles")
   invoices        Invoice[]
-  messages        Message[]      @relation("CommandeMessages")
+  // Le champ 'messages' est supprimé ici
 
   @@index([userId])
   @@index([statut])
@@ -92,46 +92,40 @@ model File {
   @@map("files")
 }
 
-/// Messages entre utilisateurs (clients <-> admins <-> correcteurs)
-/// Un message peut être lié à :
-/// - Une commande spécifique (conversation projet)
-/// - Un ticket de support (conversation support)
-/// - Aucun contexte spécifique (message général)
+/// Messages entre utilisateurs (clients <-> admins <-> visiteurs)
 model Message {
-  id               String        @id @default(uuid())
-  senderId         String
-  receiverId       String?
-  commandeId       String?
-  supportRequestId String?
-  subject          String?       @db.VarChar(255)
-  content          String        @db.Text
-  type             MessageType   @default(USER_MESSAGE)
-  statut           MessageStatut @default(ENVOYE)
-  isRead           Boolean       @default(false)
-  isArchived       Boolean       @default(false)
-  isPinned         Boolean       @default(false)
-  parentId         String?
-  threadId         String?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  id             String @id @default(uuid())
+  conversationId String @default(uuid()) // Regroupe les messages d'une même conversation
 
-  attachments    MessageAttachment[]
-  commande       Commande?           @relation("CommandeMessages", fields: [commandeId], references: [id], onDelete: Cascade)
-  supportRequest SupportRequest?     @relation("SupportMessages", fields: [supportRequestId], references: [id], onDelete: SetNull)
-  parent         Message?            @relation("MessageThread", fields: [parentId], references: [id])
-  replies        Message[]           @relation("MessageThread")
-  receiver       User?               @relation("MessageReceiver", fields: [receiverId], references: [id])
-  sender         User                @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId   String? // Optionnel: ID de l'utilisateur connecté
+  receiverId String? // Toujours un admin pour le premier message
 
+  // Champs pour les visiteurs non connectés
+  visitorEmail String? @db.VarChar(255)
+  visitorName  String? @db.VarChar(100)
+
+  subject    String?       @db.VarChar(255)
+  content    String        @db.Text
+  type       MessageType   @default(USER_MESSAGE)
+  statut     MessageStatut @default(ENVOYE)
+  isRead     Boolean       @default(false)
+  isArchived Boolean       @default(false)
+  isPinned   Boolean       @default(false)
+  parentId   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attachments MessageAttachment[]
+  parent      Message?            @relation("MessageThread", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies     Message[]           @relation("MessageThread")
+  receiver    User?               @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: SetNull)
+  sender      User?               @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
   @@index([senderId])
   @@index([receiverId])
-  @@index([commandeId])
-  @@index([supportRequestId])
-  @@index([type])
-  @@index([statut])
-  @@index([parentId])
-  @@index([threadId])
-  @@index([createdAt])
+  @@index([visitorEmail])
   @@map("messages")
 }
 
@@ -167,9 +161,9 @@ model SupportRequest {
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
 
-  assignedTo User?     @relation("SupportAssignee", fields: [assignedToId], references: [id])
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages   Message[] @relation("SupportMessages")
+  assignedTo User? @relation("SupportAssignee", fields: [assignedToId], references: [id])
+  user       User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Le champ 'messages' est supprimé ici
 
   @@index([userId])
   @@index([assignedToId])

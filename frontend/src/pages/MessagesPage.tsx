@@ -1,9 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import EmptyState from "../components/common/EmptyState";
+import SkeletonLoader from "../components/common/SkeletonLoader";
 import MessageInput from "../components/forms/MessageInput";
 import ConversationList from "../components/messages/ConversationList";
 import MessageThread from "../components/messages/MessageThread";
+import NewMessageModal from "../components/modals/NewMessageModal";
 import { useAuth } from "../contexts/AuthContext";
+import { useInvalidateMessages } from "../hooks/useInvalidateMessages";
 import { Message, TypeMessage, User } from "../types/shared";
 import { buildApiUrl, getAuthHeaders } from "../utils/api";
 
@@ -108,18 +113,39 @@ async function markAsReadAPI(messageId: string) {
   return response.json();
 }
 
+// Nouvelle fonction API pour créer un message à l'admin
+async function createMessageToAdminAPI(data: {
+  subject: string;
+  content: string;
+}) {
+  const response = await fetch(buildApiUrl("/messages/admin"), {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Erreur ${response.status}`);
+  }
+
+  return response.json();
+}
+
 function MessagesPage() {
   // États principaux
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
-  >("1");
+  >(null);
   const [filter, setFilter] = useState<ConversationFilter>("all");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNewMessageModalOpen, setIsNewMessageModalOpen] = useState(false);
 
   // Authentification
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { invalidateConversation } = useInvalidateMessages();
 
   // React Query - Fetch messages
   const {
@@ -191,8 +217,16 @@ function MessagesPage() {
       if (context?.previousMessages) {
         queryClient.setQueryData(["messages"], context.previousMessages);
       }
+      toast.error("Échec de l'envoi du message.");
       console.error("Failed to send message:", err);
-      // You can add a toast notification here
+    },
+    onSuccess: () => {
+      toast.success("Message envoyé !");
+      if ("Audio" in window) {
+        const audio = new Audio("/notification.mp3");
+        audio.volume = 0.3;
+        audio.play().catch(() => {});
+      }
     },
     onSettled: () => {
       // Invalidate and refetch
@@ -206,6 +240,22 @@ function MessagesPage() {
       queryClient.invalidateQueries({ queryKey: ["messages"] });
     },
   });
+
+  const createAdminMessageMutation = useMutation({
+    mutationFn: createMessageToAdminAPI,
+    onSuccess: () => {
+      toast.success("Message envoyé à l'administration !");
+      queryClient.invalidateQueries({ queryKey: ["messages"] });
+      setIsNewMessageModalOpen(false);
+    },
+    onError: (err: Error) => {
+      toast.error(`Échec de l'envoi: ${err.message}`);
+    },
+  });
+
+  const handleSendToAdmin = async (subject: string, content: string) => {
+    await createAdminMessageMutation.mutateAsync({ subject, content });
+  };
 
   // Transform API data to component format
   const messages: MessageAPI[] = React.useMemo(() => {
@@ -299,13 +349,16 @@ function MessagesPage() {
     (m) => m.conversationId === selectedConversationId
   );
 
-  // Scroll to bottom
+  // Scroll to bottom with animation
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
-    scrollToBottom();
+    // Scroll to bottom when a new message is added
+    if (conversationMessages.length > 0) {
+      scrollToBottom();
+    }
   }, [conversationMessages]);
 
   // Mark as read
@@ -313,6 +366,7 @@ function MessagesPage() {
     if (!selectedConversationId) return;
     try {
       await markAsReadMutation.mutateAsync(conversationId);
+      invalidateConversation(conversationId);
     } catch (error) {
       console.error("Failed to mark as read:", error);
     }
@@ -351,43 +405,105 @@ function MessagesPage() {
           messageData.receiverId = targetUser.id;
         }
       } else {
-        messageData.receiverId = "5b3196bc-0df6-43f0-bf17-f77c2d0a7bd7"; // Admin par défaut
+        messageData.commandeId = selectedConversationId;
       }
-
-      console.log("Sending message data:", messageData);
 
       await sendMessageMutation.mutateAsync(messageData);
-
-      if ("Audio" in window) {
-        const audio = new Audio("/notification.mp3");
-        audio.volume = 0.3;
-        audio.play().catch(() => {});
-      }
     } catch (error) {
-      console.error("Erreur envoi message:", error);
+      // Error is handled by onError in mutation
     }
   };
 
-  // Load more messages (pour plus tard)
+  // Load more messages
   const loadMoreMessages = async () => {
     if (!selectedConversationId) return;
-    // À implémenter avec pagination
-    console.log("Chargement d'anciens messages...");
+
+    try {
+      // Obtenir les données actuelles
+      const currentData = queryClient.getQueryData<any>(["messages", filter]);
+      if (!currentData) return;
+
+      // Déterminer la page suivante à charger
+      const currentPage = currentData.pagination?.page || 1;
+      const nextPage = currentPage + 1;
+
+      // Préparer les filtres
+      const filters: any = {
+        page: nextPage,
+        limit: 20,
+        conversationId: selectedConversationId,
+      };
+
+      if (filter === "archived") {
+        filters.isArchived = true;
+      } else if (filter === "unread") {
+        filters.isRead = false;
+      }
+
+      // Charger les messages supplémentaires
+      const newData = await fetchMessages(filters);
+
+      // Mettre à jour le cache React Query
+      queryClient.setQueryData(["messages", filter], (oldData: any) => {
+        if (!oldData) return newData;
+
+        return {
+          ...newData,
+          messages: [...oldData.messages, ...newData.messages],
+          pagination: newData.pagination,
+        };
+      });
+
+      console.log("Messages supplémentaires chargés");
+    } catch (error) {
+      console.error(
+        "Erreur lors du chargement des messages supplémentaires:",
+        error
+      );
+    }
   };
 
-  // Archive conversation (pour plus tard)
-  const toggleArchiveConversation = (conversationId: string) => {
-    // À implémenter avec API
-    console.log("Archive conversation:", conversationId);
+  // Archive conversation
+  const toggleArchiveConversation = async (conversationId: string) => {
+    if (!conversationId) return;
+
+    try {
+      // Trouver la conversation
+      const conversation = conversations.find((c) => c.id === conversationId);
+      if (!conversation) return;
+
+      // Déterminer la nouvelle valeur d'archivage (inverse de l'état actuel)
+      const isArchived = !conversation.isArchived;
+
+      // Appeler l'API pour mettre à jour le statut d'archivage
+      await fetch(buildApiUrl(`/messages/conversations/${conversationId}`), {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ isArchived }),
+      });
+
+      // Invalider les requêtes pour forcer un rechargement
+      invalidateConversation(conversationId);
+
+      // Feedback utilisateur
+      console.log(
+        `Conversation ${isArchived ? "archivée" : "désarchivée"} :`,
+        conversationId
+      );
+    } catch (error) {
+      console.error("Erreur lors de l'archivage de la conversation:", error);
+    }
   };
 
-  // Loading state
+  // Loading state with Skeleton
   if (isLoading) {
     return (
-      <section className="w-full h-full flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Chargement des messages...</p>
+      <section className="w-full h-full flex gap-8">
+        <div className="w-[340px] min-w-[300px] max-w-[380px] flex-shrink-0">
+          <SkeletonLoader type="conversationList" count={8} />
+        </div>
+        <div className="flex-1">
+          <SkeletonLoader type="messageThread" />
         </div>
       </section>
     );
@@ -397,33 +513,58 @@ function MessagesPage() {
   if (error) {
     return (
       <section className="w-full h-full flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-500 mb-4">
-            <i className="fas fa-exclamation-triangle text-4xl mb-2"></i>
-            <p>Erreur lors du chargement des messages</p>
-          </div>
-          <button
-            onClick={() => refetch()}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-          >
-            Réessayer
-          </button>
-        </div>
+        <EmptyState
+          title="Oups, une erreur est survenue"
+          message="Nous n'avons pas pu charger vos messages. Veuillez réessayer."
+          buttonText="Réessayer"
+          onButtonClick={() => refetch()}
+          icon="fas fa-exclamation-triangle text-red-500"
+        />
+      </section>
+    );
+  }
+
+  // Empty State
+  if (!conversations.length) {
+    return (
+      <section className="w-full h-full flex items-center justify-center">
+        <EmptyState
+          title="Aucune conversation pour le moment"
+          message="Contactez l'administration pour toute question."
+          buttonText="Nouveau Message"
+          onButtonClick={() => setIsNewMessageModalOpen(true)}
+          icon="fas fa-comments text-gray-400"
+        />
+        <NewMessageModal
+          isOpen={isNewMessageModalOpen}
+          onClose={() => setIsNewMessageModalOpen(false)}
+          onSend={handleSendToAdmin}
+          isSending={createAdminMessageMutation.isPending}
+        />
       </section>
     );
   }
 
   return (
     <section className="w-full h-full">
-      {/* En-tête */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-1">Messages</h2>
-        <p className="text-gray-600">
-          Communiquez avec votre équipe éditoriale
-        </p>
+      {/* En-tête avec bouton Nouveau Message */}
+      <div className="mb-8 flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-1">Messages</h2>
+          <p className="text-gray-600">
+            Communiquez avec votre équipe éditoriale
+          </p>
+        </div>
+        <button
+          onClick={() => setIsNewMessageModalOpen(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700"
+        >
+          <i className="fas fa-plus mr-2"></i>
+          Nouveau Message
+        </button>
       </div>
 
-      <div className="flex gap-8 h-[600px]">
+      <div className="flex gap-8 h-[calc(100vh-200px)]">
         {/* Sidebar des conversations */}
         <div
           className={`
@@ -444,39 +585,41 @@ function MessagesPage() {
             onSelectConversation={selectConversation}
             onFilterChange={setFilter}
             onArchiveConversation={toggleArchiveConversation}
+            currentUserId={user?.id}
           />
         </div>
 
-        {/* Zone principale des messages */}
-        <div className="flex-1 flex flex-col bg-white overflow-hidden">
+        {/* Main message area */}
+        <div className="flex-1 flex flex-col bg-white overflow-hidden rounded-2xl border border-gray-100">
           {selectedConversation ? (
-            <MessageThread
-              messages={conversationMessages as any}
-              users={selectedConversation.participants as any}
-              isLoading={isLoading}
-              onLoadMore={loadMoreMessages}
-              messagesEndRef={messagesEndRef}
-              currentUserId={user?.id}
-            />
+            <>
+              <MessageThread
+                messages={conversationMessages as any}
+                users={selectedConversation.participants as any}
+                isLoading={isLoading}
+                onLoadMore={loadMoreMessages}
+                messagesEndRef={messagesEndRef}
+                currentUserId={user?.id}
+              />
+              <div className="border-t p-4 bg-gray-50 sticky bottom-0">
+                <MessageInput
+                  onSendMessage={sendMessage}
+                  isSending={sendMessageMutation.isPending}
+                  error={sendMessageMutation.error?.message || null}
+                  onClearError={() => sendMessageMutation.reset()}
+                />
+              </div>
+            </>
           ) : (
             <div className="h-full flex items-center justify-center text-gray-500">
-              <i className="fas fa-comments text-4xl mr-4"></i>
-              <span>Sélectionnez une conversation pour voir les messages</span>
+              <EmptyState
+                title="Sélectionnez une conversation"
+                message="Choisissez une conversation dans la liste pour commencer à discuter."
+                icon="fas fa-comments text-gray-400"
+              />
             </div>
           )}
         </div>
-
-        {/* Pied de page avec l'input de message */}
-        {selectedConversationId && (
-          <div className="border-t p-4 bg-gray-50">
-            <MessageInput
-              onSendMessage={sendMessage}
-              isSending={sendMessageMutation.isPending}
-              error={sendMessageMutation.error?.message || null}
-              onClearError={() => sendMessageMutation.reset()}
-            />
-          </div>
-        )}
       </div>
 
       {/* Overlay mobile pour fermer la sidebar */}
@@ -486,6 +629,12 @@ function MessagesPage() {
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
+      <NewMessageModal
+        isOpen={isNewMessageModalOpen}
+        onClose={() => setIsNewMessageModalOpen(false)}
+        onSend={handleSendToAdmin}
+        isSending={createAdminMessageMutation.isPending}
+      />
     </section>
   );
 }

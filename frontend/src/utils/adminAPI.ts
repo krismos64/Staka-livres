@@ -1,29 +1,22 @@
 import axios from "axios";
+import { UnifiedConversation, UnifiedMessage } from "../types/messages"; // Import correct
 import {
   Commande,
   CommandeDetailed,
   CommandeStats,
-  Conversation,
-  ConversationStats,
-  ConversationTag,
-  CreateMessageRequest,
   Facture,
   FactureStats,
   FAQ,
   LogEntry,
-  Message,
   PageStatique,
   PaginatedResponse,
-  PrioriteConversation,
   Role,
   StatistiquesAvancees,
   StatutCommande,
-  StatutConversation,
   StatutFacture,
   StatutPage,
   Tarif,
   TypeLog,
-  UpdateConversationRequest,
   User,
   UserStats,
 } from "../types/shared";
@@ -1199,93 +1192,48 @@ class AdaptiveAdminAPI {
     throw new Error("Action disponible uniquement en mode démo");
   }
 
-  // ===============================
-  // GESTION MESSAGERIE
-  // ===============================
-  async getConversations(
-    page = 1,
-    limit = 10,
-    search?: string,
-    statut?: StatutConversation,
-    priorite?: PrioriteConversation,
-    userId?: string
-  ): Promise<Conversation[]> {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(),
-    });
+  // ===== MESSAGERIE UNIFIÉE =====
 
-    if (search) params.append("search", search);
-    if (statut) params.append("statut", statut);
-    if (priorite) params.append("priorite", priorite);
-    if (userId) params.append("userId", userId);
-
-    return this.realApiCall(`/admin/conversations?${params}`);
+  async getConversations(): Promise<UnifiedConversation[]> {
+    return this.realApiCall("/admin/messages/conversations");
   }
 
-  async getConversationById(id: string): Promise<Conversation> {
-    return this.realApiCall(`/admin/conversations/${id}`);
+  async getMessagesByConversation(
+    conversationId: string
+  ): Promise<UnifiedMessage[]> {
+    return this.realApiCall(`/admin/messages/conversations/${conversationId}`);
   }
 
-  async getConversationStats(): Promise<ConversationStats> {
-    return this.realApiCall(`/admin/conversations/stats`);
-  }
-
-  async createMessage(
+  async replyToConversation(
     conversationId: string,
-    messageData: CreateMessageRequest
-  ): Promise<Message> {
+    content: string
+  ): Promise<UnifiedMessage> {
     return this.realApiCall(
-      `/admin/conversations/${conversationId}/messages`,
+      `/admin/messages/conversations/${conversationId}/reply`,
       "POST",
-      messageData
+      { content }
     );
-  }
-
-  async updateConversation(
-    id: string,
-    updateData: UpdateConversationRequest
-  ): Promise<Conversation> {
-    return this.realApiCall(`/admin/conversations/${id}`, "PUT", updateData);
-  }
-
-  async deleteConversation(id: string): Promise<void> {
-    return this.realApiCall(`/admin/conversations/${id}`, "DELETE");
-  }
-
-  async exportConversations(format: "csv" | "json" = "csv"): Promise<Blob> {
-    const response = await fetch(
-      `${API_BASE_URL}/admin/conversations/export?format=${format}`,
-      {
-        headers: {
-          Authorization: `Bearer ${tokenUtils.get()}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Export failed: ${response.statusText}`);
-    }
-
-    return response.blob();
-  }
-
-  async getConversationTags(): Promise<ConversationTag[]> {
-    return this.realApiCall(`/admin/conversations/tags`);
   }
 
   async getUnreadConversationsCount(): Promise<number> {
-    return this.realApiCall(`/admin/conversations/unread-count`);
+    const response = await this.realApiCall<{ count: number }>(
+      "/admin/messages/unread-count"
+    );
+    return response.count;
   }
 }
 
 // Export de l'instance du service adaptatif
-export const adminAPI = new AdaptiveAdminAPI();
+const adminAPI = new AdaptiveAdminAPI();
 
-// Exports directs des méthodes pour compatibilité
+// ===============================
+// EXPORTS
+// ===============================
+
+// Dashboard
 export const getDashboardStats = () => adminAPI.getDashboardStats();
 
+// Users
 export const getUsers = (params: AdminUsersParams = {}) =>
   adminAPI.getUsers(params);
 export const getUserById = (id: string) => adminAPI.getUserById(id);
@@ -1299,6 +1247,7 @@ export const toggleUserStatus = (id: string) => adminAPI.toggleUserStatus(id);
 export const activateUser = (id: string) => adminAPI.activateUser(id);
 export const deactivateUser = (id: string) => adminAPI.deactivateUser(id);
 
+// Commandes
 export const getCommandes = (params: AdminCommandesParams = {}) =>
   adminAPI.getCommandes(params);
 export const getCommandeById = (id: string) => adminAPI.getCommandeById(id);
@@ -1308,6 +1257,7 @@ export const updateCommande = (id: string, updateData: UpdateCommandeRequest) =>
   adminAPI.updateCommande(id, updateData);
 export const deleteCommande = (id: string) => adminAPI.deleteCommande(id);
 
+// Factures
 export const getFactureStats = () => adminAPI.getFactureStats();
 export const getFactures = (
   page?: number,
@@ -1325,6 +1275,7 @@ export const sendFactureReminder = (id: string) =>
   adminAPI.sendFactureReminder(id);
 export const getFacturePdf = (id: string) => adminAPI.getFacturePdf(id);
 
+// FAQ
 export const getFAQ = (
   page?: number,
   limit?: number,
@@ -1339,7 +1290,7 @@ export const updateFAQ = (id: string, faqData: UpdateFAQRequest) =>
 export const deleteFAQ = (id: string) => adminAPI.deleteFAQ(id);
 export const getFAQPublic = () => adminAPI.getFAQPublic();
 
-// Export tarifs
+// Tarifs
 export const getTarifs = (
   page?: number,
   limit?: number,
@@ -1353,7 +1304,7 @@ export const updateTarif = (id: string, tarifData: UpdateTarifRequest) =>
   adminAPI.updateTarif(id, tarifData);
 export const deleteTarif = (id: string) => adminAPI.deleteTarif(id);
 
-// Exports des méthodes de pages
+// Pages
 export const getPages = (
   page?: number,
   limit?: number,
@@ -1369,34 +1320,24 @@ export const deletePage = (id: string) => adminAPI.deletePage(id);
 export const publishPage = (id: string) => adminAPI.publishPage(id);
 export const unpublishPage = (id: string) => adminAPI.unpublishPage(id);
 
-// Exports des méthodes de messagerie
-export const getConversations = (
-  page?: number,
-  limit?: number,
-  search?: string,
-  statut?: StatutConversation,
-  priorite?: PrioriteConversation,
-  userId?: string
-) => adminAPI.getConversations(page, limit, search, statut, priorite, userId);
-
-export const getConversationById = (id: string) =>
-  adminAPI.getConversationById(id);
-export const getConversationStats = () => adminAPI.getConversationStats();
-export const createMessage = (
-  conversationId: string,
-  messageData: CreateMessageRequest
-) => adminAPI.createMessage(conversationId, messageData);
-export const updateConversation = (
-  id: string,
-  updateData: UpdateConversationRequest
-) => adminAPI.updateConversation(id, updateData);
-export const deleteConversation = (id: string) =>
-  adminAPI.deleteConversation(id);
-export const exportConversations = (format?: "csv" | "json") =>
-  adminAPI.exportConversations(format);
-export const getConversationTags = () => adminAPI.getConversationTags();
+// MESSAGERIE UNIFIÉE
+export const getConversations = () => adminAPI.getConversations();
+export const getMessagesByConversation = (conversationId: string) =>
+  adminAPI.getMessagesByConversation(conversationId);
+export const replyToConversation = (conversationId: string, content: string) =>
+  adminAPI.replyToConversation(conversationId, content);
 export const getUnreadConversationsCount = () =>
   adminAPI.getUnreadConversationsCount();
 
-// Export statistiques avancées
+// Logs & Stats
+export const getLogs = (
+  page?: number,
+  limit?: number,
+  search?: string,
+  type?: TypeLog
+) => adminAPI.getLogs(page, limit, search, type);
 export const getStatistiquesAvancees = () => adminAPI.getStatistiquesAvancees();
+
+// Demo Mode
+export const refreshDemoData = () => adminAPI.refreshDemoData();
+export const resetDemoData = () => adminAPI.resetDemoData();

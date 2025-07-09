@@ -1,29 +1,47 @@
+import { Role } from "@prisma/client";
 import { Router } from "express";
 import {
-  addAttachment,
-  createMessage,
-  deleteMessage,
-  getMessageById,
-  getMessages,
-  getMessageStats,
-  updateMessage,
+  createVisitorMessage,
+  getConversations,
+  getMessagesByConversation,
+  getUnreadConversationsCount,
+  replyToConversation,
 } from "../controllers/messagesController";
 import { authenticateToken } from "../middleware/auth";
+import { requireRole } from "../middleware/requireRole";
 
 const router = Router();
 
-// Toutes les routes nécessitent une authentification
+// Route publique pour les visiteurs
+router.post("/visitor", createVisitorMessage);
+
+// Authentification requise pour les routes suivantes
 router.use(authenticateToken);
 
-// Routes principales des messages
-router.post("/", createMessage); // POST /messages - Créer un message
-router.get("/", getMessages); // GET /messages - Liste paginée avec filtres
-router.get("/stats", getMessageStats); // GET /messages/stats - Statistiques utilisateur
-router.get("/:id", getMessageById); // GET /messages/:id - Détail d'un message + replies
-router.patch("/:id", updateMessage); // PATCH /messages/:id - Maj statut (lu, archivé, etc.)
-router.delete("/:id", deleteMessage); // DELETE /messages/:id - Suppression (soft/hard RGPD)
+// Compatibilité ancienne API : GET /messages => GET /messages/conversations
+router.get("/", (req, res, next) => {
+  req.url = "/conversations";
+  next();
+});
 
-// Routes pour les pièces jointes
-router.post("/:id/attachments", addAttachment); // POST /messages/:id/attachments - Upload pièce jointe
+// Obtenir les conversations pour l'utilisateur connecté (client ou admin)
+router.get("/conversations", getConversations);
+
+// Obtenir les messages d'une conversation spécifique
+router.get("/conversations/:conversationId", getMessagesByConversation);
+
+// Envoyer une réponse dans une conversation
+router.post("/conversations/:conversationId/reply", replyToConversation);
+
+// Les admins ont des routes supplémentaires
+const adminRouter = Router();
+adminRouter.use(requireRole(Role.ADMIN));
+
+// Par exemple, l'admin pourrait avoir une route pour voir TOUTES les conversations
+// adminRouter.get('/all', getAllConversationsForAdmin);
+router.use("/admin", adminRouter);
+
+// Dans la section adminRouter
+adminRouter.get("/unread-count", getUnreadConversationsCount);
 
 export default router;

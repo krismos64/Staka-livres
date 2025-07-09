@@ -3,7 +3,7 @@ import ConfirmationModal from "../../components/common/ConfirmationModal";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Modal from "../../components/common/Modal";
 import { FAQ } from "../../types/shared";
-import { adminAPI } from "../../utils/adminAPI";
+import { createFAQ, deleteFAQ, getFAQ, updateFAQ } from "../../utils/adminAPI";
 import { useToasts } from "../../utils/toast";
 
 const AdminFAQ: React.FC = () => {
@@ -43,7 +43,7 @@ const AdminFAQ: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      const response = await adminAPI.getFAQ();
+      const response = await getFAQ();
       setFaqs(response);
 
       showToast("success", "Données chargées", "Liste des FAQ mise à jour");
@@ -110,7 +110,7 @@ const AdminFAQ: React.FC = () => {
 
       if (selectedFAQ) {
         // Mise à jour
-        await adminAPI.updateFAQ(selectedFAQ.id, editFormData);
+        await updateFAQ(selectedFAQ.id, editFormData);
         showToast(
           "success",
           "FAQ modifiée",
@@ -118,7 +118,7 @@ const AdminFAQ: React.FC = () => {
         );
       } else {
         // Création
-        await adminAPI.createFAQ(editFormData);
+        await createFAQ(editFormData);
         showToast(
           "success",
           "FAQ créée",
@@ -142,7 +142,7 @@ const AdminFAQ: React.FC = () => {
     try {
       setIsOperationLoading(true);
 
-      await adminAPI.updateFAQ(faq.id, { visible: !faq.visible });
+      await updateFAQ(faq.id, { visible: !faq.visible });
       showToast(
         "success",
         "Visibilité modifiée",
@@ -165,7 +165,7 @@ const AdminFAQ: React.FC = () => {
     try {
       setIsOperationLoading(true);
 
-      await adminAPI.updateFAQ(faq.id, { ordre: newOrder });
+      await updateFAQ(faq.id, { ordre: newOrder });
       showToast(
         "success",
         "Ordre modifié",
@@ -195,7 +195,7 @@ const AdminFAQ: React.FC = () => {
     try {
       setIsOperationLoading(true);
 
-      await adminAPI.deleteFAQ(faqToDelete.id);
+      await deleteFAQ(faqToDelete.id);
       showToast(
         "success",
         "FAQ supprimée",

@@ -387,3 +387,35 @@ export type ConversationType = Conversation["type"];
 export type MessageSortOrder = "asc" | "desc";
 
 export type MessageGroupBy = "date" | "sender" | "type" | "conversation";
+
+export interface UserSnippet {
+  id: string;
+  prenom?: string;
+  nom?: string;
+  avatarUrl?: string;
+  role?: string;
+}
+
+export interface UnifiedMessage {
+  id: string;
+  conversationId: string;
+  content: string;
+  createdAt: string;
+  senderId?: string;
+  receiverId?: string;
+  visitorEmail?: string;
+  visitorName?: string;
+  sender?: UserSnippet;
+  attachments: any[]; // Simplifié pour le moment
+}
+
+export interface UnifiedConversation {
+  conversationId: string;
+  lastMessage: UnifiedMessage;
+  unreadCount: number;
+  withUser: {
+    id: string;
+    name: string;
+    avatarUrl?: string;
+  };
+}

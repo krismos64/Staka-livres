@@ -5,7 +5,12 @@ import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Modal from "../../components/common/Modal";
 import { useTarifInvalidation } from "../../hooks/useTarifInvalidation";
 import { Tarif } from "../../types/shared";
-import { adminAPI } from "../../utils/adminAPI";
+import {
+  createTarif,
+  deleteTarif,
+  getTarifs,
+  updateTarif,
+} from "../../utils/adminAPI";
 import { useToasts } from "../../utils/toast";
 
 const AdminTarifs: React.FC = () => {
@@ -52,7 +57,7 @@ const AdminTarifs: React.FC = () => {
       setError(null);
 
       console.log("🔄 Chargement des tarifs depuis adminAPI...");
-      const response = await adminAPI.getTarifs();
+      const response = await getTarifs();
       console.log("📦 Réponse getTarifs reçue:", response);
       console.log(
         "📦 Type de la réponse:",
@@ -140,7 +145,7 @@ const AdminTarifs: React.FC = () => {
           dataToSend
         );
         console.log("📝 Tarif original sélectionné:", selectedTarif);
-        updatedTarif = await adminAPI.updateTarif(currentTarifId, dataToSend);
+        updatedTarif = await updateTarif(currentTarifId, dataToSend);
         console.log("✅ Tarif mis à jour reçu du backend:", updatedTarif);
       } else {
         // Création
@@ -149,7 +154,7 @@ const AdminTarifs: React.FC = () => {
           "📝 Données à envoyer (prix converti en centimes):",
           dataToSend
         );
-        updatedTarif = await adminAPI.createTarif(dataToSend);
+        updatedTarif = await createTarif(dataToSend);
         console.log("✅ Nouveau tarif créé reçu du backend:", updatedTarif);
       }
 
@@ -207,7 +212,7 @@ const AdminTarifs: React.FC = () => {
       setLoadingTarifIds((prev) => new Set([...prev, tarif.id]));
 
       const updatedData = { actif: !tarif.actif };
-      const updatedTarif = await adminAPI.updateTarif(tarif.id, updatedData);
+      const updatedTarif = await updateTarif(tarif.id, updatedData);
 
       // Mise à jour optimiste de l'état local
       setTarifs((prevTarifs) =>
@@ -251,8 +256,7 @@ const AdminTarifs: React.FC = () => {
       // Marquer ce tarif comme en cours de chargement
       setLoadingTarifIds((prev) => new Set([...prev, tarif.id]));
 
-      const updatedData = { ordre: newOrder };
-      await adminAPI.updateTarif(tarif.id, updatedData);
+      await updateTarif(tarif.id, { ordre: newOrder });
 
       // Mise à jour optimiste de l'état local
       setTarifs((prevTarifs) =>
@@ -305,7 +309,7 @@ const AdminTarifs: React.FC = () => {
       // Marquer ce tarif comme en cours de chargement
       setLoadingTarifIds((prev) => new Set([...prev, tarifToDelete.id]));
 
-      await adminAPI.deleteTarif(tarifToDelete.id);
+      await deleteTarif(tarifToDelete.id);
 
       // Suppression optimiste de l'état local
       setTarifs((prevTarifs) =>

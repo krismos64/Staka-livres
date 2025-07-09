@@ -1,5 +1,15 @@
 import { Role } from "../../src/types/shared";
-import { adminAPI } from "../../src/utils/adminAPI";
+import {
+  activateUser,
+  createUser,
+  deactivateUser,
+  deleteUser,
+  getUserById,
+  getUserStats,
+  getUsers,
+  toggleUserStatus,
+  updateUser,
+} from "../../src/utils/adminAPI";
 
 // Test d'intégration pour les endpoints admin/users
 describe("Admin Users API Integration", () => {
@@ -21,7 +31,7 @@ describe("Admin Users API Integration", () => {
 
   describe("Workflow complet CRUD utilisateurs", () => {
     it("devrait récupérer les statistiques des utilisateurs", async () => {
-      const stats = await adminAPI.getUserStats();
+      const stats = await getUserStats();
 
       expect(stats).toHaveProperty("total");
       expect(stats).toHaveProperty("actifs");
@@ -32,7 +42,7 @@ describe("Admin Users API Integration", () => {
     });
 
     it("devrait récupérer la liste des utilisateurs avec pagination", async () => {
-      const response = await adminAPI.getUsers(1, 10);
+      const response = await getUsers({ page: 1, limit: 10 });
 
       expect(response).toHaveProperty("data");
       expect(response).toHaveProperty("pagination");
@@ -45,7 +55,11 @@ describe("Admin Users API Integration", () => {
     });
 
     it("devrait filtrer les utilisateurs par rôle", async () => {
-      const adminUsers = await adminAPI.getUsers(1, 10, undefined, Role.ADMIN);
+      const adminUsers = await getUsers({
+        page: 1,
+        limit: 10,
+        role: Role.ADMIN,
+      });
 
       expect(adminUsers.data).toBeDefined();
       // Vérifier que tous les utilisateurs retournés sont des admins
@@ -55,7 +69,11 @@ describe("Admin Users API Integration", () => {
     });
 
     it("devrait rechercher des utilisateurs", async () => {
-      const searchResults = await adminAPI.getUsers(1, 10, "admin");
+      const searchResults = await getUsers({
+        page: 1,
+        limit: 10,
+        search: "admin",
+      });
 
       expect(searchResults.data).toBeDefined();
       // Vérifier que les résultats contiennent le terme recherché
@@ -71,7 +89,7 @@ describe("Admin Users API Integration", () => {
     });
 
     it("devrait créer un nouvel utilisateur", async () => {
-      const createdUser = await adminAPI.createUser(testUser);
+      const createdUser = await createUser(testUser);
 
       expect(createdUser).toHaveProperty("id");
       expect(createdUser.prenom).toBe(testUser.prenom);
@@ -89,7 +107,7 @@ describe("Admin Users API Integration", () => {
         throw new Error("Aucun utilisateur créé pour ce test");
       }
 
-      const user = await adminAPI.getUserById(createdUserId);
+      const user = await getUserById(createdUserId);
 
       expect(user.id).toBe(createdUserId);
       expect(user.prenom).toBe(testUser.prenom);
@@ -107,7 +125,7 @@ describe("Admin Users API Integration", () => {
         isActive: false,
       };
 
-      const updatedUser = await adminAPI.updateUser(createdUserId, updateData);
+      const updatedUser = await updateUser(createdUserId, updateData);
 
       expect(updatedUser.id).toBe(createdUserId);
       expect(updatedUser.prenom).toBe(updateData.prenom);
@@ -120,7 +138,7 @@ describe("Admin Users API Integration", () => {
       }
 
       // L'utilisateur est actuellement inactif (isActive: false)
-      const toggledUser = await adminAPI.toggleUserStatus(createdUserId);
+      const toggledUser = await toggleUserStatus(createdUserId);
 
       expect(toggledUser.id).toBe(createdUserId);
       expect(toggledUser.isActive).toBe(true); // Devrait être activé
@@ -132,10 +150,10 @@ describe("Admin Users API Integration", () => {
       }
 
       // D'abord désactiver
-      await adminAPI.deactivateUser(createdUserId);
+      await deactivateUser(createdUserId);
 
       // Puis activer
-      const activatedUser = await adminAPI.activateUser(createdUserId);
+      const activatedUser = await activateUser(createdUserId);
 
       expect(activatedUser.id).toBe(createdUserId);
       expect(activatedUser.isActive).toBe(true);
@@ -146,7 +164,7 @@ describe("Admin Users API Integration", () => {
         throw new Error("Aucun utilisateur créé pour ce test");
       }
 
-      const deactivatedUser = await adminAPI.deactivateUser(createdUserId);
+      const deactivatedUser = await deactivateUser(createdUserId);
 
       expect(deactivatedUser.id).toBe(createdUserId);
       expect(deactivatedUser.isActive).toBe(false);
@@ -158,16 +176,16 @@ describe("Admin Users API Integration", () => {
       }
 
       // Supprimer l'utilisateur
-      await adminAPI.deleteUser(createdUserId);
+      await deleteUser(createdUserId);
 
       // Vérifier que l'utilisateur n'existe plus
-      await expect(adminAPI.getUserById(createdUserId)).rejects.toThrow();
+      await expect(getUserById(createdUserId)).rejects.toThrow();
     });
   });
 
   describe("Gestion des erreurs", () => {
     it("devrait gérer les utilisateurs inexistants", async () => {
-      await expect(adminAPI.getUserById("inexistant-id")).rejects.toThrow();
+      await expect(getUserById("inexistant-id")).rejects.toThrow();
     });
 
     it("devrait gérer les données de création invalides", async () => {
@@ -179,7 +197,7 @@ describe("Admin Users API Integration", () => {
         role: Role.USER,
       };
 
-      await expect(adminAPI.createUser(invalidUser)).rejects.toThrow();
+      await expect(createUser(invalidUser)).rejects.toThrow();
     });
 
     it("devrait empêcher la création d'utilisateurs avec email dupliqué", async () => {
@@ -192,21 +210,21 @@ describe("Admin Users API Integration", () => {
         role: Role.USER,
       };
 
-      await expect(adminAPI.createUser(duplicateUser)).rejects.toThrow();
+      await expect(createUser(duplicateUser)).rejects.toThrow();
     });
   });
 
   describe("Pagination et filtres avancés", () => {
     it("devrait gérer la pagination correctement", async () => {
       // Test avec une limite très petite pour forcer la pagination
-      const page1 = await adminAPI.getUsers(1, 1);
+      const page1 = await getUsers({ page: 1, limit: 1 });
 
       expect(page1.pagination.page).toBe(1);
       expect(page1.pagination.limit).toBe(1);
       expect(page1.data?.length).toBeLessThanOrEqual(1);
 
       if (page1.pagination.totalPages > 1) {
-        const page2 = await adminAPI.getUsers(2, 1);
+        const page2 = await getUsers({ page: 2, limit: 1 });
         expect(page2.pagination.page).toBe(2);
         expect(page2.data?.length).toBeLessThanOrEqual(1);
 
@@ -223,20 +241,16 @@ describe("Admin Users API Integration", () => {
     });
 
     it("devrait filtrer par statut actif/inactif", async () => {
-      const activeUsers = await adminAPI.getUsers(
-        1,
-        10,
-        undefined,
-        undefined,
-        true
-      );
-      const inactiveUsers = await adminAPI.getUsers(
-        1,
-        10,
-        undefined,
-        undefined,
-        false
-      );
+      const activeUsers = await getUsers({
+        page: 1,
+        limit: 10,
+        isActive: true,
+      });
+      const inactiveUsers = await getUsers({
+        page: 1,
+        limit: 10,
+        isActive: false,
+      });
 
       // Vérifier que tous les utilisateurs actifs sont bien actifs
       activeUsers.data?.forEach((user) => {
@@ -250,13 +264,13 @@ describe("Admin Users API Integration", () => {
     });
 
     it("devrait combiner plusieurs filtres", async () => {
-      const filteredUsers = await adminAPI.getUsers(
-        1,
-        10,
-        "admin", // recherche
-        Role.ADMIN, // rôle
-        true // actifs uniquement
-      );
+      const filteredUsers = await getUsers({
+        page: 1,
+        limit: 10,
+        search: "admin", // recherche
+        role: Role.ADMIN, // rôle
+        isActive: true, // actifs uniquement
+      });
 
       expect(filteredUsers.data).toBeDefined();
       // Tous les résultats doivent être des admins actifs

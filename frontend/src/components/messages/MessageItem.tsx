@@ -6,6 +6,9 @@ interface MessageItemProps {
   user?: User;
   isOwn: boolean;
   isLastInGroup?: boolean;
+  showAvatar?: boolean;
+  showSender?: boolean;
+  isConsecutive?: boolean;
   onVisible?: () => void;
   className?: string;
 }
@@ -19,7 +22,7 @@ const formatMessageTime = (date: Date): string => {
 };
 
 // Obtenir l'icône du statut du message
-const getStatusIcon = (status: Message["status"]): string => {
+const getStatusIcon = (status: string | undefined): string => {
   switch (status) {
     case "sending":
       return "fas fa-clock text-gray-400";
@@ -52,7 +55,10 @@ function MessageItem({
   isConsecutive,
 }: MessageItemProps) {
   const renderMessageContent = () => {
-    if (message.type === "file" && message.attachment) {
+    // Gérer les pièces jointes si présentes
+    if (message.attachments && message.attachments.length > 0) {
+      const attachment = message.attachments[0].file;
+
       return (
         <div className="space-y-2">
           {/* Contenu textuel si présent */}
@@ -77,9 +83,9 @@ function MessageItem({
               className={`
               w-8 h-8 rounded-lg flex items-center justify-center
               ${
-                message.attachment.type.startsWith("image/")
+                attachment.mimeType.startsWith("image/")
                   ? "bg-green-100 text-green-600"
-                  : message.attachment.type === "application/pdf"
+                  : attachment.mimeType === "application/pdf"
                   ? "bg-red-100 text-red-600"
                   : "bg-blue-100 text-blue-600"
               }
@@ -87,9 +93,9 @@ function MessageItem({
             >
               <i
                 className={`fas ${
-                  message.attachment.type.startsWith("image/")
+                  attachment.mimeType.startsWith("image/")
                     ? "fa-image"
-                    : message.attachment.type === "application/pdf"
+                    : attachment.mimeType === "application/pdf"
                     ? "fa-file-pdf"
                     : "fa-file"
                 } text-xs`}
@@ -102,25 +108,28 @@ function MessageItem({
                   isOwn ? "text-white" : "text-gray-900"
                 }`}
               >
-                {message.attachment.name}
+                {attachment.filename}
               </p>
               <p
                 className={`text-xs ${
                   isOwn ? "text-blue-100" : "text-gray-500"
                 }`}
               >
-                {formatFileSize(message.attachment.size)}
+                {formatFileSize(attachment.size)}
               </p>
             </div>
 
-            <button
+            <a
+              href={attachment.url}
+              target="_blank"
+              rel="noopener noreferrer"
               className={`p-1 rounded-lg hover:bg-black/10 transition-colors ${
                 isOwn ? "text-white" : "text-gray-400"
               }`}
               aria-label="Télécharger le fichier"
             >
               <i className="fas fa-download text-xs"></i>
-            </button>
+            </a>
           </div>
         </div>
       );

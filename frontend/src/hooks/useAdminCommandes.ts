@@ -6,7 +6,11 @@ import {
   PaginatedResponse,
   StatutCommande,
 } from "../types/shared";
-import { adminAPI, AdminCommandesParams } from "../utils/adminAPI";
+import {
+  getCommandes,
+  updateCommande,
+  type AdminCommandesParams,
+} from "../utils/adminAPI";
 import { useToasts } from "../utils/toast";
 
 export interface CommandeFilters {
@@ -145,7 +149,7 @@ export const useAdminCommandes = (
         console.log(`🔍 [DEBUG HOOK] loadCommandes avec paramètres:`, params);
 
         const response: PaginatedResponse<Commande> & { stats: CommandeStats } =
-          await adminAPI.getCommandes(params);
+          await getCommandes(params);
 
         setCommandes(response.data || []);
         setTotalPages(response.pagination?.totalPages || 1);
@@ -192,7 +196,7 @@ export const useAdminCommandes = (
     try {
       setIsLoadingStats(true);
       // Les stats sont retournées avec getCommandes, mais on peut aussi les charger séparément
-      const response = await adminAPI.getCommandes({ page: 1, limit: 1 });
+      const response = await getCommandes({ page: 1, limit: 1 });
       setStats(response.stats);
     } catch (err) {
       handleError(err, "Erreur de chargement des statistiques");
@@ -206,7 +210,7 @@ export const useAdminCommandes = (
     async (commandeId: string): Promise<CommandeDetailed | null> => {
       try {
         setIsOperationLoading(true);
-        const commande = await adminAPI.getCommandeById(commandeId);
+        const commande = await getCommandeById(commandeId);
         return commande;
       } catch (err) {
         handleError(err, "Erreur de récupération de la commande");
@@ -227,7 +231,7 @@ export const useAdminCommandes = (
     ): Promise<Commande | null> => {
       try {
         setIsOperationLoading(true);
-        const updatedCommande = await adminAPI.updateCommande(commandeId, {
+        const updatedCommande = await updateCommande(commandeId, {
           statut,
           noteCorrecteur,
         });
@@ -264,7 +268,7 @@ export const useAdminCommandes = (
     async (commandeId: string): Promise<boolean> => {
       try {
         setIsOperationLoading(true);
-        await adminAPI.deleteCommande(commandeId);
+        await deleteCommande(commandeId);
 
         // Mise à jour optimiste de la liste
         setCommandes((prev) => prev.filter((cmd) => cmd.id !== commandeId));

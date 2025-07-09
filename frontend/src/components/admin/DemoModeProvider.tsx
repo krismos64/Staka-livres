@@ -5,8 +5,8 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { adminAPI } from "../../utils/adminAPI";
-import { useToasts } from "../../utils/toast";
+import { refreshDemoData, resetDemoData } from "../../utils/adminAPI"; // Correction de l'import
+import { useToast } from "../layout/ToastProvider";
 
 interface DemoModeState {
   isDemo: boolean;
@@ -66,7 +66,7 @@ export const DemoModeProvider: React.FC<DemoModeProviderProps> = ({
     remainingTime: 0,
   });
 
-  const { showToast } = useToasts();
+  const { showToast } = useToast();
 
   // Détection automatique du mode démo via URL
   useEffect(() => {
@@ -233,7 +233,7 @@ export const DemoBanner: React.FC = () => {
   const { isDemo, demoConfig, remainingTime, disableDemo, extendSession } =
     useDemoMode();
 
-  const { showToast } = useToasts();
+  const { showToast } = useToast();
   const [isActionsLoading, setIsActionsLoading] = useState(false);
 
   if (!isDemo || !demoConfig.showBanner) return null;
@@ -250,7 +250,7 @@ export const DemoBanner: React.FC = () => {
   const handleRefreshData = async () => {
     try {
       setIsActionsLoading(true);
-      const result = await adminAPI.refreshDemoData();
+      const result = await refreshDemoData();
       showToast("success", "Données rafraîchies", result.message);
 
       // Recharger la page pour voir les nouvelles données
@@ -275,7 +275,7 @@ export const DemoBanner: React.FC = () => {
 
     try {
       setIsActionsLoading(true);
-      const result = await adminAPI.resetDemoData();
+      const result = await resetDemoData();
       showToast("success", "Données réinitialisées", result.message);
 
       // Recharger la page pour voir les données réinitialisées
@@ -427,7 +427,7 @@ export const withDemoRestriction = <P extends object>(
 // Hook pour les actions conditionnelles en mode démo
 export const useDemoAction = () => {
   const { isDemo, isActionAllowed, demoConfig } = useDemoMode();
-  const { showToast } = useToasts();
+  const { showToast } = useToast();
 
   const executeAction = (
     action: string,
