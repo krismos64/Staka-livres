@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useInView } from "../../hooks/useIntersectionObserver";
-import { Message } from "../../types/messages";
+import { Message as BaseMessage } from "../../types/messages";
 import { User } from "../../types/shared";
 import LoadingSpinner from "../common/LoadingSpinner";
 import MessageItem from "./MessageItem";
 
-interface MessageThreadProps {
-  messages: Message[];
+interface MessageThreadProps<T extends BaseMessage> {
+  messages: T[];
   users: User[];
   isLoading: boolean;
   onLoadMore?: () => void;
@@ -18,7 +18,7 @@ interface MessageThreadProps {
   className?: string;
 }
 
-const MessageThread: React.FC<MessageThreadProps> = ({
+const MessageThread: React.FC<MessageThreadProps<BaseMessage>> = ({
   messages,
   users,
   isLoading,
@@ -129,7 +129,7 @@ const MessageThread: React.FC<MessageThreadProps> = ({
 
   // Group messages by date
   const groupedMessages = useCallback(() => {
-    const groups: { date: string; messages: Message[] }[] = [];
+    const groups: { date: string; messages: BaseMessage[] }[] = [];
 
     messages.forEach((message) => {
       const messageDate = new Date(message.createdAt).toDateString();

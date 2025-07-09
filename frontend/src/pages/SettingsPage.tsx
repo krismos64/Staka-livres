@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useToast } from "../components/layout/ToastProvider";
 import DeactivateAccountModal from "../components/modals/DeactivateAccountModal";
 import DeleteAccountModal from "../components/modals/DeleteAccountModal";

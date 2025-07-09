@@ -113,7 +113,6 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **AdminTarifs** : Configuration prix et services avec calculs automatiques
 - **AdminPages** : CMS pour pages statiques avec preview et SEO
 - **AdminStatistiques** : Analytics avancées avec graphiques mockés
-- **AdminLogs** : Timeline d'audit avec filtres et métadonnées
 - **Design moderne** : Sidebar sombre, animations fluides, responsive
 - **Module Admin Users** : Architecture backend complète (AdminUserService, AdminUserController)
 - **Tests validés** : Tests Docker complets avec résultats de production
@@ -332,7 +331,6 @@ Staka-livres/
 │   │   │   │   ├── AdminTarifs.tsx       # Configuration prix et services (1229 lignes)
 │   │   │   │   ├── AdminPages.tsx        # CMS pages statiques avec SEO (180 lignes)
 │   │   │   │   ├── AdminStatistiques.tsx # Analytics et métriques avancées (394 lignes)
-│   │   │   │   └── AdminLogs.tsx         # Timeline audit et logs système (614 lignes)
 │   │   │   ├── BillingPage.tsx       # Page facturation React Query
 │   │   │   ├── LoginPage.tsx         # Page connexion
 │   │   │   ├── SignupPage.tsx        # Page inscription
@@ -457,7 +455,6 @@ Staka-livres/
 - ✅ **AdminTarifs** : Configuration prix et services avec calculs automatiques (1229 lignes)
 - ✅ **AdminPages** : CMS pour pages statiques avec SEO (180 lignes)
 - ✅ **AdminStatistiques** : Analytics et métriques avancées (394 lignes)
-- ✅ **AdminLogs** : Timeline audit et logs système (614 lignes)
 - ✅ **Composants réutilisables** : AdminLayout, DemoModeProvider, RequireAdmin, StatCard, UserTable, SearchAndFilters, ConfirmationModals
 
 **🎯 Système de Messagerie Avancé (1000+ Lignes de Hooks) :**

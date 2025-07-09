@@ -1,4 +1,8 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   fetchInvoice,
   fetchInvoices,
@@ -8,25 +12,23 @@ import {
 
 // Hook pour récupérer la liste des factures avec pagination
 export function useInvoices(page = 1, limit = 10) {
-  return useQuery<InvoicesResponse, Error>(
-    ["invoices", page, limit],
-    () => fetchInvoices(page, limit),
-    {
-      keepPreviousData: true, // Garde les données précédentes pendant le chargement
-      staleTime: 5 * 60 * 1000, // 5 minutes - les données restent "fraîches"
-      cacheTime: 10 * 60 * 1000, // 10 minutes - garde en cache
-      retry: 2, // Nombre de tentatives en cas d'erreur
-      refetchOnWindowFocus: false, // Ne recharge pas automatiquement au focus
-    }
-  );
+  return useQuery<InvoicesResponse, Error>({
+    queryKey: ["invoices", page, limit],
+    queryFn: () => fetchInvoices(page, limit),
+    placeholderData: keepPreviousData, // Garde les données précédentes pendant le chargement
+    staleTime: 5 * 60 * 1000, // 5 minutes - les données restent "fraîches"
+    retry: 2, // Nombre de tentatives en cas d'erreur
+    refetchOnWindowFocus: false, // Ne recharge pas automatiquement au focus
+  });
 }
 
 // Hook pour récupérer les détails d'une facture spécifique
 export function useInvoice(id: string) {
-  return useQuery<InvoiceAPI, Error>(["invoice", id], () => fetchInvoice(id), {
+  return useQuery<InvoiceAPI, Error>({
+    queryKey: ["invoice", id],
+    queryFn: () => fetchInvoice(id),
     enabled: !!id, // Ne déclenche la requête que si l'id existe
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
     retry: 2,
     refetchOnWindowFocus: false,
   });
@@ -37,7 +39,7 @@ export function useInvalidateInvoices() {
   const queryClient = useQueryClient();
 
   return () => {
-    queryClient.invalidateQueries(["invoices"]);
+    queryClient.invalidateQueries({ queryKey: ["invoices"] });
   };
 }
 
@@ -46,7 +48,9 @@ export function usePrefetchInvoice() {
   const queryClient = useQueryClient();
 
   return (id: string) => {
-    queryClient.prefetchQuery(["invoice", id], () => fetchInvoice(id), {
+    queryClient.prefetchQuery({
+      queryKey: ["invoice", id],
+      queryFn: () => fetchInvoice(id),
       staleTime: 5 * 60 * 1000,
     });
   };

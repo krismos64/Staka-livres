@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useRef, useState } from "react";
-import EmptyState from "../components/common/EmptyState";
 import MessageInput from "../components/forms/MessageInput";
 import ConversationList from "../components/messages/ConversationList";
 import MessageThread from "../components/messages/MessageThread";
@@ -128,9 +127,9 @@ function MessagesPage() {
     isLoading,
     error,
     refetch,
-  } = useQuery(
-    ["messages", filter],
-    () => {
+  } = useQuery({
+    queryKey: ["messages", filter],
+    queryFn: () => {
       const filters: any = { limit: 50 };
 
       // Ne passer que les paramètres nécessaires
@@ -143,19 +142,17 @@ function MessagesPage() {
       console.log("Fetching messages with filters:", filters);
       return fetchMessages(filters);
     },
-    {
-      staleTime: 30 * 1000, // 30 secondes
-      cacheTime: 5 * 60 * 1000, // 5 minutes
-      retry: 2,
-      refetchOnWindowFocus: false,
-    }
-  );
+    staleTime: 30 * 1000, // 30 secondes
+    retry: 2,
+    refetchOnWindowFocus: false,
+  });
 
   // React Query - Send message mutation
-  const sendMessageMutation = useMutation(sendMessageAPI, {
+  const sendMessageMutation = useMutation({
+    mutationFn: sendMessageAPI,
     onMutate: async (newMessage) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries(["messages"]);
+      await queryClient.cancelQueries({ queryKey: ["messages"] });
 
       // Snapshot previous value
       const previousMessages = queryClient.getQueryData(["messages"]);
@@ -171,10 +168,6 @@ function MessagesPage() {
           prenom: user?.prenom || "Vous",
           nom: user?.nom || "",
           role: user?.role || ("USER" as any),
-          email: user?.email || "",
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
         },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -198,17 +191,19 @@ function MessagesPage() {
       if (context?.previousMessages) {
         queryClient.setQueryData(["messages"], context.previousMessages);
       }
+      console.error("Failed to send message:", err);
+      // You can add a toast notification here
     },
-    onSuccess: () => {
-      // Refetch messages after successful send
-      queryClient.invalidateQueries(["messages"]);
+    onSettled: () => {
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ["messages"] });
     },
   });
 
-  // React Query - Mark as read mutation
-  const markAsReadMutation = useMutation(markAsReadAPI, {
+  const markAsReadMutation = useMutation({
+    mutationFn: markAsReadAPI,
     onSuccess: () => {
-      queryClient.invalidateQueries(["messages"]);
+      queryClient.invalidateQueries({ queryKey: ["messages"] });
     },
   });
 
@@ -244,7 +239,7 @@ function MessagesPage() {
     });
   }, [messagesData]);
 
-  // Group messages into conversations
+  // Derived state
   const conversations: ConversationAPI[] = React.useMemo(() => {
     if (!messages.length) return [];
 
@@ -256,10 +251,10 @@ function MessagesPage() {
       if (!conversationMap.has(convId)) {
         conversationMap.set(convId, {
           id: convId,
-          participants: [
-            message.auteur || message.sender,
-            // Ajouter d'autres participants si disponibles
-          ].filter(Boolean), // Remove undefined participants
+          participants: [user as any, message.sender, message.receiver].filter(
+            Boolean
+          ),
+          lastMessage: message,
           unreadCount: 0,
           isArchived: false,
           updatedAt: message.createdAt,
@@ -270,9 +265,9 @@ function MessagesPage() {
       const conversation = conversationMap.get(convId)!;
       conversation.lastMessage = message;
       conversation.updatedAt = message.createdAt;
-      const messageAuthor = message.auteur || message.sender;
-      if (!message.isRead && messageAuthor?.id !== user?.id) {
-        conversation.unreadCount++;
+
+      if (!message.isRead && message.auteur?.id !== user?.id) {
+        conversation.unreadCount += 1;
       }
     });
 
@@ -280,7 +275,7 @@ function MessagesPage() {
       (a, b) =>
         new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     );
-  }, [messages, user?.id]);
+  }, [messages, user]);
 
   // Filter conversations
   const filteredConversations = conversations.filter((conversation) => {
@@ -315,18 +310,11 @@ function MessagesPage() {
 
   // Mark as read
   const markAsRead = async (conversationId: string) => {
-    const unreadMessages = conversationMessages.filter((msg) => {
-      const msgAuthor = msg.auteur || msg.sender;
-      return !msg.isRead && msgAuthor?.id !== user?.id;
-    });
-
-    // Mark each unread message as read
-    for (const msg of unreadMessages) {
-      try {
-        await markAsReadMutation.mutateAsync(msg.id);
-      } catch (error) {
-        console.error("Error marking message as read:", error);
-      }
+    if (!selectedConversationId) return;
+    try {
+      await markAsReadMutation.mutateAsync(conversationId);
+    } catch (error) {
+      console.error("Failed to mark as read:", error);
     }
   };
 
@@ -350,15 +338,12 @@ function MessagesPage() {
     if (!selectedConversationId || (!content.trim() && !attachment)) return;
 
     try {
-      // Préparer les données du message de base
       const messageData: any = {
         content: content.trim(),
         type: attachment ? TypeMessage.FILE : TypeMessage.TEXT,
       };
 
-      // Pour les messages admin ou généraux, utiliser receiverId au lieu de commandeId
       if (user?.role === "ADMIN") {
-        // Admin envoie à un utilisateur spécifique si possible
         const targetUser = selectedConversation?.participants.find(
           (p) => p.id !== user.id
         );
@@ -366,24 +351,20 @@ function MessagesPage() {
           messageData.receiverId = targetUser.id;
         }
       } else {
-        // Pour les utilisateurs normaux, laisser vide - le backend déterminera le destinataire
-        // Ou utiliser un admin comme destinataire par défaut
         messageData.receiverId = "5b3196bc-0df6-43f0-bf17-f77c2d0a7bd7"; // Admin par défaut
       }
 
-      console.log("Sending message data:", messageData); // Debug log
+      console.log("Sending message data:", messageData);
 
       await sendMessageMutation.mutateAsync(messageData);
 
-      // Notification sonore (bonus)
       if ("Audio" in window) {
         const audio = new Audio("/notification.mp3");
         audio.volume = 0.3;
-        audio.play().catch(() => {}); // Ignorer les erreurs
+        audio.play().catch(() => {});
       }
     } catch (error) {
       console.error("Erreur envoi message:", error);
-      // L'erreur est gérée par React Query
     }
   };
 
@@ -467,89 +448,35 @@ function MessagesPage() {
         </div>
 
         {/* Zone principale des messages */}
-        <div className="flex-1 bg-white rounded-2xl border border-gray-100 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col bg-white overflow-hidden">
           {selectedConversation ? (
-            <>
-              {/* En-tête de la conversation */}
-              <div className="flex items-center px-8 pt-6 pb-4 border-b border-gray-50 gap-3">
-                {/* Bouton retour mobile */}
-                <button
-                  onClick={() => setIsMobileMenuOpen(true)}
-                  className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                  aria-label="Retour à la liste des conversations"
-                >
-                  <i className="fas fa-arrow-left text-gray-600"></i>
-                </button>
-
-                {/* Avatar et infos utilisateur */}
-                <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-600 text-white font-bold text-base">
-                  {selectedConversation.participants.find(
-                    (p) => p.id !== user?.id
-                  )?.prenom?.[0] || "?"}
-                </div>
-                <div className="flex-1">
-                  <div className="font-semibold text-gray-900">
-                    {selectedConversation.participants.find(
-                      (p) => p.id !== user?.id
-                    )?.prenom || "Conversation"}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    En ligne
-                    {selectedConversation.project && (
-                      <> · {selectedConversation.project.title}</>
-                    )}
-                  </div>
-                </div>
-
-                {/* Actions conversation */}
-                <div className="flex items-center gap-4 text-gray-400">
-                  <button
-                    className="hover:text-blue-600 transition"
-                    aria-label="Appel audio"
-                  >
-                    <i className="fas fa-phone"></i>
-                  </button>
-                  <button
-                    className="hover:text-blue-600 transition"
-                    aria-label="Appel vidéo"
-                  >
-                    <i className="fas fa-video"></i>
-                  </button>
-                  <button
-                    className="hover:text-blue-600 transition"
-                    aria-label="Plus d'options"
-                  >
-                    <i className="fas fa-ellipsis-h"></i>
-                  </button>
-                </div>
-              </div>
-
-              {/* Thread des messages */}
-              <MessageThread
-                messages={conversationMessages}
-                users={conversations.flatMap((c) => c.participants)}
-                isLoading={isLoading}
-                onLoadMore={loadMoreMessages}
-                messagesEndRef={messagesEndRef}
-              />
-
-              {/* Zone de saisie */}
-              <MessageInput
-                onSendMessage={sendMessage}
-                isSending={sendMessageMutation.isLoading}
-                error={sendMessageMutation.error?.message || null}
-                onClearError={() => sendMessageMutation.reset()}
-              />
-            </>
-          ) : (
-            /* État vide quand aucune conversation n'est sélectionnée */
-            <EmptyState
-              title="Sélectionnez une conversation"
-              description="Choisissez une conversation dans la liste pour commencer à discuter"
-              icon="fas fa-comments"
+            <MessageThread
+              messages={conversationMessages as any}
+              users={selectedConversation.participants as any}
+              isLoading={isLoading}
+              onLoadMore={loadMoreMessages}
+              messagesEndRef={messagesEndRef}
+              currentUserId={user?.id}
             />
+          ) : (
+            <div className="h-full flex items-center justify-center text-gray-500">
+              <i className="fas fa-comments text-4xl mr-4"></i>
+              <span>Sélectionnez une conversation pour voir les messages</span>
+            </div>
           )}
         </div>
+
+        {/* Pied de page avec l'input de message */}
+        {selectedConversationId && (
+          <div className="border-t p-4 bg-gray-50">
+            <MessageInput
+              onSendMessage={sendMessage}
+              isSending={sendMessageMutation.isPending}
+              error={sendMessageMutation.error?.message || null}
+              onClearError={() => sendMessageMutation.reset()}
+            />
+          </div>
+        )}
       </div>
 
       {/* Overlay mobile pour fermer la sidebar */}

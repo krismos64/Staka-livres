@@ -12,6 +12,7 @@ services:
       - DOCKER_ENV=true
     volumes:
       - ./frontend:/app/frontend
+      - /app/frontend/node_modules
       - ./shared:/app/shared
     depends_on:
       - backend
