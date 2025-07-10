@@ -1,128 +1,89 @@
-import React, { useEffect, useState } from "react";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
-import { StatistiquesAvancees } from "../../types/shared";
-import { getStatistiquesAvancees } from "../../utils/adminAPI";
-import { useToasts } from "../../utils/toast";
+import React from "react";
+import { useAdminStats } from "../../hooks/useAdminStats";
 
-// Fonction pour transformer les données du backend au format attendu
-const transformBackendData = (backendData: any): StatistiquesAvancees => {
-  return {
-    chiffreAffaires: backendData.chiffreAffaires || 0,
-    croissanceCA: backendData.croissanceCA || 0,
-    nouvellesCommandes: backendData.nouvellesCommandes || 0,
-    croissanceCommandes: backendData.croissanceCommandes || 0,
-    nouveauxClients: backendData.nouveauxClients || 0,
-    croissanceClients: backendData.croissanceClients || 0,
-    tauxSatisfaction: backendData.tauxSatisfaction || 0,
-    nombreAvis: backendData.nombreAvis || 0,
-    // Transformation des données disponibles
-    repartitionServices: backendData.topServices
-      ? backendData.topServices.map((service: any, index: number) => ({
-          type: service.nom || `Service ${index + 1}`,
-          pourcentage: Math.round(
-            (service.commandes / (backendData.nouvellesCommandes || 1)) * 100
-          ),
-          commandes: service.commandes || 0,
-        }))
-      : [],
-    topClients: [], // Non disponible dans le backend pour l'instant
-    tempsTraitementMoyen: backendData.performance?.tempsReponse
-      ? `${backendData.performance.tempsReponse}h`
-      : "N/A",
-    tauxReussite: backendData.performance?.tauxResolution || 0,
-    panierMoyen:
-      backendData.chiffreAffaires && backendData.nouvellesCommandes
-        ? Math.round(
-            backendData.chiffreAffaires / backendData.nouvellesCommandes
-          )
-        : 0,
-  };
+const formatCurrency = (amount: number): string => {
+  return amount.toLocaleString('fr-FR', { 
+    style: 'currency', 
+    currency: 'EUR',
+    minimumFractionDigits: 0
+  });
 };
 
+const formatEvolution = (evolution: number): string => {
+  const sign = evolution >= 0 ? '+' : '';
+  return `${sign}${evolution.toFixed(1)}%`;
+};
+
+const getEvolutionColor = (evolution: number): string => {
+  if (evolution > 0) return 'text-green-600';
+  if (evolution < 0) return 'text-red-600';
+  return 'text-gray-600';
+};
+
+const StatCard: React.FC<{
+  title: string;
+  value: string | number;
+  evolution?: number;
+  icon: string;
+  iconColor: string;
+  subtitle?: string;
+}> = ({ title, value, evolution, icon, iconColor, subtitle }) => (
+  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="flex items-center justify-between">
+      <div className="flex-1">
+        <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
+        <p className="text-2xl font-bold text-gray-900 mb-2">
+          {typeof value === 'number' ? value.toLocaleString() : value}
+        </p>
+        {evolution !== undefined && (
+          <p className={`text-sm font-medium ${getEvolutionColor(evolution)}`}>
+            {formatEvolution(evolution)} vs mois précédent
+          </p>
+        )}
+        {subtitle && (
+          <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
+        )}
+      </div>
+      <div className={`w-12 h-12 ${iconColor} rounded-lg flex items-center justify-center flex-shrink-0`}>
+        <i className={`${icon} text-xl`}></i>
+      </div>
+    </div>
+  </div>
+);
+
 const AdminStatistiques: React.FC = () => {
-  const [stats, setStats] = useState<StatistiquesAvancees | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isExporting, setIsExporting] = useState(false);
-  const { showToast } = useToasts();
+  const { data: stats, isLoading, error, refetch } = useAdminStats();
 
-  const loadStatistiques = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Appel à l'API réelle
-      const response = await getStatistiquesAvancees();
-      // Transformer les données du backend au format attendu
-      const transformedStats = transformBackendData(response);
-      setStats(transformedStats);
-
-      showToast("success", "Statistiques chargées", "Données mises à jour");
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Erreur de chargement des statistiques";
-      setError(errorMessage);
-      showToast("error", "Erreur", errorMessage);
-      console.error("Erreur chargement statistiques:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadStatistiques();
-  }, []);
-
-  const handleExportData = async () => {
-    try {
-      setIsExporting(true);
-
-      // Simulation d'export pour l'instant
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      showToast("success", "Export réussi", "Données exportées en CSV");
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Erreur d'export";
-      showToast("error", "Erreur", errorMessage);
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const handleRefresh = () => {
-    loadStatistiques();
-  };
-
-  if (isLoading && !stats) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <LoadingSpinner size="lg" />
-        <span className="ml-3 text-gray-600">
-          Chargement des statistiques...
-        </span>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <i className="fas fa-spinner fa-spin text-3xl text-blue-500 mb-4"></i>
+          <p className="text-gray-600 text-lg">Chargement des statistiques...</p>
+        </div>
       </div>
     );
   }
 
-  if (error && !stats) {
+  if (error) {
     return (
-      <div className="text-center py-12">
-        <div className="text-red-600 mb-4">
-          <i className="fas fa-chart-line text-5xl"></i>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto">
+          <i className="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Erreur de chargement
+          </h3>
+          <p className="text-gray-600 mb-4">
+            Impossible de charger les statistiques
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <i className="fas fa-redo mr-2"></i>
+            Réessayer
+          </button>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Erreur de chargement
-        </h3>
-        <p className="text-gray-600 mb-4">{error}</p>
-        <button
-          onClick={handleRefresh}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Réessayer
-        </button>
       </div>
     );
   }
@@ -130,261 +91,142 @@ const AdminStatistiques: React.FC = () => {
   if (!stats) return null;
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Actions */}
-      <div className="flex justify-end items-center space-x-3">
-        <button
-          onClick={handleExportData}
-          disabled={isExporting}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-green-400"
-        >
-          {isExporting ? (
-            <LoadingSpinner size="sm" color="white" />
-          ) : (
-            <>
-              <i className="fas fa-download mr-2"></i>Exporter
-            </>
-          )}
-        </button>
-
-        <button
-          onClick={handleRefresh}
-          disabled={isLoading}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400"
-        >
-          {isLoading ? (
-            <LoadingSpinner size="sm" color="white" />
-          ) : (
-            "Actualiser"
-          )}
-        </button>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Chiffre d'affaires</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {(stats.chiffreAffaires || 0).toLocaleString()}€
-              </p>
-              <p className="text-sm text-green-600">
-                +{stats.croissanceCA || 0}% vs période précédente
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <i className="fas fa-euro-sign text-green-600 text-xl"></i>
-            </div>
+    <div className="p-6 max-w-7xl mx-auto">
+      {/* En-tête */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <i className="fas fa-chart-line mr-3 text-blue-600"></i>
+              Statistiques
+            </h1>
+            <p className="text-gray-600">
+              Vue d'ensemble des performances - {stats.resumeMois.periode}
+            </p>
           </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Nouvelles commandes</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {stats.nouvellesCommandes || 0}
-              </p>
-              <p className="text-sm text-blue-600">
-                +{stats.croissanceCommandes || 0}% vs période précédente
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <i className="fas fa-shopping-cart text-blue-600 text-xl"></i>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Nouveaux clients</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {stats.nouveauxClients || 0}
-              </p>
-              <p className="text-sm text-purple-600">
-                +{stats.croissanceClients || 0}% vs période précédente
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <i className="fas fa-users text-purple-600 text-xl"></i>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Taux de satisfaction</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {stats.tauxSatisfaction || 0}%
-              </p>
-              <p className="text-sm text-yellow-600">
-                {stats.nombreAvis || 0} avis clients
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <i className="fas fa-star text-yellow-600 text-xl"></i>
-            </div>
+          <div className="text-right">
+            <button
+              onClick={() => refetch()}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              <i className="fas fa-sync-alt mr-2"></i>
+              Actualiser
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Graphiques mockés */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Graphique revenus */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Évolution du chiffre d'affaires
-          </h3>
-          <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-            <div className="text-center">
-              <i className="fas fa-chart-line text-gray-400 text-4xl mb-2"></i>
-              <p className="text-gray-500">Graphique du chiffre d'affaires</p>
-              <p className="text-sm text-gray-400">
-                CA actuel: {(stats.chiffreAffaires || 0).toLocaleString()}€ (+
-                {stats.croissanceCA || 0}%)
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Graphique commandes */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Évolution des commandes
-          </h3>
-          <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-            <div className="text-center">
-              <i className="fas fa-shopping-cart text-gray-400 text-4xl mb-2"></i>
-              <p className="text-gray-500">Graphique des commandes</p>
-              <p className="text-sm text-gray-400">
-                Nouvelles: {stats.nouvellesCommandes || 0} (+
-                {stats.croissanceCommandes || 0}%)
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Répartition par services */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">
-          Répartition par type de service
-        </h3>
+      {/* Résumé du mois */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 mb-8 text-white">
+        <h2 className="text-xl font-semibold mb-4">Résumé - {stats.resumeMois.periode}</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {stats.repartitionServices && stats.repartitionServices.length > 0 ? (
-            stats.repartitionServices.map((service, index) => (
-              <div key={index} className="text-center">
-                <div className="relative w-24 h-24 mx-auto mb-3">
-                  <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
-                    <div className="text-2xl font-bold text-gray-700">
-                      {service.pourcentage}%
-                    </div>
-                  </div>
-                </div>
-                <h4 className="font-semibold text-gray-900">{service.type}</h4>
-                <p className="text-sm text-gray-600">
-                  {service.commandes} commandes
-                </p>
-              </div>
-            ))
-          ) : (
-            <div className="col-span-3 text-center py-8">
-              <i className="fas fa-chart-pie text-gray-400 text-4xl mb-2"></i>
-              <p className="text-gray-500">
-                Données de répartition non disponibles
-              </p>
-              <p className="text-sm text-gray-400">
-                Les statistiques de services seront disponibles prochainement
-              </p>
-            </div>
-          )}
+          <div className="text-center">
+            <p className="text-blue-100 text-sm font-medium mb-1">Chiffre d'affaires</p>
+            <p className="text-2xl font-bold">{formatCurrency(stats.resumeMois.totalCA)}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-blue-100 text-sm font-medium mb-1">Commandes</p>
+            <p className="text-2xl font-bold">{stats.resumeMois.totalCommandes}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-blue-100 text-sm font-medium mb-1">Nouveaux clients</p>
+            <p className="text-2xl font-bold">{stats.resumeMois.totalClients}</p>
+          </div>
         </div>
       </div>
 
-      {/* Top clients et métriques */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top clients */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Top 5 clients
-          </h3>
-          <div className="space-y-3">
-            {stats.topClients && stats.topClients.length > 0 ? (
-              stats.topClients.map((client, index) => (
-                <div
-                  key={client.id || index}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold text-sm">
-                        {(client.nom || "N/A").charAt(0)}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {client.nom || "Client inconnu"}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {client.commandes || 0} commandes
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-gray-900">
-                      {(client.chiffreAffaires || 0).toLocaleString()}€
-                    </p>
-                    <p className="text-sm text-gray-600">CA total</p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <i className="fas fa-users text-gray-400 text-4xl mb-2"></i>
-                <p className="text-gray-500">Top clients non disponible</p>
-                <p className="text-sm text-gray-400">
-                  Les données clients seront disponibles prochainement
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+      {/* Métriques principales */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard
+          title="Chiffre d'affaires"
+          value={formatCurrency(stats.chiffreAffairesMois)}
+          evolution={stats.evolutionCA}
+          icon="fas fa-euro-sign"
+          iconColor="bg-green-100 text-green-600"
+        />
+        
+        <StatCard
+          title="Nouvelles commandes"
+          value={stats.nouvellesCommandesMois}
+          evolution={stats.evolutionCommandes}
+          icon="fas fa-shopping-cart"
+          iconColor="bg-blue-100 text-blue-600"
+        />
+        
+        <StatCard
+          title="Nouveaux clients"
+          value={stats.nouveauxClientsMois}
+          evolution={stats.evolutionClients}
+          icon="fas fa-users"
+          iconColor="bg-purple-100 text-purple-600"
+        />
+        
+        <StatCard
+          title="Satisfaction"
+          value={`${stats.satisfactionMoyenne}/5`}
+          icon="fas fa-star"
+          iconColor="bg-yellow-100 text-yellow-600"
+          subtitle={`${stats.nombreAvisTotal} avis clients`}
+        />
+      </div>
 
-        {/* Métriques de performance */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Métriques de performance
-          </h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Temps de traitement moyen</span>
-              <span className="font-semibold text-gray-900">
-                {stats.tempsTraitementMoyen || "N/A"}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Taux de réussite</span>
-              <span className="font-semibold text-green-600">
-                {stats.tauxReussite || 0}%
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Panier moyen</span>
-              <span className="font-semibold text-blue-600">
-                {(stats.panierMoyen || 0).toLocaleString()}€
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Satisfaction client</span>
-              <span className="font-semibold text-yellow-600">
-                {stats.tauxSatisfaction || 0}%
-              </span>
-            </div>
+      {/* Derniers paiements */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+          <i className="fas fa-credit-card mr-2 text-green-600"></i>
+          Derniers paiements
+        </h3>
+        
+        {stats.derniersPaiements.length === 0 ? (
+          <div className="text-center py-8">
+            <i className="fas fa-receipt text-gray-300 text-4xl mb-4"></i>
+            <p className="text-gray-500 text-lg">Aucun paiement récent</p>
+            <p className="text-gray-400">Les paiements apparaîtront ici</p>
           </div>
-        </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Client</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Projet</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Montant</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.derniersPaiements.map((paiement, index) => (
+                  <tr key={paiement.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                    <td className="py-3 px-4">
+                      <div>
+                        <p className="font-medium text-gray-900">{paiement.clientNom}</p>
+                        <p className="text-sm text-gray-500">{paiement.clientEmail}</p>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <p className="text-gray-900 truncate max-w-xs">{paiement.projetTitre}</p>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="font-semibold text-green-600">
+                        {formatCurrency(paiement.montant)}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <p className="text-gray-600 text-sm">
+                        {new Date(paiement.date).toLocaleDateString('fr-FR', {
+                          day: 'numeric',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

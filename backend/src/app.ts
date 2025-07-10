@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import express from "express";
 import helmet from "helmet";
 import adminRoutes from "./routes/admin";
+import adminStatsRoutes from "./routes/adminStats";
 import authRoutes from "./routes/auth";
 import commandesRoutes from "./routes/commandes";
 import faqRoutes from "./routes/faq";
@@ -75,6 +76,9 @@ app.use("/payments", paymentsRoutes);
 
 // Routes admin (protégées)
 app.use("/admin", adminRoutes);
+
+// Routes statistiques admin (protégées)
+app.use("/admin/stats", adminStatsRoutes);
 
 // Routes factures (côté client)
 app.use("/invoices", invoiceRoutes);

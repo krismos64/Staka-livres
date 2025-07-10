@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../contexts/AuthContext";
 import { buildApiUrl, getAuthHeaders } from "../../utils/api";
+import { User } from "../../types/shared";
 
 // Types pour les nouvelles API avec threads
 interface ThreadAPI {
@@ -62,6 +63,47 @@ interface MessageAPI {
     avatar?: string;
   };
   attachments?: any[];
+}
+
+// API Functions pour récupérer les utilisateurs
+async function fetchUsers(search?: string): Promise<User[]> {
+  const params = new URLSearchParams();
+  if (search) {
+    params.append("search", search);
+  }
+  params.append("limit", "50"); // Limite pour le sélecteur
+  
+  const response = await fetch(buildApiUrl(`/admin/users?${params}`), {
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Erreur ${response.status}`);
+  }
+
+  const result = await response.json();
+  return result.data || [];
+}
+
+// Fonction pour créer une nouvelle conversation avec un utilisateur
+async function createNewConversation(userId: string, content: string): Promise<any> {
+  const response = await fetch(buildApiUrl("/admin/messages/conversations/create"), {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+      userId,
+      content,
+      subject: "Nouveau message de l'administration"
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Erreur ${response.status}`);
+  }
+
+  return response.json();
 }
 
 // API Functions pour admin threads
@@ -172,7 +214,25 @@ const AdminMessagerie = () => {
   const [replyContent, setReplyContent] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<string | null>(null);
+  
+  // États pour la nouvelle conversation
+  const [showNewConversationModal, setShowNewConversationModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [newMessageContent, setNewMessageContent] = useState("");
+  const [userSearch, setUserSearch] = useState("");
+  
   const queryClient = useQueryClient();
+
+  // Récupération des utilisateurs pour le sélecteur
+  const {
+    data: users = [],
+    isLoading: isLoadingUsers,
+  } = useQuery({
+    queryKey: ["admin-users", userSearch],
+    queryFn: () => fetchUsers(userSearch),
+    enabled: showNewConversationModal,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
 
   // Récupération des threads pour admin
   const {
@@ -221,6 +281,31 @@ const AdminMessagerie = () => {
     },
     onError: (error: Error) => {
       toast.error("Erreur lors de la suppression : " + error.message);
+    },
+  });
+
+  // Mutation pour créer une nouvelle conversation
+  const createConversationMutation = useMutation({
+    mutationFn: ({ userId, content }: { userId: string; content: string }) =>
+      createNewConversation(userId, content),
+    onSuccess: (result) => {
+      setShowNewConversationModal(false);
+      setSelectedUserId(null);
+      setNewMessageContent("");
+      setUserSearch("");
+      
+      // Rafraîchir la liste des conversations et sélectionner la nouvelle
+      queryClient.invalidateQueries({ queryKey: ["admin-threads"] });
+      
+      // Sélectionner automatiquement la nouvelle conversation
+      if (result.conversationId) {
+        setSelectedConversationId(result.conversationId);
+      }
+      
+      toast.success("Nouvelle conversation créée avec succès !");
+    },
+    onError: (error: Error) => {
+      toast.error("Erreur lors de la création : " + error.message);
     },
   });
 
@@ -309,6 +394,33 @@ const AdminMessagerie = () => {
     });
   };
 
+  const handleCreateNewConversation = () => {
+    if (!selectedUserId || !newMessageContent.trim()) {
+      toast.error("Veuillez sélectionner un utilisateur et saisir un message");
+      return;
+    }
+
+    createConversationMutation.mutate({
+      userId: selectedUserId,
+      content: newMessageContent.trim(),
+    });
+  };
+
+  const handleUserSelect = (userId: string) => {
+    setSelectedUserId(userId);
+    const selectedUser = users.find(u => u.id === userId);
+    if (selectedUser) {
+      setUserSearch(`${selectedUser.prenom} ${selectedUser.nom}`);
+    }
+  };
+
+  const filteredUsers = users.filter(u => 
+    u.role !== "ADMIN" && // Exclure les admins
+    (userSearch === "" || 
+     `${u.prenom} ${u.nom}`.toLowerCase().includes(userSearch.toLowerCase()) ||
+     u.email.toLowerCase().includes(userSearch.toLowerCase()))
+  );
+
   const getMessageStyle = (message: MessageAPI) => {
     const isMyMessage = message.senderId === user?.id;
     return {
@@ -358,10 +470,24 @@ const AdminMessagerie = () => {
       {/* Sidebar des conversations */}
       <div className="w-1/3 border-r border-gray-200 flex flex-col">
         <div className="p-4 border-b border-gray-200 bg-gray-50">
-          <h2 className="text-xl font-semibold">Messagerie Admin</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            {conversations.length} conversation(s)
-          </p>
+          <div className="flex justify-between items-start mb-3">
+            <div>
+              <h2 className="text-xl font-semibold">Messagerie Admin</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                {conversations.length} conversation(s)
+              </p>
+            </div>
+            <button
+              onClick={() => setShowNewConversationModal(true)}
+              className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center space-x-1"
+              title="Nouveau message"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              <span>Nouveau</span>
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -562,6 +688,185 @@ const AdminMessagerie = () => {
           </div>
         </div>
       )}
+
+      {/* Modal nouvelle conversation */}
+      <AnimatePresence>
+        {showNewConversationModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-xl font-semibold text-gray-900">Nouvelle conversation</h3>
+                    <p className="text-sm text-gray-600">Sélectionnez un utilisateur et rédigez votre message</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowNewConversationModal(false);
+                    setSelectedUserId(null);
+                    setNewMessageContent("");
+                    setUserSearch("");
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Sélection utilisateur */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Rechercher et sélectionner un utilisateur
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={userSearch}
+                      onChange={(e) => {
+                        setUserSearch(e.target.value);
+                        if (e.target.value === "") {
+                          setSelectedUserId(null);
+                        }
+                      }}
+                      placeholder="Tapez le nom ou l'email de l'utilisateur..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  {/* Liste des utilisateurs */}
+                  {userSearch && (
+                    <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg bg-white shadow-lg">
+                      {isLoadingUsers ? (
+                        <div className="p-4 text-center text-gray-500">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mx-auto mb-2"></div>
+                          Recherche en cours...
+                        </div>
+                      ) : filteredUsers.length > 0 ? (
+                        filteredUsers.map((user) => (
+                          <button
+                            key={user.id}
+                            onClick={() => handleUserSelect(user.id)}
+                            className={`w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors ${
+                              selectedUserId === user.id ? "bg-green-50 border-l-4 border-l-green-500" : ""
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-medium text-gray-900">
+                                  {user.prenom} {user.nom}
+                                </div>
+                                <div className="text-sm text-gray-600">{user.email}</div>
+                                <div className="flex items-center mt-1">
+                                  <span className={`text-xs px-2 py-1 rounded-full ${
+                                    user.role === "USER" ? "bg-blue-100 text-blue-800" :
+                                    user.role === "CORRECTOR" ? "bg-purple-100 text-purple-800" :
+                                    "bg-gray-100 text-gray-800"
+                                  }`}>
+                                    {user.role}
+                                  </span>
+                                  <span className={`ml-2 text-xs px-2 py-1 rounded-full ${
+                                    user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                                  }`}>
+                                    {user.isActive ? "Actif" : "Inactif"}
+                                  </span>
+                                </div>
+                              </div>
+                              {selectedUserId === user.id && (
+                                <div className="text-green-600">
+                                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="p-4 text-center text-gray-500">
+                          Aucun utilisateur trouvé
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Message */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Message
+                  </label>
+                  <textarea
+                    value={newMessageContent}
+                    onChange={(e) => setNewMessageContent(e.target.value)}
+                    placeholder="Rédigez votre message..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                    rows={4}
+                    disabled={createConversationMutation.isPending}
+                  />
+                  <div className="mt-2 text-sm text-gray-500">
+                    {newMessageContent.length} caractères
+                  </div>
+                </div>
+
+                {/* Boutons d'action */}
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                  <button
+                    onClick={() => {
+                      setShowNewConversationModal(false);
+                      setSelectedUserId(null);
+                      setNewMessageContent("");
+                      setUserSearch("");
+                    }}
+                    className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    disabled={createConversationMutation.isPending}
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={handleCreateNewConversation}
+                    disabled={!selectedUserId || !newMessageContent.trim() || createConversationMutation.isPending}
+                    className="px-6 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                  >
+                    {createConversationMutation.isPending ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Création...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                        <span>Envoyer le message</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

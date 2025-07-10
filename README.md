@@ -17,8 +17,20 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 - **Dashboard client** avec gestion complète des projets
 - **Système de facturation** intelligent avec React Query et cache optimisé
 - **Espace administrateur** moderne et intuitif avec mode démo professionnel
+- **Système de notifications** temps réel pour clients et administrateurs
 - **Design responsive** mobile-first avec animations fluides
 - **UX premium** avec micro-interactions et feedback temps réel
+
+### 🔔 **Système de Notifications Temps Réel (NOUVEAU)**
+
+- **Notifications en temps réel** : Polling automatique toutes les 15 secondes
+- **Cloches intelligentes** : Badges avec compteurs non-lus et détection admin/client
+- **Menu déroulant moderne** : Actions rapides (lire, supprimer, naviguer)
+- **Pages dédiées** : Interface complète avec filtres et pagination
+- **Génération automatique** : Messages, paiements, inscriptions, événements système
+- **Types spécialisés** : INFO, SUCCESS, WARNING, ERROR, PAYMENT, ORDER, MESSAGE, SYSTEM
+- **UX professionnelle** : Animations Framer Motion et design responsive
+- **API sécurisée** : `/notifications` avec authentification et rôles
 
 ### 🎨 **Landing Page Production-Ready (14 Composants)**
 
@@ -67,6 +79,7 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - Système de messagerie React Query (1000+ lignes de hooks optimisés)
 - Module Admin complet production-ready avec 9 pages fonctionnelles
 - Système de tarifs dynamiques avec synchronisation temps réel
+- Système de notifications temps réel avec génération automatique
 
 ---
 
@@ -81,6 +94,18 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **Middleware d'authentification** pour routes protégées
 - **Gestion des sessions** avec localStorage
 - **Redirection intelligente** selon le rôle utilisateur
+
+### 🔔 **Système de Notifications Temps Réel (NOUVEAU 2025)**
+
+- **API Backend** : Controller `/notifications` avec 6 endpoints sécurisés
+- **Hooks React Query** : `useNotifications`, `useNotificationBell`, `useMarkAsRead`, `useDeleteNotification`
+- **Composants UI** : Cloches intelligentes avec badges et menus déroulants
+- **Pages dédiées** : Interface complète client et admin avec filtres et pagination
+- **Génération automatique** : Messages, paiements, inscriptions, événements système
+- **Types spécialisés** : INFO, SUCCESS, WARNING, ERROR, PAYMENT, ORDER, MESSAGE, SYSTEM
+- **Polling temps réel** : Refresh automatique toutes les 15 secondes
+- **UX moderne** : Animations Framer Motion, responsive design, états de chargement
+- **Sécurité** : Authentification requise, isolation utilisateurs, validation rôles
 
 ### 💳 **Système de Facturation Automatique (React Query)**
 
@@ -111,7 +136,12 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **AdminFAQ** : Gestion base de connaissance avec réorganisation (1130 lignes)
 - **AdminTarifs** : Configuration prix et services avec calculs automatiques (1233 lignes)
 - **AdminPages** : CMS pour pages statiques avec preview et SEO (180 lignes)
-- **AdminStatistiques** : Analytics avancées avec graphiques mockés (394 lignes)
+- **AdminStatistiques** : **✅ REFAIT COMPLET** - Interface simple, production-ready avec données réelles (235 lignes)
+  - **API sécurisée** : `/admin/stats` avec calculs Prisma et évolutions vs mois précédent
+  - **Hook React Query** : Refresh automatique toutes les 30 secondes
+  - **Design moderne** : Métriques essentielles avec indicateurs d'évolution colorés
+  - **Derniers paiements** : Tableau avec détails clients et montants formatés
+  - **Pas de données mockées** : Tout depuis la vraie base MySQL
 - **Design moderne** : Sidebar sombre, animations fluides, responsive
 - **Module Admin Users** : Architecture backend complète (AdminUserService, AdminUserController)
 - **Tests validés** : Tests Docker complets avec résultats de production
@@ -165,7 +195,8 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **Routes admin FAQ** : CRUD complet pour base de connaissance
 - **Routes admin tarifs** : Configuration dynamique des prix et services
 - **Routes admin pages** : CMS pour pages statiques avec SEO
-- **Routes admin statistiques** : Analytics et métriques avancées
+- **Routes admin statistiques** : ✅ **API `/admin/stats`** avec calculs réels Prisma et évolutions
+- **Routes notifications** : ✅ **API `/notifications`** complète avec 6 endpoints sécurisés
 - **Routes client commandes** : POST /commandes, GET /commandes
 - **Routes de facturation** : GET /invoices, GET /invoices/:id, GET /invoices/:id/download
 - **Routes de paiement Stripe** : POST /payments/create-checkout-session, GET /payments/status, POST /payments/webhook
@@ -189,10 +220,10 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **File** : système de fichiers avec types, permissions, sécurité
 - **Invoice** : facturation automatique avec numérotation et PDF
 - **PaymentMethod** : moyens de paiement Stripe avec chiffrement
-- **Notification** : système de notifications avec types et priorités
+- **Notification** : ✅ **système de notifications** avec types, priorités et expiration
 - **Page** : CMS pour contenu éditorial avec SEO
 - **FAQ** : Questions fréquemment posées avec catégorisation
-- **Tarif** : ✅ Modèle de tarification flexible (NEW)
+- **Tarif** : ✅ Modèle de tarification flexible
 
 **Relations RGPD** : Cascade DELETE, contraintes FK, soft delete  
 **Performance** : Index optimisés, requêtes type-safe Prisma  
@@ -211,20 +242,24 @@ Staka-livres/
 │   │   ├── server.ts       # Point d'entrée principal
 │   │   ├── app.ts          # Configuration Express
 │   │   ├── controllers/    # Contrôleurs API (12 contrôleurs)
-│   │   │   ├── authController.ts      # Authentification
-│   │   │   ├── adminController.ts     # Administration générale
-│   │   │   ├── adminUserController.ts # Gestion utilisateurs admin
-│   │   │   ├── adminCommandeController.ts  # Gestion commandes admin
-│   │   │   ├── adminFactureController.ts   # Gestion factures admin
-│   │   │   ├── adminPageController.ts      # Gestion pages admin
-│   │   │   ├── faqController.ts            # Gestion FAQ
-│   │   │   ├── commandeClientController.ts # Commandes client
-│   │   │   ├── commandeController.ts       # Commandes générales
-│   │   │   ├── messagesController.ts       # Messagerie avancée
-│   │   │   └── paymentController.ts        # Paiements Stripe
-│   │   ├── routes/         # Routes Express (11 fichiers)
+│   │   │   ├── authController.ts              # Authentification
+│   │   │   ├── adminController.ts             # Administration générale
+│   │   │   ├── adminUserController.ts         # Gestion utilisateurs admin
+│   │   │   ├── adminCommandeController.ts     # Gestion commandes admin
+│   │   │   ├── adminFactureController.ts      # Gestion factures admin
+│   │   │   ├── adminPageController.ts         # Gestion pages admin
+│   │   │   ├── adminStatsController.ts        # Statistiques admin (NOUVEAU)
+│   │   │   ├── notificationsController.ts     # Notifications temps réel (NOUVEAU)
+│   │   │   ├── faqController.ts               # Gestion FAQ
+│   │   │   ├── commandeClientController.ts    # Commandes client
+│   │   │   ├── commandeController.ts          # Commandes générales
+│   │   │   ├── messagesController.ts          # Messagerie avancée
+│   │   │   └── paymentController.ts           # Paiements Stripe
+│   │   ├── routes/         # Routes Express (13 fichiers)
 │   │   │   ├── auth.ts     # Routes authentification
 │   │   │   ├── admin.ts    # Routes administration générale
+│   │   │   ├── adminStats.ts    # Routes statistiques admin (NOUVEAU)
+│   │   │   ├── notifications.ts # Routes notifications (NOUVEAU)
 │   │   │   ├── admin/      # Routes admin spécialisées (7 fichiers)
 │   │   │   │   ├── users.ts       # Routes admin utilisateurs
 │   │   │   │   ├── commandes.ts   # Routes admin commandes
@@ -254,6 +289,8 @@ Staka-livres/
 │   │   │   └── mailer.ts   # Service email
 │   │   ├── config/         # Configuration
 │   │   └── types/          # Types TypeScript
+│   │       ├── adminStats.ts    # Types statistiques admin (NOUVEAU)
+│   │       └── notifications.ts # Types notifications (NOUVEAU)
 │   ├── prisma/
 │   │   ├── schema.prisma   # Schéma base de données (12 modèles)
 │   │   ├── migrations/     # Migrations appliquées
@@ -271,15 +308,15 @@ Staka-livres/
 │   │   ├── main.tsx        # Point d'entrée avec QueryClientProvider
 │   │   ├── components/     # Composants React
 │   │   │   ├── admin/      # Composants administration (9 composants refactorisés)
-│   │   │   │   ├── AdminLayout.tsx    # Layout admin moderne
+│   │   │   │   ├── AdminLayout.tsx         # Layout admin moderne
 │   │   │   │   ├── DemoModeProvider.tsx    # Mode démo (453 lignes)
 │   │   │   │   ├── RequireAdmin.tsx        # Sécurité multi-niveaux
-│   │   │   │   ├── StatCard.tsx       # Cartes statistiques
+│   │   │   │   ├── StatCard.tsx            # Cartes statistiques
 │   │   │   │   ├── CommandeStatusSelect.tsx # Sélecteur statut
-│   │   │   │   ├── UserTable.tsx      # Table générique avec accessibilité WCAG (541 lignes)
-│   │   │   │   ├── SearchAndFilters.tsx   # Interface recherche et filtres (370 lignes)
-│   │   │   │   ├── ConfirmationModals.tsx # Modales RGPD avec conséquences détaillées
-│   │   │   │   └── CommandeTable.tsx      # Table commandes avec statuts
+│   │   │   │   ├── UserTable.tsx           # Table générique avec accessibilité WCAG (541 lignes)
+│   │   │   │   ├── SearchAndFilters.tsx    # Interface recherche et filtres (370 lignes)
+│   │   │   │   ├── ConfirmationModals.tsx  # Modales RGPD avec conséquences détaillées
+│   │   │   │   └── CommandeTable.tsx       # Table commandes avec statuts
 │   │   │   ├── billing/    # Composants facturation React Query
 │   │   │   │   ├── CurrentInvoiceCard.tsx     # Facture courante
 │   │   │   │   ├── InvoiceHistoryCard.tsx     # Historique factures
@@ -308,6 +345,9 @@ Staka-livres/
 │   │   │   │   ├── Testimonials.tsx        # Témoignages (133 lignes)
 │   │   │   │   ├── TrustIndicators.tsx     # Indicateurs confiance (61 lignes)
 │   │   │   │   └── Footer.tsx              # Pied de page (306 lignes)
+│   │   │   ├── common/     # Composants communs
+│   │   │   │   ├── Notifications.tsx       # Cloches notifications (NOUVEAU - 297 lignes)
+│   │   │   │   └── LoadingSpinner.tsx      # Spinner de chargement
 │   │   │   ├── modals/     # Modales
 │   │   │   ├── messages/   # Architecture messagerie complète
 │   │   │   │   ├── ConversationList.tsx   # Liste conversations
@@ -315,7 +355,7 @@ Staka-livres/
 │   │   │   │   └── MessageItem.tsx        # Affichage message
 │   │   │   ├── project/    # Gestion projets
 │   │   │   └── common/     # Composants communs
-│   │   ├── hooks/          # Hooks React Query spécialisés (10 hooks)
+│   │   ├── hooks/          # Hooks React Query spécialisés (12 hooks)
 │   │   │   ├── useInvoices.ts         # Hooks facturation (existant)
 │   │   │   ├── useMessages.ts         # Messagerie client (654 lignes)
 │   │   │   ├── useAdminMessages.ts    # Messagerie admin (321 lignes)
@@ -323,7 +363,8 @@ Staka-livres/
 │   │   │   ├── useAdminCommandes.ts   # Gestion commandes admin (359 lignes)
 │   │   │   ├── useAdminFactures.ts    # Gestion factures admin (240 lignes)
 │   │   │   ├── useAdminPages.ts       # Gestion pages admin (215 lignes)
-│   │   │   ├── useAdminMessages.ts    # Gestion messagerie admin (321 lignes)
+│   │   │   ├── useAdminStats.ts       # Statistiques admin (NOUVEAU - 49 lignes)
+│   │   │   ├── useNotifications.ts    # Notifications temps réel (NOUVEAU - 167 lignes)
 │   │   │   ├── useMessages.ts         # Messagerie client (694 lignes)
 │   │   │   ├── useInvoices.ts         # Facturation client (58 lignes)
 │   │   │   ├── useTarifInvalidation.ts # Invalidation tarifs (78 lignes)
@@ -332,20 +373,21 @@ Staka-livres/
 │   │   │   └── useIntersectionObserver.ts # Pagination infinie (44 lignes)
 │   │   ├── pages/          # Pages React
 │   │   │   ├── admin/      # Pages administration (9 pages complètes)
-│   │   │   │   ├── AdminDashboard.tsx    # Tableau de bord avec KPIs (118 lignes)
-│   │   │   │   ├── AdminUtilisateurs.tsx # Gestion CRUD utilisateurs (625 lignes)
-│   │   │   │   ├── AdminCommandes.tsx    # Gestion commandes avec statuts (964 lignes)
-│   │   │   │   ├── AdminFactures.tsx     # Interface facturation avancée (1177 lignes)
-│   │   │   │   ├── AdminFAQ.tsx          # Gestion FAQ et base connaissance (1130 lignes)
-│   │   │   │   ├── AdminTarifs.tsx       # Configuration prix et services (1233 lignes)
-│   │   │   │   ├── AdminPages.tsx        # CMS pages statiques avec SEO (180 lignes)
-│   │   │   │   ├── AdminStatistiques.tsx # Analytics et métriques avancées (394 lignes)
-│   │   │   │   └── AdminMessagerie.tsx   # Interface messagerie admin (215 lignes)
+│   │   │   │   ├── AdminDashboard.tsx         # Tableau de bord avec KPIs (118 lignes)
+│   │   │   │   ├── AdminUtilisateurs.tsx      # Gestion CRUD utilisateurs (625 lignes)
+│   │   │   │   ├── AdminCommandes.tsx         # Gestion commandes avec statuts (964 lignes)
+│   │   │   │   ├── AdminFactures.tsx          # Interface facturation avancée (1177 lignes)
+│   │   │   │   ├── AdminFAQ.tsx               # Gestion FAQ et base connaissance (1130 lignes)
+│   │   │   │   ├── AdminTarifs.tsx            # Configuration prix et services (1233 lignes)
+│   │   │   │   ├── AdminPages.tsx             # CMS pages statiques avec SEO (180 lignes)
+│   │   │   │   ├── AdminStatistiques.tsx      # Analytics production-ready (NOUVEAU - 235 lignes)
+│   │   │   │   └── AdminMessagerie.tsx        # Interface messagerie admin (215 lignes)
 │   │   │   ├── BillingPage.tsx       # Page facturation React Query
 │   │   │   ├── LoginPage.tsx         # Page connexion
 │   │   │   ├── SignupPage.tsx        # Page inscription
 │   │   │   ├── DashboardPage.tsx     # Dashboard client
 │   │   │   ├── MessagesPage.tsx      # Page messagerie client
+│   │   │   ├── NotificationsPage.tsx # Page notifications (NOUVEAU - 319 lignes)
 │   │   │   ├── ProjectsPage.tsx      # Page projets client
 │   │   │   ├── FilesPage.tsx         # Page fichiers
 │   │   │   ├── HelpPage.tsx          # Page aide
@@ -381,6 +423,8 @@ Staka-livres/
 ├── docker-compose.yml       # Orchestration Docker avec volumes
 ├── .dockerignore           # Exclusions Docker
 ├── package.json            # Config workspace racine
+├── test-admin-stats.js     # Script de test API statistiques (NOUVEAU)
+├── fix-admin-role.js       # Script utilitaire correctif rôles
 └── README.md               # Cette documentation
 ```
 
@@ -421,6 +465,7 @@ Staka-livres/
 - **Framer Motion** : Animations fluides et micro-interactions
 - **FontAwesome** : Icônes vectorielles
 - **React Dropzone** : Upload de fichiers drag & drop
+- **React Hot Toast** : Notifications toast élégantes
 - **Axios** : Client HTTP pour API calls
 - **Vitest** : Framework de tests unitaires
 - **Cypress** : Tests E2E automatisés
@@ -444,12 +489,35 @@ Staka-livres/
 
 ## 📋 **Changelog Récent**
 
-### ✅ **Version Actuelle (Janvier 2025)**
+### ✅ **Version Actuelle (Juillet 2025)**
 
-**🎯 Architecture Backend Complète (12 Contrôleurs + 40+ Endpoints) :**
+**🔔 Système de Notifications Temps Réel (NOUVEAU) :**
 
-- ✅ **12 contrôleurs spécialisés** : authController, adminController, adminUserController, adminCommandeController, adminFactureController, adminPageController, faqController, commandeClientController, commandeController, messagesController, paymentController, pageController
-- ✅ **40+ endpoints REST** : Authentification, administration complète, commandes, factures, messagerie, paiements, FAQ, pages, tarifs, statistiques
+- ✅ **API Backend complète** : Controller `/notifications` avec 6 endpoints sécurisés (150+ lignes)
+- ✅ **Routes authentifiées** : CRUD complet avec middleware JWT et validation rôles
+- ✅ **Hooks React Query** : 4 hooks spécialisés avec polling 15s et cache intelligent (167 lignes)
+- ✅ **Composant Notifications** : Cloches intelligentes avec badges et menus déroulants (297 lignes)
+- ✅ **Page NotificationsPage** : Interface complète avec filtres et pagination (319 lignes)
+- ✅ **Génération automatique** : Messages, paiements, inscriptions, événements système
+- ✅ **Types spécialisés** : INFO, SUCCESS, WARNING, ERROR, PAYMENT, ORDER, MESSAGE, SYSTEM
+- ✅ **UX moderne** : Animations Framer Motion, responsive design, états de chargement
+- ✅ **Sécurité** : Authentification requise, isolation utilisateurs, routing intelligent admin/client
+
+**📊 Page Statistiques Admin Refaite (PRODUCTION-READY) :**
+
+- ✅ **API `/admin/stats`** : Endpoint sécurisé avec calculs Prisma et évolutions vs mois précédent (125 lignes)
+- ✅ **Hook useAdminStats** : React Query avec refresh automatique toutes les 30 secondes (49 lignes)
+- ✅ **AdminStatistiques refait** : Interface simple et moderne avec données réelles (235 lignes)
+- ✅ **Métriques essentielles** : CA, commandes, clients, satisfaction avec indicateurs d'évolution
+- ✅ **Derniers paiements** : Tableau formaté avec détails clients et montants
+- ✅ **Design responsive** : Cards modernes avec icônes colorées et gradients
+- ✅ **Pas de données mockées** : Tout depuis la vraie base MySQL via Prisma
+- ✅ **Script de test** : `test-admin-stats.js` pour validation API complète
+
+**🎯 Architecture Backend Complète (12 Contrôleurs + 45+ Endpoints) :**
+
+- ✅ **13 contrôleurs spécialisés** : authController, adminController, adminUserController, adminCommandeController, adminFactureController, adminPageController, adminStatsController, notificationsController, faqController, commandeClientController, commandeController, messagesController, paymentController
+- ✅ **45+ endpoints REST** : Authentification, administration complète, notifications, statistiques, commandes, factures, messagerie, paiements, FAQ, pages, tarifs
 - ✅ **Services métier** : adminCommandeService, adminUserService, stripeService, invoiceService, pageService
 - ✅ **Middleware de sécurité** : JWT, rôles, validation Zod
 - ✅ **Tests complets** : Unitaires et intégration avec Jest
@@ -464,7 +532,7 @@ Staka-livres/
 - ✅ **AdminFAQ** : Gestion base de connaissance avec réorganisation (1130 lignes)
 - ✅ **AdminTarifs** : Configuration prix et services avec calculs automatiques (1233 lignes)
 - ✅ **AdminPages** : CMS pour pages statiques avec SEO (180 lignes)
-- ✅ **AdminStatistiques** : Analytics et métriques avancées (394 lignes)
+- ✅ **AdminStatistiques** : Interface production-ready avec données réelles (235 lignes)
 - ✅ **AdminMessagerie** : Interface messagerie admin avec hooks React Query (215 lignes)
 - ✅ **Composants réutilisables** : AdminLayout, DemoModeProvider, RequireAdmin, StatCard, UserTable, SearchAndFilters, ConfirmationModals, CommandeTable
 
@@ -500,6 +568,7 @@ Staka-livres/
 **🗄️ Base de Données Complète (12 Modèles) :**
 
 - ✅ **12 modèles de données complets** : User, Commande, File, Message, MessageAttachment, SupportRequest, PaymentMethod, Invoice, Notification, Page, FAQ, Tarif
+- ✅ **Modèle Notification** : Types, priorités, expiration, actions URL, métadonnées JSON
 - ✅ **Schéma Prisma robuste** : Relations RGPD, contraintes FK, index performance
 - ✅ **Migrations corrigées** : Déploiement automatique sans erreurs
 - ✅ **Support Request Integration** : Messagerie unifiée projet + support
@@ -511,6 +580,7 @@ Staka-livres/
 - ✅ Base de données persistante avec migrations automatiques
 - ✅ Prisma Studio accessible sur port 5555
 - ✅ Variables d'environnement sécurisées
+- ✅ Scripts utilitaires : `fix-admin-role.js`, `test-admin-stats.js`
 
 **🚀 Intégration Stripe Complète :**
 
@@ -524,6 +594,7 @@ Staka-livres/
 - ✅ Seed automatique avec comptes admin/user/correcteur
 - ✅ Commandes de test avec différents statuts de paiement
 - ✅ Structure complète User ↔ Commande ↔ Invoice avec champs Stripe
+- ✅ **Compte admin opérationnel** : admin@test.com / password avec rôle ADMIN
 - ✅ **Prisma Studio** : Interface d'administration sur http://localhost:5555
 
 ---
@@ -612,8 +683,57 @@ cd frontend && npm run test
 # Tests E2E Cypress
 cd frontend && npm run test:e2e
 
+# Test API statistiques admin
+node test-admin-stats.js
+
 # Linting
 npm run lint --workspace=frontend
 ```
 
+### 🔑 **Comptes de Test**
+
+```bash
+# Admin (accès complet)
+Email: admin@test.com
+Password: password
+
+# Utilisateur standard
+Email: user@test.com
+Password: password
+
+# Correcteur
+Email: corrector@test.com
+Password: password
+```
+
+### 🛠️ **Commandes de Développement**
+
+```bash
+# Backend
+cd backend
+npm run dev              # Démarrer le serveur de développement
+npm run db:migrate       # Appliquer les migrations
+npm run db:generate      # Générer le client Prisma
+npm run prisma:seed      # Insérer les données de test
+
+# Frontend
+cd frontend
+npm run dev              # Démarrer le serveur de développement
+npm run build            # Build de production
+npm run preview          # Prévisualiser le build
+
+# Docker
+npm run docker:dev       # Démarrer l'environnement complet
+npm run docker:build     # Rebuild les images
+docker-compose logs -f   # Voir les logs en temps réel
+```
+
 **Consulter la documentation spécialisée selon vos besoins de développement ou d'administration.**
+
+---
+
+## 🎉 **État du Projet**
+
+**✅ Version Production-Ready** avec système de notifications temps réel, statistiques admin refaites, infrastructure Docker stable, et architecture backend complète de 45+ endpoints.
+
+**🚀 Prêt pour déploiement** avec tests validés, documentation complète, et données de test opérationnelles.
