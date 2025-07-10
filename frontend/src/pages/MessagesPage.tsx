@@ -113,12 +113,12 @@ async function markAsReadAPI(messageId: string) {
   return response.json();
 }
 
-// Nouvelle fonction API pour créer un message à l'admin
-async function createMessageToAdminAPI(data: {
+// Nouvelle fonction API pour démarrer une conversation avec un admin
+async function createNewConversationAPI(data: {
   subject: string;
   content: string;
 }) {
-  const response = await fetch(buildApiUrl("/messages/admin"), {
+  const response = await fetch(buildApiUrl("/messages/conversations"), {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
@@ -242,14 +242,20 @@ function MessagesPage() {
   });
 
   const createAdminMessageMutation = useMutation({
-    mutationFn: createMessageToAdminAPI,
-    onSuccess: () => {
-      toast.success("Message envoyé à l'administration !");
+    mutationFn: createNewConversationAPI,
+    onSuccess: (data) => {
+      toast.success(data.message || "Message envoyé à l'administration !");
       queryClient.invalidateQueries({ queryKey: ["messages"] });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] }); // Assurer la mise à jour de la liste
       setIsNewMessageModalOpen(false);
+      // Optionnel : sélectionner la nouvelle conversation
+      if (data.conversationId) {
+        setSelectedConversationId(data.conversationId);
+      }
     },
-    onError: (err: Error) => {
-      toast.error(`Échec de l'envoi: ${err.message}`);
+    onError: (error: Error) => {
+      toast.error(error.message || "Impossible d'envoyer le message.");
+      console.error("Erreur lors de la création de la conversation:", error);
     },
   });
 

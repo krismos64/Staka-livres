@@ -1,6 +1,7 @@
 import { Role } from "@prisma/client";
 import { Router } from "express";
 import {
+  createConversation,
   createVisitorMessage,
   getConversations,
   getMessagesByConversation,
@@ -18,6 +19,9 @@ router.post("/visitor", createVisitorMessage);
 // Authentification requise pour les routes suivantes
 router.use(authenticateToken);
 
+// Route pour démarrer une nouvelle conversation avec un admin
+router.post("/conversations", createConversation);
+
 // Compatibilité ancienne API : GET /messages => GET /messages/conversations
 router.get("/", (req, res, next) => {
   req.url = "/conversations";
@@ -33,15 +37,22 @@ router.get("/conversations/:conversationId", getMessagesByConversation);
 // Envoyer une réponse dans une conversation
 router.post("/conversations/:conversationId/reply", replyToConversation);
 
+// Obtenir le nombre de conversations non lues (pour l'admin authentifié)
+router.get(
+  "/unread-count",
+  requireRole(Role.ADMIN),
+  getUnreadConversationsCount
+);
+
 // Les admins ont des routes supplémentaires
-const adminRouter = Router();
-adminRouter.use(requireRole(Role.ADMIN));
+// const adminRouter = Router();
+// adminRouter.use(requireRole(Role.ADMIN));
 
 // Par exemple, l'admin pourrait avoir une route pour voir TOUTES les conversations
 // adminRouter.get('/all', getAllConversationsForAdmin);
-router.use("/admin", adminRouter);
+// router.use("/admin", adminRouter);
 
 // Dans la section adminRouter
-adminRouter.get("/unread-count", getUnreadConversationsCount);
+// adminRouter.get("/unread-count", getUnreadConversationsCount);
 
 export default router;

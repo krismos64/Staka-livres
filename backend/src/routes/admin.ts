@@ -6,6 +6,7 @@ import commandeRoutes from "./admin/commandes";
 import factureRoutes from "./admin/factures";
 import faqRoutes from "./admin/faq";
 import pagesRoutes from "./admin/pages";
+import statsRoutes from "./admin/stats";
 import tarifsRoutes from "./admin/tarifs";
 import userRoutes from "./admin/users";
 import messageRoutes from "./messages";
@@ -47,6 +48,9 @@ router.use("/tarifs", tarifsRoutes);
 
 // 📄 GESTION DES PAGES STATIQUES
 router.use("/pages", pagesRoutes);
+
+// 📊 GESTION DES STATISTIQUES
+router.use("/stats", statsRoutes);
 
 // 📬 GESTION DES MESSAGES
 router.use("/messages", messageRoutes);

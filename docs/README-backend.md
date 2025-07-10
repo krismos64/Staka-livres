@@ -79,15 +79,18 @@ backend/
 │   │   ├── admin/            # Routes espace admin
 │   │   │   ├── users.ts      # ✅ Gestion utilisateurs
 │   │   │   ├── commandes.ts  # ✅ Gestion commandes
-│   │   │   ├── factures.ts   # ✅ Gestion factures (NOUVEAU)
-│   │   │   ├── faq.ts        # ✅ Gestion FAQ (NOUVEAU)
-│   │   │   └── tarifs.ts     # ✅ Gestion tarifs (NOUVEAU)
+│   │   │   ├── factures.ts   # ✅ Gestion factures
+│   │   │   ├── faq.ts        # ✅ Gestion FAQ
+│   │   │   ├── pages.ts      # ✅ Gestion pages CMS
+│   │   │   ├── stats.ts      # ✅ Statistiques admin
+│   │   │   └── tarifs.ts     # ✅ Gestion tarifs
 │   │   ├── admin.ts          # Routeur principal admin
 │   │   ├── auth.ts           # Authentification
 │   │   ├── commandes.ts      # Commandes client
 │   │   ├── faq.ts            # FAQ publique
 │   │   ├── invoice.ts        # Factures client
-│   │   ├── messages.ts       # Messagerie
+│   │   ├── messages.ts       # Messagerie unifiée
+│   │   ├── pages.ts          # Pages publiques
 │   │   ├── payments/         # Routes paiements
 │   │   │   └── webhook.ts    # Webhook Stripe
 │   │   ├── payments.ts       # Création session paiement
@@ -125,58 +128,189 @@ User {
   password: string (hashé bcrypt)
   role: "USER" | "ADMIN"
   isActive: boolean
+  adresse?: string
+  avatar?: string
+  telephone?: string
   createdAt: DateTime
   updatedAt: DateTime
   commandes: Commande[]
-  messages: Message[]
+  files: File[]
+  sentMessages: Message[]
+  receivedMessages: Message[]
+  notifications: Notification[]
+  paymentMethods: PaymentMethod[]
+  supportRequests: SupportRequest[]
+  assignedSupportRequests: SupportRequest[]
 }
 
-// Commande
+// Commande/Projet
 Commande {
   id: string (UUID)
   userId: string
   titre: string
   description?: string
   fichierUrl?: string
-  statut: "EN_ATTENTE" | "EN_COURS" | "TERMINE" | "ANNULEE"
+  statut: "EN_ATTENTE" | "EN_COURS" | "TERMINE" | "ANNULEE" | "SUSPENDUE"
   noteClient?: string
   noteCorrecteur?: string
   paymentStatus?: "unpaid" | "paid" | "failed"
   stripeSessionId?: string
+  amount?: number
+  dateEcheance?: DateTime
+  dateFinition?: DateTime
+  priorite: "BASSE" | "NORMALE" | "HAUTE" | "URGENTE"
   createdAt: DateTime
   updatedAt: DateTime
   user: User
-  messages: Message[]
+  files: File[]
+  invoices: Invoice[]
 }
 
-// Message (Système de messagerie unifiée)
+// Message (Système de messagerie unifié simplifié)
 Message {
   id: string (UUID)
-  senderId: string
-  receiverId?: string
-  commandeId?: string
-  supportRequestId?: string
+  conversationId: string (UUID) // Regroupe les messages d'une même conversation
+  senderId?: string // Optionnel: ID de l'utilisateur connecté
+  receiverId?: string // Toujours un admin pour le premier message
+  visitorEmail?: string // Pour les visiteurs non connectés
+  visitorName?: string // Pour les visiteurs non connectés
   subject?: string
   content: string
-  type: MessageType
-  statut: MessageStatut
+  type: "USER_MESSAGE" | "SYSTEM_MESSAGE" | "ADMIN_MESSAGE"
+  statut: "BROUILLON" | "ENVOYE" | "DELIVRE" | "LU" | "ARCHIVE"
   isRead: boolean
   isArchived: boolean
   isPinned: boolean
-  threadId?: string
-  parentId?: string
+  parentId?: string // Pour les réponses
   createdAt: DateTime
   updatedAt: DateTime
-  sender: User
+  sender?: User
   receiver?: User
-  commande?: Commande
-  supportRequest?: SupportRequest
   parent?: Message
   replies: Message[]
   attachments: MessageAttachment[]
 }
 
-// FAQ (NOUVEAU)
+// Fichier
+File {
+  id: string (UUID)
+  filename: string
+  storedName: string
+  mimeType: string
+  size: number
+  url: string
+  type: "DOCUMENT" | "IMAGE" | "VIDEO" | "AUDIO" | "ARCHIVE"
+  uploadedById: string
+  commandeId?: string
+  description?: string
+  isPublic: boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+  uploadedBy: User
+  commande?: Commande
+  messageAttachments: MessageAttachment[]
+}
+
+// Pièce jointe de message
+MessageAttachment {
+  id: string (UUID)
+  messageId: string
+  fileId: string
+  file: File
+  message: Message
+}
+
+// Ticket de support
+SupportRequest {
+  id: string (UUID)
+  userId: string
+  title: string
+  description: string
+  category: "GENERAL" | "TECHNIQUE" | "FACTURATION" | "COMMANDE" | "AUTRE"
+  priority: "BASSE" | "NORMALE" | "HAUTE" | "URGENTE"
+  status: "OUVERT" | "EN_COURS" | "RESOLU" | "FERME"
+  assignedToId?: string
+  source?: string
+  tags?: string
+  firstResponseAt?: DateTime
+  resolvedAt?: DateTime
+  closedAt?: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+  user: User
+  assignedTo?: User
+}
+
+// Moyen de paiement
+PaymentMethod {
+  id: string (UUID)
+  userId: string
+  stripePaymentMethodId: string (unique)
+  brand: string
+  last4: string
+  expMonth: number
+  expYear: number
+  isDefault: boolean
+  isActive: boolean
+  fingerprint?: string
+  createdAt: DateTime
+  updatedAt: DateTime
+  user: User
+}
+
+// Facture
+Invoice {
+  id: string (UUID)
+  commandeId: string
+  number: string (unique)
+  amount: number
+  taxAmount: number
+  pdfUrl: string
+  status: "GENERATED" | "SENT" | "PAID" | "OVERDUE" | "CANCELLED"
+  issuedAt?: DateTime
+  dueAt?: DateTime
+  paidAt?: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+  commande: Commande
+}
+
+// Notification
+Notification {
+  id: string (UUID)
+  userId: string
+  title: string
+  message: string
+  type: "INFO" | "SUCCESS" | "WARNING" | "ERROR"
+  priority: "BASSE" | "NORMALE" | "HAUTE" | "URGENTE"
+  data?: string
+  actionUrl?: string
+  isRead: boolean
+  isDeleted: boolean
+  readAt?: DateTime
+  expiresAt?: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+  user: User
+}
+
+// Page de contenu
+Page {
+  id: string (UUID)
+  title: string
+  slug: string (unique)
+  content: string
+  excerpt?: string
+  metaTitle?: string
+  metaDescription?: string
+  type: "STATIC" | "FAQ" | "LEGAL" | "MARKETING"
+  status: "DRAFT" | "PUBLISHED" | "ARCHIVED"
+  publishedAt?: DateTime
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+// FAQ
 FAQ {
   id: string (UUID)
   question: string
@@ -188,7 +322,7 @@ FAQ {
   updatedAt: DateTime
 }
 
-// Tarif (NOUVEAU)
+// Tarif
 Tarif {
   id: string (UUID)
   nom: string
@@ -373,402 +507,218 @@ Content-Type: application/json
 
 ### **Vue d'ensemble**
 
-Système de messagerie complet avec support pour :
+Système de messagerie **simplifié et unifié** basé sur des `conversationId` uniques :
 
-- **Messages directs** entre utilisateurs ✅
-- **Messages projet** liés aux commandes ✅
-- **Messages support** via tickets ✅
-- **Threading** et réponses ✅
-- **Pièces jointes** avec gestion fichiers ✅
-- **Administration** complète côté admin ✅
-- **Anti-spam & sécurité** : Rate limiting + validation RGPD ✅
-- **Interface admin** : Parser conversations + grouping automatique ✅
+- **Messagerie visiteur** : Route publique pour utilisateurs non authentifiés ✅
+- **Messagerie client/admin** : Interface unifiée après authentification ✅
+- **Conversations génériques** : Un seul type de conversation avec `conversationId` ✅
+- **Support visiteurs** : Champs `visitorEmail` et `visitorName` pour non-connectés ✅
+- **Administration** : Interface admin avec comptage messages non lus ✅
 
 ### **Architecture technique**
 
-#### **Types de messages**
+#### **Modèle de données simplifié**
 
 ```typescript
-enum MessageType {
-  USER_MESSAGE     // Message standard utilisateur
-  SYSTEM_MESSAGE   // Message automatique du système
-  ADMIN_MESSAGE    // Message administrateur
-}
-
-enum MessageStatut {
-  BROUILLON        // En cours de rédaction
-  ENVOYE           // Envoyé avec succès
-  DELIVRE          // Délivré au destinataire
-  LU               // Lu par le destinataire
-  ARCHIVE          // Archivé
+// Message unifié avec conversationId
+Message {
+  id: string (UUID)
+  conversationId: string (UUID) // Regroupe les messages d'une même conversation
+  senderId?: string // Optionnel: ID de l'utilisateur connecté
+  receiverId?: string // Toujours un admin pour le premier message
+  visitorEmail?: string // Pour les visiteurs non connectés
+  visitorName?: string // Pour les visiteurs non connectés
+  subject?: string
+  content: string
+  type: "USER_MESSAGE" | "SYSTEM_MESSAGE" | "ADMIN_MESSAGE"
+  statut: "BROUILLON" | "ENVOYE" | "DELIVRE" | "LU" | "ARCHIVE"
+  isRead: boolean
+  isArchived: boolean
+  isPinned: boolean
+  parentId?: string // Pour les réponses
+  createdAt: DateTime
+  updatedAt: DateTime
 }
 ```
 
-#### **Contrôle d'accès intelligent**
-
-- **Utilisateurs** : Accès aux messages où ils sont expéditeur/destinataire
-- **Propriétaires de projets** : Accès aux messages liés à leurs commandes
-- **Support** : Accès aux messages des tickets assignés/créés
-- **Admins** : Accès complet à tous les messages
-
-#### **Anti-spam & sécurité**
-
-- **Rate limiting** : 50 messages/heure par utilisateur
-- **Validation contenu** : Maximum 10,000 caractères
-- **Vérification contexte** : Au moins un destinataire requis
-- **RGPD** : Soft delete par défaut, hard delete admin
-
 ### **Routes Messages (`/messages`)**
 
-#### **1. POST /messages - Créer un message**
+#### **1. POST /messages/visitor - Message visiteur (PUBLIC)**
 
 ```http
-POST /messages
-Authorization: Bearer token
+POST /messages/visitor
 Content-Type: application/json
 
 {
-  "content": "Contenu du message",
-  "receiverId": "uuid-destinataire",        // Optionnel (message direct)
-  "commandeId": "uuid-commande",            // Optionnel (message projet)
-  "supportRequestId": "uuid-ticket",       // Optionnel (message support)
-  "subject": "Sujet du message",            // Optionnel
-  "type": "TEXT",                           // TEXT, FILE, IMAGE, SYSTEM
-  "parentId": "uuid-message-parent"        // Optionnel (réponse)
+  "visitorName": "Jean Dupont",
+  "visitorEmail": "jean@example.com",
+  "subject": "Demande de devis",
+  "content": "Bonjour, j'aimerais un devis pour..."
 }
 
 # Response: 201
 {
-  "message": "Message créé avec succès",
-  "data": {
-    "id": "msg-123",
-    "content": "Contenu du message",
-    "type": "USER_MESSAGE",
-    "statut": "ENVOYE",
-    "isRead": false,
-    "isPinned": false,
-    "threadId": "thread-456",
-    "createdAt": "2024-01-15T10:30:00Z",
-    "sender": {
-      "id": "user-789",
-      "prenom": "Jean",
-      "nom": "Dupont",
-      "role": "USER"
-    },
-    "receiver": { ... },
-    "commande": {
-      "id": "cmd-123",
-      "titre": "Mon projet",
-      "statut": "EN_COURS"
-    },
-    "attachments": [],
-    "_count": { "replies": 0 }
-  }
+  "message": "Message envoyé avec succès",
+  "conversationId": "conv-123"
 }
 ```
 
-#### **2. GET /messages - Liste avec filtres et pagination**
+#### **2. POST /messages/conversations - Créer une conversation**
 
 ```http
-GET /messages?page=1&limit=20&commandeId=cmd-123&isRead=false&search=correction
-Authorization: Bearer token
-
-# Filtres disponibles:
-# - page, limit: Pagination
-# - commandeId: Messages d'un projet
-# - supportRequestId: Messages d'un ticket support
-# - threadId: Messages d'un thread
-# - type: Type de message
-# - statut: Statut du message
-# - isRead: true/false - Messages lus/non lus
-# - isArchived: true/false - Messages archivés
-# - isPinned: true/false - Messages épinglés
-# - search: Recherche dans contenu et sujet
-
-# Response: 200
-{
-  "messages": [...],
-  "pagination": {
-    "page": 1,
-    "limit": 20,
-    "total": 150,
-    "totalPages": 8,
-    "hasNextPage": true,
-    "hasPreviousPage": false
-  }
-}
-```
-
-#### **3. GET /messages/stats - Statistiques utilisateur**
-
-```http
-GET /messages/stats
-Authorization: Bearer token
-
-# Response: 200
-{
-  "totalSent": 45,
-  "totalReceived": 38,
-  "unreadCount": 7,
-  "pinnedCount": 3,
-  "projectMessages": 25,
-  "supportMessages": 12,
-  "total": 83
-}
-```
-
-#### **4. GET /messages/:id - Détail avec réponses**
-
-```http
-GET /messages/msg-123
-Authorization: Bearer token
-
-# Response: 200
-{
-  "id": "msg-123",
-  "content": "Message principal",
-  "subject": "Discussion projet",
-  // ... autres champs
-  "replies": [
-    {
-      "id": "msg-124",
-      "content": "Première réponse",
-      "createdAt": "2024-01-15T11:00:00Z",
-      "sender": { ... },
-      "attachments": []
-    }
-  ],
-  "attachments": [
-    {
-      "id": "att-456",
-      "file": {
-        "filename": "document.pdf",
-        "size": 1024000,
-        "mimeType": "application/pdf",
-        "url": "https://storage.../document.pdf"
-      }
-    }
-  ]
-}
-```
-
-#### **5. PATCH /messages/:id - Mise à jour statut**
-
-```http
-PATCH /messages/msg-123
+POST /messages/conversations
 Authorization: Bearer token
 Content-Type: application/json
 
 {
-  "isRead": true,          // Marquer comme lu (destinataire uniquement)
-  "isArchived": false,     // Archiver/désarchiver
-  "isPinned": true,        // Épingler (expéditeur/admin uniquement)
-  "statut": "LU"          // Changer statut (expéditeur/admin uniquement)
+  "content": "Contenu du premier message",
+  "subject": "Sujet de la conversation"
 }
 
-# Contrôle des permissions:
-# - isRead: Seul le destinataire peut marquer comme lu
-# - isArchived: Tous les utilisateurs concernés
-# - isPinned: Seul l'expéditeur ou admin
-# - statut: Seul l'expéditeur ou admin
-```
-
-#### **6. DELETE /messages/:id - Suppression RGPD**
-
-```http
-DELETE /messages/msg-123?hard=false
-Authorization: Bearer token
-
-# Paramètres:
-# - hard=true: Suppression définitive (ADMIN uniquement)
-# - hard=false: Soft delete (anonymisation)
-
-# Soft Delete (défaut):
-# - Contenu remplacé par "[Message supprimé]"
-# - Message marqué comme archivé
-# - Pièces jointes conservées
-
-# Hard Delete (Admin uniquement):
-# - Suppression définitive du message
-# - Suppression des pièces jointes
-# - Suppression en cascade des réponses
-```
-
-#### **7. POST /messages/:id/attachments - Pièces jointes**
-
-```http
-POST /messages/msg-123/attachments
-Authorization: Bearer token
-Content-Type: application/json
-
+# Response: 201
 {
-  "fileId": "file-456"  // Fichier déjà uploadé via l'API Files
+  "message": "Conversation créée avec succès",
+  "conversationId": "conv-456",
+  "message": {
+    "id": "msg-789",
+    "conversationId": "conv-456",
+    "content": "Contenu du premier message",
+    "senderId": "user-123",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
 }
-
-# Contraintes:
-# - Seul l'expéditeur peut ajouter des pièces jointes
-# - Maximum 10 pièces jointes par message
-# - Le fichier doit appartenir à l'utilisateur
 ```
 
-### **Routes Admin Messagerie (`/admin/conversations`)**
-
-#### **1. GET /admin/conversations - Vue globale admin**
+#### **3. GET /messages/conversations - Liste des conversations**
 
 ```http
-GET /admin/conversations?page=1&limit=100&search=client&isRead=false&sortBy=user
-Authorization: Bearer admin-token
-
-# Paramètres:
-# - page, limit: Pagination (max 100)
-# - search: Recherche par nom utilisateur
-# - isRead: Filtrer lu/non lu
-# - sortBy: "user" (alphabétique) ou "date"
+GET /messages/conversations?page=1&limit=20
+Authorization: Bearer token
 
 # Response: 200
 {
   "conversations": [
     {
-      "id": "direct_user1_user2",
-      "type": "direct",
-      "participants": {
-        "client": {
-          "nom": "Dupont",
-          "prenom": "Jean"
-        }
-      },
-      "messageCount": 5,
-      "unreadCount": 2,
+      "conversationId": "conv-456",
       "lastMessage": {
         "content": "Dernier message...",
-        "createdAt": "2024-01-15T10:30:00Z",
-        "sender": "Jean Dupont"
-      }
+        "createdAt": "2024-01-15T10:30:00Z"
+      },
+      "unreadCount": 2,
+      "participants": [...]
     }
   ],
-  "total": 45,
-  "page": 1
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 15,
+    "totalPages": 1
+  }
 }
 ```
 
-#### **2. POST /admin/conversations/:id/messages - Message admin**
+#### **4. GET /messages/conversations/:id - Messages d'une conversation**
 
 ```http
-POST /admin/conversations/direct_user1_user2/messages
-Authorization: Bearer admin-token
+GET /messages/conversations/conv-456?page=1&limit=50
+Authorization: Bearer token
+
+# Response: 200
+{
+  "messages": [
+    {
+      "id": "msg-789",
+      "content": "Contenu du message",
+      "senderId": "user-123",
+      "sender": {
+        "prenom": "Jean",
+        "nom": "Dupont"
+      },
+      "createdAt": "2024-01-15T10:30:00Z",
+      "isRead": true
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 50,
+    "total": 5,
+    "totalPages": 1
+  }
+}
+```
+
+#### **5. POST /messages/conversations/:id - Ajouter un message**
+
+```http
+POST /messages/conversations/conv-456
+Authorization: Bearer token
 Content-Type: application/json
 
 {
-  "contenu": "Message de l'administrateur",
-  "isNote": false  // true pour note interne non visible
+  "content": "Nouveau message dans la conversation"
 }
 
-# Fonctionnalités backend:
-# - Parser intelligent des conversation IDs
-# - Identification automatique du destinataire
-# - Support des contextes: direct, projet, support
-# - Communication bidirectionnelle garantie
+# Response: 201
+{
+  "message": "Message ajouté avec succès",
+  "data": {
+    "id": "msg-790",
+    "conversationId": "conv-456",
+    "content": "Nouveau message dans la conversation",
+    "senderId": "user-123",
+    "createdAt": "2024-01-15T11:00:00Z"
+  }
+}
 ```
 
-#### **3. GET /admin/conversations/stats - Statistiques globales**
+### **Routes Admin Messagerie (`/admin/messages`)**
+
+#### **1. GET /admin/messages/unread-count - Comptage messages non lus**
 
 ```http
-GET /admin/conversations/stats
+GET /admin/messages/unread-count
 Authorization: Bearer admin-token
 
 # Response: 200
 {
-  "total": 156,
-  "unread": 23,
-  "totalMessages": 1247
+  "unreadCount": 23
 }
 ```
 
-#### **4. DELETE /admin/conversations/:id - Suppression RGPD**
+#### **2. GET /admin/messages - Vue globale admin**
 
 ```http
-DELETE /admin/conversations/direct_user1_user2
+GET /admin/messages?page=1&limit=100&search=visitor&isRead=false
 Authorization: Bearer admin-token
 
-# Suppression définitive de tous les messages
-# de la conversation en base de données
-```
-
-### **Architecture Backend Avancée**
-
-#### **Parser de Conversation IDs**
-
-```typescript
-const parseConversationId = (conversationId: string) => {
-  if (conversationId.startsWith("direct_")) {
-    return {
-      type: "direct",
-      userIds: conversationId.split("_").slice(1),
-    };
-  } else if (conversationId.startsWith("projet_")) {
-    return {
-      type: "projet",
-      commandeId: conversationId.replace("projet_", ""),
-    };
-  } else if (conversationId.startsWith("support_")) {
-    return {
-      type: "support",
-      supportRequestId: conversationId.replace("support_", ""),
-    };
-  }
-  return null;
-};
-```
-
-#### **Grouping automatique Messages → Conversations**
-
-```typescript
-const groupMessagesIntoConversations = (messages: Message[]) => {
-  const conversationsMap = new Map();
-
-  messages.forEach((message) => {
-    let conversationId: string;
-
-    if (message.commandeId) {
-      conversationId = `projet_${message.commandeId}`;
-    } else if (message.supportRequestId) {
-      conversationId = `support_${message.supportRequestId}`;
-    } else {
-      // Conversation directe
-      const userIds = [message.senderId, message.receiverId]
-        .filter(Boolean)
-        .sort();
-      conversationId = `direct_${userIds.join("_")}`;
+# Response: 200
+{
+  "messages": [
+    {
+      "id": "msg-789",
+      "conversationId": "conv-456",
+      "content": "Message d'un visiteur",
+      "visitorName": "Jean Dupont",
+      "visitorEmail": "jean@example.com",
+      "createdAt": "2024-01-15T10:30:00Z",
+      "isRead": false
     }
-
-    // Accumulation des messages par conversation
-    // Calcul automatique compteurs non-lus
-    // Détermination du dernier message
-  });
-
-  return Array.from(conversationsMap.values());
-};
-```
-
-#### **Mapping Types Frontend ↔ Backend**
-
-```typescript
-// Compatibilité avec les types frontend
-const mapFrontendTypeToPrisma = (frontendType: string): MessageType => {
-  switch (frontendType) {
-    case "TEXT":
-    case "FILE":
-    case "IMAGE":
-      return MessageType.USER_MESSAGE;
-    case "SYSTEM":
-      return MessageType.SYSTEM_MESSAGE;
-    case "ADMIN_NOTE":
-      return MessageType.ADMIN_MESSAGE;
-    default:
-      return MessageType.USER_MESSAGE;
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 100,
+    "total": 45,
+    "totalPages": 1
   }
-};
+}
 ```
+
+### **Sécurité et validation**
+
+- **Rate limiting** : 50 messages/heure par utilisateur
+- **Validation contenu** : Maximum 10,000 caractères
+- **Authentification** : JWT requis sauf pour `/messages/visitor`
+- **RGPD** : Soft delete par défaut, hard delete admin uniquement
 
 ## 🎯 **Webhook Stripe - Architecture Modulaire 2025** ✅ PRODUCTION READY
 
@@ -1008,23 +958,23 @@ stripe trigger payment_intent.payment_failed
 stripe logs tail
 ```
 
-## 📋 **Modules Admin - État 2025 (6/9 modules production-ready)**
+## 📋 **Modules Admin - État 2025 (8/9 modules production-ready)**
 
 ### 🎯 **Vue d'ensemble - Intégration Espace Admin**
 
-**✅ 6 modules terminés et opérationnels :**
+**✅ 8 modules terminés et opérationnels :**
 
 - **AdminUtilisateurs** : 7 endpoints + tests + sécurité RGPD ✅
 - **AdminCommandes** : 4 endpoints + filtres + statistiques ✅
-- **AdminFactures** : 7 endpoints + stats + PDF ⚡ NOUVEAU
-- **AdminFAQ** : 5 endpoints + filtres ⚡ NOUVEAU
-- **AdminTarifs** : 5 endpoints + filtres ⚡ NOUVEAU
-- **AdminMessagerie** : 4 endpoints + parser conversations ✅
+- **AdminFactures** : 7 endpoints + stats + PDF ✅
+- **AdminFAQ** : 5 endpoints + filtres ✅
+- **AdminTarifs** : 5 endpoints + filtres ✅
+- **AdminPages** : 4 endpoints + CMS pages statiques ✅
+- **AdminStats** : 3 endpoints + statistiques générales ✅
+- **AdminMessagerie** : 2 endpoints + comptage messages non lus ✅
 
-**⚠️ 3 modules restants à implémenter :**
+**⚠️ 1 module restant à implémenter :**
 
-- AdminDashboard (statistiques générales)
-- AdminPages (CMS pages statiques)
 - AdminStatistiques (analytics avancées)
 
 ### 📋 **Module AdminCommandes - Architecture Complète**
@@ -1177,17 +1127,21 @@ DELETE /admin/tarifs/:id → Suppression tarif
 GET /tarifs?actif=true → Tarifs publics pour calculateur
 ```
 
-### Routes admin principales (`/admin`) - **57+ ENDPOINTS DISPONIBLES**
+### Routes admin principales (`/admin`) - **60+ ENDPOINTS DISPONIBLES**
 
 ```http
-# Statistiques générales (pour AdminDashboard) ⚠️ À IMPLÉMENTER
+# Statistiques générales (pour AdminStats) - ✅ MODULE COMPLET OPÉRATIONNEL
 GET /admin/stats
 Authorization: Bearer admin_token
 # → KPIs: utilisateurs, commandes, revenus
 
+GET /admin/stats/overview
+Authorization: Bearer admin_token
+# → Statistiques détaillées avec métriques
+
 GET /admin/stats/advanced
 Authorization: Bearer admin_token
-# → Statistiques avancées avec métriques détaillées et évolution
+# → Statistiques avancées avec évolution temporelle
 
 # Gestion utilisateurs (pour AdminUtilisateurs) - ✅ MODULE COMPLET OPÉRATIONNEL
 GET /admin/users?page=1&limit=10&search=email&role=USER&isActive=true
@@ -1206,13 +1160,13 @@ DELETE /admin/users/:id
 Authorization: Bearer admin_token
 
 # Gestion commandes (pour AdminCommandes) - ✅ MODULE COMPLET OPÉRATIONNEL
-GET /admin/commandes?page=1&limit=10&search=jean&statut=EN_COURS&clientId=user-id&dateFrom=2025-01-01&dateTo=2025-01-31
+GET /admin/commandes?page=1&limit=10&search=jean&statut=EN_COURS&clientId=uuid&dateFrom=2025-01-01&dateTo=2025-01-31
 Authorization: Bearer admin_token
 # Réponse: { data: [], stats: { total, byStatut }, page, totalPages, filters }
 
 GET /admin/commandes/:id
 Authorization: Bearer admin_token
-# Détails complets d'une commande avec relations (user, files, messages, invoices)
+# Détails complets d'une commande avec relations (user, files, invoices)
 
 PUT /admin/commandes/:id
 Authorization: Bearer admin_token
@@ -1222,46 +1176,66 @@ DELETE /admin/commandes/:id
 Authorization: Bearer admin_token
 # Suppression définitive d'une commande avec validation
 
-# Gestion factures (pour AdminFactures)
-GET /admin/invoices?page=1&statut=paid
-POST /admin/invoice/:id/reminder
-DELETE /admin/invoice/:id
+# Gestion factures (pour AdminFactures) - ✅ MODULE COMPLET OPÉRATIONNEL
+GET /admin/factures/stats
+Authorization: Bearer admin_token
+GET /admin/factures?page=1&limit=10&search=client&statut=PAID
+Authorization: Bearer admin_token
+GET /admin/factures/:id
+Authorization: Bearer admin_token
+PUT /admin/factures/:id
+Authorization: Bearer admin_token
+DELETE /admin/factures/:id
+Authorization: Bearer admin_token
+POST /admin/factures/:id/reminder
+Authorization: Bearer admin_token
+GET /admin/factures/:id/pdf
+Authorization: Bearer admin_token
 
-# Gestion FAQ (pour AdminFAQ)
-GET /admin/faq
+# Gestion FAQ (pour AdminFAQ) - ✅ MODULE COMPLET OPÉRATIONNEL
+GET /admin/faq/stats
+Authorization: Bearer admin_token
+GET /admin/faq?page=1&limit=10&search=question&visible=true&categorie=GENERAL
+Authorization: Bearer admin_token
+GET /admin/faq/:id
+Authorization: Bearer admin_token
 POST /admin/faq
-PATCH /admin/faq/:id
+Authorization: Bearer admin_token
+PUT /admin/faq/:id
+Authorization: Bearer admin_token
 DELETE /admin/faq/:id
-PATCH /admin/faq/:id/reorder
+Authorization: Bearer admin_token
 
-# Gestion tarifs (pour AdminTarifs)
-GET /admin/tarifs
-POST /admin/tarif
-PATCH /admin/tarif/:id/activate
-DELETE /admin/tarif/:id
+# Gestion tarifs (pour AdminTarifs) - ✅ MODULE COMPLET OPÉRATIONNEL
+GET /admin/tarifs/stats/overview
+Authorization: Bearer admin_token
+GET /admin/tarifs?page=1&limit=10&search=nom&actif=true&typeService=CORRECTION
+Authorization: Bearer admin_token
+GET /admin/tarifs/:id
+Authorization: Bearer admin_token
+POST /admin/tarifs
+Authorization: Bearer admin_token
+PUT /admin/tarifs/:id
+Authorization: Bearer admin_token
+DELETE /admin/tarifs/:id
+Authorization: Bearer admin_token
 
-# Gestion pages (pour AdminPages)
-GET /admin/pages
-POST /admin/page
-PATCH /admin/page/:id/publish
-DELETE /admin/page/:id
-
-# Statistiques avancées (pour AdminStatistiques)
-GET /admin/analytics/revenue
-GET /admin/analytics/users
-GET /admin/analytics/projects
-
-# Logs système (pour AdminLogs)
-GET /admin/logs?type=AUTH&date=2025-01
+# Gestion pages (pour AdminPages) - ✅ MODULE COMPLET OPÉRATIONNEL
+GET /admin/pages?page=1&limit=10&search=titre&statut=PUBLIEE
+Authorization: Bearer admin_token
+GET /admin/pages/:id
+Authorization: Bearer admin_token
+POST /admin/pages
+Authorization: Bearer admin_token
+PATCH /admin/pages/:id
+Authorization: Bearer admin_token
+DELETE /admin/pages/:id
+Authorization: Bearer admin_token
 
 # Messagerie admin (pour AdminMessagerie) - ✅ MODULE COMPLET OPÉRATIONNEL
-GET /admin/conversations?page=1&limit=100&search=client&isRead=false&sortBy=user
+GET /admin/messages/unread-count
 Authorization: Bearer admin_token
-POST /admin/conversations/:id/messages
-Authorization: Bearer admin_token
-DELETE /admin/conversations/:id
-Authorization: Bearer admin_token
-GET /admin/conversations/stats
+GET /admin/messages?page=1&limit=100&search=visitor&isRead=false
 Authorization: Bearer admin_token
 ```
 
@@ -1710,15 +1684,16 @@ chore: maintenance
 
 ## 🎯 **Intégration Espace Admin - État Actuel 2025**
 
-### ✅ **Modules Opérationnels (6/9 modules terminés)**
+### ✅ **Modules Opérationnels (8/9 modules terminés)**
 
-L'espace admin frontend est maintenant **complet avec mock data**. **6 modules backend sont production-ready** et **3 modules restent à implémenter** :
+L'espace admin frontend est maintenant **complet avec mock data**. **8 modules backend sont production-ready** et **1 module reste à implémenter** :
 
-#### **1. AdminDashboard** - Tableau de Bord ⚠️ À IMPLÉMENTER
+#### **1. AdminStats** - Statistiques Générales ✅ **PRODUCTION READY**
 
 ```typescript
-GET /admin/stats
-→ { totalUsers, activeUsers, totalCommandes, revenue, monthlyGrowth }
+GET /admin/stats → { totalUsers, activeUsers, totalCommandes, revenue, monthlyGrowth }
+GET /admin/stats/overview → Statistiques détaillées avec métriques
+GET /admin/stats/advanced → Statistiques avancées avec évolution temporelle
 ```
 
 #### **2. AdminUtilisateurs** - Gestion Utilisateurs ✅ **PRODUCTION READY**
@@ -1743,7 +1718,7 @@ PUT /admin/commandes/:id → { "statut": "EN_COURS" | "TERMINE" | "ANNULEE" | "S
 DELETE /admin/commandes/:id → Suppression définitive avec validation
 ```
 
-#### **4. AdminFactures** - Interface Facturation ✅ **PRODUCTION READY (NOUVEAU)**
+#### **4. AdminFactures** - Interface Facturation ✅ **PRODUCTION READY**
 
 ```typescript
 GET /admin/factures/stats → { total, paid, unpaid, overdue, totalRevenue }
@@ -1755,9 +1730,10 @@ GET /admin/factures/:id/pdf → Téléchargement PDF sécurisé
 DELETE /admin/factures/:id → Suppression facture
 ```
 
-#### **5. AdminFAQ** - Base de Connaissance ✅ **PRODUCTION READY (NOUVEAU)**
+#### **5. AdminFAQ** - Base de Connaissance ✅ **PRODUCTION READY**
 
 ```typescript
+GET /admin/faq/stats → { total, visibles, categories }
 GET /admin/faq?page=1&limit=10&search=question&visible=true&categorie=GENERAL
 GET /admin/faq/:id → Détails d'une FAQ
 POST /admin/faq → { question, reponse, categorie, isActive, sortOrder }
@@ -1765,9 +1741,10 @@ PUT /admin/faq/:id → Mise à jour complète
 DELETE /admin/faq/:id → Suppression FAQ
 ```
 
-#### **6. AdminTarifs** - Configuration Prix ✅ **PRODUCTION READY (NOUVEAU)**
+#### **6. AdminTarifs** - Configuration Prix ✅ **PRODUCTION READY**
 
 ```typescript
+GET /admin/tarifs/stats/overview → { total, actifs, typesServices }
 GET /admin/tarifs?page=1&limit=10&search=nom&actif=true&typeService=CORRECTION
 GET /admin/tarifs/:id → Détails d'un tarif
 POST /admin/tarifs → { nom, description, prix, typeService, actif, ordre }
@@ -1775,39 +1752,31 @@ PUT /admin/tarifs/:id → Mise à jour complète
 DELETE /admin/tarifs/:id → Suppression tarif
 ```
 
-#### **7. AdminPages** - CMS Pages Statiques ⚠️ À IMPLÉMENTER
+#### **7. AdminPages** - CMS Pages Statiques ✅ **PRODUCTION READY**
 
 ```typescript
-GET /admin/pages?statut=PUBLIEE&search=titre
-POST /admin/page { titre, contenu, slug, description }
-PATCH /admin/page/:id/publish { statut: "PUBLIEE" }
-GET /admin/page/:id/preview
+GET /admin/pages?page=1&limit=10&search=titre&statut=PUBLIEE
+GET /admin/pages/:id → Détails d'une page
+POST /admin/pages → { titre, contenu, slug, description, type, statut }
+PATCH /admin/pages/:id → Mise à jour page
+DELETE /admin/pages/:id → Suppression page
 ```
 
-#### **8. AdminStatistiques** - Analytics Avancées ⚠️ À IMPLÉMENTER
+#### **8. AdminMessagerie** - Messagerie Admin ✅ **PRODUCTION READY**
+
+```typescript
+GET /admin/messages/unread-count → { unreadCount }
+GET /admin/messages?page=1&limit=100&search=visitor&isRead=false
+→ { messages: [], pagination } avec support visiteurs et utilisateurs
+```
+
+#### **9. AdminStatistiques** - Analytics Avancées ⚠️ À IMPLÉMENTER
 
 ```typescript
 GET /admin/analytics/revenue?period=month
 GET /admin/analytics/users/growth
 GET /admin/analytics/projects/completion
 GET /admin/analytics/top-clients?limit=10
-```
-
-#### **9. AdminLogs** - Audit et Sécurité ⚠️ À IMPLÉMENTER
-
-```typescript
-GET /admin/logs?type=AUTH&userId=uuid&date=2025-01
-GET /admin/logs/export?format=csv&period=week
-```
-
-#### **10. AdminMessagerie** - Messagerie Admin ✅ **PRODUCTION READY**
-
-```typescript
-GET /admin/conversations?page=1&limit=100&search=client&isRead=false&sortBy=user
-→ { conversations: [], total, page } avec parser conversation IDs intelligent
-POST /admin/conversations/:id/messages → { contenu, isNote }
-DELETE /admin/conversations/:id → Suppression RGPD définitive
-GET /admin/conversations/stats → { total, unread, totalMessages }
 ```
 
 ### 🎯 **Frontend Prêt pour Intégration**
@@ -1820,24 +1789,26 @@ GET /admin/conversations/stats → { total, unread, totalMessages }
 
 ### 📊 **Bilan d'Avancement Actuel**
 
-**✅ Terminé (67% - 6/9 modules)** :
+**✅ Terminé (89% - 8/9 modules)** :
 
+- **AdminStats** : 3 endpoints + statistiques générales
 - **AdminUtilisateurs** : 7 endpoints + tests + sécurité RGPD
 - **AdminCommandes** : 4 endpoints + filtres + statistiques
-- **AdminFactures**: 7 endpoints + stats + PDF (NOUVEAU)
-- **AdminFAQ**: 5 endpoints + filtres (NOUVEAU)
-- **AdminTarifs**: 5 endpoints + filtres (NOUVEAU)
-- **AdminMessagerie** : 4 endpoints + parser conversations
+- **AdminFactures**: 7 endpoints + stats + PDF
+- **AdminFAQ**: 5 endpoints + filtres
+- **AdminTarifs**: 5 endpoints + filtres
+- **AdminPages**: 4 endpoints + CMS pages statiques
+- **AdminMessagerie** : 2 endpoints + comptage messages non lus
 
-**⚠️ À implémenter (33% - 3/9 modules)** :
+**⚠️ À implémenter (11% - 1/9 modules)** :
 
-- AdminDashboard, AdminPages, AdminStatistiques, AdminLogs
+- AdminStatistiques (analytics avancées)
 
 ### 🔄 **Plan d'Intégration Restant**
 
-1. **Créer les contrôleurs** : `adminDashboardController.ts`, `adminFAQController.ts`, etc.
+1. **Créer le contrôleur** : `adminStatistiquesController.ts`
 2. **Ajouter les routes** : Extension du fichier `admin.ts` existant
-3. **Implémenter la logique métier** : CRUD avec validation et sécurité
+3. **Implémenter la logique métier** : Analytics avec validation et sécurité
 4. **Remplacer les mock services** frontend par vrais appels API
 5. **Tests d'intégration** : Validation du fonctionnement complet
 
@@ -1847,27 +1818,27 @@ GET /admin/conversations/stats → { total, unread, totalMessages }
 
 ### **📊 Métriques finales**
 
-- **✅ 57+ endpoints API** dont 25+ admin opérationnels
-- **✅ 6/9 modules admin** production-ready (83% complétude)
+- **✅ 60+ endpoints API** dont 30+ admin opérationnels
+- **✅ 8/9 modules admin** production-ready (89% complétude)
 - **✅ Tests 87% coverage** : 80+ unitaires, 5 suites intégration
 - **✅ 3300+ lignes de tests** validés en conditions réelles
 - **✅ Architecture Docker** optimisée avec CI/CD
 
 ### **🚀 Fonctionnalités clés déployées**
 
-- **Système de facturation automatique** avec PDF + S3 ⚡ NOUVEAU
-- **Interface admin messagerie** avec parser conversations ✅
-- **Modules FAQ et Tarifs** avec synchronisation temps réel ⚡ NOUVEAU
-- **Webhook Stripe** architecture modulaire + monitoring ⚡ NOUVEAU
+- **Système de facturation automatique** avec PDF + S3 ✅
+- **Interface admin messagerie** avec comptage messages non lus ✅
+- **Modules FAQ et Tarifs** avec synchronisation temps réel ✅
+- **Module Pages CMS** avec gestion contenu statique ✅
+- **Module Stats** avec statistiques générales ✅
+- **Webhook Stripe** architecture modulaire + monitoring ✅
 - **Sécurité RGPD** complète avec suppression en cascade ✅
 - **Anti-spam messagerie** avec rate limiting intelligent ✅
 
-### **⚠️ Développements restants (17%)**
+### **⚠️ Développements restants (11%)**
 
-**3 modules admin à finaliser :**
+**1 module admin à finaliser :**
 
-- AdminDashboard (statistiques générales)
-- AdminPages (CMS pages statiques)
 - AdminStatistiques (analytics avancées)
 
 ---

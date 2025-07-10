@@ -8,8 +8,8 @@ Architecture frontend complète et **production-ready** avec React 18, TypeScrip
 
 ```
 frontend/src/
-├── 🏗️ Components (70+ composants modulaires)
-│   ├── admin/           # 👨‍💼 Administration (8 composants) - REFACTORISÉ 2025
+├── 🏗️ Components (80+ composants modulaires)
+│   ├── admin/           # 👨‍💼 Administration (9 composants) - REFACTORISÉ 2025
 │   ├── billing/         # 💳 Facturation Stripe (7 composants)
 │   ├── common/          # 🎭 Composants génériques (5 composants)
 │   ├── forms/           # 📝 Formulaires (3 composants)
@@ -17,35 +17,43 @@ frontend/src/
 │   ├── layout/          # 🏛️ Structure (6 composants)
 │   ├── messages/        # 💬 Messagerie (3 composants)
 │   ├── modals/          # 🪟 Modales (8 composants)
-│   └── project/         # 📚 Projets (2 composants)
-├── 🎣 Hooks (8 hooks personnalisés + React Query)
-│   ├── useAdminUsers.ts      # Hook admin utilisateurs (233 lignes)
-│   ├── useAdminCommandes.ts  # Hook admin commandes (354 lignes)
-│   ├── useAdminFactures.ts   # Hook admin factures - NOUVEAU
-│   ├── useInvoices.ts        # Hook facturation client
-│   ├── useMessages.ts        # Hook messagerie (654 lignes)
+│   ├── project/         # 📚 Projets (2 composants)
+│   └── ui/              # 🎨 Composants UI réutilisables
+├── 🎣 Hooks (12 hooks personnalisés + React Query)
+│   ├── useAdminUsers.ts      # Hook admin utilisateurs (263 lignes)
+│   ├── useAdminCommandes.ts  # Hook admin commandes (359 lignes)
+│   ├── useAdminFactures.ts   # Hook admin factures (240 lignes)
+│   ├── useAdminPages.ts      # Hook admin pages (215 lignes)
 │   ├── useAdminMessages.ts   # Hook admin messagerie (321 lignes)
-│   ├── useDebouncedSearch.ts # Recherche optimisée
-│   └── useIntersectionObserver.ts # Pagination infinie
-├── 📄 Pages (12 pages USER + 10 pages ADMIN)
+│   ├── useMessages.ts        # Hook messagerie (694 lignes)
+│   ├── useInvoices.ts        # Hook facturation client (58 lignes)
+│   ├── useTarifInvalidation.ts # Hook synchronisation tarifs (78 lignes)
+│   ├── useInvalidateMessages.ts # Hook invalidation messages (85 lignes)
+│   ├── useDebouncedSearch.ts # Recherche optimisée (83 lignes)
+│   ├── useIntersectionObserver.ts # Pagination infinie (44 lignes)
+│   └── __tests__/           # Tests des hooks
+├── 📄 Pages (12 pages USER + 9 pages ADMIN)
 │   ├── LandingPage.tsx       # Marketing conversion-optimisée
 │   ├── [Pages Application]   # Dashboard, projets, messagerie, facturation
-│   └── admin/               # Interface admin complète (10 pages)
+│   └── admin/               # Interface admin complète (9 pages)
 ├── 🎨 Styles & Design System
 │   ├── global.css           # Variables CSS + animations (626 lignes)
 │   ├── tailwind.config.js   # Configuration Tailwind
 │   └── Design tokens        # Couleurs, ombres, typographie
 └── 🔧 Utils & Types
     ├── api.ts              # Services API principales
-    ├── adminAPI.ts         # Services admin avec backend intégré
+    ├── adminAPI.ts         # Services admin avec backend intégré (1344 lignes)
+    ├── mockData.ts         # Données de test (1002 lignes)
+    ├── auth.ts             # Authentification (102 lignes)
+    ├── toast.ts            # Notifications (209 lignes)
     └── types/shared.ts     # Types TypeScript complets
 ```
 
 ### 📈 **Métriques Production**
 
-- **🏗️ Composants** : 70+ composants React modulaires et réutilisables
-- **📄 Pages** : 12 pages USER + 10 pages ADMIN complètes
-- **🎣 Hooks** : 8 hooks personnalisés + React Query (2000+ lignes)
+- **🏗️ Composants** : 80+ composants React modulaires et réutilisables
+- **📄 Pages** : 12 pages USER + 9 pages ADMIN complètes
+- **🎣 Hooks** : 12 hooks personnalisés + React Query (2500+ lignes)
 - **🎨 Styles** : Tailwind + CSS custom (626 lignes) + Framer Motion
 - **⚡ Performance** : < 2s chargement, < 100ms interactions
 - **🔐 Sécurité** : JWT + AuthContext + RBAC complet
@@ -244,7 +252,7 @@ const BillingPage = () => {
 
 ---
 
-## 👨‍💼 Espace Administration - 15 Pages ADMIN Complètes
+## 👨‍💼 Espace Administration - 9 Pages ADMIN Complètes
 
 ### 🚀 **REFACTORISATION COMPLÈTE 2025**
 
@@ -281,7 +289,7 @@ const AdminLayout = ({ activeSection, children }: AdminLayoutProps) => {
 
 ### 🔧 **Module AdminUtilisateurs - REFACTORISÉ**
 
-#### **🎣 Hook useAdminUsers.ts (233 lignes)**
+#### **🎣 Hook useAdminUsers.ts (263 lignes)**
 
 ```typescript
 // Hook centralisé pour gestion utilisateurs
@@ -335,7 +343,7 @@ export const useAdminUsers = (options: UseAdminUsersOptions = {}) => {
 
 #### **🏗️ Composants Refactorisés**
 
-**UserTable.tsx** - Table Accessible (400 lignes)
+**UserTable.tsx** - Table Accessible (541 lignes)
 
 ```typescript
 // Composant table réutilisable avec accessibilité WCAG 2.1 AA
@@ -367,7 +375,7 @@ const UserTable = ({ users, loading, onUserAction }: UserTableProps) => {
 };
 ```
 
-**SearchAndFilters.tsx** - Interface Recherche Avancée (300 lignes)
+**SearchAndFilters.tsx** - Interface Recherche Avancée (370 lignes)
 
 ```typescript
 // Composant de recherche avec UX optimisée
@@ -409,7 +417,7 @@ const SearchAndFilters = ({
 
 ### 📋 **Module AdminCommandes - NOUVEAU COMPLET**
 
-#### **🎣 Hook useAdminCommandes.ts (354 lignes) - NOUVEAU**
+#### **🎣 Hook useAdminCommandes.ts (359 lignes)**
 
 ```typescript
 // Hook centralisé pour gestion commandes avec backend opérationnel
@@ -525,7 +533,7 @@ const CommandeStatusSelect = ({
 - ✅ **Mobile responsive** : Table desktop + cartes mobile optimisées
 - ✅ **États de chargement** : Spinners individuels par tarif avec feedback visuel
 
-#### **AdminTarifs.tsx - Interface Complète**
+#### **AdminTarifs.tsx - Interface Complète (1233 lignes)**
 
 ```typescript
 const AdminTarifs: React.FC = () => {
@@ -630,7 +638,7 @@ const AdminTarifs: React.FC = () => {
 - ✅ **Prévisualisation** : Modal de prévisualisation avec rendu HTML
 - ✅ **Statistiques** : Compteurs par statut avec dashboard visuel
 
-#### **AdminPages.tsx - Interface CMS**
+#### **AdminPages.tsx - Interface CMS (180 lignes)**
 
 ```typescript
 const AdminPages: React.FC = () => {
@@ -727,7 +735,7 @@ const AdminPages: React.FC = () => {
 
 ### 📋 **Module AdminFactures - NOUVEAU**
 
-#### **🎣 Hook useAdminFactures.ts (54 lignes)**
+#### **🎣 Hook useAdminFactures.ts (240 lignes)**
 
 ```typescript
 // Hook pour la gestion des factures côté admin
@@ -782,7 +790,7 @@ const queryClient = new QueryClient({
 
 ### 💬 **Système Messagerie - 1000+ lignes React Query**
 
-#### **useMessages.ts (654 lignes) - Messagerie Utilisateur**
+#### **useMessages.ts (694 lignes) - Messagerie Utilisateur**
 
 ```typescript
 // Hook messagerie utilisateur avec pagination infinie
@@ -902,7 +910,7 @@ export const useDownloadInvoice = () => {
 };
 ```
 
-#### **🆕 useAdminFactures.ts (231 lignes) - NOUVEAU 2025**
+#### **🆕 useAdminFactures.ts (240 lignes) - NOUVEAU 2025**
 
 ```typescript
 // Hook pour la gestion des factures côté admin
@@ -964,7 +972,7 @@ export function useSendReminder() {
 
 ### 🆕 **Hooks Tarifs Dynamiques - NOUVEAU 2025**
 
-#### **useTarifInvalidation.ts (77 lignes) - Synchronisation Admin/Landing**
+#### **useTarifInvalidation.ts (78 lignes) - Synchronisation Admin/Landing**
 
 ```typescript
 /**
@@ -1024,6 +1032,54 @@ export function useTarifInvalidation() {
     prefetchPublicTarifs,
   };
 }
+```
+
+#### **useAdminPages.ts (215 lignes) - Gestion Pages CMS**
+
+```typescript
+// Hook pour la gestion des pages côté admin
+export const useAdminPages = (params: AdminPagesParams = {}) => {
+  const { data, isLoading, error } = useQuery(
+    ["admin-pages", params],
+    () => adminAPI.getPages(params),
+    {
+      staleTime: 5 * 60 * 1000,
+      keepPreviousData: true,
+    }
+  );
+
+  return {
+    pages: data?.data || [],
+    pagination: data?.pagination,
+    isLoading,
+    error,
+  };
+};
+```
+
+#### **useInvalidateMessages.ts (85 lignes) - Invalidation Messages**
+
+```typescript
+// Hook pour invalider le cache des messages
+export const useInvalidateMessages = () => {
+  const queryClient = useQueryClient();
+
+  const invalidateMessages = useCallback(async () => {
+    try {
+      await queryClient.invalidateQueries({
+        queryKey: ["messages"],
+        exact: false,
+      });
+      console.log("✅ Cache des messages invalidé avec succès");
+    } catch (error) {
+      console.error("❌ Erreur lors de l'invalidation des messages:", error);
+    }
+  }, [queryClient]);
+
+  return {
+    invalidateMessages,
+  };
+};
 ```
 
 ---
@@ -1336,7 +1392,7 @@ export interface PaginatedResponse<T> {
 
 #### **Module AdminCommandes Opérationnel**
 
-- ✅ Hook `useAdminCommandes.ts` (354 lignes) avec backend
+- ✅ Hook `useAdminCommandes.ts` (359 lignes) avec backend
 - ✅ Composant `CommandeStatusSelect.tsx` avec validation enum
 - ✅ API `/admin/commandes` complète et testée
 - ✅ Statistiques temps réel par statut
@@ -1344,22 +1400,22 @@ export interface PaginatedResponse<T> {
 
 #### **Module AdminUtilisateurs Refactorisé**
 
-- ✅ Composants modulaires : `UserTable`, `SearchAndFilters`, `ConfirmationModals`
+- ✅ Composants modulaires : `UserTable` (541 lignes), `SearchAndFilters` (370 lignes), `ConfirmationModals`
 - ✅ Accessibilité WCAG 2.1 AA complète
-- ✅ Hook `useAdminUsers.ts` optimisé
+- ✅ Hook `useAdminUsers.ts` optimisé (263 lignes)
 - ✅ Actions CRUD avec optimistic updates
 
 #### **🆕 Module AdminTarifs - Synchronisation Temps Réel**
 
-- ✅ Hook `useTarifInvalidation.ts` pour synchronisation admin/landing
-- ✅ Interface CRUD complète avec modal gradient moderne
+- ✅ Hook `useTarifInvalidation.ts` (78 lignes) pour synchronisation admin/landing
+- ✅ Interface CRUD complète avec modal gradient moderne (1233 lignes)
 - ✅ Synchronisation < 2 secondes après modification admin
 - ✅ États de chargement individuels par tarif
 - ✅ Mobile responsive avec cartes adaptatives
 
 #### **🆕 Module AdminPages - CMS Complet**
 
-- ✅ CRUD pages statiques avec éditeur HTML riche
+- ✅ CRUD pages statiques avec éditeur HTML riche (180 lignes)
 - ✅ Génération automatique de slug normalisé
 - ✅ Gestion des statuts : Brouillon → Publié → Archivé
 - ✅ Prévisualisation HTML dans modal
@@ -1367,11 +1423,11 @@ export interface PaginatedResponse<T> {
 
 #### **🆕 Module AdminFactures - Gestion Financière**
 
-- ✅ Hook `useAdminFactures.ts` (231 lignes) avec React Query
+- ✅ Hook `useAdminFactures.ts` (240 lignes) avec React Query
 - ✅ Mutations pour download PDF, rappels, suppressions
 - ✅ Statistiques financières temps réel
 - ✅ Filtres avancés par statut, dates, montants
-- ✅ Interface responsive avec actions en masse
+- ✅ Interface responsive avec actions en masse (1177 lignes)
 
 #### **Architecture React Query Avancée**
 
@@ -1387,12 +1443,12 @@ export interface PaginatedResponse<T> {
 | --------------------- | ---------- | ------------------ | ----------------------- |
 | **Landing Page**      | 2400+      | 14                 | ✅ Production           |
 | **Dashboard USER**    | 1800+      | 12 pages           | ✅ Production           |
-| **Administration**    | 3200+      | 15 pages           | ✅ Backend intégré      |
+| **Administration**    | 3200+      | 9 pages            | ✅ Backend intégré      |
 | **React Query Hooks** | 2500+      | 12 hooks           | ✅ Production           |
 | **Design System**     | 626        | CSS/Styles         | ✅ Production           |
-| **Services API**      | 1200+      | API calls          | ✅ Backend intégré      |
+| **Services API**      | 1344+      | API calls          | ✅ Backend intégré      |
 | **Types TypeScript**  | 600+       | Interfaces         | ✅ Production           |
-| **TOTAL**             | **12326+** | **85+ composants** | **✅ PRODUCTION READY** |
+| **TOTAL**             | **12326+** | **80+ composants** | **✅ PRODUCTION READY** |
 
 ### 🎯 **Prêt pour Production**
 

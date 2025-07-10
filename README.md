@@ -49,9 +49,7 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 
 ### 👨‍💼 **Administration et Production**
 
-- **[Guide Admin Complet](docs/ADMIN_COMPLETE_GUIDE.md)** : Vue d'ensemble espace admin, sécurité et mode démo
-- **[Guide Admin Pages API](docs/ADMIN_PAGES_API.md)** : API complète pour gestion des pages statiques
-- **[Guide Admin Pages Hooks](docs/ADMIN_PAGES_HOOKS_GUIDE.md)** : Hooks React Query spécialisés pour l'administration
+- **[Guide Admin Unifié](docs/ADMIN_GUIDE_UNIFIED.md)** : Vue d'ensemble espace admin, sécurité et mode démo
 - **[Guide Facturation Stripe](docs/BILLING_AND_INVOICES.md)** : Intégration paiements, webhooks et gestion des factures
 - **[Guide Webhooks](docs/WEBHOOK_IMPLEMENTATION.md)** : Implémentation Stripe et gestion des événements
 
@@ -65,9 +63,10 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 ### 📊 **Métriques et Validation**
 
 - Tests Docker validés avec résultats de production
-- Architecture backend complète avec 40+ endpoints
+- Architecture backend complète avec 12 contrôleurs + 40+ endpoints
 - Système de messagerie React Query (1000+ lignes de hooks optimisés)
 - Module Admin complet production-ready avec 9 pages fonctionnelles
+- Système de tarifs dynamiques avec synchronisation temps réel
 
 ---
 
@@ -96,23 +95,23 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 
 ### 👨‍💼 **Espace Administrateur Complet (9 Pages)**
 
-- **AdminDashboard** : Vue d'ensemble avec KPIs et statistiques temps réel
-- **AdminUtilisateurs** : **✅ REFACTORISÉ COMPLET** - Architecture modulaire avec hooks personnalisés et composants réutilisables
-  - **useAdminUsers** : Hook centralisé pour logique API et gestion d'états
-  - **useDebouncedSearch** : Hook de recherche optimisée avec debounce
-  - **UserTable** : Composant table générique avec accessibilité WCAG complète
-  - **SearchAndFilters** : Composants de recherche et filtres avec états visuels
+- **AdminDashboard** : Vue d'ensemble avec KPIs et statistiques temps réel (118 lignes)
+- **AdminUtilisateurs** : **✅ REFACTORISÉ COMPLET** - Architecture modulaire avec hooks personnalisés et composants réutilisables (625 lignes)
+  - **useAdminUsers** : Hook centralisé pour logique API et gestion d'états (263 lignes)
+  - **useDebouncedSearch** : Hook de recherche optimisée avec debounce (83 lignes)
+  - **UserTable** : Composant table générique avec accessibilité WCAG complète (541 lignes)
+  - **SearchAndFilters** : Composants de recherche et filtres avec états visuels (370 lignes)
   - **ConfirmationModals** : Modales RGPD avec conséquences détaillées
-- **AdminCommandes** : **✅ REFACTORISÉ COMPLET** - Suivi projets avec changement de statuts et modale de détails moderne
+- **AdminCommandes** : **✅ REFACTORISÉ COMPLET** - Suivi projets avec changement de statuts et modale de détails moderne (964 lignes)
   - **CommandeDetailed** : Type étendu avec toutes les données (montant, priorité, fichiers, statistiques)
   - **Modale moderne XL** : Design gradient avec sections visuellement distinctes et actions rapides
   - **Backend enrichi** : Service `getCommandeById()` avec toutes les relations Prisma
-- **AdminFactures** : Interface facturation avec téléchargement PDF et actions
-- **AdminMessagerie** : Interface messagerie avancée avec hooks React Query spécialisés
-- **AdminFAQ** : Gestion base de connaissance avec réorganisation
-- **AdminTarifs** : Configuration prix et services avec calculs automatiques
-- **AdminPages** : CMS pour pages statiques avec preview et SEO
-- **AdminStatistiques** : Analytics avancées avec graphiques mockés
+- **AdminFactures** : Interface facturation avec téléchargement PDF et actions (1177 lignes)
+- **AdminMessagerie** : Interface messagerie avancée avec hooks React Query spécialisés (215 lignes)
+- **AdminFAQ** : Gestion base de connaissance avec réorganisation (1130 lignes)
+- **AdminTarifs** : Configuration prix et services avec calculs automatiques (1233 lignes)
+- **AdminPages** : CMS pour pages statiques avec preview et SEO (180 lignes)
+- **AdminStatistiques** : Analytics avancées avec graphiques mockés (394 lignes)
 - **Design moderne** : Sidebar sombre, animations fluides, responsive
 - **Module Admin Users** : Architecture backend complète (AdminUserService, AdminUserController)
 - **Tests validés** : Tests Docker complets avec résultats de production
@@ -157,7 +156,7 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **UX optimisée** : États de chargement, messages d'erreur, boutons retry
 - **Performance** : Cache partagé, déduplication requêtes, background refresh
 
-### 📊 **API Backend Robuste (40+ Endpoints)**
+### 📊 **API Backend Robuste (12 Contrôleurs + 40+ Endpoints)**
 
 - **Routes d'authentification** : /auth/register, /auth/login, /auth/me
 - **Routes admin utilisateurs** : **7 endpoints production** `/admin/users/*` avec CRUD complet et suppression RGPD
@@ -166,11 +165,15 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **Routes admin FAQ** : CRUD complet pour base de connaissance
 - **Routes admin tarifs** : Configuration dynamique des prix et services
 - **Routes admin pages** : CMS pour pages statiques avec SEO
+- **Routes admin statistiques** : Analytics et métriques avancées
 - **Routes client commandes** : POST /commandes, GET /commandes
 - **Routes de facturation** : GET /invoices, GET /invoices/:id, GET /invoices/:id/download
 - **Routes de paiement Stripe** : POST /payments/create-checkout-session, GET /payments/status, POST /payments/webhook
 - **Routes messagerie** : API complète avec threading et support requests
-- **Architecture backend** : Services avec méthodes statiques optimisées, Contrôleurs avec validation stricte
+- **Routes FAQ publiques** : GET /faq pour base de connaissance
+- **Routes pages statiques** : GET /pages/:slug pour CMS
+- **Routes tarifs publics** : GET /tarifs pour landing page
+- **Architecture backend** : 12 contrôleurs spécialisés avec services métier optimisés
 - **Sécurité production** : JWT Admin obligatoire, validation Zod, hashage bcrypt 12 rounds, protection dernier admin
 - **Middleware de rôles** avec RequireAdmin
 - **Gestion d'erreurs** centralisée avec logs
@@ -222,13 +225,14 @@ Staka-livres/
 │   │   ├── routes/         # Routes Express (11 fichiers)
 │   │   │   ├── auth.ts     # Routes authentification
 │   │   │   ├── admin.ts    # Routes administration générale
-│   │   │   ├── admin/      # Routes admin spécialisées (6 fichiers)
+│   │   │   ├── admin/      # Routes admin spécialisées (7 fichiers)
 │   │   │   │   ├── users.ts       # Routes admin utilisateurs
 │   │   │   │   ├── commandes.ts   # Routes admin commandes
 │   │   │   │   ├── factures.ts    # Routes admin factures
 │   │   │   │   ├── faq.ts         # Routes admin FAQ
 │   │   │   │   ├── tarifs.ts      # Routes admin tarifs
-│   │   │   │   └── pages.ts       # Routes admin pages
+│   │   │   │   ├── pages.ts       # Routes admin pages
+│   │   │   │   └── stats.ts       # Routes admin statistiques
 │   │   │   ├── commandes.ts # Routes commandes client
 │   │   │   ├── invoice.ts  # Routes facturation
 │   │   │   ├── payments.ts # Routes paiements Stripe
@@ -266,15 +270,16 @@ Staka-livres/
 │   │   ├── app.tsx         # App React principale
 │   │   ├── main.tsx        # Point d'entrée avec QueryClientProvider
 │   │   ├── components/     # Composants React
-│   │   │   ├── admin/      # Composants administration (6 composants refactorisés)
+│   │   │   ├── admin/      # Composants administration (9 composants refactorisés)
 │   │   │   │   ├── AdminLayout.tsx    # Layout admin moderne
 │   │   │   │   ├── DemoModeProvider.tsx    # Mode démo (453 lignes)
 │   │   │   │   ├── RequireAdmin.tsx        # Sécurité multi-niveaux
 │   │   │   │   ├── StatCard.tsx       # Cartes statistiques
 │   │   │   │   ├── CommandeStatusSelect.tsx # Sélecteur statut
-│   │   │   │   ├── UserTable.tsx      # Table générique avec accessibilité WCAG (~400 lignes)
-│   │   │   │   ├── SearchAndFilters.tsx   # Interface recherche et filtres (~300 lignes)
-│   │   │   │   └── ConfirmationModals.tsx # Modales RGPD avec conséquences détaillées
+│   │   │   │   ├── UserTable.tsx      # Table générique avec accessibilité WCAG (541 lignes)
+│   │   │   │   ├── SearchAndFilters.tsx   # Interface recherche et filtres (370 lignes)
+│   │   │   │   ├── ConfirmationModals.tsx # Modales RGPD avec conséquences détaillées
+│   │   │   │   └── CommandeTable.tsx      # Table commandes avec statuts
 │   │   │   ├── billing/    # Composants facturation React Query
 │   │   │   │   ├── CurrentInvoiceCard.tsx     # Facture courante
 │   │   │   │   ├── InvoiceHistoryCard.tsx     # Historique factures
@@ -314,23 +319,28 @@ Staka-livres/
 │   │   │   ├── useInvoices.ts         # Hooks facturation (existant)
 │   │   │   ├── useMessages.ts         # Messagerie client (654 lignes)
 │   │   │   ├── useAdminMessages.ts    # Messagerie admin (321 lignes)
-│   │   │   ├── useAdminUsers.ts       # Gestion centralisée utilisateurs admin (256 lignes)
-│   │   │   ├── useAdminCommandes.ts   # Gestion commandes admin (355 lignes)
-│   │   │   ├── useAdminFactures.ts    # Gestion factures admin (232 lignes)
+│   │   │   ├── useAdminUsers.ts       # Gestion centralisée utilisateurs admin (263 lignes)
+│   │   │   ├── useAdminCommandes.ts   # Gestion commandes admin (359 lignes)
+│   │   │   ├── useAdminFactures.ts    # Gestion factures admin (240 lignes)
 │   │   │   ├── useAdminPages.ts       # Gestion pages admin (215 lignes)
+│   │   │   ├── useAdminMessages.ts    # Gestion messagerie admin (321 lignes)
+│   │   │   ├── useMessages.ts         # Messagerie client (694 lignes)
+│   │   │   ├── useInvoices.ts         # Facturation client (58 lignes)
+│   │   │   ├── useTarifInvalidation.ts # Invalidation tarifs (78 lignes)
+│   │   │   ├── useInvalidateMessages.ts # Invalidation messages (85 lignes)
 │   │   │   ├── useDebouncedSearch.ts  # Hook de recherche optimisée avec debounce (83 lignes)
-│   │   │   ├── useIntersectionObserver.ts # Pagination infinie (44 lignes)
-│   │   │   └── useTarifInvalidation.ts    # Invalidation tarifs (78 lignes)
+│   │   │   └── useIntersectionObserver.ts # Pagination infinie (44 lignes)
 │   │   ├── pages/          # Pages React
 │   │   │   ├── admin/      # Pages administration (9 pages complètes)
-│   │   │   │   ├── AdminDashboard.tsx    # Tableau de bord avec KPIs (280 lignes)
+│   │   │   │   ├── AdminDashboard.tsx    # Tableau de bord avec KPIs (118 lignes)
 │   │   │   │   ├── AdminUtilisateurs.tsx # Gestion CRUD utilisateurs (625 lignes)
 │   │   │   │   ├── AdminCommandes.tsx    # Gestion commandes avec statuts (964 lignes)
 │   │   │   │   ├── AdminFactures.tsx     # Interface facturation avancée (1177 lignes)
 │   │   │   │   ├── AdminFAQ.tsx          # Gestion FAQ et base connaissance (1130 lignes)
-│   │   │   │   ├── AdminTarifs.tsx       # Configuration prix et services (1229 lignes)
+│   │   │   │   ├── AdminTarifs.tsx       # Configuration prix et services (1233 lignes)
 │   │   │   │   ├── AdminPages.tsx        # CMS pages statiques avec SEO (180 lignes)
 │   │   │   │   ├── AdminStatistiques.tsx # Analytics et métriques avancées (394 lignes)
+│   │   │   │   └── AdminMessagerie.tsx   # Interface messagerie admin (215 lignes)
 │   │   │   ├── BillingPage.tsx       # Page facturation React Query
 │   │   │   ├── LoginPage.tsx         # Page connexion
 │   │   │   ├── SignupPage.tsx        # Page inscription
@@ -438,8 +448,8 @@ Staka-livres/
 
 **🎯 Architecture Backend Complète (12 Contrôleurs + 40+ Endpoints) :**
 
-- ✅ **12 contrôleurs spécialisés** : authController, adminController, adminUserController, adminCommandeController, adminFactureController, adminPageController, faqController, commandeClientController, commandeController, messagesController, paymentController
-- ✅ **40+ endpoints REST** : Authentification, administration complète, commandes, factures, messagerie, paiements, FAQ, pages, tarifs
+- ✅ **12 contrôleurs spécialisés** : authController, adminController, adminUserController, adminCommandeController, adminFactureController, adminPageController, faqController, commandeClientController, commandeController, messagesController, paymentController, pageController
+- ✅ **40+ endpoints REST** : Authentification, administration complète, commandes, factures, messagerie, paiements, FAQ, pages, tarifs, statistiques
 - ✅ **Services métier** : adminCommandeService, adminUserService, stripeService, invoiceService, pageService
 - ✅ **Middleware de sécurité** : JWT, rôles, validation Zod
 - ✅ **Tests complets** : Unitaires et intégration avec Jest
@@ -447,19 +457,20 @@ Staka-livres/
 
 **🎯 Espace Admin Complet Finalisé (9 Pages Production-Ready) :**
 
-- ✅ **AdminDashboard** : Vue d'ensemble avec KPIs et statistiques temps réel (280 lignes)
+- ✅ **AdminDashboard** : Vue d'ensemble avec KPIs et statistiques temps réel (118 lignes)
 - ✅ **AdminUtilisateurs** : Gestion CRUD utilisateurs avec architecture modulaire (625 lignes)
 - ✅ **AdminCommandes** : Suivi projets avec statuts et modale de détails moderne (964 lignes)
 - ✅ **AdminFactures** : Interface facturation avancée avec PDF (1177 lignes)
 - ✅ **AdminFAQ** : Gestion base de connaissance avec réorganisation (1130 lignes)
-- ✅ **AdminTarifs** : Configuration prix et services avec calculs automatiques (1229 lignes)
+- ✅ **AdminTarifs** : Configuration prix et services avec calculs automatiques (1233 lignes)
 - ✅ **AdminPages** : CMS pour pages statiques avec SEO (180 lignes)
 - ✅ **AdminStatistiques** : Analytics et métriques avancées (394 lignes)
-- ✅ **Composants réutilisables** : AdminLayout, DemoModeProvider, RequireAdmin, StatCard, UserTable, SearchAndFilters, ConfirmationModals
+- ✅ **AdminMessagerie** : Interface messagerie admin avec hooks React Query (215 lignes)
+- ✅ **Composants réutilisables** : AdminLayout, DemoModeProvider, RequireAdmin, StatCard, UserTable, SearchAndFilters, ConfirmationModals, CommandeTable
 
 **🎯 Système de Messagerie Avancé (1000+ Lignes de Hooks) :**
 
-- ✅ **useMessages.ts** : Hook principal 654 lignes avec 15+ hooks spécialisés
+- ✅ **useMessages.ts** : Hook principal 694 lignes avec 15+ hooks spécialisés
 - ✅ **useAdminMessages.ts** : Hook admin 321 lignes avec 12+ hooks modération
 - ✅ **MessagesPage.tsx** : Interface client avec optimistic updates et cache intelligent
 - ✅ **AdminMessagerie.tsx** : Interface admin avec filtres, recherche, actions masse
@@ -472,7 +483,7 @@ Staka-livres/
 - ✅ **PricingCalculator refactorisé** : Génération dynamique des cartes tarifs depuis API (492 lignes)
 - ✅ **Packs refactorisé** : Construction intelligente des offres depuis tarifs actifs avec fallbacks (389 lignes)
 - ✅ **Synchronisation temps réel** : Admin → Landing Page sans rechargement via invalidation cache
-- ✅ **useTarifInvalidation()** : Hook spécialisé pour synchronisation admin avec méthodes avancées
+- ✅ **useTarifInvalidation()** : Hook spécialisé pour synchronisation admin avec méthodes avancées (78 lignes)
 - ✅ **Tests complets** : 10 tests Vitest + 5 tests E2E Cypress validés
 - ✅ **Architecture production** : `queryKey: ["tarifs", "public"]` avec cache partagé et déduplication
 
