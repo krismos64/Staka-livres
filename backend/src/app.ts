@@ -9,6 +9,7 @@ import commandesRoutes from "./routes/commandes";
 import faqRoutes from "./routes/faq";
 import invoiceRoutes from "./routes/invoice";
 import messagesRoutes from "./routes/messages";
+import notificationsRoutes from "./routes/notifications";
 import pagesRoutes from "./routes/pages";
 import paymentsRoutes from "./routes/payments";
 import webhookRoutes from "./routes/payments/webhook";
@@ -65,6 +66,9 @@ app.use("/commandes", commandesRoutes);
 
 // Routes messages (authentifiées)
 app.use("/messages", messagesRoutes);
+
+// Routes notifications (authentifiées)
+app.use("/notifications", notificationsRoutes);
 
 // Routes paiements (sans webhook qui est déjà géré ci-dessus)
 app.use("/payments", paymentsRoutes);

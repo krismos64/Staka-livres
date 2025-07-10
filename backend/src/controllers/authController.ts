@@ -2,6 +2,7 @@ import { PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { Request, Response } from "express";
 import { signToken } from "../utils/token";
+import { notifyAdminNewRegistration } from "./notificationsController";
 
 const prisma = new PrismaClient();
 
@@ -89,6 +90,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       email: user.email,
       role: user.role,
     });
+
+    // Notifier les admins de la nouvelle inscription
+    try {
+      await notifyAdminNewRegistration(`${user.prenom} ${user.nom}`, user.email);
+    } catch (notificationError) {
+      console.error("Erreur lors de la création de la notification:", notificationError);
+    }
 
     res.status(201).json({
       message: "Utilisateur créé avec succès",

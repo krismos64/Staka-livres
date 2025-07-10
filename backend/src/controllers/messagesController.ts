@@ -1,6 +1,7 @@
 // Le code fourni dans le message précédent.
 import { MessageStatut, MessageType, PrismaClient, Role } from "@prisma/client";
 import { Request, Response } from "express";
+import { notifyAdminNewMessage, notifyNewMessage } from "./notificationsController";
 
 const prisma = new PrismaClient();
 
@@ -46,6 +47,13 @@ export const createVisitorMessage = async (
         statut: MessageStatut.ENVOYE,
       },
     });
+
+    // Notifier les admins du nouveau message visiteur
+    try {
+      await notifyAdminNewMessage(name || "Visiteur", content, true);
+    } catch (notificationError) {
+      console.error("Erreur lors de la création de la notification:", notificationError);
+    }
 
     res.status(201).json({
       message: "Message envoyé avec succès. Nous vous répondrons par email.",
@@ -544,6 +552,30 @@ export const replyToThread = async (
         receiver: true,
       },
     });
+
+    // Créer une notification pour le destinataire
+    try {
+      if (senderRole === Role.ADMIN && receiverId) {
+        // Admin répond à un client
+        const sender = await prisma.user.findUnique({
+          where: { id: senderId },
+          select: { prenom: true, nom: true },
+        });
+        const senderName = sender ? `${sender.prenom} ${sender.nom}` : "Équipe Support";
+        await notifyNewMessage(receiverId, senderName, content);
+      } else if (senderRole !== Role.ADMIN && receiverId) {
+        // Client répond à un admin
+        const sender = await prisma.user.findUnique({
+          where: { id: senderId },
+          select: { prenom: true, nom: true },
+        });
+        const senderName = sender ? `${sender.prenom} ${sender.nom}` : "Client";
+        await notifyAdminNewMessage(senderName, content, false);
+      }
+    } catch (notificationError) {
+      console.error("Erreur lors de la création de la notification:", notificationError);
+      // Ne pas faire échouer la création du message si la notification échoue
+    }
 
     res.status(201).json(newMessage);
   } catch (error) {

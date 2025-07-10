@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import express from "express";
+import { notifyAdminNewPayment, notifyPaymentSuccess } from "../../controllers/notificationsController";
 import { InvoiceService } from "../../services/invoiceService";
 import { stripeService } from "../../services/stripeService";
 
@@ -126,6 +127,33 @@ router.post("/", async (req: express.Request, res: express.Response) => {
           );
           // On continue le traitement même si la facture échoue
           // Le webhook doit toujours retourner 200 à Stripe
+        }
+
+        // 🔔 Créer des notifications pour le paiement
+        try {
+          // Notification pour le client
+          await notifyPaymentSuccess(
+            commande.user.id,
+            session.amount_total,
+            commande.titre
+          );
+
+          // Notification pour les admins
+          await notifyAdminNewPayment(
+            `${commande.user.prenom} ${commande.user.nom}`,
+            session.amount_total,
+            commande.titre
+          );
+
+          console.log(
+            `✅ [Stripe Webhook] Notifications de paiement créées avec succès`
+          );
+        } catch (notificationError) {
+          console.error(
+            `❌ [Stripe Webhook] Erreur lors de la création des notifications:`,
+            notificationError
+          );
+          // On continue le traitement même si les notifications échouent
         }
         break;
       }

@@ -29,6 +29,7 @@ import HelpPage from "./pages/HelpPage";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import MessagesPage from "./pages/MessagesPage";
+import NotificationsPage from "./pages/NotificationsPage";
 import StaticPageBySlug from "./pages/pages/[slug]";
 import PaymentCancelPage from "./pages/PaymentCancelPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
@@ -42,6 +43,7 @@ type SectionName =
   | "dashboard"
   | "projects"
   | "messages"
+  | "notifications"
   | "files"
   | "billing"
   | "help"
@@ -53,6 +55,7 @@ const pageConfig: Record<string, { title: string; section: SectionName }> = {
   dashboard: { title: "Dashboard", section: "dashboard" },
   projects: { title: "Projets", section: "projects" },
   messages: { title: "Messagerie", section: "messages" },
+  notifications: { title: "Notifications", section: "notifications" },
   files: { title: "Fichiers", section: "files" },
   billing: { title: "Facturation", section: "billing" },
   help: { title: "Aide & Support", section: "help" },
@@ -190,6 +193,7 @@ const AppContent: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
           }
         />
         <Route path="messages" element={<MessagesPage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
         <Route path="files" element={<FilesPage />} />
         <Route path="billing" element={<BillingPage />} />
         <Route path="help" element={<HelpPage />} />
@@ -219,6 +223,7 @@ const AdminRoutes: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
         <Route path="pages" element={<AdminPages />} />
         <Route path="statistiques" element={<AdminStatistiques />} />
         <Route path="messagerie" element={<AdminMessagerie />} />
+        <Route path="notifications" element={<NotificationsPage />} />
         <Route path="*" element={<PageIntrouvable />} />
       </Routes>
     </AdminLayout>

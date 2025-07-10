@@ -2,6 +2,7 @@ import React, { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { getUnreadConversationsCount } from "../../utils/adminAPI";
+import Notifications from "../common/Notifications";
 import { DemoBanner, useDemoMode } from "./DemoModeProvider";
 import { SecurityAuditPanel } from "./RequireAdmin";
 
@@ -296,7 +297,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
+                {/* Clochette de notifications admin */}
+                <Notifications />
+                
                 <div className="hidden md:flex items-center text-sm text-gray-500">
                   <i className="fas fa-user mr-2"></i>
                   {user?.email}
