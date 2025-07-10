@@ -108,10 +108,11 @@ model Message {
   content    String        @db.Text
   type       MessageType   @default(USER_MESSAGE)
   statut     MessageStatut @default(ENVOYE)
-  isRead     Boolean       @default(false)
-  isArchived Boolean       @default(false)
-  isPinned   Boolean       @default(false)
-  parentId   String?
+  isRead        Boolean @default(false)
+  isArchived    Boolean @default(false)
+  isPinned      Boolean @default(false)
+  deletedByAdmin Boolean @default(false) // Masquer la conversation pour l'admin
+  parentId      String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

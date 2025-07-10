@@ -3,10 +3,14 @@ import { Router } from "express";
 import {
   createConversation,
   createVisitorMessage,
+  deleteAdminConversation,
   getConversations,
   getMessagesByConversation,
+  getMessagesByThread,
   getUnreadConversationsCount,
+  markConversationAsRead,
   replyToConversation,
+  replyToThread,
 } from "../controllers/messagesController";
 import { authenticateToken } from "../middleware/auth";
 import { requireRole } from "../middleware/requireRole";
@@ -37,11 +41,28 @@ router.get("/conversations/:conversationId", getMessagesByConversation);
 // Envoyer une réponse dans une conversation
 router.post("/conversations/:conversationId/reply", replyToConversation);
 
+// Marquer une conversation comme lue
+router.post("/conversations/:conversationId/mark-read", markConversationAsRead);
+
+// NOUVELLES ROUTES POUR LES THREADS
+// Récupérer les messages d'un thread utilisateur
+router.get("/threads/:threadId", getMessagesByThread);
+
+// Répondre dans un thread utilisateur
+router.post("/threads/:threadId/reply", replyToThread);
+
 // Obtenir le nombre de conversations non lues (pour l'admin authentifié)
 router.get(
   "/unread-count",
   requireRole(Role.ADMIN),
   getUnreadConversationsCount
+);
+
+// ROUTES ADMIN - Supprimer une conversation (masquage côté admin)
+router.delete(
+  "/admin/conversations/:threadId",
+  requireRole(Role.ADMIN),
+  deleteAdminConversation
 );
 
 // Les admins ont des routes supplémentaires

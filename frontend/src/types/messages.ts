@@ -47,7 +47,7 @@ export interface BaseMessage {
   id: string;
   senderId: string;
   receiverId?: string;
-  commandeId?: string;
+  conversationId?: string;
   supportRequestId?: string;
   subject?: string;
   content: string;
@@ -120,7 +120,7 @@ export interface Conversation {
 export interface CreateMessageRequest {
   content: string;
   receiverId?: string;
-  commandeId?: string;
+  conversationId?: string;
   supportRequestId?: string;
   subject?: string;
   type?: MessageType;
@@ -137,7 +137,7 @@ export interface UpdateMessageRequest {
 export interface MessageFilters {
   page?: number;
   limit?: number;
-  commandeId?: string;
+  conversationId?: string;
   supportRequestId?: string;
   threadId?: string;
   type?: MessageType;

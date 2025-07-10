@@ -1217,9 +1217,64 @@ class AdaptiveAdminAPI {
 
   async getUnreadConversationsCount(): Promise<number> {
     const response = await this.realApiCall<{ count: number }>(
-      "/admin/messages/unread-count"
+      "/messages/unread-count"
     );
     return response.count;
+  }
+
+  // ===============================
+  // MESSAGES API METHODS
+  // ===============================
+  async getMessages(filters: any = {}): Promise<any> {
+    const { page = 1, limit = 10, ...otherFilters } = filters;
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    
+    Object.entries(otherFilters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        params.append(key, value.toString());
+      }
+    });
+    
+    return this.realApiCall(`/messages?${params}`);
+  }
+
+  async getMessageDetail(id: string): Promise<any> {
+    return this.realApiCall(`/messages/${id}`);
+  }
+
+  async sendMessage(data: any): Promise<any> {
+    return this.realApiCall("/messages", "POST", data);
+  }
+
+  async updateMessage(id: string, data: any): Promise<any> {
+    return this.realApiCall(`/messages/${id}`, "PUT", data);
+  }
+
+  async deleteMessage(id: string, hard: boolean = false): Promise<void> {
+    const params = hard ? "?hard=true" : "";
+    return this.realApiCall(`/messages/${id}${params}`, "DELETE");
+  }
+
+  async getMessageStats(): Promise<any> {
+    return this.realApiCall("/messages/stats");
+  }
+
+  async bulkUpdateMessages(messageIds: string[], action: any): Promise<any> {
+    return this.realApiCall("/messages/bulk", "POST", { messageIds, action });
+  }
+
+  async exportMessages(filters: any): Promise<any> {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        params.append(key, value.toString());
+      }
+    });
+    
+    return this.realApiCall(`/messages/export?${params}`);
   }
 }
 
@@ -1341,3 +1396,44 @@ export const getStatistiquesAvancees = () => adminAPI.getStatistiquesAvancees();
 // Demo Mode
 export const refreshDemoData = () => adminAPI.refreshDemoData();
 export const resetDemoData = () => adminAPI.resetDemoData();
+
+// ===============================
+// MESSAGES API OBJECT
+// ===============================
+export const messagesAPI = {
+  // Récupérer la liste des messages avec pagination et filtres
+  getMessages: (filters: any = {}) => adminAPI.getMessages(filters),
+
+  // Récupérer le détail d'un message spécifique
+  getMessageDetail: (id: string) => adminAPI.getMessageDetail(id),
+
+  // Envoyer un nouveau message
+  sendMessage: (data: any) => adminAPI.sendMessage(data),
+
+  // Mettre à jour un message existant
+  updateMessage: (id: string, data: any) => adminAPI.updateMessage(id, data),
+
+  // Supprimer un message
+  deleteMessage: (id: string, hard: boolean = false) => adminAPI.deleteMessage(id, hard),
+
+  // Récupérer les statistiques des messages
+  getStats: () => adminAPI.getMessageStats(),
+
+  // Mise à jour en masse des messages
+  bulkUpdate: (messageIds: string[], action: any) => adminAPI.bulkUpdateMessages(messageIds, action),
+
+  // Exporter les messages
+  exportMessages: (filters: any) => adminAPI.exportMessages(filters),
+
+  // Récupérer les conversations
+  getConversations: () => adminAPI.getConversations(),
+
+  // Récupérer les messages d'une conversation
+  getMessagesByConversation: (conversationId: string) => adminAPI.getMessagesByConversation(conversationId),
+
+  // Répondre à une conversation
+  replyToConversation: (conversationId: string, content: string) => adminAPI.replyToConversation(conversationId, content),
+
+  // Compter les conversations non lues
+  getUnreadConversationsCount: () => adminAPI.getUnreadConversationsCount(),
+};

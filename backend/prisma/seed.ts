@@ -189,7 +189,7 @@ async function main() {
       url: "https://exemple.staka.fr/fake.pdf",
       type: FileType.DOCUMENT,
       uploadedById: user.id,
-      commandeId: commande1.id,
+      // commandeId supprimé du modèle
     },
   });
 
@@ -203,7 +203,7 @@ async function main() {
       url: "https://exemple.staka.fr/fake_admin.docx",
       type: FileType.DOCUMENT,
       uploadedById: admin.id,
-      commandeId: commande2.id,
+      // commandeId: commande2.id,
     },
   });
 
@@ -212,7 +212,7 @@ async function main() {
     data: {
       senderId: admin.id,
       receiverId: user.id,
-      commandeId: commande1.id,
+      // commandeId supprimé du modèle
       subject: "Bienvenue sur Staka Livres !",
       content: "Ceci est votre première conversation.",
       type: MessageType.USER_MESSAGE,
@@ -271,7 +271,7 @@ async function main() {
     data: {
       senderId: admin.id,
       receiverId: user.id,
-      supportRequestId: support.id,
+      // supportRequestId: support.id,
       subject: "Votre demande de support",
       content: "Nous traitons votre demande de support au plus vite.",
       type: MessageType.SUPPORT_MESSAGE,
