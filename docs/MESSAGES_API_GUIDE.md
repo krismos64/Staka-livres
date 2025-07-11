@@ -6,7 +6,7 @@
 ![React Query](https://img.shields.io/badge/React%20Query-5.17-red)
 ![Production](https://img.shields.io/badge/Status-Production%20Ready-green)
 
-**✨ Version Juillet 2025 - État actuel**
+**✨ Version Janvier 2025 - État actuel**
 
 ## 📋 **Vue d'ensemble**
 

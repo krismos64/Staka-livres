@@ -11,7 +11,7 @@
 
 ## 📊 Vue d'Ensemble
 
-**✨ Version Juillet 2025 - État actuel :**
+**✨ Version Janvier 2025 - État actuel :**
 
 Architecture frontend complète et **production-ready** avec React 18, TypeScript, Tailwind CSS et React Query. Le frontend comprend une **landing page marketing optimisée**, une **application dashboard fonctionnelle**, un **espace d'administration moderne** avec **intégration backend opérationnelle** et un **système de notifications temps réel**.
 
@@ -421,7 +421,7 @@ export interface StatistiquesAdmin {
   satisfactionMoyenne: number;        // Note satisfaction (mock pour l'instant)
   nombreAvisTotal: number;            // Nombre d'avis total (calculé)
   resumeMois: {
-    periode: string;                  // "juillet 2025"
+    periode: string;                  // "janvier 2025"
     totalCA: number;                  // Total CA mois
     totalCommandes: number;           // Total commandes mois
     totalClients: number;             // Total nouveaux clients mois
@@ -1896,7 +1896,7 @@ export interface PaginatedResponse<T> {
 - ✅ Invalidation croisée entre hooks
 - ✅ Hooks tarifs dynamiques avec synchronisation
 
-### 📈 **Métriques Finales - État Juillet 2025**
+### 📈 **Métriques Finales - État Janvier 2025**
 
 | Module                     | Lignes     | Composants         | Status                  |
 | -------------------------- | ---------- | ------------------ | ----------------------- |

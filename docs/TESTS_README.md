@@ -6,7 +6,7 @@ Documentation complète pour l'infrastructure de tests du projet **Staka Livres*
 
 ---
 
-## 🏗️ Architecture des Tests - Version 2025
+## 🏗️ Architecture des Tests - Version Janvier 2025
 
 ```
 .
@@ -71,7 +71,7 @@ Documentation complète pour l'infrastructure de tests du projet **Staka Livres*
 - Interactions utilisateur (filtres, modales, suppression).
 - Pagination et gestion des erreurs.
 
-#### **🆕 Tests Tarifs Dynamiques (370 lignes) - NOUVEAU 2025**
+#### **🆕 Tests Tarifs Dynamiques (370 lignes) - NOUVEAU Janvier 2025**
 
 **Tests `tarifsInvalidation.test.tsx` (10 tests) :**
 

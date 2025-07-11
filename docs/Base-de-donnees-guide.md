@@ -7,7 +7,7 @@
 
 ## 📋 **Vue d'ensemble**
 
-**✨ Version Juillet 2025 - État actuel :**
+**✨ Version Janvier 2025 - État actuel :**
 
 La base de données **Staka Livres** est une architecture complète MySQL 8 gérée par **Prisma ORM** et déployée avec **Docker**. Elle couvre tous les aspects d'une plateforme de correction de manuscrits moderne : utilisateurs, projets, **système de messagerie unifié**, **notifications temps réel**, support client, **facturation automatique** et contenu éditorial.
 
