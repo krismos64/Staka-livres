@@ -16,11 +16,5 @@ router.get(
   paymentController.getPaymentStatus
 );
 
-// Webhook Stripe (pas d'authentification JWT)
-router.post(
-  "/webhook",
-  express.raw({ type: "application/json" }),
-  paymentController.handleWebhook
-);
 
 export default router;

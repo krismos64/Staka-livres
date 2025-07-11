@@ -51,60 +51,6 @@ export const paymentController = {
     }
   },
 
-  // Webhook Stripe
-  async handleWebhook(req: Request, res: Response) {
-    try {
-      const signature = req.headers["stripe-signature"] as string;
-      const body = req.body;
-
-      if (!signature) {
-        return res.status(400).json({ error: "Signature manquante" });
-      }
-
-      const event = stripeService.constructEvent(body, signature);
-
-      switch (event.type) {
-        case "checkout.session.completed":
-          const session = event.data.object as any;
-          const { userId, commandeId } = session.metadata;
-
-          // Mettre à jour le statut de la commande
-          await prisma.commande.update({
-            where: { id: commandeId },
-            data: {
-              statut: "EN_COURS",
-              paymentStatus: "paid",
-              stripeSessionId: session.id,
-            },
-          });
-
-          console.log(`✅ Paiement confirmé pour commande ${commandeId}`);
-          break;
-
-        case "payment_intent.payment_failed":
-          const paymentIntent = event.data.object as any;
-          // Chercher la commande par stripeSessionId si disponible
-          if (paymentIntent.metadata?.commandeId) {
-            await prisma.commande.update({
-              where: { id: paymentIntent.metadata.commandeId },
-              data: { paymentStatus: "failed" },
-            });
-            console.log(
-              `❌ Paiement échoué pour commande ${paymentIntent.metadata.commandeId}`
-            );
-          }
-          break;
-
-        default:
-          console.log(`🔔 Événement non géré: ${event.type}`);
-      }
-
-      res.json({ received: true });
-    } catch (error) {
-      console.error("Erreur webhook Stripe:", error);
-      res.status(400).json({ error: "Webhook invalide" });
-    }
-  },
 
   // Vérifier le statut d'un paiement
   async getPaymentStatus(req: Request, res: Response) {

@@ -24,6 +24,99 @@ Backend REST API pour Staka Livres, une plateforme de correction de livres profe
 - **Modules FAQ, Tarifs, Pages CMS et Statistiques** dynamiques avec synchronisation temps réel
 - **Architecture scalable** avec monitoring intégré et logs structurés
 
+## 🔐 Sécurité et Audit - Version 2025 Renforcée
+
+### 🛡️ Système d'Audit Complet Implémenté
+
+**✅ Service d'Audit Centralisé :**
+
+- **AuditService** : Service centralisé avec 50+ actions standardisées
+- **Logs d'authentification** : Tentatives de connexion, échecs, succès avec IP et UserAgent
+- **Audit des actions admin** : Toutes les opérations sensibles tracées avec détails
+- **Audit financier** : Accès aux factures, téléchargements PDF, rappels, annulations
+- **Audit des paiements** : Sessions créées, statuts consultés, webhooks traités
+- **Logs de sécurité** : Tentatives d'accès non autorisées, signatures invalides
+- **Middleware d'audit** : Intégration automatique sur toutes les routes sensibles
+
+### 🔒 Middleware de Sécurité Renforcé
+
+**✅ Authentification avec Validation Base de Données :**
+
+```typescript
+// Middleware d'authentification avec validation DB réelle
+export const authenticateToken = async (req, res, next) => {
+  // Vérification JWT + validation utilisateur en base
+  const user = await prisma.user.findUnique({
+    where: { id: decoded.userId },
+  });
+  
+  if (!user || !user.isActive) {
+    // Log tentative d'accès non autorisée
+    await AuditService.logSecurityEvent(...);
+    return res.status(401).json({ error: "Accès non autorisé" });
+  }
+  
+  // Log connexion réussie
+  await AuditService.logSecurityEvent(...);
+  req.user = user;
+  next();
+};
+```
+
+### 📊 Événements Auditables
+
+**Authentification :**
+- `LOGIN_SUCCESS`, `LOGIN_FAILED`, `LOGOUT`
+- `PASSWORD_CHANGE`, `ACCOUNT_LOCKED`
+
+**Gestion des Utilisateurs :**
+- `USER_CREATED`, `USER_UPDATED`, `USER_DELETED`
+- `USER_ROLE_CHANGED`, `USER_STATUS_CHANGED`
+
+**Gestion des Factures :**
+- `INVOICE_ACCESSED`, `INVOICE_DOWNLOADED`
+- `INVOICE_SENT`, `INVOICE_CANCELLED`
+
+**Gestion des Paiements :**
+- `PAYMENT_SESSION_CREATED`, `PAYMENT_STATUS_CHECKED`
+- `PAYMENT_WEBHOOK_RECEIVED`
+
+**Sécurité :**
+- `UNAUTHORIZED_ACCESS`, `SUSPICIOUS_ACTIVITY`
+- `SECURITY_BREACH`, `INVALID_SIGNATURE`
+
+### 🔐 Niveaux de Sévérité
+
+- 🔷 **LOW** : Accès routinier, consultations
+- 🔶 **MEDIUM** : Modifications, créations, suppressions
+- 🔴 **HIGH** : Changements de rôle, annulations, échecs de sécurité
+- 🚨 **CRITICAL** : Violations de signature, tentatives d'intrusion
+
+### 📈 Monitoring et Traçabilité
+
+**Format des Logs :**
+```typescript
+{
+  timestamp: "2025-07-11T10:30:00.000Z",
+  adminEmail: "admin@staka.com",
+  action: "INVOICE_DOWNLOADED",
+  targetType: "invoice",
+  targetId: "inv-123",
+  details: { filename: "facture-2025-001.pdf" },
+  ipAddress: "192.168.1.100",
+  userAgent: "Mozilla/5.0...",
+  severity: "MEDIUM"
+}
+```
+
+**Conformité RGPD :**
+- ✅ Traçabilité complète des accès aux données personnelles
+- ✅ Logs d'export et suppression de données
+- ✅ Audit des changements de consentement
+- ✅ Historique des demandes d'accès aux données
+
+---
+
 ## 🚀 Démarrage rapide
 
 ### Prérequis
