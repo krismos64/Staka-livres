@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
+<<<<<<< HEAD
 import React, { useState, useEffect, useImperativeHandle, forwardRef } from "react";
 import toast from "react-hot-toast";
 import { buildApiUrl } from "../../utils/api";
@@ -15,10 +16,19 @@ interface ChatWidgetProps {
 const ChatWidget = forwardRef<ChatWidgetRef, ChatWidgetProps>(
   ({ isExternallyControlled = false }, ref) => {
     const [isOpen, setIsOpen] = useState(false);
+=======
+import React, { useState } from "react";
+import toast from "react-hot-toast";
+import { buildApiUrl } from "../../utils/api";
+
+const ChatWidget = () => {
+  const [isOpen, setIsOpen] = useState(false);
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+<<<<<<< HEAD
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Méthodes exposées via ref pour contrôler le widget depuis l'extérieur
@@ -26,6 +36,8 @@ const ChatWidget = forwardRef<ChatWidgetRef, ChatWidgetProps>(
     openChat: () => setIsOpen(true),
     closeChat: () => setIsOpen(false),
   }));
+=======
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,8 +56,12 @@ const ChatWidget = forwardRef<ChatWidgetRef, ChatWidgetProps>(
       if (!response.ok) {
         throw new Error(data.error || "Une erreur est survenue.");
       }
+<<<<<<< HEAD
       // Afficher le modal de confirmation au lieu du toast
       setShowSuccessModal(true);
+=======
+      toast.success("Message envoyé ! Nous vous répondrons par email.");
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
       setIsOpen(false);
       setName("");
       setEmail("");
@@ -63,6 +79,7 @@ const ChatWidget = forwardRef<ChatWidgetRef, ChatWidgetProps>(
 
   return (
     <>
+<<<<<<< HEAD
       {/* Bouton flottant - masqué si contrôlé depuis l'extérieur */}
       {!isExternallyControlled && (
         <div className="fixed bottom-5 right-5 z-50">
@@ -78,6 +95,20 @@ const ChatWidget = forwardRef<ChatWidgetRef, ChatWidgetProps>(
           </motion.button>
         </div>
       )}
+=======
+      <div className="fixed bottom-5 right-5 z-50">
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setIsOpen(!isOpen)}
+          className="bg-blue-600 text-white rounded-full w-16 h-16 flex items-center justify-center shadow-lg"
+        >
+          <i
+            className={`fas ${isOpen ? "fa-times" : "fa-comments"} text-2xl`}
+          ></i>
+        </motion.button>
+      </div>
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
 
       <AnimatePresence>
         {isOpen && (
@@ -125,6 +156,7 @@ const ChatWidget = forwardRef<ChatWidgetRef, ChatWidgetProps>(
           </motion.div>
         )}
       </AnimatePresence>
+<<<<<<< HEAD
 
       {/* Modal de confirmation professionnel */}
       <AnimatePresence>
@@ -204,5 +236,10 @@ const ChatWidget = forwardRef<ChatWidgetRef, ChatWidgetProps>(
 });
 
 ChatWidget.displayName = "ChatWidget";
+=======
+    </>
+  );
+};
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
 
 export default ChatWidget;

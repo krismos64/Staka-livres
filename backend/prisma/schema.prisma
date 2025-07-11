@@ -104,11 +104,14 @@ model Message {
   visitorEmail String? @db.VarChar(255)
   visitorName  String? @db.VarChar(100)
 
+<<<<<<< HEAD
   // Champs pour nom d'affichage personnalisé (admin)
   displayFirstName String? @db.VarChar(100)
   displayLastName  String? @db.VarChar(100)
   displayRole      String? @db.VarChar(100)
 
+=======
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
   subject    String?       @db.VarChar(255)
   content    String        @db.Text
   type       MessageType   @default(USER_MESSAGE)

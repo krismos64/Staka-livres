@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { useAuth } from "../../contexts/AuthContext";
 import { buildApiUrl, getAuthHeaders } from "../../utils/api";
 import { User } from "../../types/shared";
+<<<<<<< HEAD
 import FileUpload from "../../components/FileUpload";
 import MessageAttachments from "../../components/MessageAttachments";
 import AdminIdentitySelector from "../../components/AdminIdentitySelector";
@@ -14,6 +15,8 @@ interface AdminIdentity {
   firstName: string;
   lastName: string;
 }
+=======
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
 
 // Types pour les nouvelles API avec threads
 interface ThreadAPI {
@@ -71,6 +74,7 @@ interface MessageAPI {
     nom: string;
     avatar?: string;
   };
+<<<<<<< HEAD
   attachments?: {
     id: string;
     file: {
@@ -85,6 +89,9 @@ interface MessageAPI {
   displayFirstName?: string;
   displayLastName?: string;
   displayRole?: string;
+=======
+  attachments?: any[];
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
 }
 
 // API Functions pour récupérer les utilisateurs
@@ -109,6 +116,7 @@ async function fetchUsers(search?: string): Promise<User[]> {
 }
 
 // Fonction pour créer une nouvelle conversation avec un utilisateur
+<<<<<<< HEAD
 async function createNewConversation(
   userId: string, 
   content: string, 
@@ -116,17 +124,25 @@ async function createNewConversation(
   identity?: AdminIdentity
 ): Promise<any> {
   const response = await fetch(buildApiUrl("/messages/admin/conversations/create"), {
+=======
+async function createNewConversation(userId: string, content: string): Promise<any> {
+  const response = await fetch(buildApiUrl("/admin/messages/conversations/create"), {
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify({
       userId,
       content,
+<<<<<<< HEAD
       subject: "Nouveau message de l'administration",
       attachments,
       ...(identity && {
         displayFirstName: identity.firstName,
         displayLastName: identity.lastName,
       }),
+=======
+      subject: "Nouveau message de l'administration"
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
     }),
   });
 
@@ -181,6 +197,7 @@ async function fetchAdminConversationMessages(conversationId: string): Promise<M
   return fetchAdminThreadMessages(conversationId);
 }
 
+<<<<<<< HEAD
 async function sendAdminThreadReply(
   threadId: string, 
   content: string, 
@@ -199,6 +216,13 @@ async function sendAdminThreadReply(
         displayRole: identity.role,
       }),
     }),
+=======
+async function sendAdminThreadReply(threadId: string, content: string): Promise<MessageAPI | { error: string; visitorEmail?: string; visitorName?: string }> {
+  const response = await fetch(buildApiUrl(`/messages/threads/${threadId}/reply`), {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ content }),
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
   });
 
   if (!response.ok) {
@@ -266,6 +290,7 @@ const AdminMessagerie = () => {
   const [newMessageContent, setNewMessageContent] = useState("");
   const [userSearch, setUserSearch] = useState("");
   
+<<<<<<< HEAD
   // États pour les pièces jointes
   const [replyAttachments, setReplyAttachments] = useState<string[]>([]);
   const [newConversationAttachments, setNewConversationAttachments] = useState<string[]>([]);
@@ -273,6 +298,8 @@ const AdminMessagerie = () => {
   // État pour l'identité admin
   const [adminIdentity, setAdminIdentity] = useState<AdminIdentity | undefined>(undefined);
   
+=======
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
   const queryClient = useQueryClient();
 
   // Récupération des utilisateurs pour le sélecteur
@@ -338,18 +365,27 @@ const AdminMessagerie = () => {
 
   // Mutation pour créer une nouvelle conversation
   const createConversationMutation = useMutation({
+<<<<<<< HEAD
     mutationFn: ({ userId, content, attachments }: { userId: string; content: string; attachments: string[] }) =>
       createNewConversation(userId, content, attachments, adminIdentity),
+=======
+    mutationFn: ({ userId, content }: { userId: string; content: string }) =>
+      createNewConversation(userId, content),
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
     onSuccess: (result) => {
       setShowNewConversationModal(false);
       setSelectedUserId(null);
       setNewMessageContent("");
       setUserSearch("");
+<<<<<<< HEAD
       setNewConversationAttachments([]);
+=======
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
       
       // Rafraîchir la liste des conversations et sélectionner la nouvelle
       queryClient.invalidateQueries({ queryKey: ["admin-threads"] });
       
+<<<<<<< HEAD
       // Sélectionner automatiquement la nouvelle conversation en utilisant threadId
       if (result.threadId) {
         setSelectedConversationId(result.threadId);
@@ -357,6 +393,14 @@ const AdminMessagerie = () => {
       
       const userName = result.targetUser ? result.targetUser.name : "l'utilisateur";
       toast.success(`Nouvelle conversation créée avec ${userName} !`);
+=======
+      // Sélectionner automatiquement la nouvelle conversation
+      if (result.conversationId) {
+        setSelectedConversationId(result.conversationId);
+      }
+      
+      toast.success("Nouvelle conversation créée avec succès !");
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
     },
     onError: (error: Error) => {
       toast.error("Erreur lors de la création : " + error.message);
@@ -365,8 +409,13 @@ const AdminMessagerie = () => {
 
   // Mutation pour envoyer une réponse admin
   const sendReplyMutation = useMutation({
+<<<<<<< HEAD
     mutationFn: ({ threadId, content, attachments }: { threadId: string; content: string; attachments: string[] }) =>
       sendAdminThreadReply(threadId, content, attachments, adminIdentity),
+=======
+    mutationFn: ({ threadId, content }: { threadId: string; content: string }) =>
+      sendAdminThreadReply(threadId, content),
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
     onSuccess: (result) => {
       // Vérifier si c'est un visiteur
       if ('error' in result && result.error === 'VISITOR_EMAIL_RESPONSE') {
@@ -390,7 +439,10 @@ const AdminMessagerie = () => {
       }
       
       setReplyContent("");
+<<<<<<< HEAD
       setReplyAttachments([]);
+=======
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
       // Invalider les deux queries
       queryClient.invalidateQueries({ queryKey: ["admin-threads"] });
       queryClient.invalidateQueries({ queryKey: ["admin-thread-messages", selectedConversationId] });
@@ -401,6 +453,7 @@ const AdminMessagerie = () => {
     },
   });
 
+<<<<<<< HEAD
   // Filtrer les utilisateurs en excluant les admins
   const filteredUsers = (users || []).filter(user => {
     if (!user || user?.role === "ADMIN") return false;
@@ -438,6 +491,8 @@ const AdminMessagerie = () => {
     });
   };
 
+=======
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
   // Auto-refresh pour les admins (plus fréquent)
   useEffect(() => {
     const interval = setInterval(() => {
@@ -465,12 +520,17 @@ const AdminMessagerie = () => {
     setSelectedConversationId(conversationId);
   };
 
+<<<<<<< HEAD
   const handleDeleteConversation = (threadId: string | undefined, e: React.MouseEvent) => {
     e.stopPropagation(); // Empêcher la sélection de la conversation
     if (!threadId) {
       toast.error("Impossible de supprimer cette conversation");
       return;
     }
+=======
+  const handleDeleteConversation = (threadId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Empêcher la sélection de la conversation
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
     setConversationToDelete(threadId);
     setShowDeleteModal(true);
   };
@@ -482,11 +542,16 @@ const AdminMessagerie = () => {
   };
 
   const handleSendReply = () => {
+<<<<<<< HEAD
     if (!selectedConversationId || (!replyContent.trim() && replyAttachments.length === 0)) return;
+=======
+    if (!selectedConversationId || !replyContent.trim()) return;
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
 
     sendReplyMutation.mutate({
       threadId: selectedConversationId,
       content: replyContent.trim(),
+<<<<<<< HEAD
       attachments: replyAttachments,
     });
   };
@@ -507,6 +572,40 @@ const AdminMessagerie = () => {
   const getMessageStyle = (message: MessageAPI | null) => {
     if (!message) return {};
     const isMyMessage = message?.senderId === user?.id;
+=======
+    });
+  };
+
+  const handleCreateNewConversation = () => {
+    if (!selectedUserId || !newMessageContent.trim()) {
+      toast.error("Veuillez sélectionner un utilisateur et saisir un message");
+      return;
+    }
+
+    createConversationMutation.mutate({
+      userId: selectedUserId,
+      content: newMessageContent.trim(),
+    });
+  };
+
+  const handleUserSelect = (userId: string) => {
+    setSelectedUserId(userId);
+    const selectedUser = users.find(u => u.id === userId);
+    if (selectedUser) {
+      setUserSearch(`${selectedUser.prenom} ${selectedUser.nom}`);
+    }
+  };
+
+  const filteredUsers = users.filter(u => 
+    u.role !== "ADMIN" && // Exclure les admins
+    (userSearch === "" || 
+     `${u.prenom} ${u.nom}`.toLowerCase().includes(userSearch.toLowerCase()) ||
+     u.email.toLowerCase().includes(userSearch.toLowerCase()))
+  );
+
+  const getMessageStyle = (message: MessageAPI) => {
+    const isMyMessage = message.senderId === user?.id;
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
     return {
       alignSelf: isMyMessage ? "flex-end" : "flex-start",
       backgroundColor: isMyMessage ? "#059669" : "#F3F4F6", // Vert pour admin, gris pour client
@@ -520,6 +619,7 @@ const AdminMessagerie = () => {
     };
   };
 
+<<<<<<< HEAD
   const getMessageSenderInfo = (message: MessageAPI | null): { name: string; role: string | null; email?: string } => {
     if (!message) return { name: "Utilisateur inconnu", role: null };
     
@@ -558,6 +658,27 @@ const AdminMessagerie = () => {
     }
     
     return { name: "Utilisateur", role: null };
+=======
+  const getMessageSenderInfo = (message: MessageAPI) => {
+    if (message.senderId === user?.id) {
+      return "Vous (Admin)";
+    }
+    
+    if (message.sender) {
+      return `${message.sender.prenom} ${message.sender.nom}`;
+    }
+    
+    if (message.visitorEmail) {
+      return (
+        <div>
+          <div className="font-medium">{message.visitorName || "Visiteur"}</div>
+          <div className="text-xs opacity-75">{message.visitorEmail}</div>
+        </div>
+      );
+    }
+    
+    return "Utilisateur";
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
   };
 
   if (isLoadingConversations) {
@@ -569,6 +690,7 @@ const AdminMessagerie = () => {
   }
 
   return (
+<<<<<<< HEAD
     <div className="h-full flex flex-col md:flex-row bg-white">
       {/* Sidebar des conversations */}
       <div className="w-full md:w-1/3 lg:w-1/4 border-r border-gray-200 flex flex-col">
@@ -576,6 +698,15 @@ const AdminMessagerie = () => {
           <div className="flex justify-between items-start mb-3">
             <div>
               <h2 className="text-lg md:text-xl font-semibold">Messagerie Admin</h2>
+=======
+    <div className="h-full flex bg-white">
+      {/* Sidebar des conversations */}
+      <div className="w-1/3 border-r border-gray-200 flex flex-col">
+        <div className="p-4 border-b border-gray-200 bg-gray-50">
+          <div className="flex justify-between items-start mb-3">
+            <div>
+              <h2 className="text-xl font-semibold">Messagerie Admin</h2>
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
               <p className="text-sm text-gray-600 mt-1">
                 {conversations.length} conversation(s)
               </p>
@@ -588,7 +719,11 @@ const AdminMessagerie = () => {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
+<<<<<<< HEAD
               <span className="hidden sm:inline">Nouveau</span>
+=======
+              <span>Nouveau</span>
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
             </button>
           </div>
         </div>
@@ -606,13 +741,18 @@ const AdminMessagerie = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
                 onClick={() => handleSelectConversation(conversation.conversationId)}
+<<<<<<< HEAD
                 className={`p-3 md:p-4 border-b border-gray-100 cursor-pointer transition-all duration-200 ${
+=======
+                className={`p-4 border-b border-gray-100 cursor-pointer transition-all duration-200 ${
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
                   selectedConversationId === conversation.conversationId 
                     ? "bg-gradient-to-r from-green-100 to-emerald-100 border-l-4 border-l-green-600 shadow-md" 
                     : "hover:bg-gray-50 hover:shadow-sm"
                 }`}
               >
                 <div className="flex justify-between items-start">
+<<<<<<< HEAD
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center mb-1">
                       <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-semibold mr-3 flex-shrink-0">
@@ -658,6 +798,34 @@ const AdminMessagerie = () => {
                     </span>
                     <button
                       onClick={(e) => handleDeleteConversation(conversation?.conversationId, e)}
+=======
+                  <div className="flex-1">
+                    <div className="flex items-center">
+                      <span className="font-medium text-gray-900">
+                        {conversation.withUser.name}
+                      </span>
+                      {threads.find(t => t.threadId === conversation.conversationId)?.isVisitor && (
+                        <span className="ml-2 bg-orange-100 text-orange-800 text-xs rounded-full px-2 py-1 font-medium">
+                          Visiteur
+                        </span>
+                      )}
+                      {conversation.unreadCount > 0 && (
+                        <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 font-bold">
+                          {conversation.unreadCount}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1 truncate">
+                      {conversation.lastMessage.content}
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs text-gray-500">
+                      {new Date(conversation.lastMessage.createdAt).toLocaleDateString()}
+                    </span>
+                    <button
+                      onClick={(e) => handleDeleteConversation(conversation.conversationId, e)}
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
                       className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
                       title="Supprimer la conversation"
                     >
@@ -706,6 +874,7 @@ const AdminMessagerie = () => {
               ) : (
                 <div className="space-y-3">
                   {messages.map((message) => (
+<<<<<<< HEAD
                     <div key={message?.id || Math.random()} className="flex flex-col">
                       <div style={getMessageStyle(message)}>
                         <div className="text-xs opacity-70 mb-1">
@@ -748,6 +917,17 @@ const AdminMessagerie = () => {
                             }
                           </span>
                           {message?.isRead && message?.senderId !== user?.id && (
+=======
+                    <div key={message.id} className="flex flex-col">
+                      <div style={getMessageStyle(message)}>
+                        <div className="text-xs opacity-70 mb-1">
+                          {getMessageSenderInfo(message)}
+                        </div>
+                        <div>{message.content}</div>
+                        <div className="text-xs opacity-70 mt-1 flex items-center justify-between">
+                          <span>{new Date(message.createdAt).toLocaleTimeString()}</span>
+                          {message.isRead && message.senderId !== user?.id && (
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
                             <span className="bg-white bg-opacity-20 px-1 rounded text-xs">
                               ✓ Lu
                             </span>
@@ -777,6 +957,7 @@ const AdminMessagerie = () => {
                   rows={3}
                   disabled={sendReplyMutation.isPending}
                 />
+<<<<<<< HEAD
                 
                 {/* Upload de fichiers pour la réponse */}
                 <FileUpload
@@ -802,6 +983,15 @@ const AdminMessagerie = () => {
                   <button
                     onClick={handleSendReply}
                     disabled={(!replyContent.trim() && replyAttachments.length === 0) || sendReplyMutation.isPending}
+=======
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">
+                    Réponse en tant qu'administrateur
+                  </span>
+                  <button
+                    onClick={handleSendReply}
+                    disabled={!replyContent.trim() || sendReplyMutation.isPending}
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
                     className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
                     {sendReplyMutation.isPending ? "Envoi..." : "Répondre"}
@@ -891,7 +1081,10 @@ const AdminMessagerie = () => {
                     setSelectedUserId(null);
                     setNewMessageContent("");
                     setUserSearch("");
+<<<<<<< HEAD
                     setNewConversationAttachments([]);
+=======
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
                   }}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
@@ -938,15 +1131,23 @@ const AdminMessagerie = () => {
                       ) : filteredUsers.length > 0 ? (
                         filteredUsers.map((user) => (
                           <button
+<<<<<<< HEAD
                             key={user?.id || Math.random()}
                             onClick={() => handleUserSelect(user?.id)}
                             className={`w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors ${
                               selectedUserId === user?.id ? "bg-green-50 border-l-4 border-l-green-500" : ""
+=======
+                            key={user.id}
+                            onClick={() => handleUserSelect(user.id)}
+                            className={`w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors ${
+                              selectedUserId === user.id ? "bg-green-50 border-l-4 border-l-green-500" : ""
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
                             }`}
                           >
                             <div className="flex items-center justify-between">
                               <div>
                                 <div className="font-medium text-gray-900">
+<<<<<<< HEAD
                                   {user?.prenom || ""} {user?.nom || ""}
                                 </div>
                                 <div className="text-sm text-gray-600">{user?.email || ""}</div>
@@ -966,6 +1167,27 @@ const AdminMessagerie = () => {
                                 </div>
                               </div>
                               {selectedUserId === user?.id && (
+=======
+                                  {user.prenom} {user.nom}
+                                </div>
+                                <div className="text-sm text-gray-600">{user.email}</div>
+                                <div className="flex items-center mt-1">
+                                  <span className={`text-xs px-2 py-1 rounded-full ${
+                                    user.role === "USER" ? "bg-blue-100 text-blue-800" :
+                                    user.role === "CORRECTOR" ? "bg-purple-100 text-purple-800" :
+                                    "bg-gray-100 text-gray-800"
+                                  }`}>
+                                    {user.role}
+                                  </span>
+                                  <span className={`ml-2 text-xs px-2 py-1 rounded-full ${
+                                    user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                                  }`}>
+                                    {user.isActive ? "Actif" : "Inactif"}
+                                  </span>
+                                </div>
+                              </div>
+                              {selectedUserId === user.id && (
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
                                 <div className="text-green-600">
                                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -984,6 +1206,7 @@ const AdminMessagerie = () => {
                   )}
                 </div>
 
+<<<<<<< HEAD
                 {/* Sélection d'identité admin */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1000,6 +1223,8 @@ const AdminMessagerie = () => {
                   </div>
                 </div>
 
+=======
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
                 {/* Message */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1018,6 +1243,7 @@ const AdminMessagerie = () => {
                   </div>
                 </div>
 
+<<<<<<< HEAD
                 {/* Upload de fichiers pour la nouvelle conversation */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1031,6 +1257,8 @@ const AdminMessagerie = () => {
                   />
                 </div>
 
+=======
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
                 {/* Boutons d'action */}
                 <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                   <button
@@ -1039,7 +1267,10 @@ const AdminMessagerie = () => {
                       setSelectedUserId(null);
                       setNewMessageContent("");
                       setUserSearch("");
+<<<<<<< HEAD
                       setNewConversationAttachments([]);
+=======
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
                     }}
                     className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                     disabled={createConversationMutation.isPending}

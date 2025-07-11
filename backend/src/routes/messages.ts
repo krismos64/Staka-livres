@@ -1,7 +1,10 @@
 import { Role } from "@prisma/client";
 import { Router } from "express";
 import {
+<<<<<<< HEAD
   createAdminConversation,
+=======
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
   createConversation,
   createVisitorMessage,
   deleteAdminConversation,
@@ -59,6 +62,7 @@ router.get(
   getUnreadConversationsCount
 );
 
+<<<<<<< HEAD
 // ROUTES ADMIN - Créer une nouvelle conversation avec un utilisateur
 router.post(
   "/admin/conversations/create",
@@ -66,6 +70,8 @@ router.post(
   createAdminConversation
 );
 
+=======
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
 // ROUTES ADMIN - Supprimer une conversation (masquage côté admin)
 router.delete(
   "/admin/conversations/:threadId",

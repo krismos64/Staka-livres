@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 import { useRef } from "react";
 import ChatWidget, { ChatWidgetRef } from "../components/common/ChatWidget"; // Importer le nouveau composant
+=======
+import ChatWidget from "../components/common/ChatWidget"; // Importer le nouveau composant
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
 import About from "../components/landing/About";
 import Blog from "../components/landing/Blog";
 import Contact from "../components/landing/Contact";
@@ -20,6 +24,7 @@ interface LandingPageProps {
 }
 
 export default function LandingPage({ onLoginClick }: LandingPageProps) {
+<<<<<<< HEAD
   const chatWidgetRef = useRef<ChatWidgetRef>(null);
 
   const handleChatButtonClick = () => {
@@ -29,6 +34,12 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
     <div className="bg-gray-50 text-gray-800 font-sans leading-relaxed">
       {/* Navigation */}
       <Navigation onLoginClick={onLoginClick} onChatClick={handleChatButtonClick} />
+=======
+  return (
+    <div className="bg-gray-50 text-gray-800 font-sans leading-relaxed">
+      {/* Navigation */}
+      <Navigation onLoginClick={onLoginClick} />
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
 
       <main id="main-content">
         {/* Hero Section */}
@@ -50,6 +61,7 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
         {/* Free Sample Section */}
         <FreeSample />
         {/* About Section */}
+<<<<<<< HEAD
         <About onChatClick={handleChatButtonClick} />
         {/* FAQ Section */}
         <FAQ />
@@ -58,6 +70,16 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
         {/* Footer Section */}
         <Footer />
         <ChatWidget ref={chatWidgetRef} /> {/* Ajouter le widget ici */}
+=======
+        <About />
+        {/* FAQ Section */}
+        <FAQ />
+        {/* Contact Section */}
+        <Contact />
+        {/* Footer Section */}
+        <Footer />
+        <ChatWidget /> {/* Ajouter le widget ici */}
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
       </main>
 
       {/* Floating WhatsApp Button */}

@@ -1,10 +1,14 @@
 import React, { useState } from "react";
 
+<<<<<<< HEAD
 interface ContactProps {
   onChatClick?: () => void;
 }
 
 export default function Contact({ onChatClick }: ContactProps) {
+=======
+export default function Contact() {
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
   const [formData, setFormData] = useState({
     nom: "",
     email: "",
@@ -135,10 +139,14 @@ export default function Contact({ onChatClick }: ContactProps) {
                   Un de nos conseillers est disponible pour répondre à vos
                   questions
                 </p>
+<<<<<<< HEAD
                 <button 
                   onClick={onChatClick}
                   className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition"
                 >
+=======
+                <button className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition">
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
                   <i className="fas fa-comments mr-2"></i>
                   Démarrer le chat
                 </button>

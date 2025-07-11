@@ -1,5 +1,6 @@
 import React from "react";
 
+<<<<<<< HEAD
 interface AboutProps {
   onChatClick?: () => void;
 }
@@ -13,6 +14,14 @@ export default function About({ onChatClick }: AboutProps) {
       console.log("Ouverture du chat...");
       alert("Chat en cours d'ouverture... 💬");
     }
+=======
+export default function About() {
+  const handleChatClick = () => {
+    // Simulation d'ouverture du chat
+    console.log("Ouverture du chat...");
+    // Ici on pourrait intégrer un vrai système de chat
+    alert("Chat en cours d'ouverture... 💬");
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
   };
 
   const handleBookingClick = () => {

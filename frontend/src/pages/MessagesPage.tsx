@@ -3,8 +3,11 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../contexts/AuthContext";
 import { buildApiUrl, getAuthHeaders } from "../utils/api";
+<<<<<<< HEAD
 import FileUpload from "../components/FileUpload";
 import MessageAttachments from "../components/MessageAttachments";
+=======
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
 
 // Types pour les nouvelles API avec threads
 interface ThreadAPI {
@@ -64,6 +67,7 @@ interface MessageAPI {
     nom: string;
     avatar?: string;
   };
+<<<<<<< HEAD
   attachments?: {
     id: string;
     file: {
@@ -78,6 +82,9 @@ interface MessageAPI {
   displayFirstName?: string;
   displayLastName?: string;
   displayRole?: string;
+=======
+  attachments?: any[];
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
 }
 
 // API Functions pour les threads
@@ -124,11 +131,19 @@ async function fetchConversationMessages(conversationId: string): Promise<Messag
   return fetchThreadMessages(conversationId);
 }
 
+<<<<<<< HEAD
 async function sendThreadReply(threadId: string, content: string, attachments: string[] = []): Promise<MessageAPI | { error: string; visitorEmail?: string; visitorName?: string }> {
   const response = await fetch(buildApiUrl(`/messages/threads/${threadId}/reply`), {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify({ content, attachments }),
+=======
+async function sendThreadReply(threadId: string, content: string): Promise<MessageAPI | { error: string; visitorEmail?: string; visitorName?: string }> {
+  const response = await fetch(buildApiUrl(`/messages/threads/${threadId}/reply`), {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ content }),
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
   });
 
   if (!response.ok) {
@@ -150,15 +165,24 @@ async function sendThreadReply(threadId: string, content: string, attachments: s
 }
 
 // Legacy function
+<<<<<<< HEAD
 async function sendReply(conversationId: string, content: string, attachments: string[] = []): Promise<MessageAPI> {
   const result = await sendThreadReply(conversationId, content, attachments);
+=======
+async function sendReply(conversationId: string, content: string): Promise<MessageAPI> {
+  const result = await sendThreadReply(conversationId, content);
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
   if ('error' in result) {
     throw new Error(result.error);
   }
   return result;
 }
 
+<<<<<<< HEAD
 async function createNewConversation(data: { subject: string; content: string; attachments?: string[] }): Promise<any> {
+=======
+async function createNewConversation(data: { subject: string; content: string }): Promise<any> {
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
   const response = await fetch(buildApiUrl("/messages/conversations"), {
     method: "POST",
     headers: getAuthHeaders(),
@@ -189,13 +213,19 @@ function MessagesPage() {
   const queryClient = useQueryClient();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
+<<<<<<< HEAD
   const [replyAttachments, setReplyAttachments] = useState<string[]>([]);
+=======
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
   const [isNewConversationModalOpen, setIsNewConversationModalOpen] = useState(false);
   const [newConversationData, setNewConversationData] = useState({
     subject: "",
     content: "",
   });
+<<<<<<< HEAD
   const [newConversationAttachments, setNewConversationAttachments] = useState<string[]>([]);
+=======
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
 
   // Récupération des threads (nouvelles conversations regroupées)
   const {
@@ -234,8 +264,13 @@ function MessagesPage() {
 
   // Mutation pour envoyer une réponse
   const sendReplyMutation = useMutation({
+<<<<<<< HEAD
     mutationFn: ({ threadId, content, attachments }: { threadId: string; content: string; attachments: string[] }) =>
       sendThreadReply(threadId, content, attachments),
+=======
+    mutationFn: ({ threadId, content }: { threadId: string; content: string }) =>
+      sendThreadReply(threadId, content),
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
     onSuccess: (result) => {
       // Vérifier si c'est une erreur de visiteur
       if ('error' in result && result.error === 'VISITOR_EMAIL_RESPONSE') {
@@ -250,7 +285,10 @@ function MessagesPage() {
       }
       
       setNewMessage("");
+<<<<<<< HEAD
       setReplyAttachments([]);
+=======
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
       // Invalidate both threads and messages
       queryClient.invalidateQueries({ queryKey: ["threads"] });
       queryClient.invalidateQueries({ queryKey: ["thread-messages", selectedConversationId] });
@@ -269,7 +307,10 @@ function MessagesPage() {
       if (data.error === 'EXISTING_CONVERSATION') {
         setIsNewConversationModalOpen(false);
         setNewConversationData({ subject: "", content: "" });
+<<<<<<< HEAD
         setNewConversationAttachments([]);
+=======
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
         setSelectedConversationId(data.threadId);
         toast.info(data.message);
         return;
@@ -277,7 +318,10 @@ function MessagesPage() {
       
       setIsNewConversationModalOpen(false);
       setNewConversationData({ subject: "", content: "" });
+<<<<<<< HEAD
       setNewConversationAttachments([]);
+=======
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
       queryClient.invalidateQueries({ queryKey: ["threads"] });
       toast.success("Conversation créée avec succès !");
       if (data.threadId) {
@@ -304,11 +348,16 @@ function MessagesPage() {
   }, [queryClient, selectedConversationId]);
 
   const handleSendMessage = () => {
+<<<<<<< HEAD
     if (!selectedConversationId || (!newMessage.trim() && replyAttachments.length === 0)) return;
+=======
+    if (!selectedConversationId || !newMessage.trim()) return;
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
 
     sendReplyMutation.mutate({
       threadId: selectedConversationId,
       content: newMessage.trim(),
+<<<<<<< HEAD
       attachments: replyAttachments,
     });
   };
@@ -330,6 +379,15 @@ function MessagesPage() {
   const handleNewConversationFilesUploaded = (files: any[]) => {
     const fileIds = files.map(file => file.id);
     setNewConversationAttachments(fileIds);
+=======
+    });
+  };
+
+  const handleCreateConversation = () => {
+    if (!newConversationData.content.trim()) return;
+
+    createConversationMutation.mutate(newConversationData);
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
   };
 
   const getMessageStyle = (message: MessageAPI) => {
@@ -340,16 +398,24 @@ function MessagesPage() {
       color: isMyMessage ? "white" : "black",
       marginLeft: isMyMessage ? "auto" : "0",
       marginRight: isMyMessage ? "0" : "auto",
+<<<<<<< HEAD
       maxWidth: window.innerWidth < 768 ? "85%" : "70%",
       padding: window.innerWidth < 768 ? "10px 12px" : "12px 16px",
       borderRadius: "18px",
       marginBottom: "8px",
       fontSize: window.innerWidth < 768 ? "14px" : "16px",
+=======
+      maxWidth: "70%",
+      padding: "12px 16px",
+      borderRadius: "18px",
+      marginBottom: "8px",
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
     };
   };
 
   const getMessageSenderInfo = (message: MessageAPI) => {
     if (message.senderId === user?.id) {
+<<<<<<< HEAD
       return { name: "Vous", role: null };
     }
     
@@ -383,6 +449,20 @@ function MessagesPage() {
     }
     
     return { name: "Équipe Support", role: "Staka" };
+=======
+      return "Vous";
+    }
+    
+    if (message.sender) {
+      return `${message.sender.prenom} ${message.sender.nom}`;
+    }
+    
+    if (message.visitorEmail) {
+      return `${message.visitorName || "Visiteur"} (${message.visitorEmail})`;
+    }
+    
+    return "Utilisateur";
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
   };
 
   if (loadingConversations) {
@@ -394,6 +474,7 @@ function MessagesPage() {
   }
 
   return (
+<<<<<<< HEAD
     <div className="h-full flex flex-col md:flex-row bg-white">
       {/* Sidebar des conversations */}
       <div className="w-full md:w-1/3 lg:w-1/4 border-r border-gray-200 flex flex-col">
@@ -406,6 +487,19 @@ function MessagesPage() {
             >
               <span className="hidden sm:inline">+ Nouveau</span>
               <span className="sm:hidden">+</span>
+=======
+    <div className="h-full flex bg-white">
+      {/* Sidebar des conversations */}
+      <div className="w-1/3 border-r border-gray-200 flex flex-col">
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Messages</h2>
+            <button
+              onClick={() => setIsNewConversationModalOpen(true)}
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              + Nouveau
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
             </button>
           </div>
         </div>
@@ -413,23 +507,32 @@ function MessagesPage() {
         <div className="flex-1 overflow-y-auto">
           {conversations.length === 0 ? (
             <div className="p-4 text-center text-gray-500">
+<<<<<<< HEAD
               <div className="text-gray-400 text-4xl mb-4">
                 <i className="fas fa-comments"></i>
               </div>
               <p className="text-sm">Aucune conversation</p>
+=======
+              Aucune conversation
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
             </div>
           ) : (
             conversations.map((conversation) => (
               <div
                 key={conversation.conversationId}
                 onClick={() => setSelectedConversationId(conversation.conversationId)}
+<<<<<<< HEAD
                 className={`p-3 md:p-4 border-b border-gray-100 cursor-pointer transition-all duration-200 ${
+=======
+                className={`p-4 border-b border-gray-100 cursor-pointer transition-all duration-200 ${
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
                   selectedConversationId === conversation.conversationId 
                     ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-l-blue-500 shadow-sm" 
                     : "hover:bg-gray-50 hover:shadow-sm"
                 }`}
               >
                 <div className="flex justify-between items-start">
+<<<<<<< HEAD
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center mb-1">
                       <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold mr-3 flex-shrink-0">
@@ -461,6 +564,25 @@ function MessagesPage() {
                       month: '2-digit',
                       year: window.innerWidth < 768 ? undefined : '2-digit'
                     })}
+=======
+                  <div className="flex-1">
+                    <div className="flex items-center">
+                      <span className="font-medium text-gray-900">
+                        {conversation.withUser.name}
+                      </span>
+                      {conversation.unreadCount > 0 && (
+                        <span className="ml-2 bg-blue-500 text-white text-xs rounded-full px-2 py-1">
+                          {conversation.unreadCount}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1 truncate">
+                      {conversation.lastMessage.content}
+                    </p>
+                  </div>
+                  <span className="text-xs text-gray-500 ml-2">
+                    {new Date(conversation.lastMessage.createdAt).toLocaleDateString()}
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
                   </span>
                 </div>
               </div>
@@ -470,6 +592,7 @@ function MessagesPage() {
       </div>
 
       {/* Zone des messages */}
+<<<<<<< HEAD
       <div className="flex-1 flex flex-col min-h-0">
         {selectedConversationId ? (
           <>
@@ -535,6 +658,43 @@ function MessagesPage() {
                             hour: '2-digit',
                             minute: '2-digit'
                           })}
+=======
+      <div className="flex-1 flex flex-col">
+        {selectedConversationId ? (
+          <>
+            {/* Header de la conversation */}
+            <div className="p-4 border-b border-gray-200 bg-gray-50">
+              <h3 className="font-medium">
+                {conversations.find(c => c.conversationId === selectedConversationId)?.withUser.name}
+              </h3>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {loadingMessages ? (
+                <div className="flex justify-center items-center h-32">
+                  Chargement des messages...
+                </div>
+              ) : messagesError ? (
+                <div className="text-red-500 text-center">
+                  Erreur: {messagesError.message}
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="text-center text-gray-500">
+                  Aucun message dans cette conversation
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {messages.map((message) => (
+                    <div key={message.id} className="flex flex-col">
+                      <div style={getMessageStyle(message)}>
+                        <div className="text-xs opacity-70 mb-1">
+                          {getMessageSenderInfo(message)}
+                        </div>
+                        <div>{message.content}</div>
+                        <div className="text-xs opacity-70 mt-1">
+                          {new Date(message.createdAt).toLocaleTimeString()}
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
                         </div>
                       </div>
                     </div>
@@ -544,6 +704,7 @@ function MessagesPage() {
             </div>
 
             {/* Zone de saisie */}
+<<<<<<< HEAD
             <div className="p-3 md:p-4 border-t border-gray-200 bg-gray-50">
               <div className="space-y-3">
                 {/* Upload de fichiers */}
@@ -594,10 +755,31 @@ function MessagesPage() {
                     )}
                   </button>
                 </div>
+=======
+            <div className="p-4 border-t border-gray-200 bg-gray-50">
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                  placeholder="Tapez votre message..."
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={sendReplyMutation.isPending}
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!newMessage.trim() || sendReplyMutation.isPending}
+                  className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  {sendReplyMutation.isPending ? "Envoi..." : "Envoyer"}
+                </button>
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
               </div>
             </div>
           </>
         ) : (
+<<<<<<< HEAD
           <div className="flex-1 flex justify-center items-center text-gray-500 p-4">
             <div className="text-center">
               <div className="text-gray-400 text-4xl md:text-6xl mb-4">
@@ -605,6 +787,12 @@ function MessagesPage() {
               </div>
               <p className="text-lg md:text-xl mb-2">Sélectionnez une conversation</p>
               <p className="text-sm md:text-base">Ou créez une nouvelle conversation avec l'administration</p>
+=======
+          <div className="flex-1 flex justify-center items-center text-gray-500">
+            <div className="text-center">
+              <p className="text-lg mb-2">Sélectionnez une conversation</p>
+              <p className="text-sm">Ou créez une nouvelle conversation avec l'administration</p>
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
             </div>
           </div>
         )}
@@ -612,6 +800,7 @@ function MessagesPage() {
 
       {/* Modal pour nouvelle conversation */}
       {isNewConversationModalOpen && (
+<<<<<<< HEAD
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
           <div className="bg-white rounded-lg p-4 md:p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
@@ -623,6 +812,11 @@ function MessagesPage() {
                 <i className="fas fa-times text-xl"></i>
               </button>
             </div>
+=======
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4">Nouvelle conversation</h3>
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -632,7 +826,11 @@ function MessagesPage() {
                   type="text"
                   value={newConversationData.subject}
                   onChange={(e) => setNewConversationData(prev => ({ ...prev, subject: e.target.value }))}
+<<<<<<< HEAD
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
+=======
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
                   placeholder="Sujet de votre message"
                 />
               </div>
@@ -643,11 +841,16 @@ function MessagesPage() {
                 <textarea
                   value={newConversationData.content}
                   onChange={(e) => setNewConversationData(prev => ({ ...prev, content: e.target.value }))}
+<<<<<<< HEAD
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
+=======
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
                   rows={4}
                   placeholder="Tapez votre message..."
                 />
               </div>
+<<<<<<< HEAD
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Pièces jointes
@@ -673,11 +876,19 @@ function MessagesPage() {
               <button
                 onClick={() => setIsNewConversationModalOpen(false)}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50 text-sm md:text-base"
+=======
+            </div>
+            <div className="flex justify-end space-x-2 mt-6">
+              <button
+                onClick={() => setIsNewConversationModalOpen(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
               >
                 Annuler
               </button>
               <button
                 onClick={handleCreateConversation}
+<<<<<<< HEAD
                 disabled={(!newConversationData.content.trim() && newConversationAttachments.length === 0) || createConversationMutation.isPending}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm md:text-base"
               >
@@ -692,6 +903,12 @@ function MessagesPage() {
                     Envoyer
                   </span>
                 )}
+=======
+                disabled={!newConversationData.content.trim() || createConversationMutation.isPending}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                {createConversationMutation.isPending ? "Envoi..." : "Envoyer"}
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
               </button>
             </div>
           </div>

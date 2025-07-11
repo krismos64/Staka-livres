@@ -4,6 +4,10 @@ import { useAuth } from "../../contexts/AuthContext";
 import { getUnreadConversationsCount } from "../../utils/adminAPI";
 import Notifications from "../common/Notifications";
 import { DemoBanner, useDemoMode } from "./DemoModeProvider";
+<<<<<<< HEAD
+=======
+import { SecurityAuditPanel } from "./RequireAdmin";
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
 
 export type AdminSection =
   | "dashboard"
@@ -318,6 +322,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
         </div>
       </div>
 
+<<<<<<< HEAD
+=======
+      {/* Panel d'audit de sécurité (développement uniquement) */}
+      <SecurityAuditPanel />
+>>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
     </div>
   );
 };
