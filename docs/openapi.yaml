@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Staka Livres API
   description: API for the Staka Livres manuscript correction platform
-  version: 1.0.0
+  version: 2.0.0
   contact:
     name: Staka Livres
     email: contact@staka-editions.com
@@ -16,48 +16,82 @@ servers:
 paths:
   /projects:
     get:
-      summary: Get user projects
-      description: Retrieve active projects for the authenticated user
+      summary: Get user projects with pagination
+      description: Retrieve projects for the authenticated user with pagination, filtering, and search capabilities
       tags:
         - Projects
       security:
         - bearerAuth: []
       parameters:
-        - name: status
+        - name: page
           in: query
-          description: Filter projects by status (default is 'active' which maps to 'EN_COURS')
-          required: false
-          schema:
-            type: string
-            enum: [active, EN_ATTENTE, EN_COURS, TERMINE, ANNULEE, SUSPENDUE]
-            default: active
-        - name: limit
-          in: query
-          description: Maximum number of projects to return
+          description: Page number (starts from 1)
           required: false
           schema:
             type: integer
             minimum: 1
-            maximum: 20
-            default: 3
+            default: 1
+        - name: limit
+          in: query
+          description: Number of projects per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+        - name: status
+          in: query
+          description: Filter projects by status
+          required: false
+          schema:
+            type: string
+            enum: [all, active, pending, completed]
+            default: all
+        - name: search
+          in: query
+          description: Search projects by title (max 100 characters)
+          required: false
+          schema:
+            type: string
+            maxLength: 100
       responses:
         '200':
-          description: List of user projects
+          description: Paginated list of user projects with metadata
+          headers:
+            X-Total-Count:
+              description: Total number of projects matching the criteria
+              schema:
+                type: integer
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Project'
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Project'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
               example:
-                - id: "cmd-1-uuid"
-                  title: "Correction de roman fantastique"
-                  status: "EN_COURS"
-                  updatedAt: "2024-01-02T10:30:00.000Z"
-                - id: "cmd-2-uuid"
-                  title: "Relecture de nouvelle"
-                  status: "EN_COURS"
-                  updatedAt: "2024-01-01T14:15:00.000Z"
+                data:
+                  - id: "cmd-1-uuid"
+                    title: "L'Écho du Temps"
+                    type: "Roman"
+                    pages: 280
+                    startedAt: "2025-01-05"
+                    deliveryAt: "2025-01-15"
+                    corrector: "Sarah Martin"
+                    pack: "Pack Intégral"
+                    status: "completed"
+                    progress: 100
+                    rating: 4.8
+                    canDownload: true
+                meta:
+                  page: 1
+                  pageSize: 10
+                  total: 42
         '400':
           description: Invalid parameters
           content:
@@ -65,8 +99,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                error: "Paramètre limit invalide"
-                message: "Le paramètre limit doit être un nombre entre 1 et 20"
+                error: "Paramètres invalides"
+                message: "page doit être ≥ 1"
         '401':
           description: Unauthorized - Authentication required
           content:
@@ -86,35 +120,147 @@ paths:
                 error: "Erreur interne du serveur"
                 message: "Impossible de récupérer les projets"
 
+  /projects/counts:
+    get:
+      summary: Get project status counts
+      description: Retrieve count of projects grouped by status for the authenticated user
+      tags:
+        - Projects
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Project counts by status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  all:
+                    type: integer
+                    description: Total number of projects
+                  active:
+                    type: integer
+                    description: Number of active projects (EN_COURS)
+                  pending:
+                    type: integer
+                    description: Number of pending projects (EN_ATTENTE)
+                  completed:
+                    type: integer
+                    description: Number of completed projects (TERMINE)
+              example:
+                all: 42
+                active: 12
+                pending: 5
+                completed: 25
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
 components:
   schemas:
     Project:
       type: object
+      description: Detailed project information with all computed fields
       properties:
         id:
           type: string
-          format: uuid
           description: Unique identifier for the project
           example: "cmd-1-uuid"
         title:
           type: string
           description: Project title
-          example: "Correction de roman fantastique"
+          example: "L'Écho du Temps"
+        type:
+          type: string
+          description: Project type (automatically determined from description)
+          example: "Roman"
+        pages:
+          type: integer
+          nullable: true
+          description: Estimated number of pages
+          example: 280
+        startedAt:
+          type: string
+          format: date
+          description: Project start date (YYYY-MM-DD)
+          example: "2025-01-05"
+        deliveryAt:
+          type: string
+          format: date
+          nullable: true
+          description: Planned delivery date (YYYY-MM-DD)
+          example: "2025-01-15"
+        corrector:
+          type: string
+          nullable: true
+          description: Assigned corrector name
+          example: "Sarah Martin"
+        pack:
+          type: string
+          description: Service package (determined by amount)
+          example: "Pack Intégral"
         status:
           type: string
-          enum: [EN_ATTENTE, EN_COURS, TERMINE, ANNULEE, SUSPENDUE]
-          description: Current status of the project
-          example: "EN_COURS"
-        updatedAt:
-          type: string
-          format: date-time
-          description: Last update timestamp
-          example: "2024-01-02T10:30:00.000Z"
+          enum: [pending, active, completed, cancelled, suspended]
+          description: Current project status
+          example: "completed"
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Project completion percentage
+          example: 100
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+          nullable: true
+          description: Project rating (only for completed projects)
+          example: 4.8
+        canDownload:
+          type: boolean
+          description: Whether the corrected document can be downloaded
+          example: true
       required:
         - id
         - title
+        - type
+        - startedAt
+        - pack
         - status
-        - updatedAt
+        - progress
+        - canDownload
+
+    PaginationMeta:
+      type: object
+      description: Pagination metadata
+      properties:
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        pageSize:
+          type: integer
+          description: Number of items per page
+          example: 10
+        total:
+          type: integer
+          description: Total number of items
+          example: 42
+      required:
+        - page
+        - pageSize
+        - total
 
     Error:
       type: object
@@ -125,6 +271,11 @@ components:
         message:
           type: string
           description: Detailed error message
+        details:
+          type: array
+          items:
+            type: object
+          description: Additional error details (for validation errors)
       required:
         - error
         - message

@@ -1,71 +1,50 @@
-import { StatutCommande } from "@prisma/client";
-import { ProjectModel, Project } from "../models/projectModel";
-
-export interface ProjectsResponse {
-  projects: Project[];
-  total: number;
-}
+import { ProjectModel, PaginatedResult, Project, ProjectFilters } from "../models/projectModel";
 
 /**
  * Service pour la gestion des projets utilisateur
  */
 export class ProjectService {
   /**
-   * Récupère les projets actifs d'un utilisateur
+   * Récupère les projets avec pagination et filtres
    * @param userId - ID de l'utilisateur authentifié
-   * @param status - Statut des projets (optionnel, default: EN_COURS)
-   * @param limit - Nombre maximum de projets (1-20, default: 3)
+   * @param page - Page courante (default: 1)
+   * @param limit - Éléments par page (default: 10)
+   * @param filters - Filtres de recherche
    */
-  static async getUserProjects(
+  static async getProjects(
     userId: string,
-    status?: string,
-    limit: number = 3
-  ): Promise<ProjectsResponse> {
+    page: number = 1,
+    limit: number = 10,
+    filters: ProjectFilters = {}
+  ): Promise<PaginatedResult<Project>> {
     // Validation des paramètres d'entrée
     if (!userId) {
       throw new Error("ID utilisateur requis");
     }
 
-    // Validation et normalisation du limit
-    const normalizedLimit = Math.min(Math.max(parseInt(String(limit)) || 3, 1), 20);
+    // Validation des paramètres de pagination
+    if (page < 1) {
+      throw new Error("La page doit être ≥ 1");
+    }
 
-    // Détermination du statut (default: active = EN_COURS)
-    let projectStatus: StatutCommande;
-    
-    if (!status || status === "active") {
-      projectStatus = StatutCommande.EN_COURS;
-    } else {
-      // Validation du statut fourni
-      const statusMap: Record<string, StatutCommande> = {
-        "EN_ATTENTE": StatutCommande.EN_ATTENTE,
-        "EN_COURS": StatutCommande.EN_COURS,
-        "TERMINE": StatutCommande.TERMINE,
-        "ANNULEE": StatutCommande.ANNULEE,
-        "SUSPENDUE": StatutCommande.SUSPENDUE,
-        "active": StatutCommande.EN_COURS,
-      };
+    if (limit < 1 || limit > 50) {
+      throw new Error("Le limit doit être entre 1 et 50");
+    }
 
-      if (!statusMap[status]) {
-        throw new Error(
-          `Statut invalide. Valeurs autorisées: ${Object.keys(statusMap).join(", ")}`
-        );
-      }
+    // Validation du statut
+    const validStatuses = ['all', 'active', 'pending', 'completed'];
+    if (filters.status && !validStatuses.includes(filters.status)) {
+      throw new Error(`Statut invalide. Valeurs autorisées: ${validStatuses.join(", ")}`);
+    }
 
-      projectStatus = statusMap[status];
+    // Validation de la recherche
+    if (filters.search && filters.search.length > 100) {
+      throw new Error("La recherche doit faire ≤ 100 caractères");
     }
 
     try {
       // Récupération des projets via le model
-      const projects = await ProjectModel.findByUserAndStatus(
-        userId,
-        projectStatus,
-        normalizedLimit
-      );
-
-      return {
-        projects,
-        total: projects.length,
-      };
+      return await ProjectModel.findPaginated(userId, page, limit, filters);
     } catch (error) {
       // Log de l'erreur (en production, utiliser un logger approprié)
       console.error(`Erreur lors de la récupération des projets pour l'utilisateur ${userId}:`, error);
@@ -76,29 +55,18 @@ export class ProjectService {
   }
 
   /**
-   * Récupère tous les projets d'un utilisateur (sans filtre de statut)
+   * Récupère les compteurs par statut pour un utilisateur
    * @param userId - ID de l'utilisateur authentifié
-   * @param limit - Nombre maximum de projets (1-20, default: 10)
    */
-  static async getAllUserProjects(
-    userId: string,
-    limit: number = 10
-  ): Promise<ProjectsResponse> {
+  static async getStatusCounts(userId: string): Promise<Record<string, number>> {
     if (!userId) {
       throw new Error("ID utilisateur requis");
     }
 
-    const normalizedLimit = Math.min(Math.max(parseInt(String(limit)) || 10, 1), 20);
-
     try {
-      const projects = await ProjectModel.findByUser(userId, normalizedLimit);
-
-      return {
-        projects,
-        total: projects.length,
-      };
+      return await ProjectModel.getStatusCounts(userId);
     } catch (error) {
-      console.error(`Erreur lors de la récupération de tous les projets pour l'utilisateur ${userId}:`, error);
+      console.error(`Erreur lors de la récupération des compteurs pour l'utilisateur ${userId}:`, error);
       throw error;
     }
   }

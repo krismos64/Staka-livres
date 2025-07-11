@@ -678,40 +678,61 @@ Authorization: Bearer token
 ### 📋 Routes projets (`/projects`) - ✅ PRODUCTION READY
 
 ```http
-# Récupérer mes projets actifs
+# Récupérer mes projets avec pagination
 GET /projects
 Authorization: Bearer token
 
-# Response: 200 - Tableau des projets actifs (status=EN_COURS, limit=3)
-[
-  {
-    "id": "cmd-1-uuid",
-    "title": "Correction de roman fantastique",
-    "status": "EN_COURS",
-    "updatedAt": "2024-01-02T10:30:00.000Z"
-  },
-  {
-    "id": "cmd-2-uuid",
-    "title": "Relecture de nouvelle",
-    "status": "EN_COURS",
-    "updatedAt": "2024-01-01T14:15:00.000Z"
+# Response: 200 - Projets paginés avec métadonnées
+{
+  "data": [
+    {
+      "id": "cmd-1-uuid",
+      "title": "L'Écho du Temps",
+      "type": "Roman",
+      "pages": 280,
+      "startedAt": "2025-01-05",
+      "deliveryAt": "2025-01-15",
+      "corrector": "Sarah Martin",
+      "pack": "Pack Intégral",
+      "status": "completed",
+      "progress": 100,
+      "rating": 4.8,
+      "canDownload": true
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "pageSize": 10,
+    "total": 42
   }
-]
+}
 
-# Projets avec paramètres personnalisés
-GET /projects?status=active&limit=2
-GET /projects?status=EN_ATTENTE&limit=5
-GET /projects?status=TERMINE&limit=10
+# Projets avec filtres et recherche
+GET /projects?page=2&limit=5&status=active&search=roman
 Authorization: Bearer token
 
 # Paramètres disponibles :
-# - status: active|EN_ATTENTE|EN_COURS|TERMINE|ANNULEE|SUSPENDUE (défaut: active)
-# - limit: 1-20 (défaut: 3)
+# - page: ≥1 (défaut: 1)
+# - limit: 1-50 (défaut: 10) 
+# - status: all|active|pending|completed (défaut: all)
+# - search: ≤100 caractères (recherche dans le titre)
+
+# Compteurs par statut
+GET /projects/counts
+Authorization: Bearer token
+
+# Response: 200
+{
+  "all": 42,
+  "active": 12,
+  "pending": 5,
+  "completed": 25
+}
 
 # Response: 400 - Paramètres invalides
 {
-  "error": "Paramètre limit invalide",
-  "message": "Le paramètre limit doit être un nombre entre 1 et 20"
+  "error": "Paramètres invalides",
+  "message": "page doit être ≥ 1"
 }
 ```
 
