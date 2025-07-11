@@ -1,0 +1,137 @@
+openapi: 3.0.3
+info:
+  title: Staka Livres API
+  description: API for the Staka Livres manuscript correction platform
+  version: 1.0.0
+  contact:
+    name: Staka Livres
+    email: contact@staka-editions.com
+
+servers:
+  - url: http://localhost:3001
+    description: Development server
+  - url: https://api.staka-editions.com
+    description: Production server
+
+paths:
+  /projects:
+    get:
+      summary: Get user projects
+      description: Retrieve active projects for the authenticated user
+      tags:
+        - Projects
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filter projects by status (default is 'active' which maps to 'EN_COURS')
+          required: false
+          schema:
+            type: string
+            enum: [active, EN_ATTENTE, EN_COURS, TERMINE, ANNULEE, SUSPENDUE]
+            default: active
+        - name: limit
+          in: query
+          description: Maximum number of projects to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 3
+      responses:
+        '200':
+          description: List of user projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+              example:
+                - id: "cmd-1-uuid"
+                  title: "Correction de roman fantastique"
+                  status: "EN_COURS"
+                  updatedAt: "2024-01-02T10:30:00.000Z"
+                - id: "cmd-2-uuid"
+                  title: "Relecture de nouvelle"
+                  status: "EN_COURS"
+                  updatedAt: "2024-01-01T14:15:00.000Z"
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Paramètre limit invalide"
+                message: "Le paramètre limit doit être un nombre entre 1 et 20"
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Authentification requise"
+                message: "Utilisateur non authentifié"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Erreur interne du serveur"
+                message: "Impossible de récupérer les projets"
+
+components:
+  schemas:
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the project
+          example: "cmd-1-uuid"
+        title:
+          type: string
+          description: Project title
+          example: "Correction de roman fantastique"
+        status:
+          type: string
+          enum: [EN_ATTENTE, EN_COURS, TERMINE, ANNULEE, SUSPENDUE]
+          description: Current status of the project
+          example: "EN_COURS"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2024-01-02T10:30:00.000Z"
+      required:
+        - id
+        - title
+        - status
+        - updatedAt
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error type or category
+        message:
+          type: string
+          description: Detailed error message
+      required:
+        - error
+        - message
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authentication

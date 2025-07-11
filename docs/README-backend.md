@@ -675,6 +675,46 @@ GET /commandes/:id
 Authorization: Bearer token
 ```
 
+### 📋 Routes projets (`/projects`) - ✅ PRODUCTION READY
+
+```http
+# Récupérer mes projets actifs
+GET /projects
+Authorization: Bearer token
+
+# Response: 200 - Tableau des projets actifs (status=EN_COURS, limit=3)
+[
+  {
+    "id": "cmd-1-uuid",
+    "title": "Correction de roman fantastique",
+    "status": "EN_COURS",
+    "updatedAt": "2024-01-02T10:30:00.000Z"
+  },
+  {
+    "id": "cmd-2-uuid",
+    "title": "Relecture de nouvelle",
+    "status": "EN_COURS",
+    "updatedAt": "2024-01-01T14:15:00.000Z"
+  }
+]
+
+# Projets avec paramètres personnalisés
+GET /projects?status=active&limit=2
+GET /projects?status=EN_ATTENTE&limit=5
+GET /projects?status=TERMINE&limit=10
+Authorization: Bearer token
+
+# Paramètres disponibles :
+# - status: active|EN_ATTENTE|EN_COURS|TERMINE|ANNULEE|SUSPENDUE (défaut: active)
+# - limit: 1-20 (défaut: 3)
+
+# Response: 400 - Paramètres invalides
+{
+  "error": "Paramètre limit invalide",
+  "message": "Le paramètre limit doit être un nombre entre 1 et 20"
+}
+```
+
 ### 💳 Routes paiements (`/payments`) - ✅ PRODUCTION READY
 
 ```http

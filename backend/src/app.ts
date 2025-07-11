@@ -14,6 +14,7 @@ import messagesRoutes from "./routes/messages";
 import notificationsRoutes from "./routes/notifications";
 import pagesRoutes from "./routes/pages";
 import paymentsRoutes from "./routes/payments";
+import projectsRoutes from "./routes/projects";
 import webhookRoutes from "./routes/payments/webhook";
 import tarifsRoutes from "./routes/tarifs";
 
@@ -80,6 +81,9 @@ app.use("/notifications", notificationsRoutes);
 
 // Routes paiements (sans webhook qui est déjà géré ci-dessus)
 app.use("/payments", paymentsRoutes);
+
+// Routes projets (authentifiées)
+app.use("/projects", projectsRoutes);
 
 // Routes admin (protégées)
 app.use("/admin", adminRoutes);
