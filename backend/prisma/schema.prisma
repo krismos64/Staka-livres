@@ -302,23 +302,51 @@ model FAQ {
 
 /// Tarifs des services proposés
 model Tarif {
-  id           String   @id @default(uuid())
-  nom          String   @db.VarChar(255)
-  description  String   @db.Text
-  prix         Int // Prix en centimes (pour éviter les problèmes de float)
-  prixFormate  String   @db.VarChar(50) // Prix formaté pour affichage (ex: "2€", "350€")
-  typeService  String   @db.VarChar(100) // Type de service (Correction, Relecture, etc.)
-  dureeEstimee String?  @db.VarChar(100) // Durée estimée (ex: "7-8 jours")
-  actif        Boolean  @default(true)
-  ordre        Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String   @id @default(uuid())
+  nom             String   @db.VarChar(255)
+  description     String   @db.Text
+  prix            Int // Prix en centimes (pour éviter les problèmes de float)
+  prixFormate     String   @db.VarChar(50) // Prix formaté pour affichage (ex: "2€", "350€")
+  typeService     String   @db.VarChar(100) // Type de service (Correction, Relecture, etc.)
+  dureeEstimee    String?  @db.VarChar(100) // Durée estimée (ex: "7-8 jours")
+  actif           Boolean  @default(true)
+  ordre           Int      @default(0)
+  // Intégration Stripe pour synchronisation automatique
+  stripeProductId String?  @db.VarChar(255) // ID du produit Stripe associé
+  stripePriceId   String?  @db.VarChar(255) // ID du prix Stripe associé
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([actif])
   @@index([ordre])
   @@index([typeService])
   @@index([createdAt])
+  @@index([stripeProductId])
+  @@index([stripePriceId])
   @@map("tarifs")
+}
+
+/// Logs d'audit système
+model AuditLog {
+  id          String               @id @default(uuid())
+  timestamp   DateTime             @default(now())
+  adminEmail  String               @db.VarChar(255)
+  action      String               @db.VarChar(100)
+  targetType  AuditTargetType
+  targetId    String?              @db.VarChar(191)
+  details     String?              @db.Text
+  ipAddress   String?              @db.VarChar(45)
+  userAgent   String?              @db.Text
+  severity    AuditSeverity        @default(MEDIUM)
+  createdAt   DateTime             @default(now())
+
+  @@index([adminEmail])
+  @@index([action])
+  @@index([targetType])
+  @@index([severity])
+  @@index([timestamp])
+  @@index([createdAt])
+  @@map("audit_logs")
 }
 
 /// Énumération des rôles utilisateur
@@ -447,4 +475,23 @@ enum PageStatus {
   PUBLISHED
   ARCHIVED
   SCHEDULED
+}
+
+/// Types de cibles pour les logs d'audit
+enum AuditTargetType {
+  user
+  command
+  invoice
+  payment
+  file
+  auth
+  system
+}
+
+/// Niveaux de sévérité des logs d'audit
+enum AuditSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
 }

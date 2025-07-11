@@ -13,6 +13,7 @@ import MainLayout from "./components/layout/MainLayout";
 import { ToastProvider } from "./components/layout/ToastProvider";
 import ModalNouveauProjet from "./components/modals/ModalNouveauProjet";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import AdminCommandes from "./pages/admin/AdminCommandes";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminFactures from "./pages/admin/AdminFactures";
@@ -223,6 +224,7 @@ const AdminRoutes: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
         <Route path="pages" element={<AdminPages />} />
         <Route path="statistiques" element={<AdminStatistiques />} />
         <Route path="messagerie" element={<AdminMessagerie />} />
+        <Route path="audit-logs" element={<AdminAuditLogs />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="*" element={<PageIntrouvable />} />
       </Routes>

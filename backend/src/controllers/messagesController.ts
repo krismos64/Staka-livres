@@ -9,6 +9,59 @@ import {
 const prisma = new PrismaClient();
 
 /**
+ * Valide les pièces jointes d'un message
+ */
+async function validateAttachments(attachments: string[], userId: string): Promise<{ valid: boolean; validFiles: any[] }> {
+  if (!attachments || attachments.length === 0) {
+    return { valid: true, validFiles: [] };
+  }
+
+  // Limite nombre de pièces jointes
+  if (attachments.length > 10) {
+    throw new Error("Maximum 10 pièces jointes autorisées par message");
+  }
+
+  const validFiles = [];
+  let totalSize = 0;
+  
+  for (const fileId of attachments) {
+    // Validation format UUID
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(fileId)) {
+      throw new Error(`ID de fichier invalide: ${fileId}`);
+    }
+
+    // Vérifier existence et propriété
+    const file = await prisma.file.findFirst({
+      where: {
+        id: fileId,
+        uploadedById: userId,
+        // Seulement les fichiers de type document/image pour messagerie
+        type: { in: ['DOCUMENT', 'IMAGE'] }
+      }
+    });
+
+    if (!file) {
+      throw new Error(`Fichier non trouvé ou non autorisé: ${fileId}`);
+    }
+
+    // Vérifier taille individuelle (limite 50MB par fichier)
+    if (file.size > 50 * 1024 * 1024) {
+      throw new Error(`Fichier trop volumineux: ${file.filename} (max 50MB)`);
+    }
+
+    totalSize += file.size;
+    validFiles.push(file);
+  }
+
+  // Vérifier taille totale (limite 100MB total)
+  if (totalSize > 100 * 1024 * 1024) {
+    throw new Error("Taille totale des pièces jointes trop importante (max 100MB)");
+  }
+
+  return { valid: true, validFiles };
+}
+
+/**
  * Crée un message à partir d'un visiteur non authentifié.
  * Le message est assigné au premier admin disponible.
  */
@@ -152,18 +205,12 @@ export const createConversation = async (
       },
     });
 
-    // Gérer les pièces jointes si présentes
+    // Valider et gérer les pièces jointes si présentes
     if (attachments && attachments.length > 0) {
-      for (const fileId of attachments) {
-        // Vérifier que le fichier existe et appartient à l'utilisateur
-        const file = await prisma.file.findFirst({
-          where: {
-            id: fileId,
-            uploadedById: senderId,
-          },
-        });
-
-        if (file) {
+      try {
+        await validateAttachments(attachments, senderId);
+        
+        for (const fileId of attachments) {
           await prisma.messageAttachment.create({
             data: {
               messageId: message.id,
@@ -171,6 +218,14 @@ export const createConversation = async (
             },
           });
         }
+      } catch (error) {
+        // Supprimer le message créé en cas d'erreur de validation des fichiers
+        await prisma.message.delete({ where: { id: message.id } });
+        const errorMessage = error instanceof Error ? error.message : 'Erreur de validation inconnue';
+        res.status(400).json({ 
+          error: `Erreur de validation des pièces jointes: ${errorMessage}` 
+        });
+        return;
       }
     }
 
@@ -658,18 +713,12 @@ export const replyToThread = async (
       },
     });
 
-    // Attacher les fichiers si présents
+    // Valider et attacher les fichiers si présents
     if (attachments && attachments.length > 0) {
-      for (const fileId of attachments) {
-        // Vérifier que le fichier existe et appartient à l'utilisateur
-        const file = await prisma.file.findFirst({
-          where: {
-            id: fileId,
-            uploadedById: senderId,
-          },
-        });
-
-        if (file) {
+      try {
+        await validateAttachments(attachments, senderId);
+        
+        for (const fileId of attachments) {
           await prisma.messageAttachment.create({
             data: {
               messageId: newMessage.id,
@@ -677,6 +726,14 @@ export const replyToThread = async (
             },
           });
         }
+      } catch (error) {
+        // Supprimer le message créé en cas d'erreur de validation des fichiers
+        await prisma.message.delete({ where: { id: newMessage.id } });
+        const errorMessage = error instanceof Error ? error.message : 'Erreur de validation inconnue';
+        res.status(400).json({ 
+          error: `Erreur de validation des pièces jointes: ${errorMessage}` 
+        });
+        return;
       }
     }
 
@@ -984,18 +1041,12 @@ export const createAdminConversation = async (
       },
     });
 
-    // Attacher les fichiers si présents
+    // Valider et attacher les fichiers si présents
     if (attachments && attachments.length > 0) {
-      for (const fileId of attachments) {
-        // Vérifier que le fichier existe et appartient à l'utilisateur
-        const file = await prisma.file.findFirst({
-          where: {
-            id: fileId,
-            uploadedById: adminId,
-          },
-        });
-
-        if (file) {
+      try {
+        await validateAttachments(attachments, adminId);
+        
+        for (const fileId of attachments) {
           await prisma.messageAttachment.create({
             data: {
               messageId: message.id,
@@ -1003,6 +1054,14 @@ export const createAdminConversation = async (
             },
           });
         }
+      } catch (error) {
+        // Supprimer le message créé en cas d'erreur de validation des fichiers
+        await prisma.message.delete({ where: { id: message.id } });
+        const errorMessage = error instanceof Error ? error.message : 'Erreur de validation inconnue';
+        res.status(400).json({ 
+          error: `Erreur de validation des pièces jointes: ${errorMessage}` 
+        });
+        return;
       }
     }
 
@@ -1116,5 +1175,97 @@ export const deleteAdminConversation = async (
   } catch (error) {
     console.error("Erreur lors de la suppression de la conversation:", error);
     res.status(500).json({ error: "Erreur interne du serveur." });
+  }
+};
+
+/**
+ * Archive une conversation en marquant tous ses messages comme archivés
+ */
+export const archiveConversation = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user!.id;
+
+    if (!conversationId) {
+      res.status(400).json({ error: "ID de conversation requis." });
+      return;
+    }
+
+    // Marquer tous les messages de cette conversation comme archivés
+    const updatedCount = await prisma.message.updateMany({
+      where: {
+        conversationId: conversationId,
+        OR: [
+          { senderId: userId },
+          { receiverId: userId }
+        ]
+      },
+      data: {
+        isArchived: true,
+        updatedAt: new Date()
+      }
+    });
+
+    if (updatedCount.count === 0) {
+      res.status(404).json({ error: "Conversation non trouvée ou non autorisée." });
+      return;
+    }
+
+    res.json({
+      message: "Conversation archivée avec succès",
+      updatedCount: updatedCount.count
+    });
+  } catch (error) {
+    console.error("Erreur archivage conversation:", error);
+    res.status(500).json({ error: "Erreur lors de l'archivage" });
+  }
+};
+
+/**
+ * Désarchive une conversation en marquant tous ses messages comme non-archivés
+ */
+export const unarchiveConversation = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user!.id;
+
+    if (!conversationId) {
+      res.status(400).json({ error: "ID de conversation requis." });
+      return;
+    }
+
+    // Désarchiver tous les messages de cette conversation
+    const updatedCount = await prisma.message.updateMany({
+      where: {
+        conversationId: conversationId,
+        OR: [
+          { senderId: userId },
+          { receiverId: userId }
+        ]
+      },
+      data: {
+        isArchived: false,
+        updatedAt: new Date()
+      }
+    });
+
+    if (updatedCount.count === 0) {
+      res.status(404).json({ error: "Conversation non trouvée ou non autorisée." });
+      return;
+    }
+
+    res.json({
+      message: "Conversation désarchivée avec succès",
+      updatedCount: updatedCount.count
+    });
+  } catch (error) {
+    console.error("Erreur désarchivage conversation:", error);
+    res.status(500).json({ error: "Erreur lors du désarchivage" });
   }
 };

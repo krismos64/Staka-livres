@@ -1,6 +1,7 @@
 import { PrismaClient, Role } from "@prisma/client";
 import { Request, Response, Router } from "express";
 import { requireRole } from "../../middleware/requireRole";
+import { TarifStripeSyncService } from "../../services/tarifStripeSync";
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -116,6 +117,118 @@ router.get(
 );
 
 /**
+ * @route GET /admin/tarifs/stripe-status
+ * @desc Récupère le statut Stripe de tous les tarifs
+ * @access Admin seulement
+ */
+router.get(
+  "/stripe-status",
+  requireRole(Role.ADMIN),
+  async (req: Request, res: Response) => {
+    try {
+      console.log("📊 [ADMIN_TARIFS] Récupération statut Stripe");
+
+      const stripeStatus = await TarifStripeSyncService.getTarifsWithStripeInfo();
+
+      console.log(`✅ [ADMIN_TARIFS] Statut récupéré:`, stripeStatus.summary);
+
+      res.status(200).json({
+        success: true,
+        data: stripeStatus.tarifs,
+        summary: stripeStatus.summary,
+        message: "Statut Stripe récupéré avec succès",
+      });
+    } catch (error) {
+      console.error("❌ [ADMIN_TARIFS] Erreur récupération statut:", error);
+      res.status(500).json({
+        success: false,
+        error: "Erreur interne du serveur",
+        message: "Impossible de récupérer le statut Stripe",
+      });
+    }
+  }
+);
+
+/**
+ * @route GET /admin/tarifs/stats
+ * @desc Récupère les statistiques des tarifs
+ * @access Admin seulement
+ */
+router.get(
+  "/stats/overview",
+  requireRole(Role.ADMIN),
+  async (req: Request, res: Response) => {
+    try {
+      const [total, actifs, typesServices] = await Promise.all([
+        prisma.tarif.count(),
+        prisma.tarif.count({ where: { actif: true } }),
+        prisma.tarif.groupBy({
+          by: ["typeService"],
+          _count: { typeService: true },
+        }),
+      ]);
+
+      const stats = {
+        total,
+        actifs,
+        inactifs: total - actifs,
+        typesServices: typesServices.map((ts) => ({
+          type: ts.typeService,
+          count: ts._count.typeService,
+        })),
+      };
+
+      console.log(`✅ [ADMIN_TARIFS] Statistiques calculées: ${total} tarifs`);
+
+      res.status(200).json({
+        success: true,
+        data: stats,
+      });
+    } catch (error) {
+      console.error("❌ [ADMIN_TARIFS] Erreur calcul statistiques:", error);
+      res.status(500).json({
+        success: false,
+        error: "Erreur interne du serveur",
+        message: "Impossible de calculer les statistiques",
+      });
+    }
+  }
+);
+
+/**
+ * @route POST /admin/tarifs/sync-stripe
+ * @desc Synchronise tous les tarifs avec Stripe
+ * @access Admin seulement
+ */
+router.post(
+  "/sync-stripe",
+  requireRole(Role.ADMIN),
+  async (req: Request, res: Response) => {
+    try {
+      console.log("🔄 [ADMIN_TARIFS] Début synchronisation Stripe globale");
+
+      const syncResult = await TarifStripeSyncService.syncAllTarifsToStripe();
+
+      console.log(`✅ [ADMIN_TARIFS] Synchronisation terminée:`, syncResult.summary);
+
+      res.status(200).json({
+        success: syncResult.success,
+        data: syncResult.results,
+        summary: syncResult.summary,
+        message: `Synchronisation terminée: ${syncResult.summary.total} tarifs traités`,
+      });
+    } catch (error) {
+      console.error("❌ [ADMIN_TARIFS] Erreur synchronisation globale:", error);
+      res.status(500).json({
+        success: false,
+        error: "Erreur interne du serveur",
+        message: "Impossible de synchroniser avec Stripe",
+      });
+    }
+  }
+);
+
+/**
  * @route GET /admin/tarifs/:id
  * @desc Récupère un tarif spécifique par son ID
  * @access Admin seulement
@@ -196,10 +309,26 @@ router.post(
 
       console.log(`✅ [ADMIN_TARIFS] Nouveau tarif créé: ${nouveauTarif.nom}`);
 
+      // Synchronisation automatique avec Stripe si le tarif est actif
+      let stripeSync = null;
+      if (nouveauTarif.actif) {
+        try {
+          stripeSync = await TarifStripeSyncService.syncTarifToStripe(nouveauTarif);
+          console.log(`🔄 [STRIPE_SYNC] ${stripeSync.message}`);
+        } catch (error) {
+          console.error(`❌ [STRIPE_SYNC] Erreur sync création:`, error);
+        }
+      }
+
       res.status(201).json({
         success: true,
         data: nouveauTarif,
         message: "Tarif créé avec succès",
+        stripeSync: stripeSync ? {
+          success: stripeSync.success,
+          action: stripeSync.action,
+          message: stripeSync.message,
+        } : null,
       });
     } catch (error) {
       console.error("❌ [ADMIN_TARIFS] Erreur création tarif:", error);
@@ -294,10 +423,24 @@ router.put(
         updatedAt: tarifMisAJour.updatedAt,
       });
 
+      // Synchronisation automatique avec Stripe
+      let stripeSync = null;
+      try {
+        stripeSync = await TarifStripeSyncService.syncTarifToStripe(tarifMisAJour);
+        console.log(`🔄 [STRIPE_SYNC] ${stripeSync.message}`);
+      } catch (error) {
+        console.error(`❌ [STRIPE_SYNC] Erreur sync mise à jour:`, error);
+      }
+
       res.status(200).json({
         success: true,
         data: tarifMisAJour,
         message: "Tarif mis à jour avec succès",
+        stripeSync: stripeSync ? {
+          success: stripeSync.success,
+          action: stripeSync.action,
+          message: stripeSync.message,
+        } : null,
       });
     } catch (error) {
       console.error("❌ [ADMIN_TARIFS] Erreur mise à jour tarif:", error);
@@ -357,46 +500,46 @@ router.delete(
 );
 
 /**
- * @route GET /admin/tarifs/stats
- * @desc Récupère les statistiques des tarifs
+ * @route POST /admin/tarifs/:id/sync-stripe
+ * @desc Synchronise un tarif spécifique avec Stripe
  * @access Admin seulement
  */
-router.get(
-  "/stats/overview",
+router.post(
+  "/:id/sync-stripe",
   requireRole(Role.ADMIN),
   async (req: Request, res: Response) => {
     try {
-      const [total, actifs, typesServices] = await Promise.all([
-        prisma.tarif.count(),
-        prisma.tarif.count({ where: { actif: true } }),
-        prisma.tarif.groupBy({
-          by: ["typeService"],
-          _count: { typeService: true },
-        }),
-      ]);
+      const { id } = req.params;
 
-      const stats = {
-        total,
-        actifs,
-        inactifs: total - actifs,
-        typesServices: typesServices.map((ts) => ({
-          type: ts.typeService,
-          count: ts._count.typeService,
-        })),
-      };
+      const tarif = await prisma.tarif.findUnique({
+        where: { id },
+      });
 
-      console.log(`✅ [ADMIN_TARIFS] Statistiques calculées: ${total} tarifs`);
+      if (!tarif) {
+        return res.status(404).json({
+          success: false,
+          error: "Tarif non trouvé",
+          message: `Aucun tarif trouvé avec l'ID ${id}`,
+        });
+      }
+
+      console.log(`🔄 [ADMIN_TARIFS] Synchronisation Stripe: ${tarif.nom}`);
+
+      const syncResult = await TarifStripeSyncService.syncTarifToStripe(tarif);
+
+      console.log(`✅ [ADMIN_TARIFS] Sync individuel terminé: ${syncResult.message}`);
 
       res.status(200).json({
-        success: true,
-        data: stats,
+        success: syncResult.success,
+        data: syncResult,
+        message: syncResult.message,
       });
     } catch (error) {
-      console.error("❌ [ADMIN_TARIFS] Erreur calcul statistiques:", error);
+      console.error("❌ [ADMIN_TARIFS] Erreur synchronisation individuelle:", error);
       res.status(500).json({
         success: false,
         error: "Erreur interne du serveur",
-        message: "Impossible de calculer les statistiques",
+        message: "Impossible de synchroniser le tarif avec Stripe",
       });
     }
   }

@@ -532,5 +532,3 @@ describe("Invalidation des tarifs", () => {
     });
   });
 });
-
-});

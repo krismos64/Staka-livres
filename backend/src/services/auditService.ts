@@ -89,23 +89,24 @@ export class AuditService {
         console.log(`📄 [AUDIT DETAILS] ${JSON.stringify(event.details)}`);
       }
       
-      // TODO: Implémenter la persistence en base de données
-      // await prisma.auditLog.create({
-      //   data: {
-      //     timestamp: event.timestamp,
-      //     adminEmail: event.adminEmail,
-      //     action: event.action,
-      //     targetType: event.targetType,
-      //     targetId: event.targetId,
-      //     details: event.details ? JSON.stringify(event.details) : null,
-      //     ipAddress: event.ipAddress,
-      //     userAgent: event.userAgent,
-      //     severity: event.severity || 'MEDIUM',
-      //   },
-      // });
+      // Persistence en base de données
+      await prisma.auditLog.create({
+        data: {
+          timestamp: event.timestamp,
+          adminEmail: event.adminEmail,
+          action: event.action,
+          targetType: event.targetType as any,
+          targetId: event.targetId,
+          details: event.details ? JSON.stringify(event.details) : null,
+          ipAddress: event.ipAddress,
+          userAgent: event.userAgent,
+          severity: event.severity || 'MEDIUM',
+        },
+      });
       
     } catch (error) {
       console.error('❌ [AUDIT ERROR] Erreur lors de l\'enregistrement de l\'audit:', error);
+      // Ne pas faire échouer la requête si l'audit échoue
     }
   }
   

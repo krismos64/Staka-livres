@@ -1,5 +1,8 @@
+import { PrismaClient } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
 import { JwtPayload, verifyToken } from "../utils/token";
+
+const prisma = new PrismaClient();
 
 // Extension de l'interface Request pour inclure user
 declare global {
@@ -29,6 +32,8 @@ export const authenticateToken = async (
     const token = authHeader && authHeader.split(" ")[1]; // Format: "Bearer TOKEN"
 
     if (!token) {
+      // Log tentative d'accès sans token
+      console.log(`🔐 [AUTH] Tentative d'accès sans token - IP: ${req.ip} - UserAgent: ${req.get('user-agent')}`);
       res.status(401).json({ error: "Token d'accès requis" });
       return;
     }
@@ -36,23 +41,47 @@ export const authenticateToken = async (
     // Vérifier et décoder le token
     const decoded: JwtPayload = verifyToken(token);
 
-    // Pour les tests - créer un objet user basé sur le token
-    // (en production, on récupérerait depuis la DB)
-    const mockUser = {
-      id: decoded.userId,
-      prenom: decoded.email.includes("admin") ? "Admin" : "Test",
-      nom: decoded.email.includes("admin") ? "Staka" : "User",
-      email: decoded.email,
-      role: decoded.role,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    // CORRECTION CRITIQUE : Récupérer l'utilisateur depuis la base de données
+    const user = await prisma.user.findUnique({
+      where: {
+        id: decoded.userId,
+      },
+      select: {
+        id: true,
+        prenom: true,
+        nom: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!user) {
+      // Log tentative d'accès avec token invalide
+      console.log(`🔐 [AUTH] Token valide mais utilisateur introuvable - UserID: ${decoded.userId} - IP: ${req.ip}`);
+      res.status(401).json({ error: "Utilisateur non trouvé" });
+      return;
+    }
+
+    if (!user.isActive) {
+      // Log tentative d'accès avec compte inactif
+      console.log(`🔐 [AUTH] Tentative d'accès avec compte inactif - User: ${user.email} - IP: ${req.ip}`);
+      res.status(401).json({ error: "Compte désactivé" });
+      return;
+    }
+
+    // Log connexion réussie pour monitoring
+    console.log(`✅ [AUTH] Connexion réussie - User: ${user.email} - Role: ${user.role} - IP: ${req.ip}`);
 
     // Attacher l'utilisateur à la requête
-    req.user = mockUser;
+    req.user = user;
     next();
   } catch (error) {
+    // Log tentative d'accès avec token invalide
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.log(`❌ [AUTH] Token invalide - IP: ${req.ip} - Error: ${errorMessage}`);
     res.status(401).json({ error: "Token invalide" });
   }
 };

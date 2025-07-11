@@ -2,6 +2,7 @@ import { Role } from "@prisma/client";
 import { Request, Response, Router } from "express";
 import { authenticateToken } from "../middleware/auth";
 import { requireRole } from "../middleware/requireRole";
+import auditRoutes from "./admin/audit";
 import commandeRoutes from "./admin/commandes";
 import factureRoutes from "./admin/factures";
 import faqRoutes from "./admin/faq";
@@ -54,5 +55,8 @@ router.use("/stats", statsRoutes);
 
 // 📬 GESTION DES MESSAGES
 router.use("/messages", messageRoutes);
+
+// 🔐 GESTION DES LOGS D'AUDIT
+router.use("/audit", auditRoutes);
 
 export default router;

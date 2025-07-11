@@ -10,7 +10,10 @@
     "test:watch": "jest --watch",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
-    "prisma:seed": "ts-node prisma/seed.ts"
+    "prisma:seed": "ts-node prisma/seed.ts",
+    "stripe:sync-all": "ts-node scripts/sync-tarifs-stripe.ts",
+    "stripe:sync-dry": "ts-node scripts/sync-tarifs-stripe.ts --dry-run",
+    "stripe:sync-verbose": "ts-node scripts/sync-tarifs-stripe.ts --verbose"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.837.0",
@@ -28,6 +31,7 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
+    "node-fetch": "^3.3.2",
     "pdfkit": "^0.17.1",
     "stripe": "^18.2.1",
     "uuid": "^11.1.0",

@@ -15,7 +15,8 @@ export type AdminSection =
   | "tarifs"
   | "pages"
   | "statistiques"
-  | "messagerie";
+  | "messagerie"
+  | "audit-logs";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -140,6 +141,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
       label: "Pages statiques",
       icon: "fas fa-file-alt",
     },
+    {
+      id: "audit-logs",
+      label: "Logs/Audit",
+      icon: "fas fa-shield-alt",
+    },
   ];
 
   const getPageTitle = (): string => {
@@ -154,6 +160,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
         tarifs: "Gestion des tarifs",
         pages: "Pages statiques",
         statistiques: "Statistiques avancées",
+        "audit-logs": "Logs d'Audit",
       }[activeSection] || "Administration";
 
     return isDemo ? `${baseTitle} (Démo)` : baseTitle;
@@ -171,6 +178,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
         tarifs: "Configuration des prix et services",
         pages: "Contenu éditorial et pages marketing",
         statistiques: "Analyses et rapports détaillés",
+        "audit-logs": "Supervision des activités administratives et de sécurité",
       }[activeSection] || "Panel d'administration"
     );
   };

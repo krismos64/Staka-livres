@@ -1,6 +1,7 @@
 import { Role } from "@prisma/client";
 import { Router } from "express";
 import {
+  archiveConversation,
   createAdminConversation,
   createConversation,
   createVisitorMessage,
@@ -12,6 +13,7 @@ import {
   markConversationAsRead,
   replyToConversation,
   replyToThread,
+  unarchiveConversation,
 } from "../controllers/messagesController";
 import { authenticateToken } from "../middleware/auth";
 import { requireRole } from "../middleware/requireRole";
@@ -44,6 +46,13 @@ router.post("/conversations/:conversationId/reply", replyToConversation);
 
 // Marquer une conversation comme lue
 router.post("/conversations/:conversationId/mark-read", markConversationAsRead);
+
+// NOUVELLES ROUTES D'ARCHIVAGE
+// Archiver une conversation
+router.patch("/conversations/:conversationId/archive", archiveConversation);
+
+// Désarchiver une conversation
+router.patch("/conversations/:conversationId/unarchive", unarchiveConversation);
 
 // NOUVELLES ROUTES POUR LES THREADS
 // Récupérer les messages d'un thread utilisateur
