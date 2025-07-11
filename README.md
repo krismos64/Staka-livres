@@ -117,7 +117,7 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 ### 👨‍💼 **Administration et Production**
 
 - **[Guide Admin Unifié](docs/ADMIN_GUIDE_UNIFIED.md)** : Vue d'ensemble espace admin, sécurité et mode démo
-- **[Guide Facturation Stripe](docs/BILLING_AND_INVOICES.md)** : Intégration paiements, webhooks et gestion des factures
+- **[Guide Facturation Stripe](docs/BILLING_AND_INVOICES.md)** : Intégration paiements, webhooks, moyens de paiement et statistiques
 - **[Guide Webhooks](docs/WEBHOOK_IMPLEMENTATION.md)** : Implémentation Stripe et gestion des événements
 
 ### 🔧 **Guides Techniques Spécialisés**
@@ -188,6 +188,21 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **Téléchargement PDF** : Blob API avec trigger automatique
 - **Gestion d'erreurs** : Retry automatique et toasts informatifs
 - **Performance** : Navigation instantanée grâce au cache
+
+### 💳 **Système de Moyens de Paiement et Statistiques (NOUVEAU 2025)**
+
+- **API 3 endpoints** : GET /payment-methods, PUT /:id/default, DELETE /:id
+- **Synchronisation Stripe** : Gestion customer.invoice_settings.default_payment_method
+- **Hooks React Query** : `usePaymentMethods()`, `useSetDefaultPaymentMethod()`, `useDeletePaymentMethod()`
+- **Cache intelligent** : 2 minutes pour cartes, invalidation automatique sur mutations
+- **UX optimisée** : Boutons "Définir par défaut" + "Supprimer" avec confirmations
+- **Sécurité renforcée** : Validation UUID, vérification propriété, soft delete
+- **API Statistiques annuelles** : GET /stats/annual?year=YYYY avec agrégation
+- **Calculs automatiques** : Dépenses (sum), pages corrigées (estimation), commandes (count)
+- **Statut VIP automatique** : > 1000€ = 5% réduction avec message personnalisé
+- **BillingPage mise à jour** : Suppression mocks, données réelles Stripe + stats live
+- **Tests complets** : 200+ lignes de tests unitaires avec stubs Stripe
+- **Documentation complète** : OpenAPI, BILLING_AND_INVOICES.md mis à jour
 
 ### 👨‍💼 **Espace Administrateur Complet (10 Pages)**
 

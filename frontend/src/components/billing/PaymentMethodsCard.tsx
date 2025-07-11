@@ -1,10 +1,11 @@
 import React from "react";
-import { PaymentMethod } from "../../pages/BillingPage";
+import { PaymentMethodUI } from "../../pages/BillingPage";
 
 interface PaymentMethodsCardProps {
-  paymentMethods: PaymentMethod[];
+  paymentMethods: PaymentMethodUI[];
   onAdd: () => void;
   onRemove: (paymentMethodId: string) => void;
+  onSetDefault?: (paymentMethodId: string) => void;
 }
 
 // Composant pour gérer les moyens de paiement
@@ -12,9 +13,10 @@ export function PaymentMethodsCard({
   paymentMethods,
   onAdd,
   onRemove,
+  onSetDefault,
 }: PaymentMethodsCardProps) {
   // Fonction pour obtenir l'icône selon le type de carte
-  const getCardIcon = (type: PaymentMethod["type"]) => {
+  const getCardIcon = (type: PaymentMethodUI["type"]) => {
     const cardIcons = {
       visa: "fab fa-cc-visa text-blue-700",
       mastercard: "fab fa-cc-mastercard text-red-600",
@@ -25,7 +27,7 @@ export function PaymentMethodsCard({
   };
 
   // Fonction pour formater l'affichage de la carte
-  const formatCardDisplay = (method: PaymentMethod) => {
+  const formatCardDisplay = (method: PaymentMethodUI) => {
     const cardNames = {
       visa: "Visa",
       mastercard: "Mastercard",
@@ -72,6 +74,18 @@ export function PaymentMethodsCard({
                 <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
                   Par défaut
                 </span>
+              )}
+
+              {/* Bouton définir par défaut (si pas déjà par défaut) */}
+              {!method.isDefault && onSetDefault && (
+                <button
+                  onClick={() => onSetDefault(method.id)}
+                  className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-blue-600 transition-all rounded-lg hover:bg-blue-50"
+                  aria-label={`Définir ${formatCardDisplay(method)} comme méthode par défaut`}
+                  title="Définir comme méthode par défaut"
+                >
+                  <i className="fas fa-star text-sm"></i>
+                </button>
               )}
 
               {/* Bouton de suppression au hover */}

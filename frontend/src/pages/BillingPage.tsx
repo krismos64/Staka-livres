@@ -6,7 +6,13 @@ import { InvoiceHistoryCard } from "../components/billing/InvoiceHistoryCard";
 import { PaymentMethodsCard } from "../components/billing/PaymentMethodsCard";
 import { SupportCard } from "../components/billing/SupportCard";
 import EmptyState from "../components/common/EmptyState";
+import { useAnnualStats } from "../hooks/useAnnualStats";
 import { useInvoice, useInvoices } from "../hooks/useInvoices";
+import {
+  useDeletePaymentMethod,
+  usePaymentMethods,
+  useSetDefaultPaymentMethod,
+} from "../hooks/usePaymentMethods";
 import {
   buildApiUrl,
   downloadInvoice,
@@ -32,7 +38,7 @@ export interface InvoiceItem {
   amount: string;
 }
 
-export interface PaymentMethod {
+export interface PaymentMethodUI {
   id: string;
   type: "visa" | "mastercard" | "amex";
   last4: string;
@@ -41,7 +47,7 @@ export interface PaymentMethod {
   isDefault: boolean;
 }
 
-export interface AnnualStats {
+export interface AnnualStatsUI {
   completedProjects: number;
   pagesCorrected: number;
   totalSpent: string;
@@ -50,26 +56,36 @@ export interface AnnualStats {
   vipMessage: string;
 }
 
-// Données mock pour les éléments non dynamiques pour l'instant
-const mockPaymentMethods: PaymentMethod[] = [
-  {
-    id: "pm_1",
-    type: "visa",
-    last4: "4242",
-    expiryMonth: 12,
-    expiryYear: 27,
-    isDefault: true,
-  },
-];
+// Helper pour mapper le brand Stripe vers le type UI
+function mapBrandToType(brand: string): "visa" | "mastercard" | "amex" {
+  switch (brand.toLowerCase()) {
+    case "visa":
+      return "visa";
+    case "mastercard":
+      return "mastercard";
+    case "amex":
+    case "american_express":
+      return "amex";
+    default:
+      return "visa"; // Fallback
+  }
+}
 
-const mockAnnualStats: AnnualStats = {
-  completedProjects: 12,
-  pagesCorrected: 2840,
-  totalSpent: "5,680€",
-  savings: "240€",
-  vip: true,
-  vipMessage: "Statut VIP atteint ! Réduction de 5% sur tous vos projets.",
-};
+// Helper pour formater les statistiques annuelles
+function formatAnnualStats(stats: { totalSpent: number; pagesCorrected: number; orders: number }): AnnualStatsUI {
+  const totalSpentEuros = stats.totalSpent / 100; // Convertir centimes en euros
+  const vip = totalSpentEuros > 1000; // VIP si plus de 1000€ dépensés
+  const savings = vip ? Math.round(totalSpentEuros * 0.05) : 0; // 5% de réduction VIP
+
+  return {
+    completedProjects: stats.orders,
+    pagesCorrected: stats.pagesCorrected,
+    totalSpent: `${totalSpentEuros.toLocaleString('fr-FR')}€`,
+    savings: `${savings}€`,
+    vip,
+    vipMessage: vip ? "Statut VIP atteint ! Réduction de 5% sur tous vos projets." : "Dépensez plus de 1000€ pour devenir VIP !",
+  };
+}
 
 // Helper pour transformer une InvoiceAPI en Invoice UI
 function mapInvoiceApiToInvoice(invoiceApi: InvoiceAPI): Invoice {
@@ -107,9 +123,7 @@ export default function BillingPage() {
   const [invoiceHistory, setInvoiceHistory] = useState<Invoice[]>([]);
   const [hasMore, setHasMore] = useState(true);
 
-  // Données statiques et modales
-  const [paymentMethods] = useState<PaymentMethod[]>(mockPaymentMethods);
-  const [annualStats] = useState<AnnualStats>(mockAnnualStats);
+  // États pour les modales et interactions
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(
     null
   );
@@ -117,6 +131,24 @@ export default function BillingPage() {
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
   const { showToast } = useToasts();
+
+  // Hooks React Query pour les données réelles
+  const { data: paymentMethodsData, isLoading: isLoadingPaymentMethods } = usePaymentMethods();
+  const { data: annualStatsData, isLoading: isLoadingAnnualStats } = useAnnualStats(new Date().getFullYear());
+  const setDefaultPaymentMethodMutation = useSetDefaultPaymentMethod();
+  const deletePaymentMethodMutation = useDeletePaymentMethod();
+
+  // Transformer les données pour l'interface
+  const paymentMethods: PaymentMethodUI[] = paymentMethodsData?.map(pm => ({
+    id: pm.id,
+    type: mapBrandToType(pm.brand),
+    last4: pm.last4,
+    expiryMonth: pm.expMonth,
+    expiryYear: pm.expYear,
+    isDefault: pm.isDefault,
+  })) || [];
+
+  const annualStats: AnnualStatsUI | null = annualStatsData ? formatAnnualStats(annualStatsData) : null;
 
   // Hooks React Query pour les factures
   const {
@@ -313,12 +345,42 @@ export default function BillingPage() {
     );
   };
 
-  const handleRemovePaymentMethod = (paymentMethodId: string) => {
-    showToast(
-      "info",
-      "Fonctionnalité à venir",
-      "La suppression de moyens de paiement sera bientôt disponible."
-    );
+  const handleSetDefaultPaymentMethod = async (paymentMethodId: string) => {
+    try {
+      await setDefaultPaymentMethodMutation.mutateAsync(paymentMethodId);
+      showToast(
+        "success",
+        "Moyen de paiement mis à jour",
+        "Ce moyen de paiement est maintenant votre méthode par défaut."
+      );
+    } catch (error) {
+      showToast(
+        "error",
+        "Erreur",
+        error instanceof Error ? error.message : "Impossible de mettre à jour le moyen de paiement."
+      );
+    }
+  };
+
+  const handleRemovePaymentMethod = async (paymentMethodId: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce moyen de paiement ?")) {
+      return;
+    }
+
+    try {
+      await deletePaymentMethodMutation.mutateAsync(paymentMethodId);
+      showToast(
+        "success",
+        "Moyen de paiement supprimé",
+        "Le moyen de paiement a été supprimé avec succès."
+      );
+    } catch (error) {
+      showToast(
+        "error",
+        "Erreur",
+        error instanceof Error ? error.message : "Impossible de supprimer le moyen de paiement."
+      );
+    }
   };
 
   const handleContactSupport = () => {
@@ -336,15 +398,15 @@ export default function BillingPage() {
   };
 
   // Affichage de chargement
-  if (isLoading || isFetching) {
+  if (isLoading || isFetching || isLoadingPaymentMethods || isLoadingAnnualStats) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">
             {isLoading
-              ? "Chargement de vos factures..."
-              : "Chargement de plus de factures..."}
+              ? "Chargement de vos données..."
+              : "Chargement..."}
           </p>
         </div>
       </div>
@@ -357,7 +419,7 @@ export default function BillingPage() {
       <div className="space-y-8">
         {/* Stats annuelles et support */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <AnnualSummaryCard stats={annualStats} />
+          {annualStats && <AnnualSummaryCard stats={annualStats} />}
           <SupportCard onContact={handleContactSupport} />
         </div>
 
@@ -366,6 +428,7 @@ export default function BillingPage() {
           paymentMethods={paymentMethods}
           onAdd={handleAddPaymentMethod}
           onRemove={handleRemovePaymentMethod}
+          onSetDefault={handleSetDefaultPaymentMethod}
         />
 
         {/* État vide pour les factures */}
@@ -407,7 +470,7 @@ export default function BillingPage() {
 
       {/* Grille des cartes secondaires */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <AnnualSummaryCard stats={annualStats} />
+        {annualStats && <AnnualSummaryCard stats={annualStats} />}
         <SupportCard onContact={handleContactSupport} />
       </div>
 
@@ -416,6 +479,7 @@ export default function BillingPage() {
         paymentMethods={paymentMethods}
         onAdd={handleAddPaymentMethod}
         onRemove={handleRemovePaymentMethod}
+        onSetDefault={handleSetDefaultPaymentMethod}
       />
 
       {/* Bouton charger plus si nécessaire */}

@@ -149,6 +149,125 @@ const stats = {
 
 ---
 
+## 💳 **Partie 2bis : Moyens de Paiement et Statistiques - Nouveauté 2025**
+
+### **API Moyens de Paiement - 3 Endpoints**
+
+Le système intègre maintenant une gestion complète des moyens de paiement avec synchronisation Stripe.
+
+| Méthode  | Endpoint                           | Description                              | Statut 2025     |
+| -------- | ---------------------------------- | ---------------------------------------- | --------------- |
+| `GET`    | `/payment-methods`                 | Liste moyens de paiement (triés desc)   | ✅ **Complete** |
+| `PUT`    | `/payment-methods/:id/default`     | Définir carte par défaut (Stripe sync)  | ✅ **Complete** |
+| `DELETE` | `/payment-methods/:id`             | Supprimer carte (détacher Stripe)       | ✅ **Complete** |
+
+### **API Statistiques Annuelles - Endpoint Spécialisé**
+
+| Méthode | Endpoint              | Description                                        | Statut 2025     |
+| ------- | --------------------- | -------------------------------------------------- | --------------- |
+| `GET`   | `/stats/annual?year=` | Agrégation : dépenses + pages + commandes/année   | ✅ **Complete** |
+
+**Réponse type :**
+```json
+{
+  "totalSpent": 234800,     // Montant en centimes
+  "pagesCorrected": 1174,   // Pages corrigées estimées
+  "orders": 5               // Nombre de commandes
+}
+```
+
+### **Hooks React Query - Gestion Paiements**
+
+**`usePaymentMethods.ts` - 87 lignes :**
+
+```typescript
+// Hook principal - Liste cartes avec cache 2 min
+export function usePaymentMethods() {
+  return useQuery<PaymentMethod[], Error>({
+    queryKey: ["paymentMethods"],
+    queryFn: fetchPaymentMethods,
+    staleTime: 2 * 60 * 1000, // 2 minutes selon spécifications
+    retry: 2,
+    refetchOnWindowFocus: false,
+  });
+}
+
+// Mutation - Définir carte par défaut + invalidation
+export function useSetDefaultPaymentMethod() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: setDefaultPaymentMethod,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["paymentMethods"] });
+    },
+  });
+}
+
+// Mutation - Supprimer carte + invalidation
+export function useDeletePaymentMethod() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deletePaymentMethod,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["paymentMethods"] });
+    },
+  });
+}
+```
+
+### **Stripe Service Étendu**
+
+**Nouvelles méthodes intégrées :**
+
+```typescript
+export const stripeService = {
+  // Définir carte par défaut dans customer.invoice_settings
+  async setDefaultPaymentMethod(paymentMethodId: string, customerEmail: string) {
+    const customer = await stripe.customers.list({ email: customerEmail });
+    await stripe.customers.update(customer.data[0].id, {
+      invoice_settings: { default_payment_method: paymentMethodId }
+    });
+  },
+
+  // Détacher carte du compte customer
+  async detachPaymentMethod(paymentMethodId: string) {
+    await stripe.paymentMethods.detach(paymentMethodId);
+  }
+};
+```
+
+### **BillingPage Mise à Jour - Données Réelles**
+
+**Suppression des mocks + intégration live :**
+
+- ✅ **PaymentMethodsCard** : Données réelles Stripe
+- ✅ **AnnualSummaryCard** : Statistiques calculées live
+- ✅ **Boutons fonctionnels** : "Définir par défaut" + "Supprimer"
+- ✅ **UX optimisée** : Loading states + error handling
+- ✅ **Cache intelligent** : 2 min payment methods, 5 min stats
+
+**Gestion VIP automatique :**
+```typescript
+function formatAnnualStats(stats: AnnualStats): AnnualStatsUI {
+  const totalSpentEuros = stats.totalSpent / 100;
+  const vip = totalSpentEuros > 1000; // VIP si > 1000€
+  const savings = vip ? Math.round(totalSpentEuros * 0.05) : 0; // 5% réduction
+  
+  return {
+    completedProjects: stats.orders,
+    pagesCorrected: stats.pagesCorrected,
+    totalSpent: `${totalSpentEuros.toLocaleString('fr-FR')}€`,
+    savings: `${savings}€`,
+    vip,
+    vipMessage: vip 
+      ? "Statut VIP atteint ! Réduction de 5% sur tous vos projets."
+      : "Dépensez plus de 1000€ pour devenir VIP !",
+  };
+}
+```
+
+---
+
 ## 🖥️ **Partie 3 : Frontend Client (`BillingPage`) - React Query**
 
 ### **Architecture Frontend Modernisée**

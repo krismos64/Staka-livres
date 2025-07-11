@@ -117,6 +117,56 @@ export const stripeService = {
     });
   },
 
+  // Définir un moyen de paiement par défaut
+  async setDefaultPaymentMethod(paymentMethodId: string, customerEmail: string) {
+    if (isDevelopmentMock) {
+      // Mode mock pour le développement
+      console.log("🚧 [STRIPE MOCK] Définition moyen de paiement par défaut:", paymentMethodId);
+      return { success: true };
+    }
+
+    if (!stripe) {
+      throw new Error("Stripe non configuré");
+    }
+
+    // Trouver le customer par email
+    const customers = await stripe.customers.list({
+      email: customerEmail,
+      limit: 1,
+    });
+
+    if (customers.data.length === 0) {
+      throw new Error("Customer Stripe introuvable");
+    }
+
+    const customer = customers.data[0];
+
+    // Mettre à jour le moyen de paiement par défaut
+    await stripe.customers.update(customer.id, {
+      invoice_settings: {
+        default_payment_method: paymentMethodId,
+      },
+    });
+
+    return { success: true };
+  },
+
+  // Détacher un moyen de paiement
+  async detachPaymentMethod(paymentMethodId: string) {
+    if (isDevelopmentMock) {
+      // Mode mock pour le développement
+      console.log("🚧 [STRIPE MOCK] Détachement moyen de paiement:", paymentMethodId);
+      return { success: true };
+    }
+
+    if (!stripe) {
+      throw new Error("Stripe non configuré");
+    }
+
+    await stripe.paymentMethods.detach(paymentMethodId);
+    return { success: true };
+  },
+
   // Webhook signature verification
   constructEvent(body: Buffer, signature: string) {
     if (isDevelopmentMock) {

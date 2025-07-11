@@ -13,8 +13,10 @@ import invoiceRoutes from "./routes/invoice";
 import messagesRoutes from "./routes/messages";
 import notificationsRoutes from "./routes/notifications";
 import pagesRoutes from "./routes/pages";
+import paymentMethodsRoutes from "./routes/paymentMethods";
 import paymentsRoutes from "./routes/payments";
 import projectsRoutes from "./routes/projects";
+import statsRoutes from "./routes/stats";
 import webhookRoutes from "./routes/payments/webhook";
 import tarifsRoutes from "./routes/tarifs";
 
@@ -81,6 +83,12 @@ app.use("/notifications", notificationsRoutes);
 
 // Routes paiements (sans webhook qui est déjà géré ci-dessus)
 app.use("/payments", paymentsRoutes);
+
+// Routes moyens de paiement (authentifiées)
+app.use("/payment-methods", paymentMethodsRoutes);
+
+// Routes statistiques utilisateur (authentifiées)
+app.use("/stats", statsRoutes);
 
 // Routes projets (authentifiées)
 app.use("/projects", projectsRoutes);
