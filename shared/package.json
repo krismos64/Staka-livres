@@ -1,0 +1,11 @@
+{
+  "name": "@staka/shared",
+  "version": "1.0.0",
+  "main": "types/index.ts",
+  "types": "types/index.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc"
+  },
+  "description": "Types et utilitaires partagés entre frontend et backend"
+}

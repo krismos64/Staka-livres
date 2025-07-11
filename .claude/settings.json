@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(prisma *)",
+      "Bash(docker *)",
+      "Bash(docker-compose *)",
+      "Bash(gh *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(pwd)",
+      "Bash(whoami)",
+      "Read(./*)",
+      "Read(../*)",
+      "Read(~/.zshrc)",
+      "mcp__context7"
+    ],
+
+    "defaultMode": "acceptEdits"
+  },
+  "env": {
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
+    "OTEL_METRICS_EXPORTER": "otlp"
+  },
+  "enabledMcpjsonServers": ["context7"],
+  "enableAllProjectMcpServers": true
+}

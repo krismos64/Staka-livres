@@ -1,0 +1,51 @@
+{
+  "data": [
+    {
+      "id": "tarif-1",
+      "nom": "Correction Standard",
+      "description": "Correction orthographique et grammaticale",
+      "prix": 2,
+      "prixFormate": "2€",
+      "typeService": "Correction",
+      "dureeEstimee": "7-10 jours",
+      "actif": true,
+      "ordre": 1,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "tarif-2",
+      "nom": "Pack KDP Autoédition",
+      "description": "Maquette complète pour autoédition",
+      "prix": 350,
+      "prixFormate": "350€",
+      "typeService": "Mise en forme",
+      "dureeEstimee": "5-7 jours",
+      "actif": true,
+      "ordre": 2,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "tarif-3",
+      "nom": "Réécriture Avancée",
+      "description": "Réécriture complète avec suggestions",
+      "prix": 4,
+      "prixFormate": "4€",
+      "typeService": "Réécriture",
+      "dureeEstimee": "10-14 jours",
+      "actif": true,
+      "ordre": 3,
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 3,
+    "totalPages": 1,
+    "hasNextPage": false,
+    "hasPreviousPage": false
+  }
+}

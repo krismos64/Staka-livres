@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test AdminAPI</title>
+  </head>
+  <body>
+    <h1>Test AdminAPI - getCommandes</h1>
+    <button onclick="testAPI()">Tester getCommandes</button>
+    <div id="result"></div>
+
+    <script>
+      // Configuration API
+      const API_BASE_URL = "http://localhost:3001";
+
+      // Simulation token admin (remplace par un vrai token)
+      const ADMIN_TOKEN =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhMjdjNjUyMS00ODg0LTQ0OTEtYWU1Yy04MzA1Yjc0YzViODEiLCJlbWFpbCI6ImFkbWluQHN0YWthLWVkaXRpb25zLmNvbSIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTc1MTM3Mjg1NywiZXhwIjoxNzUxOTc3NjU3LCJpc3MiOiJzdGFrYS1saXZyZXMifQ.97GBIjaPgLnr-SwEX6zz2FyjwhRSRV7sju3zBZHmyQY";
+
+      async function testAPI() {
+        const resultDiv = document.getElementById("result");
+        resultDiv.innerHTML = "<p>Test en cours...</p>";
+
+        try {
+          console.log("🔍 Test direct API adminAPI.getCommandes");
+
+          const response = await fetch(
+            `${API_BASE_URL}/admin/commandes?page=1&limit=10`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${ADMIN_TOKEN}`,
+              },
+            }
+          );
+
+          const data = await response.json();
+
+          console.log("📊 Réponse brute:", data);
+          console.log("📋 Données commandes:", data.data);
+          console.log("📈 Statistiques:", data.stats);
+
+          if (data.data && data.data.length > 0) {
+            resultDiv.innerHTML = `
+                        <h2>✅ SUCCESS!</h2>
+                        <p><strong>Nombre de commandes:</strong> ${
+                          data.data.length
+                        }</p>
+                        <p><strong>Total stats:</strong> ${
+                          data.stats?.total || "N/A"
+                        }</p>
+                        <h3>Première commande:</h3>
+                        <pre>${JSON.stringify(data.data[0], null, 2)}</pre>
+                    `;
+          } else {
+            resultDiv.innerHTML = `
+                        <h2>⚠️ PROBLÈME</h2>
+                        <p>API répond mais data vide</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+          }
+        } catch (error) {
+          console.error("❌ Erreur test API:", error);
+          resultDiv.innerHTML = `
+                    <h2>❌ ERREUR</h2>
+                    <p>${error.message}</p>
+                `;
+        }
+      }
+
+      // Test automatique au chargement
+      window.onload = () => {
+        console.log("🚀 Page de test chargée");
+        testAPI();
+      };
+    </script>
+  </body>
+</html>
