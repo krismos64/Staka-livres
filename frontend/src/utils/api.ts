@@ -61,7 +61,6 @@ export const getPublicHeaders = (): HeadersInit => {
   };
 };
 
-<<<<<<< HEAD
 // Helper pour les uploads de fichiers (sans Content-Type)
 export const getFileUploadHeaders = (): HeadersInit => {
   const token = localStorage.getItem("auth_token");
@@ -71,8 +70,6 @@ export const getFileUploadHeaders = (): HeadersInit => {
   };
 };
 
-=======
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
 // Configuration Stripe (prix par type de service)
 export const stripeConfig = {
   priceIds: {

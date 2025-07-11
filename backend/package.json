@@ -16,15 +16,10 @@
     "@aws-sdk/client-s3": "^3.837.0",
     "@prisma/client": "^6.10.1",
     "@sendgrid/mail": "^8.1.5",
-<<<<<<< HEAD
     "@types/multer": "^2.0.0",
     "@types/pdfkit": "^0.14.0",
     "@types/stripe": "^8.0.416",
     "@types/uuid": "^10.0.0",
-=======
-    "@types/pdfkit": "^0.14.0",
-    "@types/stripe": "^8.0.416",
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -32,15 +27,10 @@
     "express-rate-limit": "^7.1.5",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
-<<<<<<< HEAD
     "multer": "^2.0.1",
     "pdfkit": "^0.17.1",
     "stripe": "^18.2.1",
     "uuid": "^11.1.0",
-=======
-    "pdfkit": "^0.17.1",
-    "stripe": "^18.2.1",
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
     "winston": "^3.11.0",
     "zod": "^3.22.4"
   },

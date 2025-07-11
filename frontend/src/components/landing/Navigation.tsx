@@ -2,16 +2,13 @@ import { useEffect, useState } from "react";
 
 interface NavigationProps {
   onLoginClick?: () => void;
-<<<<<<< HEAD
   onChatClick?: () => void;
 }
 
-export default function Navigation({ onLoginClick, onChatClick }: NavigationProps) {
-=======
-}
-
-export default function Navigation({ onLoginClick }: NavigationProps) {
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
+export default function Navigation({
+  onLoginClick,
+  onChatClick,
+}: NavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showPromo, setShowPromo] = useState(true);
@@ -34,7 +31,6 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
     }
   };
 
-<<<<<<< HEAD
   const handleChatClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (onChatClick) {
@@ -42,8 +38,6 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
     }
   };
 
-=======
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
   const navLinks = [
     { href: "#services", text: "Services" },
     { href: "#packs", text: "Packs" },
@@ -88,22 +82,13 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
 
             {/* Desktop CTA */}
             <div className="hidden lg:flex items-center gap-4">
-<<<<<<< HEAD
               <button
                 onClick={handleChatClick}
-=======
-              <a
-                href="#chat"
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
                 className="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold text-sm hover:bg-green-600 transition-all shadow-sm flex items-center gap-2"
               >
                 <i className="fas fa-comments"></i>
                 Chat
-<<<<<<< HEAD
               </button>
-=======
-              </a>
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
               <a
                 href="#contact"
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold text-sm hover:bg-blue-700 transition-all shadow-sm"
@@ -198,29 +183,22 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
           </nav>
 
           <div className="p-6 border-t border-gray-100 space-y-3">
-<<<<<<< HEAD
             <button
-              onClick={(e) => {
-                handleChatClick(e);
+              onClick={() => {
+                handleChatClick({
+                  preventDefault: () => {},
+                } as React.MouseEvent);
                 toggleMobileMenu();
               }}
-              className="flex items-center justify-center w-full text-center bg-green-500 text-white px-5 py-3 rounded-lg font-semibold text-base hover:bg-green-600 transition-all shadow-sm"
+              className="w-full bg-green-500 text-white py-3 rounded-lg font-semibold text-lg hover:bg-green-600 transition-all flex items-center justify-center gap-2"
             >
-              <i className="fas fa-comments mr-2"></i>Chat
+              <i className="fas fa-comments"></i>
+              Chat
             </button>
-=======
-            <a
-              href="#chat"
-              onClick={toggleMobileMenu}
-              className="flex items-center justify-center w-full text-center bg-green-500 text-white px-5 py-3 rounded-lg font-semibold text-base hover:bg-green-600 transition-all shadow-sm"
-            >
-              <i className="fas fa-comments mr-2"></i>Chat
-            </a>
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
             <a
               href="#contact"
               onClick={toggleMobileMenu}
-              className="block w-full text-center bg-blue-600 text-white px-5 py-3 rounded-lg font-semibold text-base hover:bg-blue-700 transition-all shadow-sm"
+              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-all text-center block"
             >
               Contact
             </a>
@@ -229,7 +207,7 @@ export default function Navigation({ onLoginClick }: NavigationProps) {
                 handleLoginClick();
                 toggleMobileMenu();
               }}
-              className="w-full text-center text-base font-medium text-gray-700 bg-gray-100 px-4 py-3 rounded-lg hover:bg-gray-200"
+              className="w-full text-gray-700 bg-gray-100 py-3 rounded-lg font-semibold text-lg hover:bg-gray-200 transition-all"
             >
               Connexion
             </button>

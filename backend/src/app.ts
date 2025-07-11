@@ -8,10 +8,7 @@ import adminStatsRoutes from "./routes/adminStats";
 import authRoutes from "./routes/auth";
 import commandesRoutes from "./routes/commandes";
 import faqRoutes from "./routes/faq";
-<<<<<<< HEAD
 import filesRoutes from "./routes/files";
-=======
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
 import invoiceRoutes from "./routes/invoice";
 import messagesRoutes from "./routes/messages";
 import notificationsRoutes from "./routes/notifications";
@@ -41,18 +38,12 @@ app.use(
   webhookRoutes
 );
 
-<<<<<<< HEAD
 // Body parser standard pour les autres routes (avec limite augmentée pour les uploads)
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 // Servir les fichiers statiques uploadés
 app.use("/uploads", express.static("uploads"));
-=======
-// Body parser standard pour les autres routes
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
 
 // Routes de base
 app.get("/", (req, res) => {
@@ -81,12 +72,9 @@ app.use("/commandes", commandesRoutes);
 // Routes messages (authentifiées)
 app.use("/messages", messagesRoutes);
 
-<<<<<<< HEAD
 // Routes fichiers (authentifiées)
 app.use("/files", filesRoutes);
 
-=======
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
 // Routes notifications (authentifiées)
 app.use("/notifications", notificationsRoutes);
 

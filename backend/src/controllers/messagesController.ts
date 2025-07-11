@@ -1,7 +1,10 @@
 // Le code fourni dans le message précédent.
 import { MessageStatut, MessageType, PrismaClient, Role } from "@prisma/client";
 import { Request, Response } from "express";
-import { notifyAdminNewMessage, notifyNewMessage } from "./notificationsController";
+import {
+  notifyAdminNewMessage,
+  notifyNewMessage,
+} from "./notificationsController";
 
 const prisma = new PrismaClient();
 
@@ -52,7 +55,10 @@ export const createVisitorMessage = async (
     try {
       await notifyAdminNewMessage(name || "Visiteur", content, true);
     } catch (notificationError) {
-      console.error("Erreur lors de la création de la notification:", notificationError);
+      console.error(
+        "Erreur lors de la création de la notification:",
+        notificationError
+      );
     }
 
     res.status(201).json({
@@ -76,17 +82,19 @@ export const createConversation = async (
   try {
     const senderId = req.user!.id;
     const senderRole = req.user!.role;
-<<<<<<< HEAD
-    const { subject, content, attachments = [], displayFirstName, displayLastName, displayRole } = req.body;
+    const {
+      subject,
+      content,
+      attachments = [],
+      displayFirstName,
+      displayLastName,
+      displayRole,
+    } = req.body;
 
     if (!content && (!attachments || attachments.length === 0)) {
-      res.status(400).json({ error: "Le contenu ou des pièces jointes sont requis." });
-=======
-    const { subject, content } = req.body;
-
-    if (!content) {
-      res.status(400).json({ error: "Le contenu est requis." });
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
+      res
+        .status(400)
+        .json({ error: "Le contenu ou des pièces jointes sont requis." });
       return;
     }
 
@@ -101,7 +109,8 @@ export const createConversation = async (
       if (existingMessages) {
         res.status(400).json({
           error: "EXISTING_CONVERSATION",
-          message: "Vous avez déjà une conversation ouverte avec l'équipe support. Continuez dans le fil existant.",
+          message:
+            "Vous avez déjà une conversation ouverte avec l'équipe support. Continuez dans le fil existant.",
           threadId: "admin-support",
         });
         return;
@@ -129,7 +138,6 @@ export const createConversation = async (
         senderId,
         receiverId: admin.id,
         subject: subject || `Nouveau message de ${req.user!.prenom}`,
-<<<<<<< HEAD
         content: content || "",
         type: MessageType.USER_MESSAGE,
         statut: MessageStatut.ENVOYE,
@@ -137,11 +145,6 @@ export const createConversation = async (
         ...(displayFirstName && { displayFirstName }),
         ...(displayLastName && { displayLastName }),
         ...(displayRole && { displayRole }),
-=======
-        content,
-        type: MessageType.USER_MESSAGE,
-        statut: MessageStatut.ENVOYE,
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
       },
       include: {
         sender: true,
@@ -149,18 +152,17 @@ export const createConversation = async (
       },
     });
 
-<<<<<<< HEAD
     // Gérer les pièces jointes si présentes
     if (attachments && attachments.length > 0) {
       for (const fileId of attachments) {
         // Vérifier que le fichier existe et appartient à l'utilisateur
         const file = await prisma.file.findFirst({
-          where: { 
-            id: fileId, 
-            uploadedById: senderId 
-          }
+          where: {
+            id: fileId,
+            uploadedById: senderId,
+          },
         });
-        
+
         if (file) {
           await prisma.messageAttachment.create({
             data: {
@@ -195,17 +197,11 @@ export const createConversation = async (
       },
     });
 
-=======
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
     res.status(201).json({
       message: "Conversation démarrée avec succès.",
       conversationId: message.conversationId,
       threadId: senderRole === Role.ADMIN ? admin.id : "admin-support",
-<<<<<<< HEAD
       data: messageWithAttachments,
-=======
-      data: message,
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
     });
   } catch (error) {
     console.error("Erreur lors de la création de la conversation:", error);
@@ -238,8 +234,12 @@ export const getConversations = async (
           deletedByAdmin: { not: true }, // Exclure les messages supprimés par l'admin
         },
         include: {
-          sender: { select: { id: true, prenom: true, nom: true, avatar: true } },
-          receiver: { select: { id: true, prenom: true, nom: true, avatar: true } },
+          sender: {
+            select: { id: true, prenom: true, nom: true, avatar: true },
+          },
+          receiver: {
+            select: { id: true, prenom: true, nom: true, avatar: true },
+          },
         },
         orderBy: { createdAt: "desc" },
       });
@@ -334,8 +334,12 @@ export const getConversations = async (
           // Les clients voient toujours leurs messages, même si l'admin les a "supprimés"
         },
         include: {
-          sender: { select: { id: true, prenom: true, nom: true, avatar: true } },
-          receiver: { select: { id: true, prenom: true, nom: true, avatar: true } },
+          sender: {
+            select: { id: true, prenom: true, nom: true, avatar: true },
+          },
+          receiver: {
+            select: { id: true, prenom: true, nom: true, avatar: true },
+          },
         },
         orderBy: { createdAt: "desc" },
       });
@@ -413,7 +417,9 @@ export const getMessagesByThread = async (
           },
           orderBy: { createdAt: "asc" },
           include: {
-            sender: { select: { id: true, prenom: true, nom: true, avatar: true } },
+            sender: {
+              select: { id: true, prenom: true, nom: true, avatar: true },
+            },
             attachments: { include: { file: true } },
           },
         });
@@ -430,7 +436,9 @@ export const getMessagesByThread = async (
           },
           orderBy: { createdAt: "asc" },
           include: {
-            sender: { select: { id: true, prenom: true, nom: true, avatar: true } },
+            sender: {
+              select: { id: true, prenom: true, nom: true, avatar: true },
+            },
             attachments: { include: { file: true } },
           },
         });
@@ -463,7 +471,9 @@ export const getMessagesByThread = async (
         },
         orderBy: { createdAt: "asc" },
         include: {
-          sender: { select: { id: true, prenom: true, nom: true, avatar: true } },
+          sender: {
+            select: { id: true, prenom: true, nom: true, avatar: true },
+          },
           attachments: { include: { file: true } },
         },
       });
@@ -557,17 +567,18 @@ export const replyToThread = async (
     const senderId = req.user!.id;
     const senderRole = req.user!.role;
     const { threadId } = req.params;
-<<<<<<< HEAD
-    const { content, attachments = [], displayFirstName, displayLastName, displayRole } = req.body;
+    const {
+      content,
+      attachments = [],
+      displayFirstName,
+      displayLastName,
+      displayRole,
+    } = req.body;
 
     if (!content && (!attachments || attachments.length === 0)) {
-      res.status(400).json({ error: "Le contenu ou des pièces jointes sont requis." });
-=======
-    const { content } = req.body;
-
-    if (!content) {
-      res.status(400).json({ error: "Le contenu est requis." });
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
+      res
+        .status(400)
+        .json({ error: "Le contenu ou des pièces jointes sont requis." });
       return;
     }
 
@@ -619,7 +630,6 @@ export const replyToThread = async (
         conversationId,
         senderId,
         receiverId,
-<<<<<<< HEAD
         content: content || "",
         type: MessageType.USER_MESSAGE,
         statut: MessageStatut.ENVOYE,
@@ -627,16 +637,10 @@ export const replyToThread = async (
         ...(displayFirstName && { displayFirstName }),
         ...(displayLastName && { displayLastName }),
         ...(displayRole && { displayRole }),
-=======
-        content,
-        type: MessageType.USER_MESSAGE,
-        statut: MessageStatut.ENVOYE,
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
       },
       include: {
         sender: true,
         receiver: true,
-<<<<<<< HEAD
         attachments: {
           include: {
             file: {
@@ -696,8 +700,6 @@ export const replyToThread = async (
             },
           },
         },
-=======
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
       },
     });
 
@@ -709,7 +711,9 @@ export const replyToThread = async (
           where: { id: senderId },
           select: { prenom: true, nom: true },
         });
-        const senderName = sender ? `${sender.prenom} ${sender.nom}` : "Équipe Support";
+        const senderName = sender
+          ? `${sender.prenom} ${sender.nom}`
+          : "Équipe Support";
         await notifyNewMessage(receiverId, senderName, content);
       } else if (senderRole !== Role.ADMIN && receiverId) {
         // Client répond à un admin
@@ -721,15 +725,14 @@ export const replyToThread = async (
         await notifyAdminNewMessage(senderName, content, false);
       }
     } catch (notificationError) {
-      console.error("Erreur lors de la création de la notification:", notificationError);
+      console.error(
+        "Erreur lors de la création de la notification:",
+        notificationError
+      );
       // Ne pas faire échouer la création du message si la notification échoue
     }
 
-<<<<<<< HEAD
     res.status(201).json(messageWithAttachments);
-=======
-    res.status(201).json(newMessage);
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
   } catch (error) {
     console.error("Erreur lors de l'envoi de la réponse:", error);
     res.status(500).json({ error: "Erreur interne du serveur." });
@@ -894,7 +897,6 @@ export const getUnreadConversationsCount = async (
 };
 
 /**
-<<<<<<< HEAD
  * Crée une nouvelle conversation entre un admin et un utilisateur spécifique.
  */
 export const createAdminConversation = async (
@@ -904,10 +906,23 @@ export const createAdminConversation = async (
   try {
     const adminId = req.user!.id;
     const adminRole = req.user!.role;
-    const { userId, content, subject, attachments = [], displayFirstName, displayLastName, displayRole } = req.body;
+    const {
+      userId,
+      content,
+      subject,
+      attachments = [],
+      displayFirstName,
+      displayLastName,
+      displayRole,
+    } = req.body;
 
     if (adminRole !== Role.ADMIN) {
-      res.status(403).json({ error: "Accès non autorisé. Seuls les admins peuvent créer des conversations." });
+      res
+        .status(403)
+        .json({
+          error:
+            "Accès non autorisé. Seuls les admins peuvent créer des conversations.",
+        });
       return;
     }
 
@@ -947,10 +962,10 @@ export const createAdminConversation = async (
       },
       include: {
         sender: {
-          select: { id: true, prenom: true, nom: true, avatar: true }
+          select: { id: true, prenom: true, nom: true, avatar: true },
         },
         receiver: {
-          select: { id: true, prenom: true, nom: true, avatar: true }
+          select: { id: true, prenom: true, nom: true, avatar: true },
         },
         attachments: {
           include: {
@@ -997,10 +1012,15 @@ export const createAdminConversation = async (
         where: { id: adminId },
         select: { prenom: true, nom: true },
       });
-      const adminName = adminUser ? `${adminUser.prenom} ${adminUser.nom}` : "Administration";
+      const adminName = adminUser
+        ? `${adminUser.prenom} ${adminUser.nom}`
+        : "Administration";
       await notifyNewMessage(userId, adminName, content);
     } catch (notificationError) {
-      console.error("Erreur lors de la création de la notification:", notificationError);
+      console.error(
+        "Erreur lors de la création de la notification:",
+        notificationError
+      );
     }
 
     res.status(201).json({
@@ -1015,14 +1035,15 @@ export const createAdminConversation = async (
       },
     });
   } catch (error) {
-    console.error("Erreur lors de la création de la conversation admin:", error);
+    console.error(
+      "Erreur lors de la création de la conversation admin:",
+      error
+    );
     res.status(500).json({ error: "Erreur interne du serveur." });
   }
 };
 
 /**
-=======
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
  * Supprime une conversation pour un admin (masquage côté admin uniquement).
  * L'utilisateur peut toujours voir ses messages et continuer à écrire.
  */
@@ -1036,7 +1057,12 @@ export const deleteAdminConversation = async (
     const { threadId } = req.params;
 
     if (adminRole !== Role.ADMIN) {
-      res.status(403).json({ error: "Accès non autorisé. Seuls les admins peuvent supprimer des conversations." });
+      res
+        .status(403)
+        .json({
+          error:
+            "Accès non autorisé. Seuls les admins peuvent supprimer des conversations.",
+        });
       return;
     }
 
@@ -1077,7 +1103,9 @@ export const deleteAdminConversation = async (
     }
 
     if (deleteCount === 0) {
-      res.status(404).json({ error: "Aucune conversation trouvée à supprimer." });
+      res
+        .status(404)
+        .json({ error: "Aucune conversation trouvée à supprimer." });
       return;
     }
 

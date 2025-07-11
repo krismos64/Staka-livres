@@ -1,14 +1,10 @@
 import React, { useState } from "react";
 
-<<<<<<< HEAD
 interface ContactProps {
   onChatClick?: () => void;
 }
 
 export default function Contact({ onChatClick }: ContactProps) {
-=======
-export default function Contact() {
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
   const [formData, setFormData] = useState({
     nom: "",
     email: "",
@@ -139,14 +135,10 @@ export default function Contact() {
                   Un de nos conseillers est disponible pour répondre à vos
                   questions
                 </p>
-<<<<<<< HEAD
-                <button 
+                <button
                   onClick={onChatClick}
                   className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition"
                 >
-=======
-                <button className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition">
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
                   <i className="fas fa-comments mr-2"></i>
                   Démarrer le chat
                 </button>
@@ -200,22 +192,18 @@ export default function Contact() {
                   htmlFor="contact-sujet"
                   className="block mb-2 font-semibold text-gray-700"
                 >
-                  Sujet
+                  Sujet *
                 </label>
-                <select
+                <input
+                  type="text"
                   id="contact-sujet"
                   name="sujet"
                   value={formData.sujet}
                   onChange={handleChange}
                   className="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-blue-500 focus:outline-none transition"
-                >
-                  <option value="">Choisissez un sujet</option>
-                  <option value="devis">Demande de devis</option>
-                  <option value="question">Question générale</option>
-                  <option value="rdv">Prise de rendez-vous</option>
-                  <option value="suivi">Suivi de commande</option>
-                  <option value="urgence">Correction urgente</option>
-                </select>
+                  required
+                  placeholder="Votre sujet"
+                />
               </div>
               <div>
                 <label
@@ -230,23 +218,15 @@ export default function Contact() {
                   value={formData.message}
                   onChange={handleChange}
                   rows={5}
-                  className="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-blue-500 focus:outline-none transition"
+                  className="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-blue-500 focus:outline-none transition resize-none"
                   required
-                  placeholder="Décrivez votre projet ou posez votre question..."
+                  placeholder="Décrivez votre projet..."
                 ></textarea>
               </div>
-
-              {/* Rate limiting info */}
-              <div className="text-xs text-gray-500">
-                <i className="fas fa-info-circle mr-1"></i>
-                Limité à 3 messages par heure pour éviter le spam
-              </div>
-
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white py-4 rounded-xl font-semibold text-lg hover:from-blue-700 hover:to-blue-600 transition"
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-600 transition-all duration-300 transform hover:scale-105"
               >
-                <i className="fas fa-paper-plane mr-2"></i>
                 Envoyer le message
               </button>
             </form>

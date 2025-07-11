@@ -4,10 +4,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { getUnreadConversationsCount } from "../../utils/adminAPI";
 import Notifications from "../common/Notifications";
 import { DemoBanner, useDemoMode } from "./DemoModeProvider";
-<<<<<<< HEAD
-=======
 import { SecurityAuditPanel } from "./RequireAdmin";
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
 
 export type AdminSection =
   | "dashboard"
@@ -198,23 +195,17 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
                 <div className="w-10 h-10 bg-gradient-to-tr from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
                   <i className="fas fa-shield-alt text-white text-xl"></i>
                 </div>
-                <div className="flex flex-col">
-                  <h1 className="text-xl font-bold tracking-wider">STAKA</h1>
-                  {isDemo && (
-                    <span className="text-xs text-purple-300 font-medium">
-                      <i className="fas fa-theater-masks mr-1"></i>
-                      MODE DÉMO
-                    </span>
-                  )}
+                <div>
+                  <h1 className="text-lg font-bold text-white">Admin Panel</h1>
+                  <p className="text-xs text-gray-400">
+                    {isDemo ? "Mode Démo" : "Administration"}
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Navigation */}
             <nav className="flex-1 px-4 py-6 overflow-y-auto">
-              <p className="px-4 mb-3 text-xs uppercase text-gray-400 tracking-wider">
-                Navigation
-              </p>
               <ul className="space-y-2">
                 {sidebarItems.map((item) => (
                   <SidebarLink
@@ -233,100 +224,69 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
               </ul>
             </nav>
 
-            {/* Profil utilisateur et déconnexion */}
-            <div className="p-4 border-t border-gray-700 bg-gray-900/50">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">
-                    {user?.prenom?.[0].toUpperCase()}
-                    {user?.nom?.[0].toUpperCase()}
-                  </span>
+            {/* Footer de la sidebar */}
+            <div className="p-4 border-t border-gray-700">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 bg-gradient-to-tr from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                  <i className="fas fa-user text-white text-sm"></i>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-white">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">
                     {user?.prenom} {user?.nom}
                   </p>
-                  <p className="text-xs text-gray-400">
-                    Administrateur {isDemo && "• Démo"}
+                  <p className="text-xs text-gray-400 truncate">
+                    {user?.email}
                   </p>
                 </div>
-                <button
-                  onClick={onLogout}
-                  className="text-gray-400 hover:text-red-500 transition-colors duration-200 p-2 rounded-lg hover:bg-gray-700"
-                  title="Déconnexion"
-                >
-                  <i className="fas fa-sign-out-alt text-lg"></i>
-                </button>
               </div>
+              <button
+                onClick={onLogout}
+                className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <i className="fas fa-sign-out-alt"></i>
+                <span>Déconnexion</span>
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Overlay pour mobile */}
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-70 z-40 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-            style={{ top: isDemo ? "48px" : "0" }}
-          ></div>
-        )}
-
         {/* --- Contenu principal --- */}
-        <div className="flex-1 flex flex-col lg:ml-0 min-w-0">
-          {/* En-tête */}
-          <header className="bg-white shadow-md px-6 py-4 z-30">
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Header */}
+          <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
             <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => setSidebarOpen(!sidebarOpen)}
-                    className="lg:hidden text-gray-600 hover:text-gray-900 p-2 rounded-lg hover:bg-gray-100"
-                  >
-                    <i className="fas fa-bars text-xl"></i>
-                  </button>
-                  <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                      {getPageTitle()}
-                      {isDemo && (
-                        <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
-                          Démo
-                        </span>
-                      )}
-                    </h1>
-                    <p className="text-gray-600 text-sm">
-                      {getPageDescription()}
-                    </p>
-                  </div>
+              <div className="flex items-center gap-4">
+                {/* Bouton menu mobile */}
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="lg:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  <i className="fas fa-bars text-xl"></i>
+                </button>
+
+                {/* Titre de la page */}
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    {getPageTitle()}
+                  </h1>
+                  <p className="text-sm text-gray-600">
+                    {getPageDescription()}
+                  </p>
                 </div>
               </div>
 
+              {/* Actions de droite */}
               <div className="flex items-center gap-4">
-                {/* Clochette de notifications admin */}
                 <Notifications />
-                
-                <div className="hidden md:flex items-center text-sm text-gray-500">
-                  <i className="fas fa-user mr-2"></i>
-                  {user?.email}
-                </div>
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">
-                    {user?.prenom?.[0].toUpperCase()}
-                  </span>
-                </div>
+                <SecurityAuditPanel />
               </div>
             </div>
           </header>
 
           {/* Contenu */}
-          <main className="flex-1 overflow-auto bg-gray-50">{children}</main>
+          <main className="flex-1 overflow-y-auto p-6">{children}</main>
         </div>
       </div>
-
-<<<<<<< HEAD
-=======
-      {/* Panel d'audit de sécurité (développement uniquement) */}
-      <SecurityAuditPanel />
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
     </div>
   );
 };

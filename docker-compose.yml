@@ -54,12 +54,6 @@ services:
     ports:
       - "3001:3001"
       - "5555:5555"
-    entrypoint:
-      [
-        "/bin/sh",
-        "-c",
-        "ls -la src/routes && echo 'Attente de 15s pour le démarrage de la DB...' && sleep 15 && npm run dev",
-      ]
     env_file:
       - ./backend/.env
     volumes:

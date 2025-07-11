@@ -1,9 +1,5 @@
-<<<<<<< HEAD
 import { useRef } from "react";
-import ChatWidget, { ChatWidgetRef } from "../components/common/ChatWidget"; // Importer le nouveau composant
-=======
-import ChatWidget from "../components/common/ChatWidget"; // Importer le nouveau composant
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
+import ChatWidget, { ChatWidgetRef } from "../components/common/ChatWidget";
 import About from "../components/landing/About";
 import Blog from "../components/landing/Blog";
 import Contact from "../components/landing/Contact";
@@ -24,22 +20,19 @@ interface LandingPageProps {
 }
 
 export default function LandingPage({ onLoginClick }: LandingPageProps) {
-<<<<<<< HEAD
   const chatWidgetRef = useRef<ChatWidgetRef>(null);
 
   const handleChatButtonClick = () => {
     chatWidgetRef.current?.openChat();
   };
+
   return (
     <div className="bg-gray-50 text-gray-800 font-sans leading-relaxed">
       {/* Navigation */}
-      <Navigation onLoginClick={onLoginClick} onChatClick={handleChatButtonClick} />
-=======
-  return (
-    <div className="bg-gray-50 text-gray-800 font-sans leading-relaxed">
-      {/* Navigation */}
-      <Navigation onLoginClick={onLoginClick} />
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
+      <Navigation
+        onLoginClick={onLoginClick}
+        onChatClick={handleChatButtonClick}
+      />
 
       <main id="main-content">
         {/* Hero Section */}
@@ -61,7 +54,6 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
         {/* Free Sample Section */}
         <FreeSample />
         {/* About Section */}
-<<<<<<< HEAD
         <About onChatClick={handleChatButtonClick} />
         {/* FAQ Section */}
         <FAQ />
@@ -69,17 +61,7 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
         <Contact onChatClick={handleChatButtonClick} />
         {/* Footer Section */}
         <Footer />
-        <ChatWidget ref={chatWidgetRef} /> {/* Ajouter le widget ici */}
-=======
-        <About />
-        {/* FAQ Section */}
-        <FAQ />
-        {/* Contact Section */}
-        <Contact />
-        {/* Footer Section */}
-        <Footer />
-        <ChatWidget /> {/* Ajouter le widget ici */}
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
+        <ChatWidget ref={chatWidgetRef} />
       </main>
 
       {/* Floating WhatsApp Button */}
@@ -91,13 +73,11 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
           className="w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110 group relative"
         >
           <i className="fab fa-whatsapp text-2xl"></i>
-
           {/* Tooltip */}
           <div className="absolute left-16 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
             Chattez avec nous sur WhatsApp
             <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-gray-900"></div>
           </div>
-
           {/* Pulse animation */}
           <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-25"></div>
         </a>

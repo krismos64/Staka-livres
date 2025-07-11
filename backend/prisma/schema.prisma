@@ -104,23 +104,20 @@ model Message {
   visitorEmail String? @db.VarChar(255)
   visitorName  String? @db.VarChar(100)
 
-<<<<<<< HEAD
   // Champs pour nom d'affichage personnalisé (admin)
   displayFirstName String? @db.VarChar(100)
   displayLastName  String? @db.VarChar(100)
   displayRole      String? @db.VarChar(100)
 
-=======
->>>>>>> 1a0dc39ced08c67e1dea14cd8bfde6a56ac2b629
-  subject    String?       @db.VarChar(255)
-  content    String        @db.Text
-  type       MessageType   @default(USER_MESSAGE)
-  statut     MessageStatut @default(ENVOYE)
-  isRead        Boolean @default(false)
-  isArchived    Boolean @default(false)
-  isPinned      Boolean @default(false)
-  deletedByAdmin Boolean @default(false) // Masquer la conversation pour l'admin
-  parentId      String?
+  subject        String?       @db.VarChar(255)
+  content        String        @db.Text
+  type           MessageType   @default(USER_MESSAGE)
+  statut         MessageStatut @default(ENVOYE)
+  isRead         Boolean       @default(false)
+  isArchived     Boolean       @default(false)
+  isPinned       Boolean       @default(false)
+  deletedByAdmin Boolean       @default(false) // Masquer la conversation pour l'admin
+  parentId       String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
