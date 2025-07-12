@@ -4,19 +4,20 @@
 
 **Staka Livres** est une plateforme web moderne et production-ready dédiée aux **services de correction et d'édition de manuscrits**. Cette application monorepo sophistiquée offre une expérience complète aux auteurs, de la découverte des services jusqu'à la gestion avancée de leurs projets éditoriaux, avec un système d'authentification sécurisé, un espace d'administration complet et un **système de facturation automatique avec React Query**.
 
-### 📊 **Métriques du Projet (2025)**
+### 📊 **Métriques du Projet (Juillet 2025)**
 
-- **210,991+ lignes de code** TypeScript/JavaScript
-- **69 composants React** modulaires et réutilisables
-- **16 contrôleurs backend** spécialisés
-- **49+ endpoints REST API** sécurisés
-- **13 modèles de base de données** avec relations RGPD
-- **Système d'audit complet** avec traçabilité sécurisée
-- **36 suites de tests** (Jest, Vitest, Cypress)
-- **15 guides de documentation** complets
-- **87% de couverture de tests** validée
-- **9 pages admin** entièrement fonctionnelles
-- **14 composants landing page** production-ready
+- **200,000+ lignes de code** TypeScript/JavaScript
+- **127+ composants React** modulaires et réutilisables avec TypeScript
+- **20+ contrôleurs backend** spécialisés
+- **50+ endpoints REST API** sécurisés avec Zod validation
+- **13 modèles de base de données** avec relations RGPD complètes
+- **Système d'audit sécurisé** avec traçabilité complète et export
+- **200+ tests automatisés** (Jest, Vitest, Cypress)
+- **15+ guides de documentation** complets et à jour
+- **87%+ de couverture de tests** validée
+- **10 pages admin** entièrement fonctionnelles
+- **14+ composants landing page** production-ready
+- **Support multi-architecture** Docker (ARM64/x86)
 
 ### 🌟 **Vision**
 
@@ -29,14 +30,15 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 - **Paiements Stripe** avec synchronisation automatique et génération de factures PDF
 - **Messagerie temps réel** avec pièces jointes, archivage et support unifié
 - **Upload de fichiers projet** avec S3 presigned URLs et suivi de progression
-- **Notifications push** avec polling intelligent
-- **Interface admin complète** avec 10 pages spécialisées
+- **Notifications push** avec polling intelligent temps réel
+- **Interface admin complète** avec 10 pages spécialisées et audit logs
 - **Système d'audit sécurisé** avec logs admin et traçabilité complète
 - **Tarification dynamique** avec synchronisation Stripe automatique et cache React Query
 - **Synchronisation Stripe automatique** pour tous les tarifs avec script CLI
-- **Conformité RGPD** avec suppression en cascade
-- **Infrastructure Docker** avec MySQL 8
-- **Tests complets** avec couverture 87%
+- **Conformité RGPD** avec suppression en cascade et export de données
+- **Infrastructure Docker multi-architecture** avec MySQL 8 et support ARM64/x86
+- **Tests complets** avec couverture 87%+ et CI/CD
+- **Support multi-plateforme** avec build Docker optimisé ARM64 et x86
 
 ### 🎨 **Interface Moderne**
 
@@ -88,7 +90,7 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 - **Performance** : < 100ms récupération conversations, cache React Query intelligent
 - **Score de fiabilité** : 97/100 après optimisations (Janvier 2025)
 
-### 📁 **Système d'Upload de Fichiers Projet (NOUVEAU 2025)**
+### 📁 **Système d'Upload de Fichiers Projet (2025)**
 
 - **Intégration S3 complète** : URLs présignées pour upload direct avec authentification sécurisée
 - **Interface moderne** : Composants FileItem et UploadButton avec drag & drop intuitif
@@ -96,10 +98,11 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 - **Hooks React Query** : `useUploadFile` et `useProjectFiles` avec cache intelligent 30 secondes
 - **Validation stricte** : Max 20 Mo par fichier, types MIME autorisés (PDF, DOC, DOCX, TXT, JPG, PNG, ZIP, RAR)
 - **Gestion d'état avancée** : Téléchargement, suppression, invalidation cache automatique
-- **Sécurité renforcée** : Validation ownership projet, contrôle accès utilisateur
+- **Sécurité renforcée** : Validation ownership projet, contrôle accès utilisateur avec audit
 - **API REST complète** : 3 endpoints sécurisés avec Zod validation et gestion d'erreurs
 - **Tests complets** : Mock S3, couverture ≥90% avec scénarios edge cases
 - **Mode simulation** : Fonctionnement sans AWS pour développement local
+- **Support Nginx** : Proxy API avec routing optimisé et cache statique
 
 ### 🎨 **Landing Page Production-Ready (14 Composants)**
 
@@ -317,24 +320,25 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **Gestion d'erreurs** centralisée avec logs
 - **Données de fallback** en cas d'indisponibilité DB
 
-### 🗄️ **Base de Données Complète (13 Modèles)**
+### 🗄️ **Base de Données Complète (13 Modèles Prisma)**
 
 - **User** : UUID, rôles (USER/ADMIN/CORRECTOR), statut actif, avatar, contacts
 - **Commande** : statuts, priorités, échéances, notes client/correcteur
+- **File** : système de fichiers avec types, permissions, sécurité S3
 - **Message** : messagerie unifiée (projet + support) avec threading
-- **MessageAttachment** : pièces jointes messages avec relations
+- **MessageAttachment** : pièces jointes messages avec relations sécurisées
 - **SupportRequest** : tickets de support avec SLA et assignation
-- **File** : système de fichiers avec types, permissions, sécurité
 - **Invoice** : facturation automatique avec numérotation et PDF
 - **PaymentMethod** : moyens de paiement Stripe avec chiffrement
 - **Notification** : système de notifications avec types, priorités et expiration
-- **AuditLog** : ✅ **logs d'audit sécurisés** avec traçabilité complète (NOUVEAU)
+- **AuditLog** : **logs d'audit sécurisés** avec traçabilité complète et export
 - **Page** : CMS pour contenu éditorial avec SEO
 - **FAQ** : Questions fréquemment posées avec catégorisation
-- **Tarif** : Modèle de tarification flexible
+- **Tarif** : Modèle de tarification flexible avec intégration Stripe
 
-**Relations RGPD** : Cascade DELETE, contraintes FK, soft delete  
-**Performance** : Index optimisés, requêtes type-safe Prisma  
+**Relations RGPD** : Cascade DELETE, contraintes FK, soft delete, audit trail  
+**Performance** : Index optimisés, requêtes type-safe Prisma, connexion pooling  
+**Sécurité** : Validation UUID, chiffrement données sensibles, audit complet  
 **Documentation** : [Guide complet Base de Données](docs/Base-de-donnees-guide.md)
 
 ---
@@ -545,64 +549,85 @@ Staka-livres/
 
 ## 🛠️ Technologies Utilisées
 
-### 🚀 **Backend (Node.js)**
+### 🚀 **Backend (Node.js + TypeScript)**
 
-- **Node.js 18** : Runtime JavaScript moderne
-- **Express.js** : Framework web minimaliste
-- **TypeScript** : Typage statique pour la robustesse
-- **Prisma ORM** : Modélisation et requêtes type-safe
-- **MySQL 8** : Base de données relationnelle
-- **JWT (jsonwebtoken)** : Authentification sécurisée
-- **bcryptjs** : Hachage des mots de passe (12 rounds)
-- **cors** : Gestion des requêtes cross-origin
-- **helmet** : Sécurité HTTP
-- **winston** : Logging avancé
-- **nodemon** : Rechargement automatique en dev
-- **ts-node** : Exécution TypeScript directe
-- **Stripe** : Plateforme de paiement sécurisée
-- **Jest** : Framework de tests unitaires et d'intégration
-- **Zod** : Validation de schémas TypeScript
-- **PDFKit** : Génération de PDF pour factures
-- **SendGrid** : Service d'envoi d'emails
-- **AWS S3** : Stockage de fichiers
+- **Node.js 18.20.2** : Runtime JavaScript moderne avec support ARM64
+- **Express.js 4.18.2** : Framework web minimaliste et robuste
+- **TypeScript 5.8.3** : Typage statique strict pour la robustesse
+- **Prisma ORM 6.10.1** : Modélisation et requêtes type-safe avec MySQL
+- **MySQL 8.4+** : Base de données relationnelle avec native password
+- **JWT (jsonwebtoken 9.0.2)** : Authentification sécurisée avec expiration
+- **bcryptjs 2.4.3** : Hachage des mots de passe (12 rounds)
+- **Zod 3.22.4** : Validation stricte de schémas TypeScript
+- **Winston 3.11.0** : Logging avancé avec rotation
+- **Stripe 18.2.1** : Plateforme de paiement sécurisée
+- **AWS S3 SDK 3.837.0** : Stockage de fichiers avec presigned URLs
+- **Jest 29.7.0** : Framework de tests unitaires et d'intégration
+- **PDFKit 0.17.1** : Génération de PDF pour factures
+- **SendGrid 8.1.5** : Service d'envoi d'emails transactionnels
+- **Express Rate Limit 7.1.5** : Protection contre les attaques
+- **Helmet 7.1.0** : Sécurité HTTP headers
 
-### 🎨 **Frontend (React + React Query)**
+### 🎨 **Frontend (React + TypeScript)**
 
-- **React 18** : Framework JavaScript moderne avec hooks
-- **TypeScript** : Typage statique pour la robustesse
-- **Vite** : Build tool ultra-rapide avec HMR et optimizeDeps
-- **@tanstack/react-query v5** : Cache intelligent et gestion d'état serveur
-- **Tailwind CSS** : Framework CSS utility-first
-- **React Context API** : Gestion d'état authentification
-- **React Router DOM** : Navigation SPA
-- **Framer Motion** : Animations fluides et micro-interactions
-- **FontAwesome** : Icônes vectorielles
-- **React Dropzone** : Upload de fichiers drag & drop
-- **React Hot Toast** : Notifications toast élégantes
-- **Axios** : Client HTTP pour API calls
-- **Vitest** : Framework de tests unitaires
-- **Cypress** : Tests E2E automatisés
+- **React 18.2.0** : Framework JavaScript moderne avec Concurrent Features
+- **TypeScript 5.3.3** : Typage statique strict pour la robustesse
+- **Vite 5.0.8** : Build tool ultra-rapide avec HMR et optimizeDeps
+- **@tanstack/react-query 5.81.5** : Cache intelligent et gestion d'état serveur
+- **Tailwind CSS 3.4.17** : Framework CSS utility-first avec optimisations
+- **React Router DOM 6.30.1** : Navigation SPA avec lazy loading
+- **Framer Motion 12.23.0** : Animations fluides et micro-interactions
+- **Lucide React 0.525.0** : Icônes vectorielles modernes et légères
+- **React Dropzone 14.3.8** : Upload de fichiers drag & drop
+- **React Hot Toast 2.5.2** : Notifications toast élégantes
+- **Axios 1.10.0** : Client HTTP avec intercepteurs
+- **Vitest 3.2.4** : Framework de tests unitaires ultra-rapide
+- **Cypress 14.5.1** : Tests E2E automatisés
+- **Date-fns 4.1.0** : Manipulation de dates moderne
 
-### 🗄️ **Base de Données**
+### 🗄️ **Base de Données et ORM**
 
-- **MySQL 8** : Base de données principale
-- **Prisma Client** : ORM type-safe
-- **Prisma Migrate** : Gestion des migrations
-- **Seed Data** : Comptes de test préchargés
+- **MySQL 8.4+** : Base de données principale avec `--mysql-native-password=ON`
+- **Prisma Client 6.10.1** : ORM type-safe avec génération automatique
+- **Prisma Migrate** : Gestion des migrations avec rollback
+- **Seed Data** : Comptes de test préchargés avec données réalistes
+- **Index optimisés** : Performance queries avec contraintes FK
+- **Audit Trail** : Traçabilité complète des modifications
 
-### 🐳 **DevOps et Déploiement**
+### 🐳 **DevOps et Déploiement Multi-Architecture**
 
-- **Docker** : Conteneurisation des services
-- **Docker Compose** : Orchestration multi-services avec volumes
-- **npm workspaces** : Gestion monorepo
-- **Nginx** : Serveur web (frontend en prod)
+- **Docker Buildx** : Build multi-architecture (ARM64/x86)
+- **Docker Compose** : Orchestration multi-services avec volumes persistants
+- **npm workspaces** : Gestion monorepo avec shared types
+- **Nginx 1.25-alpine** : Serveur web production avec proxy API
+- **Script de build automatisé** : `./scripts/docker-build.sh` avec options
+- **Support ARM64 natif** : Optimisé pour Apple Silicon
 - **ngrok** : Tunnel sécurisé pour webhooks Stripe en développement
 
 ---
 
 ## 📋 **Changelog Récent**
 
-### ✅ **Version Actuelle (Juillet 2025)**
+### ✅ **Version Actuelle (Juillet 2025) - Multi-Architecture & File Upload**
+
+**🐳 Infrastructure Docker Multi-Architecture (NOUVEAU) :**
+
+- ✅ **Support ARM64/x86** : Build natif pour Apple Silicon et serveurs x86
+- ✅ **Script de build automatisé** : `./scripts/docker-build.sh` avec options complètes
+- ✅ **Docker Buildx** : Builder dédié avec cache optimisé pour performance
+- ✅ **Nginx proxy optimisé** : Routing API avec strip prefix `/api/` → backend:3001
+- ✅ **Configuration sécurisée** : Headers sécurité, compression gzip, cache statique
+- ✅ **Health checks** : Monitoring automatique des containers
+- ✅ **Volumes persistants** : Données MySQL et uploads sécurisés
+
+**📁 Système d'Upload de Fichiers Projet (NOUVEAU) :**
+
+- ✅ **API REST complète** : 3 endpoints avec validation Zod et gestion d'erreurs
+- ✅ **Integration S3** : URLs présignées pour upload direct sécurisé
+- ✅ **Hooks React Query** : `useUploadFile` et `useProjectFiles` avec cache 30s
+- ✅ **Interface moderne** : Drag & drop avec progression temps réel
+- ✅ **Tests complets** : Mock S3, couverture ≥90% avec edge cases
+- ✅ **Sécurité renforcée** : Validation ownership, contrôle accès, audit trail
 
 **🔐 Système d'Audit Sécurisé (NOUVEAU) :**
 
@@ -818,9 +843,9 @@ node test-admin-stats.js
 npm run lint --workspace=frontend
 ```
 
-### 🛠️ **Build Multi-Architecture Docker**
+### 🛠️ **Build Multi-Architecture Docker (ARM64/x86)**
 
-Le projet supporte maintenant le build multi-architecture (ARM64/x86) pour une compatibilité complète avec Apple Silicon et serveurs x86.
+Le projet supporte le build multi-architecture (ARM64/x86) pour une compatibilité complète avec Apple Silicon et serveurs x86, avec script de build automatisé.
 
 **Développement local (Apple Silicon) :**
 
@@ -832,10 +857,10 @@ docker compose up backend db frontend -d
 cd frontend && npm run dev
 ```
 
-**Build et publication multi-arch :**
+**Build et publication multi-arch avec script optimisé :**
 
 ```bash
-# Build local pour test
+# Build local pour test (ARM64 + x86)
 ./scripts/docker-build.sh
 
 # Build et push avec tag spécifique
@@ -844,8 +869,20 @@ cd frontend && npm run dev
 # Build seulement le frontend
 ./scripts/docker-build.sh dev --target frontend
 
+# Build avec plateforme spécifique
+./scripts/docker-build.sh latest --platform linux/arm64
+
 # Variables d'environnement
 PUSH=true ./scripts/docker-build.sh v1.0.0
+```
+
+**Configuration Nginx avec routing API optimisé :**
+
+```bash
+# Le frontend inclut un proxy Nginx configuré
+# Routing automatique /api/* vers backend:3001
+# Strip du préfixe /api pour compatibilité
+# Cache statique et compression gzip
 ```
 
 **Résolution des problèmes Docker :**
@@ -857,15 +894,19 @@ docker system prune -a
 # Forcer rebuild Rollup/ESBuild
 docker compose build --no-cache frontend
 
+# Debug multi-arch
+docker buildx inspect staka-builder
+
 # Utiliser Rosetta si nécessaire (macOS)
 docker --platform linux/amd64 compose up
 ```
 
-**Architecture des images :**
+**Architecture des images optimisée :**
 
-- **Frontend** : Build multistage (Node.js → Nginx) avec support ARM64/x86
-- **Backend** : Image Alpine optimisée avec dépendances natives
-- **Nginx** : Configuration production avec proxy API et cache statique
+- **Frontend** : Build multistage (Node.js → Nginx) avec support ARM64/x86 natif
+- **Backend** : Image Alpine optimisée avec dépendances natives Prisma
+- **Nginx** : Configuration production avec proxy API, strip prefix, cache statique
+- **Build system** : Docker Buildx avec builder dédié pour performance
 
 Pour plus de détails, voir [Documentation Docker](docs/DEPLOYMENT_DOCKER.md).
 
@@ -920,4 +961,14 @@ docker-compose logs -f   # Voir les logs en temps réel
 
 **✅ Version Production-Ready** avec système de notifications temps réel, statistiques admin refaites, infrastructure Docker stable, et architecture backend complète de 45+ endpoints.
 
-**🚀 Prêt pour déploiement** avec tests validés, documentation complète, et données de test opérationnelles.
+**🚀 Prêt pour déploiement** avec tests validés, documentation complète, infrastructure Docker multi-architecture, et système d'upload de fichiers complet.
+
+### 🎉 **Nouvelles Fonctionnalités Récentes**
+
+- **Upload de fichiers projet** avec S3 et progression temps réel
+- **Support Docker ARM64/x86** natif avec script de build automatisé  
+- **Routing API Nginx** optimisé avec strip prefix pour compatibilité
+- **Moyens de paiement Stripe** avec gestion des cartes par défaut
+- **Statistiques annuelles** pour les clients avec statut VIP automatique
+- **Tests renforcés** avec couverture étendue et mocks S3
+- **API Projects** avec endpoints de listage et pagination

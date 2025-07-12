@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useProjects, useProjectCounts, Project } from '../hooks/useProjects';
 
 // Types pour les filtres
@@ -192,6 +193,16 @@ const ProjectCard: React.FC<{ project: Project }> = ({ project }) => {
             style={{ width: `${project.progress}%` }}
           />
         </div>
+      </div>
+
+      <div className="mt-4 flex space-x-2">
+        <Link
+          to={`/app/projects/${project.id}/files`}
+          className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm hover:bg-gray-200 transition text-center"
+        >
+          <i className="fas fa-folder mr-1"></i>
+          Gérer les fichiers
+        </Link>
       </div>
 
       {project.canDownload && (

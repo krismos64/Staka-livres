@@ -4,7 +4,6 @@ type SectionName =
   | "dashboard"
   | "projects"
   | "messages"
-  | "files"
   | "billing"
   | "help"
   | "profile"
@@ -91,21 +90,6 @@ function Sidebar({
               <span className="ml-auto">
                 <span className="w-3 h-3 bg-red-500 rounded-full block"></span>
               </span>
-            </button>
-          </li>
-          {/* Mes fichiers */}
-          <li>
-            <button
-              onClick={() => handleNavigation("files")}
-              className={`w-full flex items-center px-8 py-3 rounded-2xl text-base font-medium transition
-                ${
-                  activeSection === "files"
-                    ? "bg-[#eef4ff] text-[#2253e6]"
-                    : "text-gray-700 hover:bg-[#eef4ff] hover:text-[#2253e6]"
-                }`}
-            >
-              <i className="fas fa-file-alt mr-3 text-lg"></i>
-              Mes fichiers
             </button>
           </li>
           {/* Facturation */}

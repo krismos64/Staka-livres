@@ -1,8 +1,8 @@
 import { FileType, PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
+import fs from "fs";
 import multer from "multer";
 import path from "path";
-import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 
 // Interface pour étendre Request avec le fichier multer
@@ -24,7 +24,9 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     // Générer un nom unique pour éviter les conflits
-    const uniqueName = `${uuidv4()}-${Date.now()}${path.extname(file.originalname)}`;
+    const uniqueName = `${uuidv4()}-${Date.now()}${path.extname(
+      file.originalname
+    )}`;
     cb(null, uniqueName);
   },
 });
@@ -82,14 +84,22 @@ function getFileTypeFromMime(mimeType: string): FileType {
   if (mimeType.startsWith("image/")) return FileType.IMAGE;
   if (mimeType.startsWith("audio/")) return FileType.AUDIO;
   if (mimeType.startsWith("video/")) return FileType.VIDEO;
-  if (mimeType.includes("zip") || mimeType.includes("rar") || mimeType.includes("7z")) return FileType.ARCHIVE;
+  if (
+    mimeType.includes("zip") ||
+    mimeType.includes("rar") ||
+    mimeType.includes("7z")
+  )
+    return FileType.ARCHIVE;
   return FileType.DOCUMENT;
 }
 
 /**
  * Upload d'un fichier pour les messages
  */
-export const uploadMessageFile = async (req: RequestWithFile, res: Response): Promise<void> => {
+export const uploadMessageFile = async (
+  req: RequestWithFile,
+  res: Response
+): Promise<void> => {
   try {
     const userId = req.user!.id;
     const file = req.file;
@@ -137,7 +147,10 @@ export const uploadMessageFile = async (req: RequestWithFile, res: Response): Pr
 /**
  * Télécharger un fichier de message
  */
-export const downloadMessageFile = async (req: Request, res: Response): Promise<void> => {
+export const downloadMessageFile = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { fileId } = req.params;
     const userId = req.user!.id;
@@ -192,7 +205,11 @@ export const downloadMessageFile = async (req: Request, res: Response): Promise<
     }
 
     // Construire le chemin du fichier
-    const filePath = path.join(__dirname, "../../uploads/messages", file.storedName);
+    const filePath = path.join(
+      __dirname,
+      "../../uploads/messages",
+      file.storedName
+    );
 
     // Vérifier que le fichier existe physiquement
     if (!fs.existsSync(filePath)) {
@@ -201,7 +218,10 @@ export const downloadMessageFile = async (req: Request, res: Response): Promise<
     }
 
     // Définir les headers appropriés
-    res.setHeader("Content-Disposition", `attachment; filename="${file.filename}"`);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${file.filename}"`
+    );
     res.setHeader("Content-Type", file.mimeType);
     res.setHeader("Content-Length", file.size);
 
@@ -216,7 +236,10 @@ export const downloadMessageFile = async (req: Request, res: Response): Promise<
 /**
  * Supprimer un fichier de message
  */
-export const deleteMessageFile = async (req: Request, res: Response): Promise<void> => {
+export const deleteMessageFile = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { fileId } = req.params;
     const userId = req.user!.id;
@@ -234,12 +257,18 @@ export const deleteMessageFile = async (req: Request, res: Response): Promise<vo
 
     // Vérifier les permissions (seul l'uploader ou un admin peut supprimer)
     if (file.uploadedById !== userId && userRole !== "ADMIN") {
-      res.status(403).json({ error: "Accès non autorisé pour supprimer ce fichier" });
+      res
+        .status(403)
+        .json({ error: "Accès non autorisé pour supprimer ce fichier" });
       return;
     }
 
     // Supprimer le fichier physique
-    const filePath = path.join(__dirname, "../../uploads/messages", file.storedName);
+    const filePath = path.join(
+      __dirname,
+      "../../uploads/messages",
+      file.storedName
+    );
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
@@ -259,11 +288,14 @@ export const deleteMessageFile = async (req: Request, res: Response): Promise<vo
 /**
  * Lister les fichiers uploadés par un utilisateur
  */
-export const listUserFiles = async (req: Request, res: Response): Promise<void> => {
+export const listUserFiles = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const userId = req.user!.id;
     const { page = 1, limit = 20 } = req.query;
-    
+
     const pageNum = Number(page);
     const limitNum = Number(limit);
     const skip = (pageNum - 1) * limitNum;
@@ -300,6 +332,8 @@ export const listUserFiles = async (req: Request, res: Response): Promise<void> 
     });
   } catch (error) {
     console.error("Erreur lors de la récupération des fichiers:", error);
-    res.status(500).json({ error: "Erreur lors de la récupération des fichiers" });
+    res
+      .status(500)
+      .json({ error: "Erreur lors de la récupération des fichiers" });
   }
 };
