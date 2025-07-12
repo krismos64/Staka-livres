@@ -9,6 +9,7 @@ Le système d'upload de fichiers projet de Staka Livres permet aux utilisateurs 
 ### Composants Backend
 
 #### 1. Model (`ProjectFileModel`)
+
 ```typescript
 // backend/src/models/projectFileModel.ts
 - createFile(): Crée un enregistrement fichier et génère URL S3 présignée
@@ -17,6 +18,7 @@ Le système d'upload de fichiers projet de Staka Livres permet aux utilisateurs 
 ```
 
 #### 2. Service (`FilesService`)
+
 ```typescript
 // backend/src/services/filesService.ts
 - createProjectFile(): Orchestration upload avec client S3
@@ -25,6 +27,7 @@ Le système d'upload de fichiers projet de Staka Livres permet aux utilisateurs 
 ```
 
 #### 3. Controller (`filesController`)
+
 ```typescript
 // backend/src/controllers/filesController.ts
 - POST /files/projects/:id/files - Créer fichier + URL présignée
@@ -35,6 +38,7 @@ Le système d'upload de fichiers projet de Staka Livres permet aux utilisateurs 
 ### Composants Frontend
 
 #### 1. Hooks React Query
+
 ```typescript
 // frontend/src/hooks/useUploadFile.ts
 - Gestion upload avec progression temps réel
@@ -48,6 +52,7 @@ Le système d'upload de fichiers projet de Staka Livres permet aux utilisateurs 
 ```
 
 #### 2. Composants UI
+
 ```typescript
 // frontend/src/pages/FilesPage.tsx
 - FileItem: Affichage fichier avec actions
@@ -58,6 +63,7 @@ Le système d'upload de fichiers projet de Staka Livres permet aux utilisateurs 
 ## 🔒 Sécurité
 
 ### Backend
+
 - **Validation ownership**: Vérification utilisateur propriétaire du projet
 - **Validation MIME types**: Liste blanche des types autorisés
 - **Limite taille**: Maximum 20 Mo par fichier
@@ -65,6 +71,7 @@ Le système d'upload de fichiers projet de Staka Livres permet aux utilisateurs 
 - **Authentification JWT**: Middleware obligatoire sur toutes les routes
 
 ### Frontend
+
 - **Token validation**: Vérification token localStorage
 - **Validation côté client**: Taille et types avant upload
 - **Error boundaries**: Gestion erreurs gracieuse
@@ -73,21 +80,23 @@ Le système d'upload de fichiers projet de Staka Livres permet aux utilisateurs 
 ## 📊 Validation et Contraintes
 
 ### Types de fichiers autorisés
+
 ```typescript
 const allowedMimeTypes = [
   "application/pdf",
-  "application/msword", 
+  "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "text/plain",
   "image/jpeg",
-  "image/jpg", 
+  "image/jpg",
   "image/png",
   "application/zip",
-  "application/x-rar-compressed"
+  "application/x-rar-compressed",
 ];
 ```
 
 ### Limites
+
 - **Taille maximum**: 20 Mo par fichier
 - **Nom fichier**: 1-255 caractères
 - **Upload simultané**: Supporté avec progression individuelle
@@ -98,7 +107,7 @@ const allowedMimeTypes = [
 ### 1. Upload de fichier
 
 ```typescript
-import { useUploadFile } from '../hooks/useUploadFile';
+import { useUploadFile } from "../hooks/useUploadFile";
 
 function MyComponent() {
   const { uploadFile, progress, isUploading, error } = useUploadFile(
@@ -109,13 +118,13 @@ function MyComponent() {
 
   const handleUpload = async (file: File) => {
     try {
-      const fileId = await uploadFile({ 
-        projectId: "project-123", 
-        file 
+      const fileId = await uploadFile({
+        projectId: "project-123",
+        file,
       });
-      console.log('File uploaded:', fileId);
+      console.log("File uploaded:", fileId);
     } catch (error) {
-      console.error('Upload failed:', error);
+      console.error("Upload failed:", error);
     }
   };
 
@@ -132,7 +141,7 @@ function MyComponent() {
 ### 2. Récupération de fichiers
 
 ```typescript
-import { useProjectFiles } from '../hooks/useProjectFiles';
+import { useProjectFiles } from "../hooks/useProjectFiles";
 
 function FilesList({ projectId }: { projectId: string }) {
   const { files, count, isLoading, error } = useProjectFiles(projectId);
@@ -143,7 +152,7 @@ function FilesList({ projectId }: { projectId: string }) {
   return (
     <div>
       <h3>Fichiers ({count})</h3>
-      {files.map(file => (
+      {files.map((file) => (
         <div key={file.id}>
           <span>{file.filename}</span>
           <span>{fileUtils.formatFileSize(file.size)}</span>
@@ -158,21 +167,24 @@ function FilesList({ projectId }: { projectId: string }) {
 ### 3. Suppression de fichier
 
 ```typescript
-import { useDeleteFile } from '../hooks/useProjectFiles';
+import { useDeleteFile } from "../hooks/useProjectFiles";
 
-function DeleteButton({ projectId, fileId }: { projectId: string, fileId: string }) {
+function DeleteButton({
+  projectId,
+  fileId,
+}: {
+  projectId: string;
+  fileId: string;
+}) {
   const { deleteFile, isDeleting } = useDeleteFile(
     projectId,
-    () => alert('Fichier supprimé'),
+    () => alert("Fichier supprimé"),
     (error) => alert(`Erreur: ${error}`)
   );
 
   return (
-    <button 
-      onClick={() => deleteFile(fileId)}
-      disabled={isDeleting}
-    >
-      {isDeleting ? 'Suppression...' : 'Supprimer'}
+    <button onClick={() => deleteFile(fileId)} disabled={isDeleting}>
+      {isDeleting ? "Suppression..." : "Supprimer"}
     </button>
   );
 }
@@ -197,11 +209,13 @@ JWT_SECRET="your_jwt_secret"
 ```
 
 ### Mode développement sans S3
+
 Si les variables AWS ne sont pas configurées, le système fonctionne en mode simulation avec des URLs locales.
 
 ## 🧪 Tests
 
 ### Tests Backend
+
 ```bash
 # Tests unitaires
 cd backend && npm test -- src/__tests__/models/projectFileModel.test.ts
@@ -213,6 +227,7 @@ cd backend && npm run test:coverage
 ```
 
 ### Tests Frontend
+
 ```bash
 # Tests hooks
 cd frontend && npm test -- src/__tests__/hooks/useUploadFile.test.ts
@@ -223,6 +238,7 @@ cd frontend && npm run test:coverage
 ```
 
 ### Mocking S3
+
 Les tests utilisent `aws-sdk-client-mock` pour simuler les interactions S3 :
 
 ```typescript
@@ -235,7 +251,7 @@ beforeEach(() => {
   s3Mock.reset();
 });
 
-it('should upload to S3', async () => {
+it("should upload to S3", async () => {
   s3Mock.on(PutObjectCommand).resolves({});
   // Test upload logic
 });
@@ -244,12 +260,14 @@ it('should upload to S3', async () => {
 ## 📈 Performance
 
 ### React Query Cache
+
 - **Stale time**: 30 secondes pour les listes de fichiers
 - **Garbage collection**: 5 minutes
 - **Invalidation automatique**: Après upload/suppression
 - **Retry logic**: 3 tentatives avec backoff exponentiel
 
 ### Optimisations S3
+
 - **URLs présignées**: Upload direct sans proxy backend
 - **Metadata enrichies**: Informations utilisateur et projet dans headers
 - **Compression**: Automatique côté navigateur
@@ -259,15 +277,16 @@ it('should upload to S3', async () => {
 
 ### Codes d'erreur communs
 
-| Code | Description | Solution |
-|------|-------------|----------|
-| 400 | Fichier trop volumineux | Réduire la taille < 20 Mo |
-| 400 | Type MIME non autorisé | Utiliser un format supporté |
-| 403 | Accès projet refusé | Vérifier ownership projet |
-| 403 | Token invalide | Réauthentification |
-| 500 | Erreur S3 | Vérifier configuration AWS |
+| Code | Description             | Solution                    |
+| ---- | ----------------------- | --------------------------- |
+| 400  | Fichier trop volumineux | Réduire la taille < 20 Mo   |
+| 400  | Type MIME non autorisé  | Utiliser un format supporté |
+| 403  | Accès projet refusé     | Vérifier ownership projet   |
+| 403  | Token invalide          | Réauthentification          |
+| 500  | Erreur S3               | Vérifier configuration AWS  |
 
 ### Stratégies de récupération
+
 - **Retry automatique**: 3 tentatives avec délai croissant
 - **Fallback mode**: Mode simulation si S3 indisponible
 - **Cache persistence**: Données en cache pendant les erreurs
@@ -280,6 +299,7 @@ it('should upload to S3', async () => {
 Crée un fichier et retourne une URL présignée S3.
 
 **Request:**
+
 ```json
 {
   "name": "manuscript.pdf",
@@ -289,6 +309,7 @@ Crée un fichier et retourne une URL présignée S3.
 ```
 
 **Response 201:**
+
 ```json
 {
   "uploadUrl": "https://bucket.s3.region.amazonaws.com/",
@@ -306,12 +327,13 @@ Crée un fichier et retourne une URL présignée S3.
 Récupère les fichiers d'un projet triés par date de création DESC.
 
 **Response 200:**
+
 ```json
 {
   "files": [
     {
       "id": "file-uuid",
-      "filename": "manuscript.pdf", 
+      "filename": "manuscript.pdf",
       "mimeType": "application/pdf",
       "size": 2048576,
       "url": "https://bucket.s3.region.amazonaws.com/file.pdf",
@@ -329,6 +351,7 @@ Récupère les fichiers d'un projet triés par date de création DESC.
 Supprime un fichier avec validation ownership.
 
 **Response 200:**
+
 ```json
 {
   "message": "Fichier supprimé avec succès"
@@ -338,6 +361,7 @@ Supprime un fichier avec validation ownership.
 ## 🎯 Roadmap
 
 ### Fonctionnalités futures
+
 - [ ] **Versioning**: Historique des versions de fichiers
 - [ ] **Compression automatique**: Optimisation taille upload
 - [ ] **Prévisualisation**: Aperçu fichiers dans navigateur
@@ -346,6 +370,7 @@ Supprime un fichier avec validation ownership.
 - [ ] **Webhooks**: Notifications externes upload/suppression
 
 ### Améliorations techniques
+
 - [ ] **CDN CloudFront**: Distribution globale des fichiers
 - [ ] **Multipart upload**: Gros fichiers > 100 Mo
 - [ ] **Background jobs**: Processing async documents
@@ -355,4 +380,4 @@ Supprime un fichier avec validation ownership.
 
 ---
 
-*Documentation mise à jour le 12 janvier 2025 - Version 2.0.0*
+_Documentation mise à jour le 12 janvier 2025 - Version 2.0.0_
