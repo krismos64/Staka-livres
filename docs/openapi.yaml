@@ -166,6 +166,220 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /files/projects/{id}/files:
+    post:
+      summary: Create project file and get S3 presigned URL
+      description: Create a file record and return a presigned URL for direct S3 upload with authentication and ownership validation
+      tags:
+        - Project Files
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Project (commande) ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - size
+                - mime
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  description: Original filename
+                  example: "manuscript-final.pdf"
+                size:
+                  type: integer
+                  minimum: 1
+                  maximum: 20971520
+                  description: File size in bytes (max 20MB)
+                  example: 2048576
+                mime:
+                  type: string
+                  description: MIME type of the file
+                  enum:
+                    - application/pdf
+                    - application/msword
+                    - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+                    - text/plain
+                    - image/jpeg
+                    - image/jpg
+                    - image/png
+                    - application/zip
+                    - application/x-rar-compressed
+                  example: "application/pdf"
+      responses:
+        '201':
+          description: File created successfully with S3 upload details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadUrlResponse'
+              example:
+                uploadUrl: "https://my-bucket.s3.eu-west-3.amazonaws.com/"
+                fields:
+                  key: "project-abc123-1640995200-xyz789.pdf"
+                  bucket: "my-bucket"
+                  Content-Type: "application/pdf"
+                  x-amz-meta-original-name: "manuscript-final.pdf"
+                  x-amz-meta-user-id: "user-456"
+                  x-amz-meta-project-id: "abc123"
+                fileId: "file-789"
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Fichier trop volumineux"
+                message: "La taille du fichier ne peut pas dépasser 20 Mo"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Access denied to project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Accès refusé"
+                message: "Projet non trouvé ou accès non autorisé"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      summary: Get project files
+      description: Retrieve all files for a project sorted by upload date descending
+      tags:
+        - Project Files
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Project (commande) ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of project files
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProjectFile'
+                  count:
+                    type: integer
+                    description: Total number of files
+              example:
+                files:
+                  - id: "file-789"
+                    filename: "manuscript-final.pdf"
+                    mimeType: "application/pdf"
+                    size: 2048576
+                    url: "https://my-bucket.s3.eu-west-3.amazonaws.com/project-abc123-1640995200-xyz789.pdf"
+                    type: "DOCUMENT"
+                    commandeId: "abc123"
+                    uploadedAt: "2023-12-01T10:30:00Z"
+                count: 1
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Access denied to project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /files/projects/{id}/files/{fileId}:
+    delete:
+      summary: Delete project file
+      description: Soft delete a project file with authentication and ownership validation
+      tags:
+        - Project Files
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Project (commande) ID
+          schema:
+            type: string
+            format: uuid
+        - name: fileId
+          in: path
+          required: true
+          description: File ID to delete
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: File deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Fichier supprimé avec succès"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Access denied to file or project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /payment-methods:
     get:
       summary: Get user payment methods
@@ -550,6 +764,88 @@ components:
       required:
         - error
         - message
+
+    ProjectFile:
+      type: object
+      description: Project file information with metadata
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique file identifier
+          example: "file-789"
+        filename:
+          type: string
+          description: Original filename
+          example: "manuscript-final.pdf"
+        mimeType:
+          type: string
+          description: File MIME type
+          example: "application/pdf"
+        size:
+          type: integer
+          description: File size in bytes
+          example: 2048576
+        url:
+          type: string
+          format: uri
+          description: File download URL (S3 or local)
+          example: "https://my-bucket.s3.eu-west-3.amazonaws.com/project-abc123-1640995200-xyz789.pdf"
+        type:
+          type: string
+          enum: [DOCUMENT, IMAGE, AUDIO, VIDEO, ARCHIVE, OTHER]
+          description: File category
+          example: "DOCUMENT"
+        commandeId:
+          type: string
+          format: uuid
+          description: Associated project ID
+          example: "abc123"
+        uploadedAt:
+          type: string
+          format: date-time
+          description: Upload timestamp (ISO 8601)
+          example: "2023-12-01T10:30:00Z"
+      required:
+        - id
+        - filename
+        - mimeType
+        - size
+        - url
+        - type
+        - commandeId
+        - uploadedAt
+
+    UploadUrlResponse:
+      type: object
+      description: S3 presigned URL response for file upload
+      properties:
+        uploadUrl:
+          type: string
+          format: uri
+          description: S3 presigned upload URL
+          example: "https://my-bucket.s3.eu-west-3.amazonaws.com/"
+        fields:
+          type: object
+          description: Required form fields for S3 POST
+          additionalProperties:
+            type: string
+          example:
+            key: "project-abc123-1640995200-xyz789.pdf"
+            bucket: "my-bucket"
+            Content-Type: "application/pdf"
+            x-amz-meta-original-name: "manuscript-final.pdf"
+            x-amz-meta-user-id: "user-456"
+            x-amz-meta-project-id: "abc123"
+        fileId:
+          type: string
+          format: uuid
+          description: Database file record ID
+          example: "file-789"
+      required:
+        - uploadUrl
+        - fields
+        - fileId
 
   securitySchemes:
     bearerAuth:

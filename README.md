@@ -28,6 +28,7 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 - **Système d'authentification JWT** avec rôles (USER/ADMIN/CORRECTOR)
 - **Paiements Stripe** avec synchronisation automatique et génération de factures PDF
 - **Messagerie temps réel** avec pièces jointes, archivage et support unifié
+- **Upload de fichiers projet** avec S3 presigned URLs et suivi de progression
 - **Notifications push** avec polling intelligent
 - **Interface admin complète** avec 10 pages spécialisées
 - **Système d'audit sécurisé** avec logs admin et traçabilité complète
@@ -86,6 +87,19 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 - **6 endpoints REST** : API complète avec authentification JWT et RBAC granulaire
 - **Performance** : < 100ms récupération conversations, cache React Query intelligent
 - **Score de fiabilité** : 97/100 après optimisations (Janvier 2025)
+
+### 📁 **Système d'Upload de Fichiers Projet (NOUVEAU 2025)**
+
+- **Intégration S3 complète** : URLs présignées pour upload direct avec authentification sécurisée
+- **Interface moderne** : Composants FileItem et UploadButton avec drag & drop intuitif
+- **Suivi de progression** : Barre de progression temps réel avec gestion d'erreurs avancée
+- **Hooks React Query** : `useUploadFile` et `useProjectFiles` avec cache intelligent 30 secondes
+- **Validation stricte** : Max 20 Mo par fichier, types MIME autorisés (PDF, DOC, DOCX, TXT, JPG, PNG, ZIP, RAR)
+- **Gestion d'état avancée** : Téléchargement, suppression, invalidation cache automatique
+- **Sécurité renforcée** : Validation ownership projet, contrôle accès utilisateur
+- **API REST complète** : 3 endpoints sécurisés avec Zod validation et gestion d'erreurs
+- **Tests complets** : Mock S3, couverture ≥90% avec scénarios edge cases
+- **Mode simulation** : Fonctionnement sans AWS pour développement local
 
 ### 🎨 **Landing Page Production-Ready (14 Composants)**
 
