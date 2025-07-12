@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { z } from "zod";
 import { FilesService } from "../services/filesService";
+import "../middleware/auth"; // Import pour les types globaux Express
 
 /**
  * Contrôleur pour la gestion des fichiers de projets
@@ -44,7 +45,7 @@ export const createProjectFile = async (
     const { id: commandeId } = projectIdSchema.parse(req.params);
 
     // Validation du corps de la requête
-    const fileInput = uploadFileSchema.parse(req.body);
+    const fileInput = uploadFileSchema.parse(req.body) as { name: string; size: number; mime: string };
 
     console.log(
       `📁 [FILES] ${req.user.email} crée un fichier pour le projet ${commandeId} - ${fileInput.name} (${fileInput.size} bytes, ${fileInput.mime})`

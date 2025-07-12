@@ -818,6 +818,57 @@ node test-admin-stats.js
 npm run lint --workspace=frontend
 ```
 
+### 🛠️ **Build Multi-Architecture Docker**
+
+Le projet supporte maintenant le build multi-architecture (ARM64/x86) pour une compatibilité complète avec Apple Silicon et serveurs x86.
+
+**Développement local (Apple Silicon) :**
+
+```bash
+# Démarrage avec Docker natif ARM64
+docker compose up backend db frontend -d
+
+# Frontend local si problème Docker
+cd frontend && npm run dev
+```
+
+**Build et publication multi-arch :**
+
+```bash
+# Build local pour test
+./scripts/docker-build.sh
+
+# Build et push avec tag spécifique
+./scripts/docker-build.sh 1.2.0 --push
+
+# Build seulement le frontend
+./scripts/docker-build.sh dev --target frontend
+
+# Variables d'environnement
+PUSH=true ./scripts/docker-build.sh v1.0.0
+```
+
+**Résolution des problèmes Docker :**
+
+```bash
+# Nettoyer le cache Docker
+docker system prune -a
+
+# Forcer rebuild Rollup/ESBuild
+docker compose build --no-cache frontend
+
+# Utiliser Rosetta si nécessaire (macOS)
+docker --platform linux/amd64 compose up
+```
+
+**Architecture des images :**
+
+- **Frontend** : Build multistage (Node.js → Nginx) avec support ARM64/x86
+- **Backend** : Image Alpine optimisée avec dépendances natives
+- **Nginx** : Configuration production avec proxy API et cache statique
+
+Pour plus de détails, voir [Documentation Docker](docs/DEPLOYMENT_DOCKER.md).
+
 ### 🔑 **Comptes de Test**
 
 ```bash

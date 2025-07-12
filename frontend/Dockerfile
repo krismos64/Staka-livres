@@ -1,44 +1,69 @@
-FROM node:18-bullseye
+# syntax=docker/dockerfile:1.6
+ARG NODE_VERSION=18.20.2
 
-# Installer les dépendances système pour Cypress
-RUN apt-get update && apt-get install -y \
-    xvfb \
-    libgtk2.0-0 \
-    libgtk-3-0 \
-    libgbm-dev \
-    libnotify-dev \
-    libnss3-dev \
-    libxss1 \
-    libasound2 \
-    libxtst6 \
-    xauth \
-    xfonts-base \
-    xfonts-75dpi \
-    xfonts-100dpi \
-    && rm -rf /var/lib/apt/lists/*
-
+# ---- deps ----
+FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS deps
 WORKDIR /app
 
-# Copier le package.json racine et les package.json des workspaces
-COPY package*.json ./
-COPY frontend/package*.json ./frontend/
-COPY shared/package*.json ./shared/
+# Enable corepack and install pnpm
+RUN corepack enable
 
-# Installer les dépendances du frontend
-WORKDIR /app/frontend
-RUN npm install
+# Copy package files
+COPY frontend/package.json frontend/package-lock.json* frontend/pnpm-lock.yaml* ./
 
-# Copier le code source
+# Install dependencies - use npm if no pnpm lockfile exists
+RUN if [ -f pnpm-lock.yaml ]; then \
+      pnpm install --frozen-lockfile; \
+    else \
+      npm install --omit=dev; \
+    fi
+
+# ---- builder ----
+FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS builder
+WORKDIR /app
+
+# Enable corepack
+RUN corepack enable
+
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy source code
 COPY frontend/ ./
 COPY shared/ ../shared/
 
-# Variables d'environnement pour Xvfb
-ENV DISPLAY=:99
-ENV SCREEN_WIDTH=1280
-ENV SCREEN_HEIGHT=720
-ENV SCREEN_DEPTH=24
+# Install all dependencies (including dev dependencies)
+RUN if [ -f pnpm-lock.yaml ]; then \
+      pnpm install --frozen-lockfile; \
+    else \
+      npm install; \
+    fi
 
-EXPOSE 3000
+# Build the application
+RUN if [ -f pnpm-lock.yaml ]; then \
+      pnpm run build; \
+    else \
+      npm run build; \
+    fi
 
-# Script de démarrage qui lance Xvfb en arrière-plan puis l'application
-CMD ["sh", "-c", "Xvfb :99 -screen 0 ${SCREEN_WIDTH}x${SCREEN_HEIGHT}x${SCREEN_DEPTH} -ac & npm run dev"]
+# ---- runtime ----
+FROM --platform=$TARGETPLATFORM nginx:1.25-alpine AS runtime
+
+# Copy built application
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy custom nginx configuration
+COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Set permissions for static files
+RUN chown -R nginx:nginx /usr/share/nginx/html
+
+# Expose port
+EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
