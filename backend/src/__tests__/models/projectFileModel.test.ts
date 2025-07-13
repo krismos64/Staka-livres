@@ -1,18 +1,38 @@
-import { ProjectFileModel, ProjectFileInput } from "../../models/projectFileModel";
-import { PrismaClient, FileType } from "@prisma/client";
-import { mockReset, DeepMockProxy, mockDeep } from "jest-mock-extended";
+import { FileType, PrismaClient } from "@prisma/client";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  ProjectFileInput,
+  ProjectFileModel,
+} from "../../models/projectFileModel";
 
 // Mock Prisma Client
-jest.mock("@prisma/client", () => ({
-  ...jest.requireActual("@prisma/client"),
-  PrismaClient: jest.fn(),
+vi.mock("@prisma/client", async (importOriginal) => ({
+  ...(await importOriginal()),
+  PrismaClient: vi.fn(),
+  FileType: {
+    IMAGE: "IMAGE",
+    DOCUMENT: "DOCUMENT",
+    ARCHIVE: "ARCHIVE",
+  },
 }));
 
-const prismaMock = mockDeep<PrismaClient>();
+const mockPrismaClient = {
+  commande: {
+    findFirst: vi.fn(),
+  },
+  file: {
+    create: vi.fn(),
+    findMany: vi.fn(),
+    findFirst: vi.fn(),
+    delete: vi.fn(),
+  },
+} as any;
+
+vi.mocked(PrismaClient).mockImplementation(() => mockPrismaClient);
 
 describe("ProjectFileModel", () => {
   beforeEach(() => {
-    mockReset(prismaMock);
+    vi.clearAllMocks();
   });
 
   describe("createFile", () => {
@@ -26,7 +46,7 @@ describe("ProjectFileModel", () => {
 
     it("should create a file successfully", async () => {
       // Mock commande exists and belongs to user
-      prismaMock.commande.findFirst.mockResolvedValue({
+      mockPrismaClient.commande.findFirst.mockResolvedValue({
         id: mockCommandeId,
         userId: mockUserId,
         titre: "Test Project",
@@ -62,7 +82,7 @@ describe("ProjectFileModel", () => {
         updatedAt: new Date(),
       };
 
-      prismaMock.file.create.mockResolvedValue(mockFile as any);
+      mockPrismaClient.file.create.mockResolvedValue(mockFile as any);
 
       // Set environment variables for test
       process.env.AWS_S3_BUCKET = "test-bucket";
@@ -72,7 +92,7 @@ describe("ProjectFileModel", () => {
         mockCommandeId,
         mockUserId,
         mockFileInput,
-        prismaMock
+        mockPrismaClient
       );
 
       expect(result).toEqual({
@@ -88,17 +108,19 @@ describe("ProjectFileModel", () => {
         fileId: "file-123",
       });
 
-      expect(prismaMock.commande.findFirst).toHaveBeenCalledWith({
+      expect(mockPrismaClient.commande.findFirst).toHaveBeenCalledWith({
         where: { id: mockCommandeId, userId: mockUserId },
       });
 
-      expect(prismaMock.file.create).toHaveBeenCalledWith({
+      expect(mockPrismaClient.file.create).toHaveBeenCalledWith({
         data: {
           filename: mockFileInput.name,
           storedName: expect.stringContaining("project-commande-123-"),
           mimeType: mockFileInput.mime,
           size: mockFileInput.size,
-          url: expect.stringContaining("https://test-bucket.s3.eu-west-3.amazonaws.com/"),
+          url: expect.stringContaining(
+            "https://test-bucket.s3.eu-west-3.amazonaws.com/"
+          ),
           type: FileType.DOCUMENT,
           uploadedById: mockUserId,
           commandeId: mockCommandeId,
@@ -116,7 +138,12 @@ describe("ProjectFileModel", () => {
       };
 
       await expect(
-        ProjectFileModel.createFile(mockCommandeId, mockUserId, largeFileInput, prismaMock)
+        ProjectFileModel.createFile(
+          mockCommandeId,
+          mockUserId,
+          largeFileInput,
+          mockPrismaClient
+        )
       ).rejects.toThrow("La taille du fichier ne peut pas dépasser 20 Mo");
     });
 
@@ -128,29 +155,54 @@ describe("ProjectFileModel", () => {
       };
 
       await expect(
-        ProjectFileModel.createFile(mockCommandeId, mockUserId, unsupportedFileInput, prismaMock)
+        ProjectFileModel.createFile(
+          mockCommandeId,
+          mockUserId,
+          unsupportedFileInput,
+          mockPrismaClient
+        )
       ).rejects.toThrow("Type de fichier non autorisé: application/javascript");
     });
 
     it("should throw error if user doesn't own the project", async () => {
-      prismaMock.commande.findFirst.mockResolvedValue(null);
+      mockPrismaClient.commande.findFirst.mockResolvedValue(null);
 
       await expect(
-        ProjectFileModel.createFile(mockCommandeId, mockUserId, mockFileInput, prismaMock)
+        ProjectFileModel.createFile(
+          mockCommandeId,
+          mockUserId,
+          mockFileInput,
+          mockPrismaClient
+        )
       ).rejects.toThrow("Projet non trouvé ou accès non autorisé");
     });
 
     it("should throw error for missing parameters", async () => {
       await expect(
-        ProjectFileModel.createFile("", mockUserId, mockFileInput, prismaMock)
+        ProjectFileModel.createFile(
+          "",
+          mockUserId,
+          mockFileInput,
+          mockPrismaClient
+        )
       ).rejects.toThrow("commandeId est requis");
 
       await expect(
-        ProjectFileModel.createFile(mockCommandeId, "", mockFileInput, prismaMock)
+        ProjectFileModel.createFile(
+          mockCommandeId,
+          "",
+          mockFileInput,
+          mockPrismaClient
+        )
       ).rejects.toThrow("userId est requis");
 
       await expect(
-        ProjectFileModel.createFile(mockCommandeId, mockUserId, { name: "", size: 1024, mime: "application/pdf" }, prismaMock)
+        ProjectFileModel.createFile(
+          mockCommandeId,
+          mockUserId,
+          { name: "", size: 1024, mime: "application/pdf" },
+          mockPrismaClient
+        )
       ).rejects.toThrow("name, size et mime sont requis");
     });
   });
@@ -161,7 +213,7 @@ describe("ProjectFileModel", () => {
 
     it("should return project files sorted by creation date desc", async () => {
       // Mock commande exists and belongs to user
-      prismaMock.commande.findFirst.mockResolvedValue({
+      mockPrismaClient.commande.findFirst.mockResolvedValue({
         id: mockCommandeId,
         userId: mockUserId,
       } as any);
@@ -191,19 +243,19 @@ describe("ProjectFileModel", () => {
         },
       ];
 
-      prismaMock.file.findMany.mockResolvedValue(mockFiles as any);
+      mockPrismaClient.file.findMany.mockResolvedValue(mockFiles as any);
 
       const result = await ProjectFileModel.getProjectFiles(
         mockCommandeId,
         mockUserId,
-        prismaMock
+        mockPrismaClient
       );
 
       expect(result).toHaveLength(2);
       expect(result[0].filename).toBe("newer-file.pdf");
       expect(result[1].filename).toBe("older-file.pdf");
 
-      expect(prismaMock.file.findMany).toHaveBeenCalledWith({
+      expect(mockPrismaClient.file.findMany).toHaveBeenCalledWith({
         where: { commandeId: mockCommandeId },
         select: {
           id: true,
@@ -221,10 +273,14 @@ describe("ProjectFileModel", () => {
     });
 
     it("should throw error if user doesn't own the project", async () => {
-      prismaMock.commande.findFirst.mockResolvedValue(null);
+      mockPrismaClient.commande.findFirst.mockResolvedValue(null);
 
       await expect(
-        ProjectFileModel.getProjectFiles(mockCommandeId, mockUserId, prismaMock)
+        ProjectFileModel.getProjectFiles(
+          mockCommandeId,
+          mockUserId,
+          mockPrismaClient
+        )
       ).rejects.toThrow("Projet non trouvé ou accès non autorisé");
     });
   });
@@ -236,54 +292,76 @@ describe("ProjectFileModel", () => {
 
     it("should delete file successfully", async () => {
       // Mock commande exists and belongs to user
-      prismaMock.commande.findFirst.mockResolvedValue({
+      mockPrismaClient.commande.findFirst.mockResolvedValue({
         id: mockCommandeId,
         userId: mockUserId,
       } as any);
 
       // Mock file exists and belongs to user and project
-      prismaMock.file.findFirst.mockResolvedValue({
+      mockPrismaClient.file.findFirst.mockResolvedValue({
         id: mockFileId,
         commandeId: mockCommandeId,
         uploadedById: mockUserId,
       } as any);
 
-      prismaMock.file.delete.mockResolvedValue({} as any);
+      mockPrismaClient.file.delete.mockResolvedValue({} as any);
 
       await expect(
-        ProjectFileModel.deleteFile(mockCommandeId, mockFileId, mockUserId, prismaMock)
+        ProjectFileModel.deleteFile(
+          mockCommandeId,
+          mockFileId,
+          mockUserId,
+          mockPrismaClient
+        )
       ).resolves.not.toThrow();
 
-      expect(prismaMock.file.delete).toHaveBeenCalledWith({
+      expect(mockPrismaClient.file.delete).toHaveBeenCalledWith({
         where: { id: mockFileId },
       });
     });
 
     it("should throw error if file doesn't exist or user doesn't have access", async () => {
-      prismaMock.commande.findFirst.mockResolvedValue({
+      mockPrismaClient.commande.findFirst.mockResolvedValue({
         id: mockCommandeId,
         userId: mockUserId,
       } as any);
 
-      prismaMock.file.findFirst.mockResolvedValue(null);
+      mockPrismaClient.file.findFirst.mockResolvedValue(null);
 
       await expect(
-        ProjectFileModel.deleteFile(mockCommandeId, mockFileId, mockUserId, prismaMock)
+        ProjectFileModel.deleteFile(
+          mockCommandeId,
+          mockFileId,
+          mockUserId,
+          mockPrismaClient
+        )
       ).rejects.toThrow("Fichier non trouvé ou accès non autorisé");
     });
   });
 
   describe("utility methods", () => {
     it("should determine correct file type from mime", () => {
-      expect(ProjectFileModel["getFileTypeFromMime"]("image/jpeg")).toBe(FileType.IMAGE);
-      expect(ProjectFileModel["getFileTypeFromMime"]("application/zip")).toBe(FileType.ARCHIVE);
-      expect(ProjectFileModel["getFileTypeFromMime"]("application/pdf")).toBe(FileType.DOCUMENT);
+      expect(ProjectFileModel["getFileTypeFromMime"]("image/jpeg")).toBe(
+        FileType.IMAGE
+      );
+      expect(ProjectFileModel["getFileTypeFromMime"]("application/zip")).toBe(
+        FileType.ARCHIVE
+      );
+      expect(ProjectFileModel["getFileTypeFromMime"]("application/pdf")).toBe(
+        FileType.DOCUMENT
+      );
     });
 
     it("should get correct extension from mime type", () => {
-      expect(ProjectFileModel["getExtensionFromMime"]("application/pdf")).toBe(".pdf");
-      expect(ProjectFileModel["getExtensionFromMime"]("image/jpeg")).toBe(".jpg");
-      expect(ProjectFileModel["getExtensionFromMime"]("application/zip")).toBe(".zip");
+      expect(ProjectFileModel["getExtensionFromMime"]("application/pdf")).toBe(
+        ".pdf"
+      );
+      expect(ProjectFileModel["getExtensionFromMime"]("image/jpeg")).toBe(
+        ".jpg"
+      );
+      expect(ProjectFileModel["getExtensionFromMime"]("application/zip")).toBe(
+        ".zip"
+      );
     });
   });
 });

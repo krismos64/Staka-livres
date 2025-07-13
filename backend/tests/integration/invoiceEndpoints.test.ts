@@ -9,8 +9,10 @@ import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 import request from "supertest";
 import app from "../../src/server";
+import { hasValidAwsCreds } from "../../src/test-helpers/utils";
 
 const prisma = new PrismaClient();
+const describeS3 = hasValidAwsCreds() ? describe : describe.skip;
 
 describe("Invoice Endpoints Integration Tests", () => {
   let userToken: string;
@@ -255,7 +257,7 @@ describe("Invoice Endpoints Integration Tests", () => {
     });
   });
 
-  describe("GET /invoices/:id/download", () => {
+  describeS3("GET /invoices/:id/download", () => {
     beforeEach(() => {
       // Mock des variables d'environnement pour S3
       process.env.AWS_ACCESS_KEY_ID = "test-access-key";

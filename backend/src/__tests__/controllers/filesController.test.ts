@@ -1,16 +1,21 @@
 import { Request, Response } from "express";
-import { createProjectFile, getProjectFiles, deleteProjectFile } from "../../controllers/filesController";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  createProjectFile,
+  deleteProjectFile,
+  getProjectFiles,
+} from "../../controllers/filesController";
 import { FilesService } from "../../services/filesService";
 
 // Mock FilesService
-jest.mock("../../services/filesService");
-const mockFilesService = FilesService as jest.Mocked<typeof FilesService>;
+vi.mock("../../services/filesService");
+const mockFilesService = vi.mocked(FilesService);
 
 // Helper to create mock request and response
 const createMockReq = (
   params: any = {},
   body: any = {},
-  user: any = { id: "user-123", email: "test@example.com" }
+  user: any = { id: "550e8400-e29b-41d4-a716-446655440000", email: "test@example.com" }
 ): Partial<Request> => ({
   params,
   body,
@@ -19,18 +24,18 @@ const createMockReq = (
 
 const createMockRes = (): Partial<Response> => {
   const res: Partial<Response> = {};
-  res.status = jest.fn().mockReturnValue(res);
-  res.json = jest.fn().mockReturnValue(res);
+  res.status = vi.fn().mockReturnValue(res);
+  res.json = vi.fn().mockReturnValue(res);
   return res;
 };
 
 describe("FilesController", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("createProjectFile", () => {
-    const mockParams = { id: "commande-123" };
+    const mockParams = { id: "550e8400-e29b-41d4-a716-446655440001" };
     const mockBody = {
       name: "test-document.pdf",
       size: 1024 * 1024,
@@ -44,11 +49,11 @@ describe("FilesController", () => {
       const mockResult = {
         uploadUrl: "https://bucket.s3.region.amazonaws.com/presigned-url",
         fields: {
-          key: "project-commande-123-1234567890-abcdef.pdf",
+          key: "project-550e8400-e29b-41d4-a716-446655440001-1234567890-abcdef.pdf",
           bucket: "test-bucket",
           "Content-Type": "application/pdf",
         },
-        fileId: "file-123",
+        fileId: "550e8400-e29b-41d4-a716-446655440002",
       };
 
       mockFilesService.createProjectFile.mockResolvedValue(mockResult);
@@ -56,8 +61,8 @@ describe("FilesController", () => {
       await createProjectFile(req as Request, res as Response);
 
       expect(mockFilesService.createProjectFile).toHaveBeenCalledWith(
-        "commande-123",
-        "user-123",
+        "550e8400-e29b-41d4-a716-446655440001",
+        "550e8400-e29b-41d4-a716-446655440000",
         mockBody
       );
 
@@ -127,7 +132,7 @@ describe("FilesController", () => {
       const req = createMockReq(mockParams, mockBody);
       const res = createMockRes();
 
-      mockFilesService.createProjectFile.mockRejectedValue(
+      vi.spyOn(mockFilesService, 'createProjectFile').mockRejectedValue(
         new Error("Projet non trouvé ou accès non autorisé")
       );
 
@@ -144,7 +149,9 @@ describe("FilesController", () => {
       const req = createMockReq(mockParams, mockBody);
       const res = createMockRes();
 
-      mockFilesService.createProjectFile.mockRejectedValue(new Error("Unexpected error"));
+      vi.spyOn(mockFilesService, 'createProjectFile').mockRejectedValue(
+        new Error("Unexpected error")
+      );
 
       await createProjectFile(req as Request, res as Response);
 
@@ -157,7 +164,7 @@ describe("FilesController", () => {
   });
 
   describe("getProjectFiles", () => {
-    const mockParams = { id: "commande-123" };
+    const mockParams = { id: "550e8400-e29b-41d4-a716-446655440001" };
 
     it("should get project files successfully", async () => {
       const req = createMockReq(mockParams);
@@ -171,7 +178,7 @@ describe("FilesController", () => {
           size: 1024,
           url: "https://bucket.s3.region.amazonaws.com/test.pdf",
           type: "DOCUMENT" as const,
-          commandeId: "commande-123",
+          commandeId: "550e8400-e29b-41d4-a716-446655440001",
           uploadedAt: "2023-12-01T10:00:00Z",
         },
       ];
@@ -181,8 +188,8 @@ describe("FilesController", () => {
       await getProjectFiles(req as Request, res as Response);
 
       expect(mockFilesService.getProjectFiles).toHaveBeenCalledWith(
-        "commande-123",
-        "user-123"
+        "550e8400-e29b-41d4-a716-446655440001",
+        "550e8400-e29b-41d4-a716-446655440000"
       );
 
       expect(res.status).toHaveBeenCalledWith(200);
@@ -209,7 +216,7 @@ describe("FilesController", () => {
       const req = createMockReq(mockParams);
       const res = createMockRes();
 
-      mockFilesService.getProjectFiles.mockRejectedValue(
+      vi.spyOn(mockFilesService, 'getProjectFiles').mockRejectedValue(
         new Error("Projet non trouvé ou accès non autorisé")
       );
 
@@ -224,7 +231,7 @@ describe("FilesController", () => {
   });
 
   describe("deleteProjectFile", () => {
-    const mockParams = { id: "commande-123", fileId: "file-123" };
+    const mockParams = { id: "550e8400-e29b-41d4-a716-446655440001", fileId: "550e8400-e29b-41d4-a716-446655440002" };
 
     it("should delete project file successfully", async () => {
       const req = createMockReq(mockParams);
@@ -235,9 +242,9 @@ describe("FilesController", () => {
       await deleteProjectFile(req as Request, res as Response);
 
       expect(mockFilesService.deleteProjectFile).toHaveBeenCalledWith(
-        "commande-123",
-        "file-123",
-        "user-123"
+        "550e8400-e29b-41d4-a716-446655440001",
+        "550e8400-e29b-41d4-a716-446655440002",
+        "550e8400-e29b-41d4-a716-446655440000"
       );
 
       expect(res.status).toHaveBeenCalledWith(200);
@@ -277,7 +284,7 @@ describe("FilesController", () => {
       const req = createMockReq(mockParams);
       const res = createMockRes();
 
-      mockFilesService.deleteProjectFile.mockRejectedValue(
+      vi.spyOn(mockFilesService, 'deleteProjectFile').mockRejectedValue(
         new Error("Fichier non trouvé ou accès non autorisé")
       );
 
@@ -294,7 +301,9 @@ describe("FilesController", () => {
       const req = createMockReq(mockParams);
       const res = createMockRes();
 
-      mockFilesService.deleteProjectFile.mockRejectedValue(new Error("Unexpected error"));
+      vi.spyOn(mockFilesService, 'deleteProjectFile').mockRejectedValue(
+        new Error("Unexpected error")
+      );
 
       await deleteProjectFile(req as Request, res as Response);
 

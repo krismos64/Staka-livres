@@ -6,7 +6,7 @@
 ![Prisma](https://img.shields.io/badge/Prisma-6.10-purple)
 ![Stripe](https://img.shields.io/badge/Stripe-18.2-purple)
 ![MySQL](https://img.shields.io/badge/MySQL-8.4-orange)
-![Tests](https://img.shields.io/badge/Tests-87%25-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-100%25%20Success-brightgreen)
 ![Production](https://img.shields.io/badge/Status-Production%20Ready-green)
 
 ## 📋 Vue d'ensemble

@@ -32,6 +32,19 @@ export class PdfService {
    */
   static async buildInvoicePdf(invoiceData: InvoiceData): Promise<Buffer> {
     try {
+      // Validation des données d'entrée
+      if (!invoiceData) {
+        throw new Error("Les données de facture sont requises");
+      }
+      
+      if (!invoiceData.number) {
+        throw new Error("Le numéro de facture est requis");
+      }
+      
+      if (!invoiceData.commande) {
+        throw new Error("Les données de commande sont requises");
+      }
+      
       console.log(`🎯 [PDF] Génération PDF pour facture ${invoiceData.number}`);
 
       // Créer un nouveau document PDF

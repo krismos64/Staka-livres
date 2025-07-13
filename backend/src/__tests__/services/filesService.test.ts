@@ -1,27 +1,31 @@
-import { FilesService } from "../../services/filesService";
-import { ProjectFileModel } from "../../models/projectFileModel";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ProjectFileModel } from "../../models/projectFileModel";
+import { FilesService } from "../../services/filesService";
 
 // Mock AWS SDK
-jest.mock("@aws-sdk/client-s3");
-jest.mock("@aws-sdk/s3-request-presigner");
+vi.mock("@aws-sdk/client-s3");
+vi.mock("@aws-sdk/s3-request-presigner");
 
 // Mock ProjectFileModel
-jest.mock("../../models/projectFileModel");
+vi.mock("../../models/projectFileModel");
 
-const mockProjectFileModel = ProjectFileModel as jest.Mocked<typeof ProjectFileModel>;
-const mockS3Client = S3Client as jest.MockedClass<typeof S3Client>;
-const mockGetSignedUrl = getSignedUrl as jest.MockedFunction<typeof getSignedUrl>;
+const mockProjectFileModel = vi.mocked(ProjectFileModel);
+const mockS3Client = vi.mocked(S3Client);
+const mockGetSignedUrl = vi.mocked(getSignedUrl);
 
 describe("FilesService", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Reset environment variables
     delete process.env.AWS_ACCESS_KEY_ID;
     delete process.env.AWS_SECRET_ACCESS_KEY;
     delete process.env.AWS_S3_BUCKET;
     delete process.env.AWS_REGION;
+    
+    // Reset the static s3Client to ensure clean state between tests
+    (FilesService as any).s3Client = null;
   });
 
   describe("createProjectFile", () => {
@@ -51,11 +55,13 @@ describe("FilesService", () => {
       };
 
       mockProjectFileModel.createFile.mockResolvedValue(mockModelResult);
-      
+
       // Mock S3 client and signed URL
       const mockS3Instance = {};
       mockS3Client.mockImplementation(() => mockS3Instance as any);
-      mockGetSignedUrl.mockResolvedValue("https://test-bucket.s3.eu-west-3.amazonaws.com/presigned-url");
+      mockGetSignedUrl.mockResolvedValue(
+        "https://test-bucket.s3.eu-west-3.amazonaws.com/presigned-url"
+      );
 
       const result = await FilesService.createProjectFile(
         mockCommandeId,
@@ -64,7 +70,8 @@ describe("FilesService", () => {
       );
 
       expect(result).toEqual({
-        uploadUrl: "https://test-bucket.s3.eu-west-3.amazonaws.com/presigned-url",
+        uploadUrl:
+          "https://test-bucket.s3.eu-west-3.amazonaws.com/presigned-url",
         fields: {
           key: "project-commande-123-1234567890-abcdef.pdf",
           bucket: "test-bucket",
@@ -79,6 +86,7 @@ describe("FilesService", () => {
         mockFileInput
       );
 
+      expect(mockGetSignedUrl).toHaveBeenCalledTimes(1);
       expect(mockGetSignedUrl).toHaveBeenCalledWith(
         mockS3Instance,
         expect.any(PutObjectCommand),
@@ -88,7 +96,7 @@ describe("FilesService", () => {
 
     it("should create project file with simulation URL when AWS is not configured", async () => {
       const mockModelResult = {
-        uploadUrl: "http://localhost:3001/api/upload/simulate/file-123",
+        uploadUrl: "https://test-bucket.s3.eu-west-3.amazonaws.com/presigned-url",
         fields: {
           key: "project-commande-123-1234567890-abcdef.pdf",
           bucket: "staka-livres-files",
@@ -105,6 +113,7 @@ describe("FilesService", () => {
         mockFileInput
       );
 
+      // When AWS is not configured, expect simulation URL
       expect(result).toEqual({
         uploadUrl: "http://localhost:3001/api/upload/simulate/file-123",
         fields: mockModelResult.fields,
@@ -123,7 +132,11 @@ describe("FilesService", () => {
       };
 
       await expect(
-        FilesService.createProjectFile(mockCommandeId, mockUserId, largeFileInput)
+        FilesService.createProjectFile(
+          mockCommandeId,
+          mockUserId,
+          largeFileInput
+        )
       ).rejects.toThrow("La taille du fichier ne peut pas dépasser 20 Mo");
     });
 
@@ -137,15 +150,25 @@ describe("FilesService", () => {
       ).rejects.toThrow("userId est requis");
 
       await expect(
-        FilesService.createProjectFile(mockCommandeId, mockUserId, { name: "", size: 1024, mime: "application/pdf" })
+        FilesService.createProjectFile(mockCommandeId, mockUserId, {
+          name: "",
+          size: 1024,
+          mime: "application/pdf",
+        })
       ).rejects.toThrow("name, size et mime sont requis");
     });
 
     it("should handle errors from ProjectFileModel", async () => {
-      mockProjectFileModel.createFile.mockRejectedValue(new Error("Database error"));
+      mockProjectFileModel.createFile.mockRejectedValue(
+        new Error("Database error")
+      );
 
       await expect(
-        FilesService.createProjectFile(mockCommandeId, mockUserId, mockFileInput)
+        FilesService.createProjectFile(
+          mockCommandeId,
+          mockUserId,
+          mockFileInput
+        )
       ).rejects.toThrow("Database error");
     });
   });
@@ -170,7 +193,10 @@ describe("FilesService", () => {
 
       mockProjectFileModel.getProjectFiles.mockResolvedValue(mockFiles);
 
-      const result = await FilesService.getProjectFiles(mockCommandeId, mockUserId);
+      const result = await FilesService.getProjectFiles(
+        mockCommandeId,
+        mockUserId
+      );
 
       expect(result).toEqual(mockFiles);
       expect(mockProjectFileModel.getProjectFiles).toHaveBeenCalledWith(
@@ -190,7 +216,9 @@ describe("FilesService", () => {
     });
 
     it("should handle errors from ProjectFileModel", async () => {
-      mockProjectFileModel.getProjectFiles.mockRejectedValue(new Error("Access denied"));
+      mockProjectFileModel.getProjectFiles.mockRejectedValue(
+        new Error("Access denied")
+      );
 
       await expect(
         FilesService.getProjectFiles(mockCommandeId, mockUserId)
@@ -232,7 +260,9 @@ describe("FilesService", () => {
     });
 
     it("should handle errors from ProjectFileModel", async () => {
-      mockProjectFileModel.deleteFile.mockRejectedValue(new Error("File not found"));
+      mockProjectFileModel.deleteFile.mockRejectedValue(
+        new Error("File not found")
+      );
 
       await expect(
         FilesService.deleteProjectFile(mockCommandeId, mockFileId, mockUserId)

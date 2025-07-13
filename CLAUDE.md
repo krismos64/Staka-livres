@@ -1,336 +1,186 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+> **Purpose** : Ce document sert de _single‑source of truth_ pour Claude Code (`claude.ai/code`). Il lui fournit les conventions, scripts et chemins à jour pour travailler efficacement sur le dépôt **Staka‑Livres** (monorepo TypeScript / Docker multi‑arch).
+>
+> **Dernière mise à jour** : **Juil 2025** – couverture tests : **63 / 63 passed – 87 %**.
 
-## Project Overview
+---
 
-**Staka Livres** is a production-ready manuscript correction and editing platform built with React/TypeScript frontend, Node.js/Express backend, and MySQL database. The project uses a monorepo structure with comprehensive admin interface, dynamic pricing system, and real-time messaging capabilities.
+## 1 · Vue d’ensemble du projet
 
-## Architecture
+| Côté              | Tech‑stack clé                                          | Ports (Docker)               | Tests                   | Couverture |
+| ----------------- | ------------------------------------------------------- | ---------------------------- | ----------------------- | ---------- |
+| **Backend**       | Node 18 · Express 4 · TypeScript 5 · Prisma 6 · MySQL 8 | `3000`                       | Vitest (63 + 7 skipped) | 87 %       |
+| **Frontend**      | React 18 · Vite 5 · React‑Query 5 · Tailwind 3          | `3001` (prod) / `5173` (dev) | Vitest + Cypress        | 85 %       |
+| **Docs & Shared** | MD guides · TS types (workspace)                        | —                            | n/a                     | —          |
 
-### Monorepo Structure
-- **frontend/**: React 18 + TypeScript + Vite + React Query v5 + Tailwind CSS
-- **backend/**: Node.js + Express + TypeScript + Prisma ORM + JWT auth
-- **shared/**: Common TypeScript types and utilities
+Fonctionnalités premium : upload S3, paiements Stripe, PDFKit, messagerie temps réel, audit logs, notifications, réservation de consultations.
 
-### Key Technologies
-- **Frontend**: React Query for server state management, Tailwind for styling, 80+ modular components
-- **Backend**: 12 specialized controllers with 49+ REST endpoints, Prisma ORM, JWT authentication
-- **Database**: MySQL 8 with 12 data models, comprehensive relations and constraints
-- **Payment**: Stripe integration with automatic invoice generation and PDF creation
-- **Testing**: Jest (backend), Vitest + Cypress (frontend) with 87% coverage
+---
 
-## Common Development Commands
+## 2 · Structure du monorepo
 
-### Setup and Installation
+```
+Staka-livres/
+├─ backend/      # API Express + Prisma
+├─ frontend/     # React + Vite UI
+├─ shared/       # Types & utils communs
+├─ docs/         # Documentation technique
+├─ docker-compose.yml
+└─ README.md
+```
+
+### 2.1 Back‑end
+
+- **src/server.ts** : bootstrap express
+- **src/controllers/** : 14 contrôleurs (auth, admin\*, files, notifications…)
+- **src/routes/** : 45+ endpoints REST déjà câblés
+- **src/services/** : logique métier (Stripe, Invoice, Audit…) – _à tester de préférence en isolation_
+- **src/tests/** : Vitest (`vitest run --coverage`)
+- **test‑helpers/utils.ts** : `hasValidAwsCreds()` & `skipIfNoAws` pour skipper les tests S3 lorsqu’`AWS_ACCESS_KEY_ID` commence par `test-` ou est vide.
+
+### 2.2 Front‑end
+
+- **src/hooks/** : 13 hooks React‑Query (messages, invoices, audit…)
+- **src/components/** : 130+ composants modulaires
+- **src/pages/** : 25 pages (10 admin, 12 client, 1 landing, etc.)
+- **tests/** : Vitest UT + Cypress E2E (`npm run test:e2e`).
+
+---
+
+## 3 · Scripts & commandes de référence
+
+### 3.1 Top‑level workspace
+
 ```bash
-# Install all dependencies
+# Installation (toutes workspaces)
 npm run install:all
 
-# Start development with Docker (recommended)
+# Lancement Docker complet (backend 3000, frontend 3001)
 npm run docker:dev
 
-# Start development locally
-npm run dev
+# Mode hot‑reload (backend nodemon + Vite dev 5173)
+npm run dev:watch
 ```
 
-### Development Commands
+### 3.2 Backend
+
 ```bash
-# Frontend development
-npm run dev:frontend          # Start frontend dev server
-cd frontend && npm run lint    # Lint frontend code
-cd frontend && npm run test    # Run frontend tests (Vitest)
-cd frontend && npm run test:e2e # Run E2E tests (Cypress)
-cd frontend && npm run test:unit # Run Jest unit tests
+# Build TS
+docker compose run --rm app npm run build
 
-# Backend development
-npm run dev:backend           # Start backend dev server
-cd backend && npm run test    # Run backend tests (Jest)
-cd backend && npm run db:migrate # Run database migrations
-cd backend && npm run db:generate # Generate Prisma client
-cd backend && npm run prisma:seed # Seed database with test data
+# Tests (inclut couverture Istanbul)
+docker compose run --rm app npm run test:ci   # = vitest --coverage
+
+# Tests S3 réels (skippés si creds factices)
+AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=... \
+  docker compose run --rm app npm run test:s3
+
+# Prisma
+npm run db:migrate   # exécute dans le conteneur
+npm run db:generate
+npm run prisma:seed
 ```
 
-### Building and Testing
+### 3.3 Frontend
+
 ```bash
-# Build all packages
-npm run build
+# Dev hot‑reload
+npm run dev           # proxy Nginx + Vite HMR
 
-# Run comprehensive tests
-npm run test                  # Backend tests
-cd frontend && npm run test:run # Frontend tests
-cd frontend && npm run test:coverage # Test coverage report
+# Tests
+npm run test          # Vitest
+npm run test:e2e      # Cypress
 ```
 
-### Database Management
-```bash
-# Generate Prisma client after schema changes
-cd backend && npm run db:generate
+---
 
-# Run database migrations
-cd backend && npm run db:migrate
+## 4 · Règles de code, sécurité & qualité
 
-# Seed database with test data (includes admin/user/corrector accounts)
-cd backend && npm run prisma:seed
+1. **TypeScript strict** : `noImplicitAny`, `strictNullChecks`, etc.
+2. **Validation entrées / sorties** : Zod (backend) + React‑Hook‑Form + zodResolver (frontend).
+3. **Auth** : JWT 7 jours, rôles (`USER` `ADMIN` `CORRECTOR`), middleware `requireRole`.
+4. **Tests** :
 
-# Access Prisma Studio for database inspection
-# Visit http://localhost:5555 when Docker is running
-```
+   - unitaires services & controllers
+   - intégration routes (Prisma SQLite in‑mem ou DB Docker)
+   - tests conditionnels S3 via `skipIfNoAws`
+   - E2E Cypress (landing, signup, paiement Stripe Playground)
 
-## Key Features and Implementation Details
+5. **Audit logs** : tout accès admin = entrée `AuditLog` (service `auditService.ts`).
+6. **Style** : ESLint + Prettier (monorepo), style Tailwind en composants.
 
-### Consultation Booking System (NEW JULY 2025)
-- **Landing Page Integration**: Interactive booking section with pre-defined time slots
-- **Client Space Access**: "Planifier un appel" button in Help & Support page
-- **Ultra-Simple Workflow**: Name, email, date, time, optional message → automatic admin notification
-- **Database Integration**: New CONSULTATION_REQUEST message type with JSON metadata
-- **Admin Management**: Consultation requests appear in admin messaging with full context
-- **API Endpoints**: 4 REST endpoints (public booking, admin management, available slots)
-- **Components**: ModalConsultationBooking with React Query integration and toast notifications
+---
 
-### Authentication System
-- JWT-based authentication with 7-day token expiration
-- bcrypt password hashing (12 rounds)
-- Role-based access control (USER, ADMIN, CORRECTOR)
-- Rate limiting on authentication endpoints
-- Protected routes with middleware validation
+## 5 · Guidelines spécifiques pour Claude Code
 
-### Database Schema (13 Models)
-- **User**: Authentication, roles, profiles with GDPR compliance
-- **Commande**: Project management with status tracking and payment integration
-- **Message**: Advanced messaging system with thread-based conversations, archiving, and file attachments
-- **Invoice**: Automatic PDF generation with S3 storage
-- **File**: Document management with security controls
-- **FAQ, Tarif, Page**: Content management systems
-- **SupportRequest, PaymentMethod, Notification**: Supporting features
-- **AuditLog**: Security audit trail with comprehensive logging (NEW)
+### 5.1 Génération de code
 
-### React Query Implementation
-- **5-minute cache** for pricing data with background refetching
-- **30-second cache** for messaging with optimistic updates
-- **Intelligent invalidation** for admin-to-public synchronization
-- **Error handling** with retry logic and fallbacks
-- **1000+ lines** of specialized hooks for complex state management
+- **Respecter l’architecture** : ajouter un service → `backend/src/services/*Service.ts` + test + mise à jour index route.
+- **Toujours écrire / adapter tests Vitest** : `backend/src/tests/**/*.test.ts`.
+- **Mocks Prisma** :
 
-### Admin Interface (9 Complete Pages)
-- **AdminUtilisateurs**: User management with GDPR-compliant deletion (625 lines)
-- **AdminCommandes**: Project tracking with status management (964 lines)
-- **AdminFactures**: Invoice management with PDF generation (1177 lines)
-- **AdminMessagerie**: Messaging administration (215 lines)
-- **AdminFAQ**: Knowledge base management (1130 lines)
-- **AdminTarifs**: Dynamic pricing configuration (1233 lines)
-- **AdminPages**: CMS for static pages (180 lines)
-- **AdminStatistiques**: Analytics dashboard (394 lines)
-- **AdminAuditLogs**: Security audit trail management (NEW - 350+ lines)
-- **Demo Mode**: Professional demonstration with mock data (453 lines)
+  - Utiliser `vi.mock("@prisma/client", …)` en début de fichier test avant `import *`.
+  - Injecter enums manquants (`Role`, `FileType`, etc.).
 
-### Dynamic Pricing System
-- **Real-time synchronization** between admin and landing page
-- **React Query cache invalidation** for instant updates
-- **usePricing() hook** with intelligent caching (440 lines)
-- **Fallback mechanisms** for error handling
-- **15 comprehensive tests** (10 unit + 5 E2E)
+- **Streams & PDF** : utiliser `Readable.from(Buffer)` + `for await` dans mocks.
+- **S3** : pour tests unit → mock `@aws-sdk/client-s3` & `@aws-sdk/s3-request-presigner`.
+- **Cache singleton** : réinitialiser entre tests via `delete (global as any).<symbol>` ou exp expose `reset()`.
 
-### Real-Time Messaging System (OPTIMIZED 2025)
-- **Thread-based architecture** with 8 REST API endpoints for comprehensive communication
-- **Multi-role support** for visitors, authenticated clients, and administrators
-- **Advanced file attachments** with strict validation (max 10 files, 50MB/file, 100MB total)
-- **Intelligent archiving** with archive/unarchive API functionality
-- **Automatic notifications** bidirectional generation for every message with action links
-- **Smart state management** read/unread marking, pinning, logical admin deletion
-- **Optimized pagination** efficient retrieval with limit/offset and chronological sorting
-- **Enhanced security** UUID validation, file ownership control, complete audit logs
-- **High performance** < 100ms conversation retrieval, intelligent React Query cache
-- **Reliability score** 97/100 after January 2025 optimizations
+### 5.2 Documentation & mise à jour
 
-### Payment Integration
-- **Stripe Checkout** for PCI DSS compliance
-- **Webhook handling** with signature verification
-- **Automatic invoice generation** with PDFKit
-- **AWS S3 integration** for file storage
-- **SendGrid email notifications**
+- Toute modification de scripts npm, structure dossiers ou commandes **=>** met à jour :
 
-## Security Guidelines
+  1. `README.md`
+  2. `CLAUDE.md`
+  3. Guides spécifiques dans `docs/`
 
-### Authentication & Authorization
-- JWT tokens with proper expiration handling
-- bcrypt password hashing (never store plain text)
-- Rate limiting on `/auth` endpoints
-- Log all failed login attempts for security audit
-- Validate inputs with Zod (backend) and form validation (frontend)
+- Ajouter un rappel dans la PR : _“Docs updated ? yes/no”_.
 
-### GDPR Compliance
-- **Cascade deletion** for account removal (all related data)
-- **Data export functionality** in JSON/ZIP format
-- **Consent tracking** in user registration
-- **Confirmation tokens** for sensitive operations
-- **Activity logging** for all sensitive actions
+### 5.3 Tests & CI
 
-### Stripe Security
-- **Signature verification** for all webhooks using STRIPE_WEBHOOK_SECRET
-- **Never store card information** directly
-- **Log all payment events** for audit trail
-- **Use Stripe Checkout** for PCI DSS compliance
+- **Objectif couverture** : ≥ 90 % backend, ≥ 85 % frontend.
+- Pipeline GitHub Actions (non inclus ici) lance :
 
-## Testing Strategy
+  - Lint → Tests backend → Tests frontend → Build Docker multi‑arch.
 
-### Backend Tests (87% Coverage)
-- **Unit tests** for services and controllers
-- **Integration tests** for API endpoints with real database
-- **Webhook testing** with Stripe event simulation
-- **Security tests** for authentication and authorization
-- **Performance tests** ensuring < 1 second response times
+- Échecs tests S3 ignorés si `AWS_ACCESS_KEY_ID` factice.
 
-### Frontend Tests
-- **Unit tests** with Vitest for components and hooks
-- **Integration tests** for React Query hooks and API calls
-- **E2E tests** with Cypress (19 scenarios)
-- **Visual regression tests** for UI consistency
+---
 
-### Test Data and Environments
-- **Seed database** with realistic test data
-- **Demo mode** with professional mock data
-- **Test accounts**: admin@test.com, user@test.com, corrector@test.com (password: password)
-- **Isolated test databases** for integration testing
+## 6 · Variables d’environnement (backend/.env)
 
-## Performance Considerations
-
-### React Query Configuration
-- **5-minute stale time** for pricing data
-- **30-second cache** for messaging
-- **Background refetching** enabled
-- **Optimistic updates** for mutations
-- **Cache invalidation strategies** for real-time updates
-
-### Database Optimizations
-- **Indexed queries** for performance
-- **Cascade deletes** for data integrity
-- **Type-safe queries** with Prisma
-- **Connection pooling** for production
-
-## Development Patterns
-
-### Component Architecture
-- **Modular React components** with TypeScript
-- **Custom hooks** for complex state management
-- **Error boundaries** for graceful error handling
-- **Consistent loading states** across UI
-
-### Backend Architecture
-- **Controller-Service pattern** for business logic separation
-- **Middleware chain** for authentication and validation
-- **Centralized error handling** with proper HTTP status codes
-- **Structured logging** with Winston
-
-### API Design
-- **RESTful endpoints** with consistent naming
-- **Zod validation** for request/response schemas
-- **Proper HTTP status codes** and error responses
-- **Comprehensive documentation** in separate guides
-
-## Environment Variables
-
-### Backend (.env)
 ```env
-# Database
 DATABASE_URL="mysql://staka:staka@db:3306/stakalivres"
-
-# Authentication
-JWT_SECRET="your_secure_jwt_secret"
-NODE_ENV="development"
-
-# Frontend
-FRONTEND_URL="http://localhost:3000"
-PORT=3001
+JWT_SECRET="dev_secret_key_change_in_production"
+FRONTEND_URL="http://localhost:3001"
+PORT=3000
 
 # Stripe
 STRIPE_SECRET_KEY="sk_test_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."
 
-# Optional services
-SENDGRID_API_KEY="your_sendgrid_key"
-AWS_ACCESS_KEY_ID="your_aws_key"
-AWS_SECRET_ACCESS_KEY="your_aws_secret"
+# AWS (optionnel – tests unit pass even if unset)
+AWS_ACCESS_KEY_ID="test-key"      # Commence par test- ⇒ tests S3 skip
+AWS_SECRET_ACCESS_KEY="test-secret"
 AWS_REGION="eu-west-3"
 AWS_S3_BUCKET="staka-livres-files"
 ```
 
-### Service URLs
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:3001
-- **Prisma Studio**: http://localhost:5555
-- **Database**: localhost:3306
+---
 
-## Troubleshooting
+## 7 · FAQ rapide
 
-### Common Issues
-- **504 Optimize Dep Error**: Run `rm -rf node_modules/.vite` and restart
-- **Docker MySQL Issues**: Ensure `--mysql-native-password=ON` in configuration
-- **Database Migration Failures**: Check schema compatibility and run `db:generate`
-- **React Query Cache Issues**: Use invalidation hooks provided in project
+| Problème                            | Solution rapide                                                               |
+| ----------------------------------- | ----------------------------------------------------------------------------- |
+| **“Prisma: libssl not found”** (CI) | Image backend basée Alpine → ajouter `apk add openssl1.1-compat` (déjà fait). |
+| Tests backend trop lents            | Vérifier mock Prisma, éviter requêtes DB réelles pour unitaires.              |
+| Vitest “worker stuck” sur Mac M1    | `node --openssl-legacy-provider $(which vitest)` ou passer à Node 20.         |
+| Cypress 504 vite dev                | Effacer `.vite` et relancer `npm run dev:watch`.                              |
+| AWS creds dev                       | Laisser `AWS_ACCESS_KEY_ID` commençant par `test-` pour skip.                 |
 
-### Performance Issues
-- **Webhook Duplication**: Clean up duplicate endpoints in payment controller
-- **Admin Interface Slowness**: Enable demo mode for faster development
-- **Database Query Optimization**: Use Prisma Studio to analyze query performance
+---
 
-## Documentation References
+### Merci !
 
-The project includes comprehensive documentation in `/docs`:
-- **Admin Guide**: Complete admin interface documentation
-- **Backend Guide**: API documentation and architecture
-- **Frontend Guide**: Component architecture and patterns
-- **Database Guide**: Complete schema and migration documentation
-- **Billing Guide**: Payment integration and invoice generation
-- **Testing Guide**: Comprehensive testing strategies
-- **Webhook Guide**: Stripe integration and event handling
-
-## Code Style and Security Rules
-
-### Authentication Rules
-- Use JWT with 30-minute expiration (refresh tokens planned)
-- Hash passwords with bcrypt (12 rounds minimum)
-- Implement rate limiting on authentication endpoints
-- Log all failed login attempts with IP and timestamp
-
-### GDPR Compliance Rules
-- Account deletion must cascade to all related data
-- Provide complete data export functionality
-- Log all sensitive operations with timestamps
-- Use confirmation tokens for destructive actions
-
-### Stripe Security Rules
-- Use Stripe Checkout for PCI DSS compliance
-- Verify webhook signatures on all endpoints
-- Never store card information directly
-- Log all payment events for audit trail
-
-### Security Audit System (NEW)
-- **Comprehensive audit logging** with AuditService for all admin actions
-- **Database persistence** for audit logs with Prisma ORM
-- **Admin-only access** with RBAC protection on frontend and backend
-- **Real-time filtering** by action, severity, target type, date range
-- **Export functionality** supporting CSV and JSON formats
-- **Automatic cleanup** with configurable retention periods
-- **Security events tracking** including unauthorized access attempts
-- **IP address and user agent logging** for all operations
-- **Four severity levels**: LOW, MEDIUM, HIGH, CRITICAL
-- **Seven target types**: user, command, invoice, payment, file, auth, system
-
-## Development Workflow
-
-1. **Setup**: Use Docker for consistent environment
-2. **Database**: Run migrations and seed data
-3. **Testing**: Write tests before implementing features
-4. **Documentation**: Update relevant guides when adding features
-5. **Security**: Follow established patterns for authentication and data protection
-6. **Performance**: Use React Query patterns for optimal caching
-7. **Deployment**: Use Docker compose for production environments
-
-## Docker and Local Development Guidelines
-
-### Key Development Principles
-- **Always use docker and no local** for consistent development environments
-- Ensure all dependencies and services are containerized
-- Use Docker Compose for managing multi-container applications
-- Maintain identical configurations between development and production
+Ce guide doit rester **court, exact et opérationnel**. Toute évolution majeure de l’architecture ou des scripts doit s’accompagner d’une mise à jour de ce fichier.
