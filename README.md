@@ -8,7 +8,7 @@
 
 - **200,000+ lignes de code** TypeScript/JavaScript
 - **130+ composants React** modulaires et réutilisables avec TypeScript
-- **20+ contrôleurs backend** spécialisés (dont consultationController)
+- **21 contrôleurs backend** spécialisés (dont consultationController)
 - **54+ endpoints REST API** sécurisés avec Zod validation
 - **13 modèles de base de données** avec relations RGPD complètes
 - **Système d'audit sécurisé** avec traçabilité complète et export
@@ -128,8 +128,8 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 
 - **[Guide Backend API](docs/README-backend.md)** : Documentation complète de l'API REST avec exemples et architecture technique
 - **[Guide Frontend](docs/README-frontend.md)** : Architecture React, composants et patterns de développement
-- **[Guide Base de Données](docs/Base-de-donnees-guide.md)** : Documentation exhaustive des 12 modèles Prisma, relations, optimisations et troubleshooting
-- **[Guide Génération PDF Factures](docs/PDF_INVOICE_GENERATION.md)** : Génération PDF professionnelle, stockage S3 sécurisé et téléchargement optimisé
+- **[Guide Base de Données](docs/Base-de-donnees-guide.md)** : Documentation exhaustive des 13 modèles Prisma, relations, optimisations et troubleshooting
+- **[Guide Système de Facturation Complet](docs/INVOICE_SYSTEM_COMPLETE.md)** : Génération PDF avec pdf-lib, stockage S3 sécurisé, webhooks Stripe et interface admin
 - **[Guide Messagerie API](docs/MESSAGES_API_GUIDE.md)** : Architecture React Query, hooks spécialisés et performance
 - **[Guide Tarifs Dynamiques](docs/TARIFS_DYNAMIQUES_INTEGRATION.md)** : Intégration React Query, cache intelligent, patterns et optimisations
 
@@ -149,7 +149,7 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 ### 📊 **Métriques et Validation**
 
 - Tests Docker validés avec résultats de production
-- Architecture backend complète avec 13 contrôleurs + 49+ endpoints
+- Architecture backend complète avec 21 contrôleurs + 49+ endpoints
 - Système de messagerie React Query (1000+ lignes de hooks optimisés)
 - Module Admin complet production-ready avec 10 pages fonctionnelles
 - Système d'audit sécurisé avec traçabilité complète
@@ -335,7 +335,7 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **Routes pages statiques** : GET /pages/:slug pour CMS
 - **Routes tarifs publics** : GET /tarifs pour landing page
 - **Routes admin audit** : ✅ **API `/admin/audit`** complète avec 4 endpoints sécurisés
-- **Architecture backend** : 14 contrôleurs spécialisés avec services métier optimisés (dont consultationController)
+- **Architecture backend** : 21 contrôleurs spécialisés avec services métier optimisés (dont consultationController)
 - **Sécurité production** : JWT Admin obligatoire, validation Zod, hashage bcrypt 12 rounds, protection dernier admin
 - **Middleware de rôles** avec RequireAdmin
 - **Gestion d'erreurs** centralisée avec logs
@@ -374,7 +374,7 @@ Staka-livres/
 │   ├── src/
 │   │   ├── server.ts       # Point d'entrée principal
 │   │   ├── app.ts          # Configuration Express
-│   │   ├── controllers/    # Contrôleurs API (13 contrôleurs)
+│   │   ├── controllers/    # Contrôleurs API (21 contrôleurs)
 │   │   │   ├── authController.ts              # Authentification
 │   │   │   ├── adminController.ts             # Administration générale
 │   │   │   ├── adminUserController.ts         # Gestion utilisateurs admin
@@ -700,7 +700,7 @@ Staka-livres/
 
 **🎯 Architecture Backend Complète (12 Contrôleurs + 45+ Endpoints) :**
 
-- ✅ **13 contrôleurs spécialisés** : authController, adminController, adminUserController, adminCommandeController, adminFactureController, adminPageController, adminStatsController, notificationsController, faqController, commandeClientController, commandeController, messagesController, paymentController
+- ✅ **21 contrôleurs spécialisés** : authController, adminController, adminUserController, adminCommandeController, adminFactureController, adminPageController, adminStatsController, notificationsController, faqController, commandeClientController, commandeController, messagesController, paymentController, consultationController, fileController, filesController, paymentMethodsController, projectsController, statsController, adminAuditController
 - ✅ **45+ endpoints REST** : Authentification, administration complète, notifications, statistiques, commandes, factures, messagerie, paiements, FAQ, pages, tarifs
 - ✅ **Services métier** : adminCommandeService, adminUserService, stripeService, invoiceService, pageService
 - ✅ **Middleware de sécurité** : JWT, rôles, validation Zod
@@ -751,9 +751,9 @@ Staka-livres/
 - ✅ **SEO optimisé** : Structure sémantique HTML5 production-ready
 - ✅ **Performance** : Cache partagé, déduplication requêtes, background refresh
 
-**🗄️ Base de Données Complète (12 Modèles) :**
+**🗄️ Base de Données Complète (13 Modèles) :**
 
-- ✅ **12 modèles de données complets** : User, Commande, File, Message, MessageAttachment, SupportRequest, PaymentMethod, Invoice, Notification, Page, FAQ, Tarif
+- ✅ **13 modèles de données complets** : User, Commande, File, Message, MessageAttachment, SupportRequest, PaymentMethod, Invoice, Notification, Page, FAQ, Tarif, AuditLog
 - ✅ **Modèle Notification** : Types, priorités, expiration, actions URL, métadonnées JSON
 - ✅ **Schéma Prisma robuste** : Relations RGPD, contraintes FK, index performance
 - ✅ **Migrations corrigées** : Déploiement automatique sans erreurs
