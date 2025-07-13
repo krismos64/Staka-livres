@@ -213,7 +213,12 @@ backend/
 │   │   │   └── webhook.ts    # Webhook Stripe
 │   │   ├── payments.ts       # Création session paiement
 │   │   └── tarifs.ts         # Tarifs publics
-│   ├── services/             # Services (Stripe, S3, etc.)
+│   ├── services/             # Services métier
+│   │   ├── pdf.ts            # Génération PDF factures (PDFKit)
+│   │   ├── s3InvoiceService.ts # Stockage S3 sécurisé factures
+│   │   ├── invoiceService.ts # Service facturation complet
+│   │   ├── filesService.ts   # Gestion fichiers S3
+│   │   └── ...autres services
 │   ├── utils/                # Utilitaires (mailer, tokens)
 │   ├── types/                # Types TypeScript partagés
 │   │   ├── adminStats.ts     # Types statistiques admin
@@ -1153,7 +1158,8 @@ GET /admin/factures/:id
 PUT /admin/factures/:id → { "statut": "PAID" | "GENERATED" | "OVERDUE" }
 DELETE /admin/factures/:id
 POST /admin/factures/:id/reminder → Envoi rappel email
-GET /admin/factures/:id/pdf → Téléchargement PDF admin
+GET /admin/factures/:id/pdf → Téléchargement PDF admin (génération automatique)
+GET /admin/factures/:id/download → Téléchargement direct PDF avec headers optimisés
 ```
 
 #### Caractéristiques techniques
@@ -1165,6 +1171,9 @@ GET /admin/factures/:id/pdf → Téléchargement PDF admin
 - **Tri** : Les factures les plus récentes en premier
 - **Interface admin** : Gestion complète avec statistiques temps réel ⚡ NOUVEAU
 - **Filtres avancés** : Recherche par client, statut, montant, dates ⚡ NOUVEAU
+- **Génération PDF** : PDFKit avec template professionnel A4 portrait ⚡ NOUVEAU
+- **Stockage S3** : URLs signées 7 jours, ACL privé, metadata complète ⚡ NOUVEAU
+- **Optimisations** : Cache S3, génération à la demande, background upload ⚡ NOUVEAU
 
 ### Événements Gérés
 
@@ -1704,6 +1713,8 @@ tests/
 │   ├── adminCommandeService.test.ts # Service admin commandes
 │   ├── invoiceRoutes.test.ts      # Routes factures (416 lignes) ⚡ NOUVEAU
 │   ├── invoiceService.test.ts     # Service factures (270 lignes) ⚡ NOUVEAU
+│   ├── pdfService.test.ts         # Service PDF factures (300+ lignes) ⚡ NOUVEAU
+│   ├── s3InvoiceService.test.ts   # Service S3 factures (250+ lignes) ⚡ NOUVEAU
 │   ├── webhook.test.ts            # Webhook Stripe
 │   └── webhookWithInvoice.test.ts # Webhook + facturation (285 lignes) ⚡ NOUVEAU
 ├── integration/                   # Tests d'intégration (5 suites)
@@ -2055,6 +2066,12 @@ docker exec -w /app staka_backend node fix-admin-role.js
 - [Stripe API](https://stripe.com/docs/api)
 - [JWT.io](https://jwt.io/)
 
+### Guides Techniques
+
+- [📄 Guide Génération PDF Factures](PDF_INVOICE_GENERATION.md) - Génération, stockage S3 et téléchargement
+- [💳 Guide Facturation Stripe](BILLING_AND_INVOICES.md) - Intégration paiements et facturation
+- [📊 Guide Base de Données](Base-de-donnees-guide.md) - Modèles Prisma et optimisations
+
 ### Dépendances principales
 
 - **Express 4.18**: Framework web
@@ -2207,7 +2224,7 @@ GET /admin/messages?page=1&limit=100&search=visitor&isRead=false
 - **AdminNotifications** : 6 endpoints + génération automatique ⚡ NOUVEAU
 - **AdminUtilisateurs** : 7 endpoints + tests + sécurité RGPD
 - **AdminCommandes** : 4 endpoints + filtres + statistiques
-- **AdminFactures**: 7 endpoints + stats + PDF
+- **AdminFactures**: 8 endpoints + stats + génération PDF avancée ([Guide PDF](PDF_INVOICE_GENERATION.md))
 - **AdminFAQ**: 5 endpoints + filtres
 - **AdminTarifs**: 5 endpoints + filtres
 - **AdminPages**: 4 endpoints + CMS pages statiques
@@ -2219,7 +2236,7 @@ GET /admin/messages?page=1&limit=100&search=visitor&isRead=false
 
 ### **📊 Métriques finales**
 
-- **✅ 65+ endpoints API** dont 45+ admin opérationnels
+- **✅ 66+ endpoints API** dont 46+ admin opérationnels
 - **✅ 9/9 modules admin** production-ready (100% complétude)
 - **✅ Tests 87% coverage** : 80+ unitaires, 5 suites intégration
 - **✅ 3300+ lignes de tests** validés en conditions réelles

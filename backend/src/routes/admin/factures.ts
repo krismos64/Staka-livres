@@ -67,4 +67,12 @@ router.post("/:id/reminder", AdminFactureController.sendReminder);
  */
 router.get("/:id/pdf", AdminFactureController.getFacturePdf);
 
+/**
+ * @route GET /admin/factures/:id/download
+ * @desc Télécharge directement le PDF d'une facture
+ * @param {string} id - ID de la facture
+ * @access Admin
+ */
+router.get("/:id/download", AdminFactureController.downloadFacture);
+
 export default router;

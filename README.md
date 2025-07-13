@@ -128,6 +128,7 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **[Guide Backend API](docs/README-backend.md)** : Documentation complète de l'API REST avec exemples et architecture technique
 - **[Guide Frontend](docs/README-frontend.md)** : Architecture React, composants et patterns de développement
 - **[Guide Base de Données](docs/Base-de-donnees-guide.md)** : Documentation exhaustive des 12 modèles Prisma, relations, optimisations et troubleshooting
+- **[Guide Génération PDF Factures](docs/PDF_INVOICE_GENERATION.md)** : Génération PDF professionnelle, stockage S3 sécurisé et téléchargement optimisé
 - **[Guide Messagerie API](docs/MESSAGES_API_GUIDE.md)** : Architecture React Query, hooks spécialisés et performance
 - **[Guide Tarifs Dynamiques](docs/TARIFS_DYNAMIQUES_INTEGRATION.md)** : Intégration React Query, cache intelligent, patterns et optimisations
 
@@ -195,14 +196,19 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **UX moderne** : Animations Framer Motion, responsive design, états de chargement
 - **Sécurité** : Authentification requise, isolation utilisateurs, validation rôles
 
-### 💳 **Système de Facturation Automatique (React Query)**
+### 💳 **Système de Facturation Automatique avec PDF (React Query)**
 
 - **API complète** : `fetchInvoices()`, `fetchInvoice()`, `downloadInvoice()` avec auth
 - **Hooks React Query** : `useInvoices()`, `useInvoice()`, `useInvalidateInvoices()`
 - **Cache intelligent** : 5-10 minutes avec invalidation automatique
 - **États optimisés** : `isLoading`, `isFetching`, `error` gérés automatiquement
 - **Pagination fluide** : `keepPreviousData` pour éviter les blancs UI
-- **Téléchargement PDF** : Blob API avec trigger automatique
+- **Génération PDF avancée** : Service PDFKit avec design professionnel A4 portrait
+- **Stockage S3 sécurisé** : URLs signées 7 jours, ACL privé, metadata complète
+- **Download endpoints** : `/admin/factures/:id/pdf` et `/admin/factures/:id/download`
+- **Optimisation performance** : Cache S3, génération à la demande, background upload
+- **Templates PDF** : Logo entreprise, informations client, tableau détaillé, totaux HT/TVA/TTC
+- **Téléchargement direct** : Headers PDF corrects, nom de fichier formaté
 - **Gestion d'erreurs** : Retry automatique et toasts informatifs
 - **Performance** : Navigation instantanée grâce au cache
 

@@ -1,5 +1,7 @@
 import { InvoiceStatus, PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
+import { PdfService, InvoiceData } from "../services/pdf";
+import { S3InvoiceService } from "../services/s3InvoiceService";
 
 const prisma = new PrismaClient();
 
@@ -513,18 +515,225 @@ export class AdminFactureController {
 
       console.log(`📄 [Admin Factures] PDF demandé pour: ${facture.number}`);
 
-      // Pour l'instant, retourner une réponse JSON avec l'URL
-      // TODO: Implémenter la génération/téléchargement réel de PDF
-      res.json({
-        message: "PDF temporairement indisponible",
-        factureNumber: facture.number,
-        info: "La génération de PDF sera implémentée prochainement",
-        // pdfUrl: facture.pdfUrl, // Commenté car l'URL cause des erreurs CORS
-      });
+      // Si le PDF existe déjà en S3, générer une URL signée et rediriger
+      if (facture.pdfUrl && await S3InvoiceService.invoiceExists(facture.id)) {
+        console.log(`📄 [Admin Factures] PDF existant trouvé pour ${facture.number}`);
+        
+        try {
+          const signedUrl = await S3InvoiceService.generateSignedUrl(facture.id, facture.number);
+          
+          // Mettre à jour l'URL signée en base
+          await prisma.invoice.update({
+            where: { id: facture.id },
+            data: { pdfUrl: signedUrl }
+          });
+
+          // Rediriger vers l'URL signée pour téléchargement direct
+          return res.redirect(signedUrl);
+        } catch (error) {
+          console.warn(`⚠️ [Admin Factures] Erreur URL signée pour ${facture.id}:`, error);
+          // Continuer vers la génération si l'URL signée échoue
+        }
+      }
+
+      // Générer le PDF s'il n'existe pas
+      console.log(`🔄 [Admin Factures] Génération PDF pour ${facture.number}`);
+      
+      try {
+        // Récupérer les données complètes de la facture
+        const fullInvoice = await prisma.invoice.findUnique({
+          where: { id },
+          include: {
+            commande: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    prenom: true,
+                    nom: true,
+                    email: true,
+                    adresse: true,
+                  }
+                }
+              }
+            }
+          }
+        });
+
+        if (!fullInvoice) {
+          return res.status(404).json({ error: "Facture complète non trouvée" });
+        }
+
+        // Préparer les données pour le PDF
+        const invoiceData: InvoiceData = {
+          id: fullInvoice.id,
+          number: fullInvoice.number,
+          amount: fullInvoice.amount,
+          taxAmount: fullInvoice.taxAmount,
+          issuedAt: fullInvoice.issuedAt || fullInvoice.createdAt,
+          dueAt: fullInvoice.dueAt,
+          commande: fullInvoice.commande
+        };
+
+        // Générer le PDF
+        const pdfBuffer = await PdfService.buildInvoicePdf(invoiceData);
+
+        // Uploader vers S3
+        const s3Url = await S3InvoiceService.uploadInvoicePdf(
+          pdfBuffer, 
+          fullInvoice.id, 
+          fullInvoice.number
+        );
+
+        // Générer l'URL signée
+        const signedUrl = await S3InvoiceService.generateSignedUrl(
+          fullInvoice.id, 
+          fullInvoice.number
+        );
+
+        // Mettre à jour la facture avec l'URL S3
+        await prisma.invoice.update({
+          where: { id: fullInvoice.id },
+          data: { pdfUrl: signedUrl }
+        });
+
+        console.log(`✅ [Admin Factures] PDF généré et uploadé pour ${fullInvoice.number}`);
+
+        // Définir les headers pour le téléchargement PDF
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="Facture_${fullInvoice.number}.pdf"`);
+        res.setHeader('Content-Length', pdfBuffer.length);
+
+        // Envoyer le PDF directement
+        res.send(pdfBuffer);
+
+      } catch (error) {
+        console.error(`❌ [Admin Factures] Erreur génération PDF pour ${facture.number}:`, error);
+        res.status(500).json({
+          error: "Erreur lors de la génération du PDF",
+          details: error instanceof Error ? error.message : "Erreur inconnue",
+        });
+      }
     } catch (error) {
       console.error("❌ [Admin Factures] Erreur récupération PDF:", error);
       res.status(500).json({
         error: "Erreur lors de la récupération du PDF",
+        details: error instanceof Error ? error.message : "Erreur inconnue",
+      });
+    }
+  }
+
+  /**
+   * GET /admin/factures/:id/download
+   * Télécharge directement le PDF d'une facture
+   */
+  static async downloadFacture(req: Request, res: Response) {
+    try {
+      const id = req.params.id;
+      console.log(`📥 [Admin Factures] Téléchargement direct PDF facture ${id}`);
+
+      const facture = await prisma.invoice.findUnique({
+        where: { id },
+        include: {
+          commande: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  prenom: true,
+                  nom: true,
+                  email: true,
+                  adresse: true,
+                }
+              }
+            }
+          }
+        }
+      });
+
+      if (!facture) {
+        console.log(`❌ [Admin Factures] Facture ${id} non trouvée`);
+        return res.status(404).json({
+          error: "Facture non trouvée",
+        });
+      }
+
+      console.log(`📄 [Admin Factures] Téléchargement direct demandé pour: ${facture.number}`);
+
+      try {
+        // Vérifier si le PDF existe sur S3
+        const pdfExists = await S3InvoiceService.invoiceExists(facture.id);
+        let pdfBuffer: Buffer;
+
+        if (pdfExists) {
+          console.log(`📄 [Admin Factures] PDF existant trouvé sur S3 pour ${facture.number}`);
+          
+          // Télécharger depuis S3
+          const stream = await S3InvoiceService.downloadInvoicePdf(facture.id);
+          const chunks: Buffer[] = [];
+          
+          for await (const chunk of stream) {
+            chunks.push(chunk);
+          }
+          
+          pdfBuffer = Buffer.concat(chunks);
+        } else {
+          console.log(`🔄 [Admin Factures] Génération nouveau PDF pour ${facture.number}`);
+          
+          // Préparer les données pour le PDF
+          const invoiceData: InvoiceData = {
+            id: facture.id,
+            number: facture.number,
+            amount: facture.amount,
+            taxAmount: facture.taxAmount,
+            issuedAt: facture.issuedAt || facture.createdAt,
+            dueAt: facture.dueAt,
+            commande: facture.commande
+          };
+
+          // Générer le PDF
+          pdfBuffer = await PdfService.buildInvoicePdf(invoiceData);
+
+          // Uploader vers S3 en arrière-plan (pas d'attente)
+          S3InvoiceService.uploadInvoicePdf(
+            pdfBuffer, 
+            facture.id, 
+            facture.number
+          ).then(async (s3Url) => {
+            // Générer l'URL signée et mettre à jour en base
+            const signedUrl = await S3InvoiceService.generateSignedUrl(facture.id, facture.number);
+            await prisma.invoice.update({
+              where: { id: facture.id },
+              data: { pdfUrl: signedUrl }
+            });
+            console.log(`✅ [Admin Factures] PDF uploadé en arrière-plan pour ${facture.number}`);
+          }).catch(error => {
+            console.warn(`⚠️ [Admin Factures] Erreur upload arrière-plan pour ${facture.number}:`, error);
+          });
+        }
+
+        // Définir les headers pour le téléchargement PDF
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="Facture_${facture.number}.pdf"`);
+        res.setHeader('Content-Length', pdfBuffer.length);
+        res.setHeader('Cache-Control', 'private, max-age=3600'); // Cache 1 heure
+
+        // Envoyer le PDF directement
+        res.send(pdfBuffer);
+
+        console.log(`✅ [Admin Factures] PDF téléchargé avec succès pour ${facture.number}`);
+
+      } catch (error) {
+        console.error(`❌ [Admin Factures] Erreur téléchargement PDF pour ${facture.number}:`, error);
+        res.status(500).json({
+          error: "Erreur lors du téléchargement du PDF",
+          details: error instanceof Error ? error.message : "Erreur inconnue",
+        });
+      }
+    } catch (error) {
+      console.error("❌ [Admin Factures] Erreur téléchargement direct:", error);
+      res.status(500).json({
+        error: "Erreur lors du téléchargement de la facture",
         details: error instanceof Error ? error.message : "Erreur inconnue",
       });
     }
