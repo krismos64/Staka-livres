@@ -6,18 +6,19 @@
 ![React Query](https://img.shields.io/badge/React%20Query-5.17-red)
 ![Production](https://img.shields.io/badge/Status-Production%20Ready-green)
 
-**✨ Version Janvier 2025 - État actuel (Optimisé avec Patchs)**
+**✨ Version Juillet 2025 - État actuel (Optimisé avec Consultations)**
 
 ## 📋 **Vue d'ensemble**
 
-Le système de messagerie de **Staka Livres** a été entièrement refactorisé pour une architecture moderne et scalable, centrée sur les conversations temps réel. Il unifie la communication entre visiteurs, clients authentifiés et administrateurs avec des fonctionnalités avancées.
+Le système de messagerie de **Staka Livres** a été entièrement refactorisé pour une architecture moderne et scalable, centrée sur les conversations temps réel. Il unifie la communication entre visiteurs, clients authentifiés et administrateurs avec des fonctionnalités avancées, incluant maintenant **les demandes de consultation**.
 
 ### 🆕 **Nouvelles Fonctionnalités 2025 + Optimisations**
 
-- **🔔 Intégration notifications** : Génération automatique de notifications pour nouveaux messages
+- **📞 Messages de consultation** : Nouveau type CONSULTATION_REQUEST avec métadonnées structurées (JUILLET 2025)
+- **🔔 Intégration notifications** : Génération automatique de notifications pour nouveaux messages et consultations
 - **📎 Pièces jointes avancées** : Support multi-fichiers avec validation stricte (max 10 fichiers, 50MB/fichier, 100MB total)
-- **📁 Archivage intelligent** : Fonctions archivage/désarchivage avec API dédiée (NOUVEAU)
-- **🎭 Interface admin moderne** : Supervision conversations avec actions en masse
+- **📁 Archivage intelligent** : Fonctions archivage/désarchivage avec API dédiée
+- **🎭 Interface admin moderne** : Supervision conversations avec actions en masse et gestion consultations
 - **⚡ React Query avancé** : Hooks spécialisés avec optimistic updates et cache intelligent
 - **🔒 Sécurité renforcée** : Validation UUID, contrôle propriété fichiers, audit trails complets
 
@@ -25,7 +26,8 @@ Le système de messagerie de **Staka Livres** a été entièrement refactorisé 
 
 - **Messagerie Visiteur** : Contact public avec captcha et validation anti-spam
 - **Messagerie Client/Admin** : Interface temps réel avec threading et pièces jointes
-- **API Backend** : 6 endpoints REST optimisés avec `conversationId` unique
+- **Système de consultation** : Demandes de rendez-vous automatiquement intégrées aux messages admin
+- **API Backend** : 8 endpoints REST optimisés avec `conversationId` unique (6 messages + 2 consultations)
 - **Hooks React Query** : 1000+ lignes de logique métier avec pagination infinie
 
 ---

@@ -13,12 +13,13 @@
 
 Backend REST API pour Staka Livres, une plateforme de correction de livres professionnelle. Architecture moderne avec TypeScript, Express, Prisma ORM et intégration Stripe pour les paiements.
 
-**✨ Version Janvier 2025 - État actuel :**
+**✨ Version Juillet 2025 - État actuel :**
 
-- **70+ endpoints API** dont 50+ admin complets et opérationnels
+- **74+ endpoints API** dont 54+ admin complets et opérationnels
 - **Espace admin 100% opérationnel** (10/10 modules production-ready)
+- **Système de réservation de consultations** avec workflow automatisé et notifications
 - **Système de notifications temps réel** avec génération automatique et polling 15s
-- **Système de messagerie unifiée** avec threading, pièces jointes et anti-spam
+- **Système de messagerie unifiée** avec threading, pièces jointes et support consultations
 - **Facturation automatique complète** avec génération PDF, AWS S3 et SendGrid
 - **Tests exhaustifs** : 87% coverage, 90+ tests unitaires, 6 suites intégration
 - **Modules FAQ, Tarifs, Pages CMS et Statistiques** dynamiques avec synchronisation temps réel
@@ -181,7 +182,8 @@ backend/
 │   │   ├── adminStatsController.ts        # Statistiques admin temps réel
 │   │   ├── notificationsController.ts     # Notifications temps réel avec polling
 │   │   ├── adminPagesController.ts        # CMS pages statiques (NOUVEAU)
-│   │   ├── adminTarifsController.ts       # Gestion tarifs dynamiques (NOUVEAU)
+│   │   ├── adminTarifsController.ts       # Gestion tarifs dynamiques
+│   │   ├── consultationController.ts      # Réservation consultations (NOUVEAU JUILLET 2025)
 │   │   ├── faqController.ts               # Gestion FAQ
 │   │   ├── commandeClientController.ts    # Commandes client
 │   │   ├── commandeController.ts          # Commandes générales
@@ -202,6 +204,7 @@ backend/
 │   │   ├── notifications.ts  # Routes notifications temps réel
 │   │   ├── auth.ts           # Authentification
 │   │   ├── commandes.ts      # Commandes client
+│   │   ├── consultations.ts  # Consultations publiques + admin (NOUVEAU)
 │   │   ├── faq.ts            # FAQ publique
 │   │   ├── invoice.ts        # Factures client
 │   │   ├── messages.ts       # Messagerie unifiée
@@ -1391,6 +1394,65 @@ DELETE /admin/tarifs/:id → Suppression tarif
 
 # Route publique pour frontend (synchronisation temps réel)
 GET /tarifs?actif=true → Tarifs publics pour calculateur
+```
+
+### 📞 **Module Consultations - Réservation d'Appels** ✅ NOUVEAU JUILLET 2025
+
+```http
+# Réservation de consultation (public)
+POST /consultations/book
+Content-Type: application/json
+
+{
+  "firstName": "Jean",
+  "lastName": "Dupont", 
+  "email": "jean@example.com",
+  "phone": "06 12 34 56 78",
+  "date": "2025-07-15",
+  "time": "14:00",
+  "message": "Je souhaite discuter de mon manuscrit",
+  "requestedDateTime": "2025-07-15 14:00",
+  "source": "landing_page"
+}
+
+# Response: 201
+{
+  "success": true,
+  "message": "Demande de consultation envoyée avec succès",
+  "data": {
+    "messageId": "uuid",
+    "requestedDateTime": "2025-07-15 14:00"
+  }
+}
+
+# Créneaux disponibles (public)
+GET /consultations/available-slots?date=2025-07-15
+
+# Response: 200
+{
+  "success": true,
+  "date": "2025-07-15",
+  "slots": [
+    { "time": "09:00", "available": true },
+    { "time": "09:30", "available": true },
+    { "time": "10:00", "available": false },
+    // ... autres créneaux
+  ]
+}
+
+# Liste des demandes de consultation (admin uniquement)
+GET /consultations/requests
+Authorization: Bearer admin-token
+
+# Marquer une demande comme traitée (admin uniquement)
+PUT /consultations/requests/:messageId
+Authorization: Bearer admin-token
+Content-Type: application/json
+
+{
+  "status": "processed",
+  "adminNote": "Appel confirmé par email"
+}
 ```
 
 ### 📊 **Module AdminStatistiques - Analytics Temps Réel** ✅ NOUVEAU 2025

@@ -11,16 +11,17 @@
 
 ## 📊 Vue d'Ensemble
 
-**✨ Version Janvier 2025 - État actuel :**
+**✨ Version Juillet 2025 - État actuel :**
 
-Architecture frontend complète et **production-ready** avec React 18, TypeScript, Tailwind CSS et React Query. Le frontend comprend une **landing page marketing optimisée**, une **application dashboard fonctionnelle**, un **espace d'administration moderne** avec **intégration backend opérationnelle** et un **système de notifications temps réel**.
+Architecture frontend complète et **production-ready** avec React 18, TypeScript, Tailwind CSS et React Query. Le frontend comprend une **landing page marketing optimisée**, une **application dashboard fonctionnelle**, un **espace d'administration moderne** avec **intégration backend opérationnelle**, un **système de notifications temps réel** et un **système de réservation de consultations**.
 
 ### 🆕 **Nouvelles Fonctionnalités 2025**
 
+- **📞 Système de réservation de consultations** avec modal responsive et workflow automatisé
 - **🔔 Système de notifications temps réel** avec polling automatique et API sécurisée
 - **📊 Statistiques admin refactorisées** avec données réelles Prisma
-- **🚀 Architecture React Query avancée** : 15+ hooks spécialisés (3000+ lignes)
-- **💫 Composants UI modernes** : 90+ composants avec animations Framer Motion
+- **🚀 Architecture React Query avancée** : 16+ hooks spécialisés (3200+ lignes)
+- **💫 Composants UI modernes** : 93+ composants avec animations Framer Motion
 - **🎨 Design System unifié** : Variables CSS, tokens design et accessibilité WCAG 2.1
 - **⚡ Performance optimisée** : Lazy loading, code splitting et cache intelligent
 
@@ -28,7 +29,7 @@ Architecture frontend complète et **production-ready** avec React 18, TypeScrip
 
 ```
 frontend/src/
-├── 🏗️ Components (90+ composants modulaires)
+├── 🏗️ Components (93+ composants modulaires)
 │   ├── admin/           # 👨‍💼 Administration (10 composants) - REFACTORISÉ 2025
 │   ├── billing/         # 💳 Facturation Stripe (7 composants)
 │   ├── common/          # 🎭 Composants génériques (8 composants)
@@ -36,11 +37,11 @@ frontend/src/
 │   ├── landing/         # 🌟 Landing page (14 composants + hooks)
 │   ├── layout/          # 🏛️ Structure (8 composants)
 │   ├── messages/        # 💬 Messagerie (5 composants)
-│   ├── modals/          # 🪟 Modales (12 composants)
+│   ├── modals/          # 🪟 Modales (13 composants) - CONSULTATION AJOUTÉE
 │   ├── notifications/   # 🔔 Notifications temps réel (6 composants) - NOUVEAU
 │   ├── project/         # 📚 Projets (3 composants)
 │   └── ui/              # 🎨 Composants UI réutilisables (15 composants)
-├── 🎣 Hooks (15 hooks personnalisés + React Query)
+├── 🎣 Hooks (16 hooks personnalisés + React Query)
 │   ├── useAdminUsers.ts         # Hook admin utilisateurs (263 lignes)
 │   ├── useAdminCommandes.ts     # Hook admin commandes (359 lignes)
 │   ├── useAdminFactures.ts      # Hook admin factures (240 lignes)
@@ -48,6 +49,7 @@ frontend/src/
 │   ├── useAdminMessages.ts      # Hook admin messagerie (321 lignes)
 │   ├── useAdminStats.ts         # Hook admin statistiques (180 lignes) - NOUVEAU
 │   ├── useNotifications.ts      # Hook notifications (245 lignes) - NOUVEAU
+│   ├── useConsultation.ts       # Hook réservation consultations (85 lignes) - NOUVEAU JUILLET 2025
 │   ├── useMessages.ts           # Hook messagerie (694 lignes)
 │   ├── useInvoices.ts           # Hook facturation client (58 lignes)
 │   ├── useTarifInvalidation.ts  # Hook synchronisation tarifs (78 lignes)

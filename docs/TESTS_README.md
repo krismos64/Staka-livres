@@ -6,7 +6,7 @@ Documentation complète pour l'infrastructure de tests du projet **Staka Livres*
 
 ---
 
-## 🏗️ Architecture des Tests - Version Janvier 2025
+## 🏗️ Architecture des Tests - Version Juillet 2025
 
 ```
 .

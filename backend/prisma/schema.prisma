@@ -118,6 +118,11 @@ model Message {
   isPinned       Boolean       @default(false)
   deletedByAdmin Boolean       @default(false) // Masquer la conversation pour l'admin
   parentId       String?
+  
+  // Champs additionnels pour les demandes de consultation
+  metadata       Json?         // Données spécifiques au type de message
+  status         String?       @db.VarChar(50) // Statut personnalisé
+  isFromVisitor  Boolean       @default(false) // Indique si c'est un visiteur non connecté
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -390,6 +395,7 @@ enum MessageType {
   NOTIFICATION
   SUPPORT_MESSAGE
   ADMIN_MESSAGE
+  CONSULTATION_REQUEST
 }
 
 /// Statuts des messages
@@ -449,6 +455,7 @@ enum NotificationType {
   ORDER
   MESSAGE
   SYSTEM
+  CONSULTATION
 }
 
 /// Priorités des notifications

@@ -7,13 +7,14 @@
 
 ## 📋 **Vue d'ensemble**
 
-**✨ Version Janvier 2025 - État actuel :**
+**✨ Version Juillet 2025 - État actuel :**
 
-La base de données **Staka Livres** est une architecture complète MySQL 8 gérée par **Prisma ORM** et déployée avec **Docker**. Elle couvre tous les aspects d'une plateforme de correction de manuscrits moderne : utilisateurs, projets, **système de messagerie unifié**, **notifications temps réel**, support client, **facturation automatique** et contenu éditorial.
+La base de données **Staka Livres** est une architecture complète MySQL 8 gérée par **Prisma ORM** et déployée avec **Docker**. Elle couvre tous les aspects d'une plateforme de correction de manuscrits moderne : utilisateurs, projets, **système de messagerie unifié**, **notifications temps réel**, **système de réservation de consultations**, support client, **facturation automatique** et contenu éditorial.
 
 ### 🆕 **Nouvelles Fonctionnalités 2025**
 
-- **🔔 Modèle Notification** : Système de notifications temps réel avec types spécialisés
+- **📞 Messages de consultation** : Nouveau type CONSULTATION_REQUEST avec métadonnées JSON
+- **🔔 Modèle Notification** : Système de notifications temps réel avec types spécialisés (dont CONSULTATION)
 - **📊 Optimisations Prisma** : Requêtes pour statistiques admin avec agrégations
 - **🎨 Modèle Page** : CMS complet pour gestion de contenu éditorial
 - **💳 Modèle PaymentMethod** : Intégration Stripe avec méthodes de paiement
@@ -161,6 +162,11 @@ model Message {
   isPinned        Boolean       @default(false)
   deletedByAdmin  Boolean       @default(false) // Masquer la conversation pour l'admin
   parentId        String?
+  
+  // Champs additionnels pour les demandes de consultation (JUILLET 2025)
+  metadata        Json?         @default({}) // Données spécifiques au type de message
+  status          String?       @db.VarChar(50) // Statut personnalisé
+  isFromVisitor   Boolean       @default(false) // Indique si c'est un visiteur non connecté
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -179,6 +185,7 @@ enum MessageType {
   NOTIFICATION
   SUPPORT_MESSAGE
   ADMIN_MESSAGE
+  CONSULTATION_REQUEST  // NOUVEAU JUILLET 2025 : Demandes de consultation
 }
 
 enum MessageStatut {
@@ -366,6 +373,7 @@ enum NotificationType {
   ORDER
   MESSAGE
   SYSTEM
+  CONSULTATION  // NOUVEAU JUILLET 2025 : Notifications de consultation
 }
 
 enum NotificationPriority {

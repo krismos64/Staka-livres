@@ -7,13 +7,13 @@
 ### 📊 **Métriques du Projet (Juillet 2025)**
 
 - **200,000+ lignes de code** TypeScript/JavaScript
-- **127+ composants React** modulaires et réutilisables avec TypeScript
-- **20+ contrôleurs backend** spécialisés
-- **50+ endpoints REST API** sécurisés avec Zod validation
+- **130+ composants React** modulaires et réutilisables avec TypeScript
+- **20+ contrôleurs backend** spécialisés (dont consultationController)
+- **54+ endpoints REST API** sécurisés avec Zod validation
 - **13 modèles de base de données** avec relations RGPD complètes
 - **Système d'audit sécurisé** avec traçabilité complète et export
 - **200+ tests automatisés** (Jest, Vitest, Cypress)
-- **15+ guides de documentation** complets et à jour
+- **16+ guides de documentation** complets et à jour (dont CONSULTATION_BOOKING_GUIDE.md)
 - **87%+ de couverture de tests** validée
 - **10 pages admin** entièrement fonctionnelles
 - **14+ composants landing page** production-ready
@@ -206,6 +206,19 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **Gestion d'erreurs** : Retry automatique et toasts informatifs
 - **Performance** : Navigation instantanée grâce au cache
 
+### 📞 **Système de Réservation de Consultations (NOUVEAU JUILLET 2025)**
+
+- **API 4 endpoints** : POST /consultations/book (public), GET /available-slots (public), GET /requests (admin), PUT /requests/:id (admin)
+- **Intégration double** : Landing page (section dédiée) + Espace client (bouton "Planifier un appel")
+- **Modal ultra-simplifiée** : Nom, prénom, email, téléphone, date, heure, message optionnel
+- **Workflow automatisé** : Soumission → Message admin → Notification → Confirmation email manuelle
+- **Validation robuste** : Schema Zod côté backend, validation temps réel côté frontend
+- **Base de données** : Nouveau type CONSULTATION_REQUEST, métadonnées JSON structurées
+- **Hook React Query** : `useBookConsultation()` avec gestion d'erreurs et toasts
+- **UX optimisée** : Sélection créneaux (7 jours ouvrés), états loading/succès, responsive design
+- **Gestion admin** : Demandes visibles dans messagerie avec toutes les informations contextuelles
+- **Documentation complète** : Guide détaillé CONSULTATION_BOOKING_GUIDE.md (650+ lignes)
+
 ### 💳 **Système de Moyens de Paiement et Statistiques (NOUVEAU 2025)**
 
 - **API 3 endpoints** : GET /payment-methods, PUT /:id/default, DELETE /:id
@@ -310,11 +323,12 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **Routes de facturation** : GET /invoices, GET /invoices/:id, GET /invoices/:id/download
 - **Routes de paiement Stripe** : POST /payments/create-checkout-session, GET /payments/status, POST /payments/webhook
 - **Routes messagerie** : API complète avec threading et support requests
+- **Routes consultations** : ✅ **API `/consultations`** avec 4 endpoints (réservation publique, gestion admin, créneaux) (NOUVEAU)
 - **Routes FAQ publiques** : GET /faq pour base de connaissance
 - **Routes pages statiques** : GET /pages/:slug pour CMS
 - **Routes tarifs publics** : GET /tarifs pour landing page
-- **Routes admin audit** : ✅ **API `/admin/audit`** complète avec 4 endpoints sécurisés (NOUVEAU)
-- **Architecture backend** : 13 contrôleurs spécialisés avec services métier optimisés
+- **Routes admin audit** : ✅ **API `/admin/audit`** complète avec 4 endpoints sécurisés
+- **Architecture backend** : 14 contrôleurs spécialisés avec services métier optimisés (dont consultationController)
 - **Sécurité production** : JWT Admin obligatoire, validation Zod, hashage bcrypt 12 rounds, protection dernier admin
 - **Middleware de rôles** avec RequireAdmin
 - **Gestion d'erreurs** centralisée avec logs
@@ -325,7 +339,7 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **User** : UUID, rôles (USER/ADMIN/CORRECTOR), statut actif, avatar, contacts
 - **Commande** : statuts, priorités, échéances, notes client/correcteur
 - **File** : système de fichiers avec types, permissions, sécurité S3
-- **Message** : messagerie unifiée (projet + support) avec threading
+- **Message** : messagerie unifiée (projet + support + consultations) avec threading et métadonnées JSON
 - **MessageAttachment** : pièces jointes messages avec relations sécurisées
 - **SupportRequest** : tickets de support avec SLA et assignation
 - **Invoice** : facturation automatique avec numérotation et PDF
@@ -965,6 +979,7 @@ docker-compose logs -f   # Voir les logs en temps réel
 
 ### 🎉 **Nouvelles Fonctionnalités Récentes**
 
+- **📞 Système de réservation de consultations** : Modal ultra-simplifiée accessible depuis landing page et espace client, avec workflow automatisé vers la messagerie admin et notifications temps réel
 - **Upload de fichiers projet** avec S3 et progression temps réel
 - **Support Docker ARM64/x86** natif avec script de build automatisé  
 - **Routing API Nginx** optimisé avec strip prefix pour compatibilité

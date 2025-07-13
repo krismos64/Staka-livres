@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import React, { ChangeEvent, FormEvent, useRef, useState } from "react";
 import { useToast } from "../components/layout/ToastProvider";
+import ModalConsultationBooking from "../components/modals/ModalConsultationBooking";
 
 // Mock FAQ (à remplacer par ta vraie source)
 const faqs = [
@@ -54,6 +55,7 @@ const contactSubjects = [
 
 export default function HelpPage() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [isConsultationModalOpen, setIsConsultationModalOpen] = useState(false);
 
   // --- Form state ---
   const { showToast } = useToast();
@@ -366,7 +368,9 @@ export default function HelpPage() {
               <button className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-2 shadow transition">
                 <i className="fas fa-comments"></i>Chat en direct
               </button>
-              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-2 shadow transition">
+              <button 
+                onClick={() => setIsConsultationModalOpen(true)}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-2 shadow transition">
                 <i className="fas fa-phone"></i>Planifier un appel
               </button>
               <button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-2 shadow transition">
@@ -449,6 +453,13 @@ export default function HelpPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de réservation de consultation */}
+      <ModalConsultationBooking
+        isOpen={isConsultationModalOpen}
+        onClose={() => setIsConsultationModalOpen(false)}
+        selectedSlot={null}
+      />
     </section>
   );
 }

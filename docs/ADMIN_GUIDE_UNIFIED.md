@@ -7,20 +7,21 @@
 ![Tests](https://img.shields.io/badge/Tests-95%25-brightgreen)
 ![Production](https://img.shields.io/badge/Status-Production%20Ready-green)
 
-**✨ Version Janvier 2025 - État actuel**
+**✨ Version Juillet 2025 - État actuel**
 
 ## 📋 Vue d'ensemble
 
 Ce document est le **guide de référence unique** pour l'espace admin de **Staka Livres**. Il couvre l'architecture complète, l'interface moderne, la documentation API exhaustive, les hooks React Query, les nouvelles fonctionnalités 2025, la sécurité et les procédures de test.
 
-L'espace admin est **100% production-ready** avec **10 modules complets**, interface moderne, système de notifications temps réel, statistiques avec données réelles, authentification renforcée, tests automatisés, mode démo professionnel et architecture scalable.
+L'espace admin est **100% production-ready** avec **10 modules complets**, interface moderne, système de notifications temps réel, **gestion des consultations**, statistiques avec données réelles, authentification renforcée, tests automatisés, mode démo professionnel et architecture scalable.
 
 ### 🆕 **Nouvelles Fonctionnalités 2025**
 
-- **🔔 Système de notifications temps réel** : Polling automatique, types spécialisés, intégration UI
+- **📞 Gestion des consultations** : Demandes de rendez-vous intégrées à la messagerie avec workflow automatisé (JUILLET 2025)
+- **🔔 Système de notifications temps réel** : Polling automatique, types spécialisés, intégration UI avec consultations
 - **📊 Statistiques refactorisées** : Données Prisma réelles, métriques évolutives, API optimisée  
 - **🎨 CMS intégré** : Gestion de contenu éditorial avec éditeur riche et SEO
-- **⚡ Architecture React Query avancée** : 15+ hooks spécialisés, cache intelligent
+- **⚡ Architecture React Query avancée** : 16+ hooks spécialisés, cache intelligent
 - **🔐 Sécurité renforcée** : RBAC complet, audit trails, validation stricte
 
 ### 🚀 Architecture Unifiée 2025
@@ -47,7 +48,7 @@ L'espace admin a été **entièrement refactorisé** avec une architecture modul
 | **Utilisateurs**     | `AdminUtilisateurs`     | 8 endpoints   | 1200+       | CRUD complet, RBAC, recherche avancée, export GDPR, refacto modulaire               |
 | **Commandes**        | `AdminCommandes`        | 5 endpoints   | 980+        | **Module complet** : filtres avancés, stats temps réel, changement statut bulk      |
 | **Factures**         | `AdminFactures`         | 7 endpoints   | 1180+       | PDF auto, rappels Stripe, analytics financières, export comptable                   |
-| **Messagerie**       | `AdminMessagerie`       | 6 endpoints   | 680+        | Supervision conversations, réponse directe, archivage, threading                    |
+| **Messagerie**       | `AdminMessagerie`       | 8 endpoints   | 680+        | Supervision conversations, réponse directe, archivage, threading, **consultations** |
 | **FAQ**              | `AdminFAQ`              | 5 endpoints   | 1130+       | CRUD, catégories, réorganisation drag&drop, prévisualisation                       |
 | **Tarifs**           | `AdminTarifs`           | 6 endpoints   | 1240+       | **CRUD + Sync temps réel** avec landing page, validation, états de chargement      |
 | **Pages CMS**        | `AdminPages`            | 8 endpoints   | 420+        | **CMS complet** : éditeur riche, SEO, publication, génération slug, prévisualisation |

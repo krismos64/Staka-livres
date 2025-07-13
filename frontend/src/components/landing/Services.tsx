@@ -1,15 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
+import ModalConsultationBooking from "../modals/ModalConsultationBooking";
 
 export default function Services() {
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<{ day: string; time: string } | null>(null);
+
   const handleConsultationBooking = () => {
-    // TODO: Implémenter la logique de réservation
-    console.log("Réservation de consultation demandée");
-    // On pourrait rediriger vers un calendly, ouvrir une modal, etc.
+    setSelectedSlot(null);
+    setIsBookingModalOpen(true);
   };
 
   const handleTimeSlotClick = (day: string, time: string) => {
-    console.log(`Créneau sélectionné: ${day} ${time}`);
-    // TODO: Logique de sélection de créneau
+    setSelectedSlot({ day, time });
+    setIsBookingModalOpen(true);
   };
 
   return (
@@ -203,6 +206,13 @@ export default function Services() {
           </div>
         </div>
       </div>
+
+      {/* Modal de réservation */}
+      <ModalConsultationBooking
+        isOpen={isBookingModalOpen}
+        onClose={() => setIsBookingModalOpen(false)}
+        selectedSlot={selectedSlot}
+      />
     </section>
   );
 }

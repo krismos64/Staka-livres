@@ -7,6 +7,7 @@ import adminRoutes from "./routes/admin";
 import adminStatsRoutes from "./routes/adminStats";
 import authRoutes from "./routes/auth";
 import commandesRoutes from "./routes/commandes";
+import consultationRoutes from "./routes/consultations";
 import faqRoutes from "./routes/faq";
 import filesRoutes from "./routes/files";
 import invoiceRoutes from "./routes/invoice";
@@ -65,6 +66,9 @@ app.use("/faq", faqRoutes);
 
 // Routes tarifs publiques
 app.use("/tarifs", tarifsRoutes);
+
+// Routes consultations (publiques et admin)
+app.use("/consultations", consultationRoutes);
 
 // Routes publiques pour les pages
 app.use("/pages", pagesRoutes);

@@ -79,6 +79,15 @@ cd backend && npm run prisma:seed
 
 ## Key Features and Implementation Details
 
+### Consultation Booking System (NEW JULY 2025)
+- **Landing Page Integration**: Interactive booking section with pre-defined time slots
+- **Client Space Access**: "Planifier un appel" button in Help & Support page
+- **Ultra-Simple Workflow**: Name, email, date, time, optional message → automatic admin notification
+- **Database Integration**: New CONSULTATION_REQUEST message type with JSON metadata
+- **Admin Management**: Consultation requests appear in admin messaging with full context
+- **API Endpoints**: 4 REST endpoints (public booking, admin management, available slots)
+- **Components**: ModalConsultationBooking with React Query integration and toast notifications
+
 ### Authentication System
 - JWT-based authentication with 7-day token expiration
 - bcrypt password hashing (12 rounds)
