@@ -69,7 +69,6 @@ export default function ModalConsultationBooking({
     try {
       const bookingData = {
         ...formData,
-        requestedDateTime: `${formData.date} ${formData.time}`,
         source: selectedSlot ? 'landing_page' as const : 'client_space' as const
       };
 

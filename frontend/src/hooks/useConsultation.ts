@@ -8,7 +8,6 @@ interface ConsultationBookingData {
   date: string;
   time: string;
   message?: string;
-  requestedDateTime: string;
   source: 'landing_page' | 'client_space';
 }
 

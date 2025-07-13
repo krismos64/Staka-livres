@@ -65,12 +65,26 @@ ${validatedData.message || "Aucun message spécifique"}
     }
     `.trim();
 
+    // Récupérer l'admin pour le message et la notification
+    const adminUser = await prisma.user.findFirst({
+      where: { role: "ADMIN" },
+      select: { id: true }
+    });
+
+    if (!adminUser) {
+      return res.status(500).json({
+        success: false,
+        message: "Aucun administrateur disponible pour traiter la demande",
+      });
+    }
+
     // Créer un message direct à l'admin
     const message = await prisma.message.create({
       data: {
         content: messageContent,
         visitorName: `${validatedData.firstName} ${validatedData.lastName}`,
         visitorEmail: validatedData.email,
+        receiverId: adminUser.id, // ✅ AJOUT: Assigner le message à l'admin
         isFromVisitor: true,
         statut: "ENVOYE",
         type: "CONSULTATION_REQUEST",
@@ -97,7 +111,7 @@ ${validatedData.message || "Aucun message spécifique"}
         title: "Nouvelle demande de consultation",
         message: `${validatedData.firstName} ${validatedData.lastName} souhaite planifier un appel le ${validatedData.date} à ${validatedData.time}`,
         isRead: false,
-        userId: "00000000-0000-0000-0000-000000000000", // ID admin par défaut (à adapter)
+        userId: adminUser.id,
         data: JSON.stringify({
           messageId: message.id,
           email: validatedData.email,

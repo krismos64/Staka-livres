@@ -63,7 +63,10 @@ export const getUnreadCount = async (
         userId,
         isRead: false,
         isDeleted: false,
-        expiresAt: { gt: new Date() },
+        OR: [
+          { expiresAt: null }, // Notifications sans expiration
+          { expiresAt: { gt: new Date() } } // Notifications non expirées
+        ]
       },
     });
 

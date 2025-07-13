@@ -67,16 +67,18 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 - **API sécurisée** : 4 endpoints avec logging des accès aux logs
 - **Nettoyage automatique** : Rétention configurable avec confirmation
 
-### 🔔 **Système de Notifications Temps Réel**
+### 🔔 **Système de Notifications Temps Réel (✅ CLOCHE ADMIN CORRIGÉE - JUILLET 2025)**
 
 - **Notifications en temps réel** : Polling automatique toutes les 15 secondes
 - **Cloches intelligentes** : Badges avec compteurs non-lus et détection admin/client
+- **Fix expiresAt critique** : Filtrage des notifications non-lues entièrement corrigé (problème NULL résolu)
 - **Menu déroulant moderne** : Actions rapides (lire, supprimer, naviguer)
 - **Pages dédiées** : Interface complète avec filtres et pagination
 - **Génération automatique** : Messages, paiements, inscriptions, événements système
 - **Types spécialisés** : INFO, SUCCESS, WARNING, ERROR, PAYMENT, ORDER, MESSAGE, SYSTEM
 - **UX professionnelle** : Animations Framer Motion et design responsive
 - **API sécurisée** : `/notifications` avec authentification et rôles
+- **Cloche admin fonctionnelle** : Compteur de notifications non-lues précis et fiable
 
 ### 💬 **Système de Messagerie Temps Réel (OPTIMISÉ 2025)**
 
@@ -185,7 +187,7 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **Nettoyage automatique** : Rétention configurable avec confirmation obligatoire
 - **Logging des accès** : Même l'accès aux logs est audité pour sécurité maximale
 
-### 🔔 **Système de Notifications Temps Réel**
+### 🔔 **Système de Notifications Temps Réel (✅ ENTIÈREMENT FONCTIONNEL - JUILLET 2025)**
 
 - **API Backend** : Controller `/notifications` avec 6 endpoints sécurisés
 - **Hooks React Query** : `useNotifications`, `useNotificationBell`, `useMarkAsRead`, `useDeleteNotification`
@@ -194,8 +196,10 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **Génération automatique** : Messages, paiements, inscriptions, événements système
 - **Types spécialisés** : INFO, SUCCESS, WARNING, ERROR, PAYMENT, ORDER, MESSAGE, SYSTEM
 - **Polling temps réel** : Refresh automatique toutes les 15 secondes
+- **Fix expiresAt critique** : Filtrage des notifications non-lues entièrement corrigé
 - **UX moderne** : Animations Framer Motion, responsive design, états de chargement
 - **Sécurité** : Authentification requise, isolation utilisateurs, validation rôles
+- **Cloche admin parfaite** : Compteur de notifications non-lues précis et fiable
 
 ### 💳 **Système de Facturation Automatique avec PDF (React Query)**
 
@@ -213,17 +217,19 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **Gestion d'erreurs** : Retry automatique et toasts informatifs
 - **Performance** : Navigation instantanée grâce au cache
 
-### 📞 **Système de Réservation de Consultations (NOUVEAU JUILLET 2025)**
+### 📞 **Système de Réservation de Consultations (✅ ENTIÈREMENT FONCTIONNEL - JUILLET 2025)**
 
 - **API 4 endpoints** : POST /consultations/book (public), GET /available-slots (public), GET /requests (admin), PUT /requests/:id (admin)
 - **Intégration double** : Landing page (section dédiée) + Espace client (bouton "Planifier un appel")
 - **Modal ultra-simplifiée** : Nom, prénom, email, téléphone, date, heure, message optionnel
 - **Workflow automatisé** : Soumission → Message admin → Notification → Confirmation email manuelle
+- **Fix receiverId critique** : Messages de consultation apparaissent correctement dans la messagerie admin
 - **Validation robuste** : Schema Zod côté backend, validation temps réel côté frontend
 - **Base de données** : Nouveau type CONSULTATION_REQUEST, métadonnées JSON structurées
 - **Hook React Query** : `useBookConsultation()` avec gestion d'erreurs et toasts
 - **UX optimisée** : Sélection créneaux (7 jours ouvrés), états loading/succès, responsive design
 - **Gestion admin** : Demandes visibles dans messagerie avec toutes les informations contextuelles
+- **Résolution HTTP 500** : Erreurs de réservation entièrement corrigées
 - **Documentation complète** : Guide détaillé CONSULTATION_BOOKING_GUIDE.md (650+ lignes)
 
 ### 💳 **Système de Moyens de Paiement et Statistiques (NOUVEAU 2025)**
