@@ -332,6 +332,87 @@ async function main() {
   );
   console.log(`📦 Commande: ${paidOrder.titre}`);
 
+  // 9.5. Création de données distribuées sur 12 mois pour les stats
+  console.log("📊 Création de données distribuées sur 12 mois pour les stats...");
+  
+  const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() - 11);
+  startDate.setDate(1);
+  startDate.setHours(0, 0, 0, 0);
+
+  const users = [user, user2, user3];
+  const additionalUsers = [];
+
+  for (let monthOffset = 0; monthOffset < 12; monthOffset++) {
+    const monthDate = new Date(startDate);
+    monthDate.setMonth(monthDate.getMonth() + monthOffset);
+    
+    // Create 5-15 users per month (varying)
+    const usersToCreate = 5 + (monthOffset % 10);
+    for (let userIndex = 0; userIndex < usersToCreate; userIndex++) {
+      const userCreatedDate = new Date(monthDate);
+      userCreatedDate.setDate(Math.floor(Math.random() * 28) + 1);
+      
+      const newUser = await prisma.user.create({
+        data: {
+          email: `stats-user-${monthOffset}-${userIndex}@test.com`,
+          password: userPassword,
+          nom: `TestUser${monthOffset}`,
+          prenom: `User${userIndex}`,
+          role: Role.USER,
+          isActive: true,
+          createdAt: userCreatedDate,
+        },
+      });
+      additionalUsers.push(newUser);
+    }
+
+    // Create 10-30 orders per month (varying)
+    const ordersToCreate = 10 + (monthOffset * 2);
+    for (let orderIndex = 0; orderIndex < ordersToCreate; orderIndex++) {
+      const orderCreatedDate = new Date(monthDate);
+      orderCreatedDate.setDate(Math.floor(Math.random() * 28) + 1);
+      
+      const randomUser = [...users, ...additionalUsers][Math.floor(Math.random() * (users.length + additionalUsers.length))];
+      const baseAmount = 1000 + (monthOffset * 100) + (orderIndex * 50);
+      
+      const order = await prisma.commande.create({
+        data: {
+          userId: randomUser.id,
+          titre: `Stats Order ${monthOffset}-${orderIndex}`,
+          description: `Test order for month ${monthOffset}`,
+          statut: StatutCommande.TERMINE,
+          priorite: Priorite.NORMALE,
+          amount: baseAmount,
+          createdAt: orderCreatedDate,
+        },
+      });
+
+      // Create paid invoice for 80% of orders
+      if (Math.random() > 0.2) {
+        const invoiceCreatedDate = new Date(orderCreatedDate);
+        invoiceCreatedDate.setDate(invoiceCreatedDate.getDate() + Math.floor(Math.random() * 5) + 1);
+        
+        await prisma.invoice.create({
+          data: {
+            commandeId: order.id,
+            number: `INV-STATS-${monthOffset}-${orderIndex}`,
+            amount: baseAmount,
+            taxAmount: Math.round(baseAmount * 0.2),
+            status: InvoiceStatus.PAID,
+            pdfUrl: `https://example.com/invoice-${monthOffset}-${orderIndex}.pdf`,
+            issuedAt: invoiceCreatedDate,
+            dueAt: new Date(invoiceCreatedDate.getTime() + 15 * 24 * 60 * 60 * 1000),
+            paidAt: invoiceCreatedDate,
+            createdAt: invoiceCreatedDate,
+          },
+        });
+      }
+    }
+  }
+
+  console.log("✅ Données distribuées créées pour les 12 derniers mois");
+
   // 10. Création des FAQ de démonstration
   console.log("❓ Création des FAQ de démonstration...");
 

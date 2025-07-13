@@ -1,0 +1,14 @@
+# Dockerfile.dev pour le développement frontend
+FROM node:18.20.2-alpine
+
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Expose the dev server port
+EXPOSE 5173
+
+# Start the development server
+CMD ["npm", "run", "dev"]

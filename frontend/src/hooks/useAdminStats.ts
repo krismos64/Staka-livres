@@ -28,6 +28,64 @@ export interface StatistiquesAdmin {
   };
 }
 
+export interface MonthlyStats {
+  months: string[];
+  revenue: number[];
+  newUsers: number[];
+  orders: number[];
+  derniersPaiements: DernierPaiement[];
+}
+
+const getCurrentMonthName = (): string => {
+  const now = new Date();
+  return now.toLocaleDateString('fr-FR', { 
+    month: 'long', 
+    year: 'numeric' 
+  });
+};
+
+const calculateEvolution = (current: number, previous: number): number => {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return ((current - previous) / previous) * 100;
+};
+
+const transformMonthlyStatsToAdminStats = (monthlyStats: MonthlyStats): StatistiquesAdmin => {
+  const { months, revenue, newUsers, orders, derniersPaiements } = monthlyStats;
+  
+  // Get current month (last month in array) and previous month
+  const currentMonthRevenue = revenue[revenue.length - 1] || 0;
+  const previousMonthRevenue = revenue[revenue.length - 2] || 0;
+  
+  const currentMonthOrders = orders[orders.length - 1] || 0;
+  const previousMonthOrders = orders[orders.length - 2] || 0;
+  
+  const currentMonthUsers = newUsers[newUsers.length - 1] || 0;
+  const previousMonthUsers = newUsers[newUsers.length - 2] || 0;
+  
+  // Calculate totals for resume
+  const totalCA = revenue.reduce((sum, amount) => sum + amount, 0);
+  const totalCommandes = orders.reduce((sum, count) => sum + count, 0);
+  const totalClients = newUsers.reduce((sum, count) => sum + count, 0);
+  
+  return {
+    chiffreAffairesMois: currentMonthRevenue,
+    evolutionCA: calculateEvolution(currentMonthRevenue, previousMonthRevenue),
+    nouvellesCommandesMois: currentMonthOrders,
+    evolutionCommandes: calculateEvolution(currentMonthOrders, previousMonthOrders),
+    nouveauxClientsMois: currentMonthUsers,
+    evolutionClients: calculateEvolution(currentMonthUsers, previousMonthUsers),
+    derniersPaiements: derniersPaiements || [],
+    satisfactionMoyenne: 4.8, // Mock data
+    nombreAvisTotal: 127, // Mock data
+    resumeMois: {
+      periode: getCurrentMonthName(),
+      totalCA: totalCA,
+      totalCommandes: totalCommandes,
+      totalClients: totalClients,
+    },
+  };
+};
+
 const fetchAdminStats = async (): Promise<StatistiquesAdmin> => {
   const response = await fetch(buildApiUrl("/admin/stats"), {
     method: "GET",
@@ -41,7 +99,8 @@ const fetchAdminStats = async (): Promise<StatistiquesAdmin> => {
     );
   }
 
-  return response.json();
+  const monthlyStats: MonthlyStats = await response.json();
+  return transformMonthlyStatsToAdminStats(monthlyStats);
 };
 
 export const useAdminStats = () => {

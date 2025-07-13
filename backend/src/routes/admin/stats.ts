@@ -1,11 +1,27 @@
 import { Role } from "@prisma/client";
 import { Request, Response, Router } from "express";
 import { requireRole } from "../../middleware/requireRole";
+import { AdminStatsService } from "../../services/adminStatsService";
 
 const router = Router();
 
 // Middleware pour s'assurer que seul un admin peut accéder à ces routes
 router.use(requireRole(Role.ADMIN));
+
+/**
+ * @route GET /api/admin/stats
+ * @description Fournit les statistiques mensuelles pour les 12 derniers mois
+ * @access Privé (Admin)
+ */
+router.get("/", async (req: Request, res: Response) => {
+  try {
+    const stats = await AdminStatsService.getMonthlyStats();
+    res.json(stats);
+  } catch (error) {
+    console.error("Error fetching admin stats:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 /**
  * @route GET /api/admin/stats/advanced
