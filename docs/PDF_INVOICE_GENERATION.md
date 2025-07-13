@@ -1,21 +1,30 @@
-# 📄 Guide de Génération PDF des Factures
+# 📄 Guide de Génération PDF des Factures - Production 2025
 
 ## 🎯 Vue d'ensemble
 
-Le système de génération PDF des factures de Staka Livres offre une solution complète pour créer, stocker et télécharger des factures professionnelles au format PDF. Cette implémentation utilise PDFKit pour la génération, AWS S3 pour le stockage sécurisé, et fournit des endpoints optimisés pour le téléchargement.
+Le système de génération PDF des factures de Staka Livres offre une solution complète pour créer, stocker et télécharger des factures professionnelles au format PDF. Cette implémentation utilise **pdf-lib** pour la génération, AWS S3 pour le stockage sécurisé avec URLs signées **30 jours**, et fournit des endpoints optimisés pour le téléchargement sans mocks.
 
 ## 🏗️ Architecture Technique
+
+### Configuration Centralisée
+
+**CONFIG** (`src/config/config.ts`)
+- **S3_SIGNED_URL_TTL**: `30 * 24 * 60 * 60` (30 jours en secondes)
+- **BUCKET**: `staka-invoices` (bucket S3 de production)
+- **REGION**: `eu-west-3` (région AWS Europe)
+- **PDF_COMPANY_INFO**: Données entreprise pour facturation
 
 ### Services Principaux
 
 1. **PdfService** (`src/services/pdf.ts`)
-   - Génération de PDF professionnel avec PDFKit
+   - Génération de PDF professionnel avec **pdf-lib** v1.17.1
    - Template A4 portrait avec design moderne
    - Gestion des logos, en-têtes, tableaux et pieds de page
+   - TypeScript strict avec polices StandardFonts
 
 2. **S3InvoiceService** (`src/services/s3InvoiceService.ts`)
    - Upload sécurisé vers AWS S3
-   - Génération d'URLs signées (7 jours)
+   - Génération d'URLs signées (30 jours)
    - Téléchargement et vérification d'existence
    - Mode simulation pour le développement local
 
@@ -197,7 +206,107 @@ const downloadInvoice = async (invoiceId: string) => {
 };
 ```
 
-## 🧪 Tests
+## 🐳 Tests d'Intégration S3 en Docker - Production 2025
+
+### Ports et Services
+
+| Service | Port | Usage |
+|---------|------|-------|
+| **Backend API** | 3000 | Tests PDF + S3 + API |
+| **Frontend UI** | 3001 | Interface administration |
+| **Vite Dev** | 5173 | Développement hot-reload |
+
+### Configuration Docker Autonome
+
+Le système de tests S3 fonctionne **exclusivement dans Docker** avec auto-skip si les credentials AWS ne sont pas fournis :
+
+```typescript
+// Vérification automatique des credentials
+const hasAwsCredentials = !!(
+  process.env.AWS_ACCESS_KEY_ID && 
+  process.env.AWS_SECRET_ACCESS_KEY && 
+  process.env.AWS_S3_BUCKET
+);
+
+const describeS3Tests = hasAwsCredentials ? describe : describe.skip;
+
+if (!hasAwsCredentials) {
+  console.warn("⚠️ [S3 TESTS] AWS credentials not provided, skipping real S3 integration tests");
+}
+```
+
+### Commandes Docker-only
+
+```bash
+# Build TypeScript dans conteneur (port 3000)
+docker compose run --rm app npm run build:ci
+
+# Tests unitaires dans conteneur
+docker compose run --rm app npm run test:ci
+
+# Tests S3 avec vraies credentials AWS
+export AWS_ACCESS_KEY_ID=your_access_key
+export AWS_SECRET_ACCESS_KEY=your_secret_key
+docker compose run --rm app npm run test:s3:ci
+
+# Audit sécurité production
+docker compose run --rm app npm audit --production
+
+# Test complet API PDF (après démarrage)
+curl -H "Authorization: Bearer $TOKEN" \
+     http://localhost:3000/admin/factures/1/download \
+     --output facture_test.pdf
+```
+
+### Variables d'environnement Docker
+
+**docker-compose.yml - Service `app`:**
+```yaml
+app:
+  environment:
+    - NODE_ENV=test
+    - AWS_S3_BUCKET=staka-invoices
+    - AWS_REGION=eu-west-3
+    # AWS credentials passés via ligne de commande pour tests S3
+  profiles:
+    - test
+```
+
+### Validation Fichier PDF Généré
+
+```bash
+# Vérifier que le PDF est valide
+file facture_test.pdf  # → facture_test.pdf: PDF document, version 1.7
+
+# Vérifier la taille (doit être > 1KB)
+ls -lh facture_test.pdf  # → 2.7K facture_test.pdf
+
+# Vérifier l'objet S3 (TTL ~30 jours)
+aws s3 ls s3://staka-invoices/invoices/ --region eu-west-3
+```
+
+## 🧪 Tests - Version Production 2025
+
+### Tests d'Intégration Réels (NOUVEAUX)
+
+#### S3InvoiceService Integration (`src/__tests__/integration/s3InvoiceService.integration.test.ts`)
+
+- ✅ **Workflow complet** : Génération PDF → Upload S3 → URL signée → Téléchargement
+- ✅ **Vraies opérations S3** : Upload/download avec bucket `staka-invoices`
+- ✅ **Nettoyage automatique** : Suppression des objets de test après chaque test
+- ✅ **Gestion concurrence** : Tests d'uploads simultanés
+- ✅ **Intégrité données** : Vérification checksums MD5
+- ✅ **ACL privé** : Validation sécurité (403 sur URLs publiques)
+- ✅ **TTL 30 jours** : Vérification expiration URLs signées
+- ✅ **Performance** : < 30s pour workflows complets
+
+**Variables d'environnement requises :**
+```bash
+AWS_ACCESS_KEY_ID=your_real_access_key
+AWS_SECRET_ACCESS_KEY=your_real_secret_key
+AWS_S3_BUCKET=staka-invoices
+AWS_REGION=eu-west-3
+```
 
 ### Tests Unitaires
 
@@ -238,14 +347,20 @@ const downloadInvoice = async (invoiceId: string) => {
 ### Commandes de Test
 
 ```bash
-# Tests unitaires services
-npm test -- --testPathPattern="pdfService|s3InvoiceService"
+# Tests d'intégration S3 réels (PRODUCTION)
+npm test -- src/__tests__/integration/s3InvoiceService.integration.test.ts
+
+# Tests unitaires services PDF
+npm test -- --testPathPattern="pdfService"
 
 # Tests routes admin
 npm test -- --testPathPattern="adminFactures"
 
-# Tests complets avec couverture
+# Tests complets avec couverture ≥ 90%
 npm run test:coverage
+
+# Validation TypeScript production
+npm run build
 ```
 
 ## 🔧 Optimisations de Performance

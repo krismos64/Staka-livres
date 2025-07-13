@@ -203,8 +203,8 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **Cache intelligent** : 5-10 minutes avec invalidation automatique
 - **États optimisés** : `isLoading`, `isFetching`, `error` gérés automatiquement
 - **Pagination fluide** : `keepPreviousData` pour éviter les blancs UI
-- **Génération PDF avancée** : Service PDFKit avec design professionnel A4 portrait
-- **Stockage S3 sécurisé** : URLs signées 7 jours, ACL privé, metadata complète
+- **Génération PDF avancée** : Service pdf-lib v1.17.1 avec design professionnel A4 portrait
+- **Stockage S3 sécurisé** : URLs signées 30 jours, ACL privé, metadata complète
 - **Download endpoints** : `/admin/factures/:id/pdf` et `/admin/factures/:id/download`
 - **Optimisation performance** : Cache S3, génération à la demande, background upload
 - **Templates PDF** : Logo entreprise, informations client, tableau détaillé, totaux HT/TVA/TTC
@@ -839,8 +839,8 @@ npm run dev
 
 **5. Accès aux services :**
 
-- **Frontend** : http://localhost:3000
-- **Backend API** : http://localhost:3001
+- **Frontend** : http://localhost:3001
+- **Backend API** : http://localhost:3000
 - **Prisma Studio** : http://localhost:5555
 - **Base de données** : localhost:3306
 
@@ -948,29 +948,57 @@ Password: password
 
 ### 🛠️ **Commandes de Développement**
 
+#### 📊 **Tableau des Ports**
+
+| Service | Port Host | Port Interne | Usage |
+|---------|-----------|--------------|-------|
+| **Backend API** | 3000 | 3000 | Express + Prisma + PDF |
+| **Frontend UI** | 3001 | 80 | React + Nginx (production) |
+| **Vite Dev** | 5173 | 5173 | React (hot-reload dev) |
+| **Prisma Studio** | 5555 | 5555 | Base de données |
+| **MySQL** | 3306 | 3306 | Base de données |
+
 ```bash
-# Backend
+# 🐳 DÉVELOPPEMENT DOCKER (RECOMMANDÉ)
+npm run dev              # Mode production (backend:3000 + frontend:3001)
+npm run dev:watch        # Mode dev hot-reload (backend:3000 + vite:5173)
+
+# 🔧 BACKEND (Docker-only - PRODUCTION READY)
 cd backend
-npm run dev              # Démarrer le serveur de développement
-npm run db:migrate       # Appliquer les migrations
-npm run db:generate      # Générer le client Prisma
-npm run prisma:seed      # Insérer les données de test
+npm run build            # Build TypeScript dans conteneur
+npm run test             # Tests complets dans conteneur
+npm run test:s3          # Tests S3 avec vraies credentials AWS
+npm run audit:docker     # Audit sécurité dans conteneur
 
-# Synchronisation Stripe (NOUVEAU)
-npm run stripe:sync-all  # Synchroniser tous les tarifs avec Stripe
-npm run stripe:sync-dry  # Mode simulation (dry-run)
-npm run stripe:sync-verbose  # Logs détaillés
+# Tests S3 avec credentials AWS
+export AWS_ACCESS_KEY_ID=your_access_key
+export AWS_SECRET_ACCESS_KEY=your_secret_key
+npm run test:s3
 
-# Frontend
-cd frontend
-npm run dev              # Démarrer le serveur de développement
-npm run build            # Build de production
-npm run preview          # Prévisualiser le build
+# 🗄️ DATABASE (via Docker)
+docker compose run --rm app npm run db:migrate
+docker compose run --rm app npm run db:generate
+docker compose run --rm app npm run prisma:seed
 
-# Docker
-npm run docker:dev       # Démarrer l'environnement complet
-npm run docker:build     # Rebuild les images
-docker-compose logs -f   # Voir les logs en temps réel
+# 💳 STRIPE SYNC (dans conteneur)
+docker compose run --rm app npm run stripe:sync-all
+docker compose run --rm app npm run stripe:sync-dry
+docker compose run --rm app npm run stripe:sync-verbose
+
+# 🎯 DÉVELOPPEMENT HOT-RELOAD
+# Dev hot-reload
+npm run dev:watch        # Backend nodemon + Frontend Vite
+# → Backend: http://localhost:3000
+# → Frontend: http://localhost:5173
+
+# ⚙️ ENVIRONNEMENT COMPLET
+docker compose up -d     # Production complète
+docker compose logs -f   # Voir les logs en temps réel
+
+# 🧪 TEST API PDF (PRODUCTION)
+curl -H "Authorization: Bearer $TOKEN" \
+     http://localhost:3000/admin/factures/1/download \
+     --output facture_test.pdf
 ```
 
 **Consulter la documentation spécialisée selon vos besoins de développement ou d'administration.**

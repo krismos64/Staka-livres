@@ -6,9 +6,9 @@ services:
     container_name: staka_frontend
     platform: linux/arm64
     ports:
-      - "3000:80"
+      - "3001:80"
     environment:
-      - VITE_API_URL=http://backend:3001
+      - VITE_API_URL=http://backend:3000
       - DOCKER_ENV=true
     depends_on:
       - backend
@@ -48,7 +48,7 @@ services:
       dockerfile: backend/Dockerfile
     container_name: staka_backend
     ports:
-      - "3001:3001"
+      - "3000:3000"
       - "5555:5555"
     env_file:
       - ./backend/.env
@@ -58,6 +58,26 @@ services:
     depends_on:
       - db
     restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: staka_app_test
+    environment:
+      - NODE_ENV=test
+      - AWS_S3_BUCKET=staka-invoices
+      - AWS_REGION=eu-west-3
+      # AWS credentials passed via command line for S3 tests
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app/backend
+      - ./shared:/app/shared
+    depends_on:
+      - db
+    profiles:
+      - test
 
   db:
     image: mysql:8

@@ -26,6 +26,11 @@ export interface TarifStripeSync {
   error?: string;
 }
 
+export interface TarifWithStripeInfo extends Tarif {
+  stripeProductActive?: boolean;
+  stripePriceActive?: boolean;
+}
+
 export class TarifStripeSyncService {
   
   /**
@@ -297,7 +302,7 @@ export class TarifStripeSyncService {
       orderBy: { ordre: 'asc' },
     });
 
-    const tarifsWithInfo = [];
+    const tarifsWithInfo: TarifWithStripeInfo[] = [];
     const summary = {
       total: tarifs.length,
       withStripeProduct: 0,
@@ -306,7 +311,7 @@ export class TarifStripeSyncService {
     };
 
     for (const tarif of tarifs) {
-      const tarifInfo: any = { ...tarif };
+      const tarifInfo: TarifWithStripeInfo = { ...tarif };
       
       if (tarif.stripeProductId) {
         summary.withStripeProduct++;

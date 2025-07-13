@@ -1,6 +1,6 @@
-import PDFDocument from "pdfkit";
-import fs from "fs";
-import path from "path";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import * as fs from "fs";
+import * as path from "path";
 
 export interface InvoiceData {
   id: string;
@@ -23,273 +23,497 @@ export interface InvoiceData {
   };
 }
 
-export interface InvoiceLineItem {
-  description: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-}
-
 /**
- * Service PDF pour la génération de factures
+ * Service PDF pour la génération de factures avec pdf-lib
  */
 export class PdfService {
   /**
    * Génère un PDF de facture avec un design professionnel
    */
   static async buildInvoicePdf(invoiceData: InvoiceData): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
+    try {
+      console.log(`🎯 [PDF] Génération PDF pour facture ${invoiceData.number}`);
+
+      // Créer un nouveau document PDF
+      const pdfDoc = await PDFDocument.create();
+      
+      // Définir les métadonnées
+      pdfDoc.setTitle(`Facture ${invoiceData.number}`);
+      pdfDoc.setAuthor('Staka Livres');
+      pdfDoc.setSubject('Facture de correction de manuscrit');
+      pdfDoc.setCreator('Staka Livres Platform');
+      pdfDoc.setProducer('pdf-lib');
+
+      // Ajouter une page A4
+      const page = pdfDoc.addPage([595.28, 841.89]); // A4 en points
+      
+      // Charger les polices
+      const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+      // Couleurs
+      const blueColor = rgb(0.15, 0.39, 0.92); // #2563eb
+      const darkGrayColor = rgb(0.12, 0.16, 0.22); // #1f2937
+      const mediumGrayColor = rgb(0.42, 0.45, 0.50); // #6b7280
+      const lightGrayColor = rgb(0.90, 0.91, 0.93); // #e5e7eb
+
+      let currentY = 750; // Position Y de départ
+
+      // Logo et en-tête
       try {
-        console.log(`🎯 [PDF] Génération PDF pour facture ${invoiceData.number}`);
-
-        const doc = new PDFDocument({ 
-          margin: 50,
-          size: 'A4',
-          info: {
-            Title: `Facture ${invoiceData.number}`,
-            Author: 'Staka Livres',
-            Subject: 'Facture de correction de manuscrit',
-            Creator: 'Staka Livres Platform'
-          }
-        });
-        
-        const chunks: Buffer[] = [];
-
-        // Capturer les données du PDF
-        doc.on("data", (chunk) => chunks.push(chunk));
-        doc.on("end", () => {
-          const pdfBuffer = Buffer.concat(chunks);
-          console.log(`✅ [PDF] PDF généré: ${pdfBuffer.length} bytes`);
-          resolve(pdfBuffer);
-        });
-        doc.on("error", reject);
-
-        // Ajouter le contenu du PDF
-        this.addHeader(doc, invoiceData);
-        this.addCompanyInfo(doc);
-        this.addClientInfo(doc, invoiceData);
-        this.addInvoiceDetails(doc, invoiceData);
-        this.addItemsTable(doc, invoiceData);
-        this.addTotals(doc, invoiceData);
-        this.addFooter(doc, invoiceData);
-
-        // Finaliser le PDF
-        doc.end();
-      } catch (error) {
-        console.error("❌ [PDF] Erreur génération PDF:", error);
-        reject(error);
-      }
-    });
-  }
-
-  /**
-   * Ajoute l'en-tête de la facture
-   */
-  private static addHeader(doc: any, invoiceData: InvoiceData): void {
-    // Logo (si disponible)
-    const logoPath = path.join(__dirname, '../../assets/logo.png');
-    if (fs.existsSync(logoPath)) {
-      try {
-        doc.image(logoPath, 50, 45, { width: 80 });
+        const logoPath = path.join(__dirname, '../../assets/logo.png');
+        if (fs.existsSync(logoPath)) {
+          const logoBytes = fs.readFileSync(logoPath);
+          const logoImage = await pdfDoc.embedPng(logoBytes);
+          const logoDims = logoImage.scale(0.3);
+          page.drawImage(logoImage, {
+            x: 50,
+            y: currentY - 50,
+            width: logoDims.width,
+            height: logoDims.height,
+          });
+        }
       } catch (error) {
         console.warn("⚠️ [PDF] Logo non trouvé, utilisation du texte");
       }
+
+      // Titre FACTURE
+      page.drawText('FACTURE', {
+        x: 50,
+        y: currentY,
+        size: 24,
+        font: helveticaBold,
+        color: blueColor,
+      });
+
+      // Informations facture (droite)
+      page.drawText(`Facture N° ${invoiceData.number}`, {
+        x: 350,
+        y: currentY,
+        size: 12,
+        font: helvetica,
+        color: darkGrayColor,
+      });
+
+      page.drawText(`Date d'émission: ${this.formatDate(invoiceData.issuedAt)}`, {
+        x: 350,
+        y: currentY - 20,
+        size: 10,
+        font: helvetica,
+        color: darkGrayColor,
+      });
+
+      if (invoiceData.dueAt) {
+        page.drawText(`Date d'échéance: ${this.formatDate(invoiceData.dueAt)}`, {
+          x: 350,
+          y: currentY - 40,
+          size: 10,
+          font: helvetica,
+          color: darkGrayColor,
+        });
+      }
+
+      currentY -= 80;
+
+      // Ligne de séparation
+      page.drawLine({
+        start: { x: 50, y: currentY },
+        end: { x: 545, y: currentY },
+        thickness: 1,
+        color: lightGrayColor,
+      });
+
+      currentY -= 30;
+
+      // Informations entreprise
+      page.drawText('STAKA LIVRES', {
+        x: 50,
+        y: currentY,
+        size: 14,
+        font: helveticaBold,
+        color: darkGrayColor,
+      });
+
+      currentY -= 20;
+      const companyInfo = [
+        'Correction et édition de manuscrits',
+        '123 Rue des Livres',
+        '75000 Paris, France',
+        'Tél: +33 1 23 45 67 89',
+        'Email: contact@staka-livres.com',
+        'SIRET: 123 456 789 00010'
+      ];
+
+      companyInfo.forEach(info => {
+        page.drawText(info, {
+          x: 50,
+          y: currentY,
+          size: 10,
+          font: helvetica,
+          color: mediumGrayColor,
+        });
+        currentY -= 15;
+      });
+
+      // Informations client (droite)
+      let clientY = currentY + (companyInfo.length * 15) + 20;
+      page.drawText('FACTURÉ À:', {
+        x: 350,
+        y: clientY,
+        size: 12,
+        font: helveticaBold,
+        color: darkGrayColor,
+      });
+
+      clientY -= 20;
+      const user = invoiceData.commande.user;
+      page.drawText(`${user.prenom} ${user.nom}`, {
+        x: 350,
+        y: clientY,
+        size: 10,
+        font: helvetica,
+        color: darkGrayColor,
+      });
+
+      clientY -= 15;
+      page.drawText(user.email, {
+        x: 350,
+        y: clientY,
+        size: 10,
+        font: helvetica,
+        color: darkGrayColor,
+      });
+
+      if (user.adresse) {
+        const adresseLines = user.adresse.split('\n');
+        adresseLines.forEach(ligne => {
+          clientY -= 15;
+          page.drawText(ligne, {
+            x: 350,
+            y: clientY,
+            size: 10,
+            font: helvetica,
+            color: darkGrayColor,
+          });
+        });
+      }
+
+      currentY -= 60;
+
+      // Détails du projet
+      page.drawText('PROJET:', {
+        x: 50,
+        y: currentY,
+        size: 12,
+        font: helveticaBold,
+        color: darkGrayColor,
+      });
+
+      currentY -= 20;
+      page.drawText(invoiceData.commande.titre, {
+        x: 50,
+        y: currentY,
+        size: 10,
+        font: helvetica,
+        color: darkGrayColor,
+      });
+
+      if (invoiceData.commande.description) {
+        currentY -= 20;
+        page.drawText('Description:', {
+          x: 50,
+          y: currentY,
+          size: 10,
+          font: helvetica,
+          color: darkGrayColor,
+        });
+        
+        currentY -= 15;
+        // Découper la description en lignes si nécessaire
+        const maxWidth = 450;
+        const words = invoiceData.commande.description.split(' ');
+        let currentLine = '';
+        
+        for (const word of words) {
+          const testLine = currentLine + (currentLine ? ' ' : '') + word;
+          const textWidth = helvetica.widthOfTextAtSize(testLine, 10);
+          
+          if (textWidth > maxWidth && currentLine) {
+            page.drawText(currentLine, {
+              x: 50,
+              y: currentY,
+              size: 10,
+              font: helvetica,
+              color: darkGrayColor,
+            });
+            currentY -= 15;
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        
+        if (currentLine) {
+          page.drawText(currentLine, {
+            x: 50,
+            y: currentY,
+            size: 10,
+            font: helvetica,
+            color: darkGrayColor,
+          });
+        }
+      }
+
+      currentY -= 40;
+
+      // Tableau des éléments
+      const tableTop = currentY;
+      
+      // En-tête du tableau (rectangle de fond)
+      page.drawRectangle({
+        x: 50,
+        y: tableTop - 25,
+        width: 495,
+        height: 25,
+        color: rgb(0.95, 0.96, 0.97), // #f3f4f6
+      });
+
+      // Bordure en-tête
+      page.drawRectangle({
+        x: 50,
+        y: tableTop - 25,
+        width: 495,
+        height: 25,
+        borderColor: lightGrayColor,
+        borderWidth: 1,
+      });
+
+      // Textes en-tête
+      page.drawText('DESCRIPTION', {
+        x: 60,
+        y: tableTop - 18,
+        size: 10,
+        font: helveticaBold,
+        color: darkGrayColor,
+      });
+
+      page.drawText('QTÉ', {
+        x: 300,
+        y: tableTop - 18,
+        size: 10,
+        font: helveticaBold,
+        color: darkGrayColor,
+      });
+
+      page.drawText('PRIX UNITAIRE HT', {
+        x: 350,
+        y: tableTop - 18,
+        size: 10,
+        font: helveticaBold,
+        color: darkGrayColor,
+      });
+
+      page.drawText('MONTANT TTC', {
+        x: 450,
+        y: tableTop - 18,
+        size: 10,
+        font: helveticaBold,
+        color: darkGrayColor,
+      });
+
+      // Ligne de l'élément
+      const itemY = tableTop - 25;
+      
+      page.drawRectangle({
+        x: 50,
+        y: itemY - 30,
+        width: 495,
+        height: 30,
+        borderColor: lightGrayColor,
+        borderWidth: 1,
+      });
+
+      const unitPrice = invoiceData.amount / 100;
+      
+      page.drawText(invoiceData.commande.titre, {
+        x: 60,
+        y: itemY - 18,
+        size: 10,
+        font: helvetica,
+        color: darkGrayColor,
+      });
+
+      page.drawText('1', {
+        x: 300,
+        y: itemY - 18,
+        size: 10,
+        font: helvetica,
+        color: darkGrayColor,
+      });
+
+      page.drawText(`${unitPrice.toFixed(2)} €`, {
+        x: 350,
+        y: itemY - 18,
+        size: 10,
+        font: helvetica,
+        color: darkGrayColor,
+      });
+
+      page.drawText(`${unitPrice.toFixed(2)} €`, {
+        x: 450,
+        y: itemY - 18,
+        size: 10,
+        font: helvetica,
+        color: darkGrayColor,
+      });
+
+      currentY = itemY - 60;
+
+      // Zone des totaux
+      const totalsY = currentY;
+      const totalHT = (invoiceData.amount - invoiceData.taxAmount) / 100;
+      const tva = invoiceData.taxAmount / 100;
+      const totalTTC = invoiceData.amount / 100;
+
+      // Rectangle de fond pour les totaux
+      page.drawRectangle({
+        x: 350,
+        y: totalsY - 80,
+        width: 195,
+        height: 80,
+        color: rgb(0.98, 0.98, 0.99), // #f9fafb
+        borderColor: lightGrayColor,
+        borderWidth: 1,
+      });
+
+      page.drawText('Total HT:', {
+        x: 360,
+        y: totalsY - 20,
+        size: 10,
+        font: helvetica,
+        color: darkGrayColor,
+      });
+
+      page.drawText(`${totalHT.toFixed(2)} €`, {
+        x: 480,
+        y: totalsY - 20,
+        size: 10,
+        font: helvetica,
+        color: darkGrayColor,
+      });
+
+      page.drawText('TVA (20%):', {
+        x: 360,
+        y: totalsY - 40,
+        size: 10,
+        font: helvetica,
+        color: darkGrayColor,
+      });
+
+      page.drawText(`${tva.toFixed(2)} €`, {
+        x: 480,
+        y: totalsY - 40,
+        size: 10,
+        font: helvetica,
+        color: darkGrayColor,
+      });
+
+      // Total TTC
+      page.drawText('TOTAL TTC:', {
+        x: 360,
+        y: totalsY - 65,
+        size: 12,
+        font: helveticaBold,
+        color: darkGrayColor,
+      });
+
+      page.drawText(`${totalTTC.toFixed(2)} €`, {
+        x: 460,
+        y: totalsY - 65,
+        size: 12,
+        font: helveticaBold,
+        color: darkGrayColor,
+      });
+
+      currentY -= 120;
+
+      // Pied de page
+      // Ligne de séparation
+      page.drawLine({
+        start: { x: 50, y: currentY },
+        end: { x: 545, y: currentY },
+        thickness: 1,
+        color: lightGrayColor,
+      });
+
+      currentY -= 30;
+
+      // Conditions de paiement
+      page.drawText('CONDITIONS DE PAIEMENT', {
+        x: 50,
+        y: currentY,
+        size: 10,
+        font: helveticaBold,
+        color: darkGrayColor,
+      });
+
+      currentY -= 20;
+      const paymentConditions = [
+        'Paiement par carte bancaire via Stripe',
+        'Règlement à réception de facture'
+      ];
+
+      paymentConditions.forEach(condition => {
+        page.drawText(condition, {
+          x: 50,
+          y: currentY,
+          size: 9,
+          font: helvetica,
+          color: mediumGrayColor,
+        });
+        currentY -= 15;
+      });
+
+      currentY -= 20;
+
+      // Mentions légales
+      const legalMentions = [
+        'TVA non applicable - Article 293 B du CGI',
+        'En cas de retard de paiement, des pénalités de 3 fois le taux légal seront appliquées.',
+        'Merci pour votre confiance !'
+      ];
+
+      legalMentions.forEach(mention => {
+        page.drawText(mention, {
+          x: 50,
+          y: currentY,
+          size: 8,
+          font: helvetica,
+          color: rgb(0.66, 0.68, 0.72), // #9ca3af
+        });
+        currentY -= 12;
+      });
+
+      // Informations techniques (en bas à droite)
+      page.drawText(`Facture générée le ${this.formatDate(new Date())} - Staka Livres Platform`, {
+        x: 300,
+        y: 30,
+        size: 7,
+        font: helvetica,
+        color: rgb(0.82, 0.84, 0.86), // #d1d5db
+      });
+
+      // Générer le PDF en tant que buffer
+      const pdfBytes = await pdfDoc.save();
+      const pdfBuffer = Buffer.from(pdfBytes);
+      
+      console.log(`✅ [PDF] PDF généré: ${pdfBuffer.length} bytes`);
+      return pdfBuffer;
+
+    } catch (error) {
+      console.error("❌ [PDF] Erreur génération PDF:", error);
+      throw error;
     }
-
-    // Titre principal
-    doc.fontSize(24)
-       .font('Helvetica-Bold')
-       .fillColor('#2563eb')
-       .text('FACTURE', 50, 50);
-
-    // Numéro de facture et date
-    doc.fontSize(12)
-       .font('Helvetica')
-       .fillColor('#000000')
-       .text(`Facture N° ${invoiceData.number}`, 350, 50)
-       .text(`Date d'émission: ${this.formatDate(invoiceData.issuedAt)}`, 350, 70);
-
-    if (invoiceData.dueAt) {
-      doc.text(`Date d'échéance: ${this.formatDate(invoiceData.dueAt)}`, 350, 90);
-    }
-
-    // Ligne de séparation
-    doc.moveTo(50, 120)
-       .lineTo(550, 120)
-       .strokeColor('#e5e7eb')
-       .stroke();
-  }
-
-  /**
-   * Ajoute les informations de l'entreprise
-   */
-  private static addCompanyInfo(doc: any): void {
-    doc.fontSize(14)
-       .font('Helvetica-Bold')
-       .fillColor('#1f2937')
-       .text('STAKA LIVRES', 50, 140);
-
-    doc.fontSize(10)
-       .font('Helvetica')
-       .fillColor('#6b7280')
-       .text('Correction et édition de manuscrits', 50, 160)
-       .text('123 Rue des Livres', 50, 175)
-       .text('75000 Paris, France', 50, 190)
-       .text('Tél: +33 1 23 45 67 89', 50, 205)
-       .text('Email: contact@staka-livres.com', 50, 220)
-       .text('SIRET: 123 456 789 00010', 50, 235);
-  }
-
-  /**
-   * Ajoute les informations du client
-   */
-  private static addClientInfo(doc: any, invoiceData: InvoiceData): void {
-    const user = invoiceData.commande.user;
-    
-    doc.fontSize(12)
-       .font('Helvetica-Bold')
-       .fillColor('#1f2937')
-       .text('FACTURÉ À:', 350, 140);
-
-    doc.fontSize(10)
-       .font('Helvetica')
-       .fillColor('#374151')
-       .text(`${user.prenom} ${user.nom}`, 350, 160)
-       .text(user.email, 350, 175);
-
-    if (user.adresse) {
-      doc.text(user.adresse, 350, 190, { width: 150 });
-    }
-  }
-
-  /**
-   * Ajoute les détails de la facture
-   */
-  private static addInvoiceDetails(doc: any, invoiceData: InvoiceData): void {
-    doc.fontSize(12)
-       .font('Helvetica-Bold')
-       .fillColor('#1f2937')
-       .text('PROJET:', 50, 280);
-
-    doc.fontSize(10)
-       .font('Helvetica')
-       .fillColor('#374151')
-       .text(invoiceData.commande.titre, 50, 300);
-
-    if (invoiceData.commande.description) {
-      doc.text('Description:', 50, 320)
-         .text(invoiceData.commande.description, 50, 335, { width: 450 });
-    }
-  }
-
-  /**
-   * Ajoute le tableau des éléments
-   */
-  private static addItemsTable(doc: any, invoiceData: InvoiceData): void {
-    const tableTop = 380;
-    const itemHeight = 30;
-
-    // En-tête du tableau
-    doc.rect(50, tableTop, 500, 25)
-       .fillColor('#f3f4f6')
-       .fill();
-
-    doc.fontSize(10)
-       .font('Helvetica-Bold')
-       .fillColor('#374151')
-       .text('DESCRIPTION', 60, tableTop + 8)
-       .text('QTÉ', 300, tableTop + 8)
-       .text('PRIX UNITAIRE HT', 350, tableTop + 8)
-       .text('MONTANT TTC', 450, tableTop + 8);
-
-    // Ligne de l'élément
-    const itemY = tableTop + 25;
-    
-    doc.rect(50, itemY, 500, itemHeight)
-       .fillColor('#ffffff')
-       .fill()
-       .rect(50, itemY, 500, itemHeight)
-       .strokeColor('#e5e7eb')
-       .stroke();
-
-    const unitPrice = invoiceData.amount / 100;
-    
-    doc.fontSize(10)
-       .font('Helvetica')
-       .fillColor('#000000')
-       .text(invoiceData.commande.titre, 60, itemY + 8)
-       .text('1', 300, itemY + 8)
-       .text(`${unitPrice.toFixed(2)} €`, 350, itemY + 8)
-       .text(`${unitPrice.toFixed(2)} €`, 450, itemY + 8);
-  }
-
-  /**
-   * Ajoute les totaux
-   */
-  private static addTotals(doc: any, invoiceData: InvoiceData): void {
-    const totalsY = 450;
-    const totalHT = (invoiceData.amount - invoiceData.taxAmount) / 100;
-    const tva = invoiceData.taxAmount / 100;
-    const totalTTC = invoiceData.amount / 100;
-
-    // Zone des totaux
-    doc.rect(350, totalsY, 200, 80)
-       .fillColor('#f9fafb')
-       .fill()
-       .rect(350, totalsY, 200, 80)
-       .strokeColor('#e5e7eb')
-       .stroke();
-
-    doc.fontSize(10)
-       .font('Helvetica')
-       .fillColor('#374151')
-       .text('Total HT:', 360, totalsY + 10)
-       .text(`${totalHT.toFixed(2)} €`, 480, totalsY + 10)
-       .text('TVA (20%):', 360, totalsY + 30)
-       .text(`${tva.toFixed(2)} €`, 480, totalsY + 30);
-
-    // Total TTC
-    doc.fontSize(12)
-       .font('Helvetica-Bold')
-       .fillColor('#1f2937')
-       .text('TOTAL TTC:', 360, totalsY + 55)
-       .text(`${totalTTC.toFixed(2)} €`, 460, totalsY + 55);
-  }
-
-  /**
-   * Ajoute le pied de page
-   */
-  private static addFooter(doc: any, invoiceData: InvoiceData): void {
-    // Ligne de séparation
-    doc.moveTo(50, 580)
-       .lineTo(550, 580)
-       .strokeColor('#e5e7eb')
-       .stroke();
-
-    // Conditions de paiement
-    doc.fontSize(10)
-       .font('Helvetica-Bold')
-       .fillColor('#1f2937')
-       .text('CONDITIONS DE PAIEMENT', 50, 600);
-
-    doc.fontSize(9)
-       .font('Helvetica')
-       .fillColor('#6b7280')
-       .text('Paiement par carte bancaire via Stripe', 50, 615)
-       .text('Règlement à réception de facture', 50, 630);
-
-    // Mentions légales
-    doc.fontSize(8)
-       .font('Helvetica')
-       .fillColor('#9ca3af')
-       .text('TVA non applicable - Article 293 B du CGI', 50, 670)
-       .text('En cas de retard de paiement, des pénalités de 3 fois le taux légal seront appliquées.', 50, 685)
-       .text('Merci pour votre confiance !', 50, 700);
-
-    // Informations techniques
-    doc.fontSize(7)
-       .fillColor('#d1d5db')
-       .text(`Facture générée le ${this.formatDate(new Date())} - Staka Livres Platform`, 350, 720);
   }
 
   /**

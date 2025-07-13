@@ -1,5 +1,5 @@
 // Le code fourni dans le message précédent.
-import { MessageStatut, MessageType, PrismaClient, Role } from "@prisma/client";
+import { MessageStatut, MessageType, PrismaClient, Role, File } from "@prisma/client";
 import { Request, Response } from "express";
 import {
   notifyAdminNewMessage,
@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 /**
  * Valide les pièces jointes d'un message
  */
-async function validateAttachments(attachments: string[], userId: string): Promise<{ valid: boolean; validFiles: any[] }> {
+async function validateAttachments(attachments: string[], userId: string): Promise<{ valid: boolean; validFiles: File[] }> {
   if (!attachments || attachments.length === 0) {
     return { valid: true, validFiles: [] };
   }
@@ -21,7 +21,7 @@ async function validateAttachments(attachments: string[], userId: string): Promi
     throw new Error("Maximum 10 pièces jointes autorisées par message");
   }
 
-  const validFiles = [];
+  const validFiles: File[] = [];
   let totalSize = 0;
   
   for (const fileId of attachments) {

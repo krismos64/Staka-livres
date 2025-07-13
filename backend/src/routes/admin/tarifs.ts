@@ -1,7 +1,7 @@
 import { PrismaClient, Role } from "@prisma/client";
 import { Request, Response, Router } from "express";
 import { requireRole } from "../../middleware/requireRole";
-import { TarifStripeSyncService } from "../../services/tarifStripeSync";
+import { TarifStripeSyncService, TarifStripeSync } from "../../services/tarifStripeSync";
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -310,7 +310,7 @@ router.post(
       console.log(`✅ [ADMIN_TARIFS] Nouveau tarif créé: ${nouveauTarif.nom}`);
 
       // Synchronisation automatique avec Stripe si le tarif est actif
-      let stripeSync = null;
+      let stripeSync: TarifStripeSync | null = null;
       if (nouveauTarif.actif) {
         try {
           stripeSync = await TarifStripeSyncService.syncTarifToStripe(nouveauTarif);
@@ -424,7 +424,7 @@ router.put(
       });
 
       // Synchronisation automatique avec Stripe
-      let stripeSync = null;
+      let stripeSync: TarifStripeSync | null = null;
       try {
         stripeSync = await TarifStripeSyncService.syncTarifToStripe(tarifMisAJour);
         console.log(`🔄 [STRIPE_SYNC] ${stripeSync.message}`);

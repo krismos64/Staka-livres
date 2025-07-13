@@ -1,6 +1,7 @@
 import app from "./app";
+import { CONFIG } from "./config/config";
 
-const PORT = Number(process.env.PORT) || 3001;
+const PORT = CONFIG.SERVER.PORT;
 
 // Démarrage du serveur
 app.listen(PORT, "0.0.0.0", () => {

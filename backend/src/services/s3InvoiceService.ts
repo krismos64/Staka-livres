@@ -1,6 +1,7 @@
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Readable } from "stream";
+import { CONFIG } from "../config/config";
 
 /**
  * Service S3 spécialisé pour la gestion des factures PDF
@@ -17,13 +18,13 @@ export class S3InvoiceService {
     }
 
     // Vérifier si S3 est configuré
-    if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY || !process.env.AWS_S3_BUCKET) {
+    if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
       console.warn("Configuration S3 manquante pour les factures. Mode simulation activé.");
       return null;
     }
 
     this.s3Client = new S3Client({
-      region: process.env.AWS_REGION || "eu-west-3",
+      region: CONFIG.S3.REGION,
       credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -56,7 +57,7 @@ export class S3InvoiceService {
 
     try {
       const key = `invoices/${invoiceId}.pdf`;
-      const bucketName = process.env.AWS_S3_BUCKET!;
+      const bucketName = CONFIG.S3.BUCKET;
 
       console.log(`📤 [S3] Upload facture vers S3: ${key}`);
 
@@ -77,9 +78,7 @@ export class S3InvoiceService {
 
       await s3Client.send(command);
 
-      const fileUrl = `https://${bucketName}.s3.${
-        process.env.AWS_REGION || "eu-west-3"
-      }.amazonaws.com/${key}`;
+      const fileUrl = `https://${bucketName}.s3.${CONFIG.S3.REGION}.amazonaws.com/${key}`;
       
       console.log(`✅ [S3] Facture uploadée: ${fileUrl}`);
       return fileUrl;
@@ -103,14 +102,14 @@ export class S3InvoiceService {
 
     if (!s3Client) {
       // Mode simulation
-      const mockUrl = `https://mock-s3.amazonaws.com/invoices/${invoiceId}.pdf?signed=true&expires=7days`;
+      const mockUrl = `https://mock-s3.amazonaws.com/invoices/${invoiceId}.pdf?signed=true&expires=30days`;
       console.log(`🔗 [S3] Simulation URL signée: ${mockUrl}`);
       return mockUrl;
     }
 
     try {
       const key = `invoices/${invoiceId}.pdf`;
-      const bucketName = process.env.AWS_S3_BUCKET!;
+      const bucketName = CONFIG.S3.BUCKET;
 
       console.log(`🔗 [S3] Génération URL signée pour: ${key}`);
 
@@ -121,10 +120,10 @@ export class S3InvoiceService {
       });
 
       const signedUrl = await getSignedUrl(s3Client, command, {
-        expiresIn: 7 * 24 * 60 * 60, // 7 jours en secondes
+        expiresIn: CONFIG.S3.SIGNED_URL_TTL, // 30 jours en secondes
       });
 
-      console.log(`✅ [S3] URL signée générée (expire dans 7 jours)`);
+      console.log(`✅ [S3] URL signée générée (expire dans 30 jours)`);
       return signedUrl;
     } catch (error) {
       console.error("❌ [S3] Erreur génération URL signée:", error);
@@ -151,7 +150,7 @@ export class S3InvoiceService {
 
     try {
       const key = `invoices/${invoiceId}.pdf`;
-      const bucketName = process.env.AWS_S3_BUCKET!;
+      const bucketName = CONFIG.S3.BUCKET;
 
       console.log(`📥 [S3] Téléchargement facture depuis S3: ${key}`);
 
@@ -190,7 +189,7 @@ export class S3InvoiceService {
 
     try {
       const key = `invoices/${invoiceId}.pdf`;
-      const bucketName = process.env.AWS_S3_BUCKET!;
+      const bucketName = CONFIG.S3.BUCKET;
 
       const command = new GetObjectCommand({
         Bucket: bucketName,
