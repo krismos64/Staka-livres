@@ -4,6 +4,8 @@ type SectionName =
   | "dashboard"
   | "projects"
   | "messages"
+  | "notifications"
+  | "files"
   | "billing"
   | "help"
   | "profile"
@@ -73,6 +75,21 @@ function Sidebar({
               </span>
             </button>
           </li>
+          {/* Mes fichiers */}
+          <li>
+            <button
+              onClick={() => handleNavigation("files")}
+              className={`w-full flex items-center px-8 py-3 rounded-2xl text-base font-medium transition
+                ${
+                  activeSection === "files"
+                    ? "bg-[#eef4ff] text-[#2253e6]"
+                    : "text-gray-700 hover:bg-[#eef4ff] hover:text-[#2253e6]"
+                }`}
+            >
+              <i className="fas fa-file mr-3 text-lg"></i>
+              Mes fichiers
+            </button>
+          </li>
           {/* Messages */}
           <li>
             <button
@@ -138,9 +155,9 @@ function Sidebar({
             </button>
             <button
               className="w-full bg-white text-gray-700 py-3 px-4 rounded-xl text-base border border-gray-200 hover:bg-gray-50 transition flex items-center justify-center gap-2"
-              onClick={() => handleNavigation("messages")}
+              onClick={() => handleNavigation("help")}
             >
-              <i className="fas fa-envelope"></i>
+              <i className="fas fa-question-circle"></i>
               Contacter l'équipe
             </button>
           </div>

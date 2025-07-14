@@ -422,7 +422,10 @@ export default function HelpPage() {
               Actions rapides
             </h4>
             <div className="space-y-3">
-              <button className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-2 shadow transition">
+              <button 
+                onClick={() => window.location.href = '/app/messages'}
+                className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-2 shadow transition"
+              >
                 <i className="fas fa-comments"></i>Chat en direct
               </button>
               <button

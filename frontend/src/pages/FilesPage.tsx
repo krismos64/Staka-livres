@@ -295,8 +295,37 @@ export default function FilesPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  // Hooks pour la gestion des fichiers
-  const { files, count, isLoading, error, refetch } = useProjectFiles(projectId || "");
+  // Si pas de projectId (route /app/files), afficher une page générale
+  if (!projectId) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Mes fichiers</h1>
+          <p className="text-gray-600">Gérez tous vos fichiers de projets en un seul endroit.</p>
+        </div>
+        
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i className="fas fa-folder-open text-blue-600 text-2xl"></i>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Aucun projet sélectionné</h3>
+          <p className="text-gray-600 mb-6">
+            Pour voir et gérer vos fichiers, veuillez sélectionner un projet spécifique.
+          </p>
+          <button 
+            onClick={() => window.location.href = '/app/projects'}
+            className="bg-blue-600 text-white py-2 px-6 rounded-lg font-medium hover:bg-blue-700 transition"
+          >
+            <i className="fas fa-folder mr-2"></i>
+            Voir mes projets
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Hooks pour la gestion des fichiers (seulement si projectId existe)
+  const { files, count, isLoading, error, refetch } = useProjectFiles(projectId);
   const { downloadFile } = useDownloadFile(projectId || "");
   const { deleteFile, isDeleting } = useDeleteFile(
     projectId || "",

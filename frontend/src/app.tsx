@@ -200,7 +200,7 @@ const AppContent: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
         <Route path="messages" element={<MessagesPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="projects/:projectId/files" element={<FilesPage />} />
-        <Route path="files" element={<Navigate to="/app/projects" replace />} />
+        <Route path="files" element={<FilesPage />} />
         <Route path="billing" element={<BillingPage />} />
         <Route path="help" element={<HelpPage />} />
         <Route path="profile" element={<ProfilPage />} />

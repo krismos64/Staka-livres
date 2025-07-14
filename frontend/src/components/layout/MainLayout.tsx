@@ -7,6 +7,8 @@ type SectionName =
   | "dashboard"
   | "projects"
   | "messages"
+  | "notifications"
+  | "files"
   | "billing"
   | "help"
   | "profile"
