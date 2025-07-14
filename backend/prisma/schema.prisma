@@ -29,6 +29,7 @@ model User {
   paymentMethods          PaymentMethod[]
   assignedSupportRequests SupportRequest[] @relation("SupportAssignee")
   supportRequests         SupportRequest[]
+  passwordResets          PasswordReset[]
 
   @@index([email])
   @@index([role])
@@ -352,6 +353,20 @@ model AuditLog {
   @@index([timestamp])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+/// Tokens de réinitialisation de mot de passe
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique @db.VarChar(255)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_resets")
 }
 
 /// Énumération des rôles utilisateur

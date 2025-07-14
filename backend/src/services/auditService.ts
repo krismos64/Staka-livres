@@ -22,6 +22,9 @@ export const AUDIT_ACTIONS = {
   LOGIN_FAILED: 'LOGIN_FAILED',
   LOGOUT: 'LOGOUT',
   PASSWORD_CHANGE: 'PASSWORD_CHANGE',
+  PASSWORD_RESET_REQUEST: 'PASSWORD_RESET_REQUEST',
+  PASSWORD_RESET_SUCCESS: 'PASSWORD_RESET_SUCCESS',
+  PASSWORD_RESET_FAILED: 'PASSWORD_RESET_FAILED',
   ACCOUNT_LOCKED: 'ACCOUNT_LOCKED',
   
   // Gestion des utilisateurs
@@ -158,6 +161,36 @@ export class AuditService {
       ipAddress,
       userAgent,
       severity,
+    });
+  }
+
+  /**
+   * Enregistre un événement de réinitialisation de mot de passe
+   */
+  static async logPasswordResetEvent(
+    email: string,
+    action: 'request' | 'success' | 'failed',
+    userId?: string,
+    ipAddress?: string,
+    userAgent?: string,
+    details?: any
+  ): Promise<void> {
+    const auditAction = action === 'request' 
+      ? AUDIT_ACTIONS.PASSWORD_RESET_REQUEST
+      : action === 'success' 
+      ? AUDIT_ACTIONS.PASSWORD_RESET_SUCCESS
+      : AUDIT_ACTIONS.PASSWORD_RESET_FAILED;
+
+    await AuditService.logEvent({
+      timestamp: new Date(),
+      adminEmail: email,
+      action: auditAction,
+      targetType: 'auth',
+      targetId: userId,
+      details,
+      ipAddress,
+      userAgent,
+      severity: action === 'failed' ? 'HIGH' : 'MEDIUM',
     });
   }
   

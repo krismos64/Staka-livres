@@ -151,7 +151,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
                   : "border-gray-300 focus:ring-blue-500"
               }`}
               placeholder="••••••••"
-              defaultValue="admin123" // Mot de passe admin de test
+              defaultValue="AdminStaka2025!" // Mot de passe admin de test RGPD
               disabled={isLoading}
             />
             {/* Bouton pour afficher/cacher le mot de passe */}
@@ -186,7 +186,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
               Se souvenir de moi
             </span>
           </label>
-          <a href="#" className="text-sm text-blue-600 hover:text-blue-500">
+          <a href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-500">
             Mot de passe oublié ?
           </a>
         </div>
@@ -244,10 +244,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
         <h4 className="font-semibold text-blue-800 mb-2">🔑 Comptes de test</h4>
         <div className="text-sm text-blue-700 space-y-2">
           <div>
-            <strong>Admin:</strong> admin@staka-editions.com / admin123
+            <strong>Admin:</strong> admin@staka-editions.com / AdminStaka2025!
           </div>
           <div>
-            <strong>User:</strong> user@example.com / user123
+            <strong>User:</strong> user@example.com / UserTest2025!
           </div>
         </div>
       </div>

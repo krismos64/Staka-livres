@@ -200,6 +200,36 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **Redirection intelligente** selon le rôle utilisateur
 - **Routes RGPD** : Suppression et export de données utilisateur sécurisés
 
+### 🔐 **Sécurité des Mots de Passe & Réinitialisation (NOUVEAU 2025)**
+
+- **Politique de mots de passe renforcée** : Conformité RGPD/CNIL avec validation stricte
+  - Minimum 12 caractères OU 8 caractères avec 3 types différents (majuscules, minuscules, chiffres, symboles)
+  - Validation temps réel côté client et serveur
+  - Feedback utilisateur avec indicateurs visuels de complexité
+- **Système de réinitialisation sécurisé** : Flux complet avec tokens à usage unique
+  - Tokens SHA-256 avec expiration 1 heure
+  - Rate limiting : 5 tentatives par heure par IP/email
+  - Invalidation automatique après utilisation
+  - Notifications par email avec templates HTML professionnels
+- **Endpoints API sécurisés** :
+  - `POST /auth/request-password-reset` avec rate limiting
+  - `POST /auth/reset-password` avec validation token
+  - Audit complet des événements de réinitialisation
+- **Interface utilisateur intuitive** :
+  - Pages dédiées `/forgot-password` et `/reset-password`
+  - Validation temps réel avec feedback visuel
+  - Design responsive avec animations fluides
+  - Messages d'erreur explicites et sécurisés
+- **Audit et traçabilité** :
+  - Logs d'événements : `PASSWORD_RESET_REQUEST`, `PASSWORD_RESET_SUCCESS`, `PASSWORD_RESET_FAILED`
+  - Tracking IP, User-Agent et détails de sécurité
+  - Intégration avec le système d'audit existant
+- **Tests complets** :
+  - Tests unitaires du service de réinitialisation (100% couverture)
+  - Tests d'intégration des endpoints avec rate limiting
+  - Tests E2E Cypress du flux complet utilisateur
+  - Validation des exigences RGPD/CNIL
+
 ### 🔐 **Système d'Audit Sécurisé (NOUVEAU 2025)**
 
 - **API Backend complète** : Controller `/admin/audit` avec 4 endpoints sécurisés (420 lignes)

@@ -38,6 +38,8 @@ import ProfilPage from "./pages/ProfilPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import SettingsPage from "./pages/SettingsPage";
 import SignupPage from "./pages/SignupPage";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import "./styles/global.css";
 
 type SectionName =
@@ -118,6 +120,8 @@ const AppRoutes: React.FC = () => {
           <SignupPage onSignupSuccess={() => {}} onBackToLogin={() => {}} />
         }
       />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/pages/:slug" element={<StaticPageBySlug />} />
       <Route
         path="/payment/success"
