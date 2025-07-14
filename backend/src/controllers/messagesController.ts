@@ -101,13 +101,8 @@ Ce message a été envoyé depuis le formulaire d'aide de l'espace client.
 Vous pouvez répondre directement à l'utilisateur via l'interface d'administration.
     `;
 
-    // Envoyer l'email
-    await MailerService.sendEmail({
-      to: supportEmail,
-      subject: `Nouveau message depuis l'espace client – ${subject}`,
-      html: htmlContent,
-      text: textContent,
-    });
+    // Email removal: Now handled by admin notification system via eventBus
+    // The calling code already creates admin notifications which will trigger emails automatically
 
     // Log d'audit
     await AuditService.logAdminAction(

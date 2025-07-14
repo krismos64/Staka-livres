@@ -25,6 +25,9 @@ import publicRoutes from "./routes/public";
 // Configuration de l'environnement
 dotenv.config();
 
+// Initialize event listeners (side-effect import)
+import "./listeners/adminNotificationEmailListener";
+
 const app = express();
 
 // Middlewares

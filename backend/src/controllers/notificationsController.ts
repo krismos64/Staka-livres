@@ -1,5 +1,6 @@
 import { NotificationPriority, NotificationType, PrismaClient, Role } from "@prisma/client";
 import { Request, Response } from "express";
+import { eventBus } from "../events/eventBus";
 
 const prisma = new PrismaClient();
 
@@ -204,7 +205,7 @@ export const createNotification = async (
   expiresAt?: Date
 ): Promise<void> => {
   try {
-    await prisma.notification.create({
+    const notification = await prisma.notification.create({
       data: {
         userId,
         title,
@@ -216,6 +217,9 @@ export const createNotification = async (
         expiresAt: expiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 jours par défaut
       },
     });
+
+    // Emit event for user notifications - no auto email for user notifications
+    eventBus.emit("user.notification.created", notification);
   } catch (error) {
     console.error("Erreur lors de la création de notification:", error);
   }
@@ -249,7 +253,16 @@ export const createAdminNotification = async (
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 jours
     }));
 
-    await prisma.notification.createMany({ data: notifications });
+    const createdNotifications = await Promise.all(
+      notifications.map(notifData => 
+        prisma.notification.create({ data: notifData })
+      )
+    );
+
+    // Emit events for each admin notification to trigger emails
+    createdNotifications.forEach(notification => {
+      eventBus.emit("admin.notification.created", notification);
+    });
   } catch (error) {
     console.error("Erreur lors de la création de notifications admin:", error);
   }

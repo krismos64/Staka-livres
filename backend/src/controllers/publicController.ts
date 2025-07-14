@@ -149,15 +149,19 @@ Vous pouvez répondre directement à l'expéditeur : ${cleanData.email}
 Staka Livres - Système de contact automatique
     `;
 
-    // Envoi de l'email
-    await MailerService.sendEmail({
-      to: supportEmail,
-      subject: `Contact site – ${cleanData.sujet}`,
-      html: htmlContent,
-      text: textContent,
-    });
+    // Créer une notification admin au lieu d'envoyer l'email directement
+    try {
+      await notifyAdminNewMessage(
+        `${cleanData.nom} (contact site)`,
+        `${cleanData.sujet}: ${cleanData.message.substring(0, 100)}${cleanData.message.length > 100 ? "..." : ""}`,
+        true
+      );
+    } catch (notificationError) {
+      console.error("Erreur lors de la création de la notification:", notificationError);
+      // Continue even if notification fails
+    }
 
-    console.log(`✅ [Contact] Message envoyé depuis le site par ${cleanData.nom} (${cleanData.email})`);
+    console.log(`✅ [Contact] Message reçu depuis le site par ${cleanData.nom} (${cleanData.email})`);
 
     // Réponse de succès
     res.status(200).json({
@@ -407,14 +411,8 @@ Staka Livres - Système d'échantillons gratuits automatique
       disposition: 'attachment'
     }] : [];
 
-    // Envoi de l'email à l'équipe avec le fichier joint
-    await MailerService.sendEmail({
-      to: supportEmail,
-      subject: `🎯 Échantillon gratuit demandé par ${cleanData.nom}`,
-      html: htmlContent,
-      text: textContent,
-      attachments: attachments,
-    });
+    // Email removal: Now handled by admin notification system via eventBus
+    // The notification below will trigger an automatic email
 
     // Notification dans l'interface admin
     try {

@@ -148,6 +148,61 @@ npm run test:e2e      # Cypress
 
 ---
 
+## 6 · Système de notifications & e‑mails (centralisé)
+
+Le système de notifications utilise une architecture événementielle pour centraliser l'envoi d'e‑mails admin :
+
+### 6.1 Architecture
+
+- **EventBus** (`src/events/eventBus.ts`) : émetteur d'événements Node.js
+- **Listener** (`src/listeners/adminNotificationEmailListener.ts`) : écoute `admin.notification.created`
+- **Queue** (`src/queues/emailQueue.ts`) : traitement asynchrone des e‑mails
+- **Templates** (`src/emails/templates/*.hbs`) : 9 templates HTML par type de notification
+
+### 6.2 Fonctionnement
+
+1. **Création notification** → `createAdminNotification()` dans `notificationsController.ts`
+2. **Émission événement** → `eventBus.emit("admin.notification.created", notification)`
+3. **Listener automatique** → détecte le type, sélectionne le template, queue l'e‑mail
+4. **Envoi asynchrone** → `MailerService.sendEmail()` via template rendu
+
+### 6.3 Types supportés
+
+| Type           | Template                | Usage                            |
+| -------------- | ----------------------- | -------------------------------- |
+| `MESSAGE`      | `admin-message.hbs`     | Nouveau message client/visiteur  |
+| `PAYMENT`      | `admin-payment.hbs`     | Paiement reçu                    |
+| `ORDER`        | `admin-order.hbs`       | Nouvelle commande                |
+| `SYSTEM`       | `admin-system-alert.hbs`| Alerte système                   |
+| `ERROR`        | `admin-error.hbs`       | Erreur critique                  |
+| `WARNING`      | `admin-warning.hbs`     | Avertissement                    |
+| `SUCCESS`      | `admin-success.hbs`     | Succès opération                 |
+| `INFO`         | `admin-info.hbs`        | Information générale             |
+| `CONSULTATION` | `admin-consultation.hbs`| Nouvelle consultation            |
+
+### 6.4 Avantages
+
+- **DRY** : plus de duplication `MailerService.sendEmail()` dans les contrôleurs
+- **Zéro oubli** : tout appel `createAdminNotification()` génère automatiquement un e‑mail
+- **Templates centralisés** : design cohérent, maintenance facile
+- **Extensible** : ajouter un type = ajouter un template
+
+### 6.5 Usage développeur
+
+```ts
+// Dans un contrôleur - l'e‑mail est automatique !
+await createAdminNotification(
+  "Nouveau paiement reçu",
+  `${customerName} a payé ${amount}€`,
+  NotificationType.PAYMENT,
+  NotificationPriority.HAUTE,
+  "/admin/invoices",
+  { customerName, amount, commandeTitle }
+);
+```
+
+---
+
 ## 6 · Variables d’environnement (backend/.env)
 
 ```env
@@ -155,6 +210,13 @@ DATABASE_URL="mysql://staka:staka@db:3306/stakalivres"
 JWT_SECRET="dev_secret_key_change_in_production"
 FRONTEND_URL="http://localhost:3001"
 PORT=3000
+
+# E-mails & notifications
+SENDGRID_API_KEY="SG.xxx..."
+FROM_EMAIL="noreply@staka-livres.com"
+FROM_NAME="Staka Livres"
+SUPPORT_EMAIL="support@staka-livres.fr"
+ADMIN_EMAIL="admin@staka-livres.fr"     # Centralized admin notifications
 
 # Stripe
 STRIPE_SECRET_KEY="sk_test_..."
