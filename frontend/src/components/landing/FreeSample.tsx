@@ -14,31 +14,76 @@ export default function FreeSample() {
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation basique
+    // Validation basique côté client
     if (!formData.nom || !formData.email) {
       alert("Veuillez remplir tous les champs obligatoires");
       return;
     }
 
-    // Simulation d'envoi
+    // Validation format email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      alert("Veuillez saisir une adresse email valide");
+      return;
+    }
+
     setIsSubmitted(true);
-    setTimeout(() => {
-      alert(
-        "🎉 Votre demande a été envoyée avec succès ! Nous vous recontacterons sous 48h avec vos 10 pages corrigées gratuitement."
-      );
-      setFormData({
-        nom: "",
-        email: "",
-        telephone: "",
-        genre: "",
-        description: "",
-        fichier: null,
+
+    try {
+      // Préparer les données à envoyer
+      const requestData = {
+        nom: formData.nom.trim(),
+        email: formData.email.trim().toLowerCase(),
+        telephone: formData.telephone.trim(),
+        genre: formData.genre,
+        description: formData.description.trim(),
+        fichier: formData.fichier ? formData.fichier.name : null // Pour l'instant juste le nom
+      };
+
+      // Appel à l'API
+      const response = await fetch("/api/public/free-sample", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData),
       });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Succès
+        alert(
+          "🎉 " + data.message || "Votre demande a été envoyée avec succès ! Nous vous recontacterons sous 48h avec vos 10 pages corrigées gratuitement."
+        );
+        
+        // Reset du formulaire
+        setFormData({
+          nom: "",
+          email: "",
+          telephone: "",
+          genre: "",
+          description: "",
+          fichier: null,
+        });
+        setUploadProgress(0);
+      } else {
+        // Erreur de validation ou serveur
+        alert(
+          "❌ " + (data.error || "Une erreur est survenue. Veuillez réessayer.")
+        );
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'envoi de la demande:", error);
+      alert(
+        "❌ Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer."
+      );
+    } finally {
       setIsSubmitted(false);
-    }, 1000);
+    }
   };
 
   const handleChange = (

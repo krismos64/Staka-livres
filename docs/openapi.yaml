@@ -722,6 +722,68 @@ paths:
                 error: "Erreur interne"
                 message: "Impossible d'envoyer le message"
 
+  /public/free-sample:
+    post:
+      summary: Submit free sample request
+      description: Submit a request for free 10-page correction sample from landing page without authentication
+      tags:
+        - Public Contact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FreeSampleRequest'
+            example:
+              nom: "Jean Dupont"
+              email: "jean.dupont@example.com"
+              telephone: "06 12 34 56 78"
+              genre: "roman"
+              description: "Premier roman de 300 pages sur une histoire d'amour"
+              fichier: "manuscrit.docx"
+      responses:
+        '200':
+          description: Free sample request submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FreeSampleResponse'
+              example:
+                success: true
+                message: "Votre demande d'échantillon gratuit a bien été envoyée ! Nous vous recontacterons sous 48h avec vos 10 pages corrigées gratuitement."
+                conversationId: "edb379e3-8eed-45fb-a813-804a60f6197a"
+        '400':
+          description: Invalid request data - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                missing_fields:
+                  summary: Missing required fields
+                  value:
+                    error: "Nom et email sont requis"
+                    details: "Ces champs sont obligatoires pour traiter votre demande"
+                invalid_email:
+                  summary: Invalid email format
+                  value:
+                    error: "Format d'email invalide"
+                    details: "Veuillez saisir une adresse email valide"
+                field_too_long:
+                  summary: Field too long
+                  value:
+                    error: "Nom trop long"
+                    details: "Le nom ne peut pas dépasser 100 caractères"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Erreur lors de l'envoi de votre demande"
+                message: "Une erreur technique est survenue. Veuillez réessayer."
+
 components:
   schemas:
     Project:
@@ -1154,6 +1216,69 @@ components:
               format: uuid
               description: Unique identifier for the sent message
               example: "msg-123e4567-e89b-12d3-a456-426614174000"
+
+    FreeSampleRequest:
+      type: object
+      description: Free sample request payload from landing page
+      required:
+        - nom
+        - email
+      properties:
+        nom:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Prospect full name
+          example: "Jean Dupont"
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: Prospect email address
+          example: "jean.dupont@example.com"
+        telephone:
+          type: string
+          maxLength: 20
+          description: Prospect phone number (optional)
+          example: "06 12 34 56 78"
+        genre:
+          type: string
+          maxLength: 50
+          description: Literary genre (optional)
+          enum: ["roman", "nouvelle", "essai", "biographie", "poesie", "autre"]
+          example: "roman"
+        description:
+          type: string
+          maxLength: 2000
+          description: Project description (optional)
+          example: "Premier roman de 300 pages sur une histoire d'amour"
+        fichier:
+          type: string
+          maxLength: 255
+          description: Attached file name (optional)
+          example: "manuscrit.docx"
+
+    FreeSampleResponse:
+      type: object
+      description: Free sample request success response
+      required:
+        - success
+        - message
+        - conversationId
+      properties:
+        success:
+          type: boolean
+          description: Operation success status
+          example: true
+        message:
+          type: string
+          description: Success confirmation message
+          example: "Votre demande d'échantillon gratuit a bien été envoyée ! Nous vous recontacterons sous 48h avec vos 10 pages corrigées gratuitement."
+        conversationId:
+          type: string
+          format: uuid
+          description: Unique conversation identifier for admin messaging
+          example: "edb379e3-8eed-45fb-a813-804a60f6197a"
 
     RGPDDeletionResponse:
       type: object

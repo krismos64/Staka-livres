@@ -9,14 +9,14 @@
 - **200,000+ lignes de code** TypeScript/JavaScript
 - **130+ composants React** modulaires et réutilisables avec TypeScript
 - **24 contrôleurs backend** spécialisés (dont consultationController, userController, publicController)
-- **58+ endpoints REST API** sécurisés avec Zod validation et conformité RGPD
+- **60+ endpoints REST API** sécurisés avec Zod validation et conformité RGPD
 - **13 modèles de base de données** avec relations RGPD complètes
 - **Système d'audit sécurisé** avec traçabilité complète et export
 - **210+ tests automatisés** (Vitest, Cypress) - **100% SUCCÈS** ✅ incluant tests RGPD et contact public
 - **16+ guides de documentation** complets et à jour (dont CONSULTATION_BOOKING_GUIDE.md)
 - **87%+ de couverture de tests** validée avec **zéro échec** après optimisations
 - **10 pages admin** entièrement fonctionnelles
-- **14+ composants landing page** production-ready
+- **15+ composants landing page** production-ready (dont FreeSample optimisé)
 - **Support multi-architecture** Docker (ARM64/x86)
 
 ### 🌟 **Vision**
@@ -90,6 +90,20 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 - **Tests curl validés** : SendGrid opérationnel en production avec validation complète
 - **Notifications temps réel** : Génération automatique pour l'équipe support
 - **Mode développement** : Fonctionnement complet sans simulation grâce à la résolution du problème
+
+### 🎯 **Système d'Échantillon Gratuit (NOUVEAU - JUILLET 2025)**
+
+- **Endpoint public** : `POST /api/public/free-sample` pour demandes d'échantillon gratuit depuis la landing page
+- **Workflow automatisé complet** : Formulaire → Messagerie admin → Email équipe → Notification temps réel
+- **FreeSample.tsx optimisé** : Composant landing page connecté à l'API réelle (fini la simulation)
+- **Intégration messagerie** : Messages automatiquement créés et assignés au premier admin disponible
+- **Templates email professionnels** : HTML responsive avec informations prospect et action requise
+- **Validation stricte** : Nom, email requis + validation format email côté client et serveur
+- **Gestion fichiers** : Support upload avec nom de fichier transmis (prêt pour intégration S3)
+- **Notifications admin** : Badge temps réel + message dans interface avec identification "échantillon gratuit"
+- **Audit logging** : Traçabilité complète avec métadonnées prospect et admin assigné
+- **UX optimisée** : Messages de succès/erreur, validation temps réel, loading states
+- **Production-ready** : Tests validés, logs console, gestion d'erreurs robuste
 
 ### 🔔 **Système de Notifications Temps Réel (✅ CLOCHE ADMIN CORRIGÉE - JUILLET 2025)**
 

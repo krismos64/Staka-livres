@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { sendContactMessage } from "../controllers/publicController";
+import { sendContactMessage, sendFreeSampleRequest } from "../controllers/publicController";
 
 const router = Router();
 
@@ -12,5 +12,11 @@ const router = Router();
  * Envoie un message de contact depuis le formulaire public du site
  */
 router.post("/contact", sendContactMessage);
+
+/**
+ * POST /public/free-sample
+ * Traite les demandes d'échantillon gratuit depuis la landing page
+ */
+router.post("/free-sample", sendFreeSampleRequest);
 
 export default router;
