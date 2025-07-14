@@ -12,11 +12,49 @@ export default function Contact({ onChatClick }: ContactProps) {
     message: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<{
+    type: 'success' | 'error' | null;
+    message: string;
+  }>({ type: null, message: '' });
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulation d'envoi du formulaire avec toast
-    alert("Message envoyé avec succès ! Notre équipe vous répondra sous 24h.");
-    setFormData({ nom: "", email: "", sujet: "", message: "" });
+    setIsSubmitting(true);
+    setSubmitStatus({ type: null, message: '' });
+
+    try {
+      const response = await fetch('/api/public/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setSubmitStatus({
+          type: 'success',
+          message: result.message || 'Votre message a bien été envoyé à notre équipe.'
+        });
+        setFormData({ nom: "", email: "", sujet: "", message: "" });
+      } else {
+        setSubmitStatus({
+          type: 'error',
+          message: result.details || result.error || 'Une erreur est survenue lors de l\'envoi.'
+        });
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi du formulaire:', error);
+      setSubmitStatus({
+        type: 'error',
+        message: 'Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer.'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (
@@ -223,11 +261,44 @@ export default function Contact({ onChatClick }: ContactProps) {
                   placeholder="Décrivez votre projet..."
                 ></textarea>
               </div>
+              
+              {/* Message de statut */}
+              {submitStatus.type && (
+                <div
+                  className={`p-4 rounded-xl border ${
+                    submitStatus.type === 'success'
+                      ? 'bg-green-50 border-green-200 text-green-800'
+                      : 'bg-red-50 border-red-200 text-red-800'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <i
+                      className={`fas ${
+                        submitStatus.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'
+                      }`}
+                    ></i>
+                    <span className="font-medium">{submitStatus.message}</span>
+                  </div>
+                </div>
+              )}
+
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-600 transition-all duration-300 transform hover:scale-105"
+                disabled={isSubmitting}
+                className={`w-full py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
+                  isSubmitting
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600 transform hover:scale-105'
+                }`}
               >
-                Envoyer le message
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Envoi en cours...</span>
+                  </div>
+                ) : (
+                  'Envoyer le message'
+                )}
               </button>
             </form>
           </div>

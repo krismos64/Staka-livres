@@ -27,7 +27,7 @@ export default defineConfig({
       "/api": {
         target: "http://backend:3001",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
+        // Ne pas supprimer /api car le backend l'attend maintenant
       },
     },
   },

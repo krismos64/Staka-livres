@@ -5,8 +5,135 @@ import {
   notifyAdminNewMessage,
   notifyNewMessage,
 } from "./notificationsController";
+import { MailerService } from "../utils/mailer";
+import { AuditService, AUDIT_ACTIONS } from "../services/auditService";
 
 const prisma = new PrismaClient();
+
+/**
+ * Envoie une copie du message d'aide au support par email
+ */
+export async function sendHelpMessageToSupport(
+  userEmail: string,
+  userName: string,
+  subject: string,
+  content: string,
+  attachments: any[] = [],
+  userId: string,
+  req: Request
+): Promise<void> {
+  try {
+    const supportEmail = process.env.SUPPORT_EMAIL || "support@staka-livres.fr";
+    
+    // Construire le contenu HTML de l'email
+    const attachmentsList = attachments.length > 0 
+      ? `
+        <h4>📎 Pièces jointes :</h4>
+        <ul>
+          ${attachments.map(file => `
+            <li>
+              <strong>${file.filename}</strong> (${Math.round(file.size / 1024)} KB)
+              <br><a href="${file.url}" target="_blank">Télécharger</a>
+            </li>
+          `).join('')}
+        </ul>
+      `
+      : '';
+
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px;">
+        <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <h2 style="color: #2563eb; margin-bottom: 20px;">📧 Nouveau message depuis l'espace client</h2>
+          
+          <div style="background-color: #f1f5f9; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 10px 0; color: #1e40af;">👤 Informations utilisateur</h3>
+            <p style="margin: 5px 0;"><strong>Nom :</strong> ${userName}</p>
+            <p style="margin: 5px 0;"><strong>Email :</strong> ${userEmail}</p>
+            <p style="margin: 5px 0;"><strong>ID utilisateur :</strong> ${userId}</p>
+          </div>
+
+          <div style="margin-bottom: 20px;">
+            <h3 style="color: #1e40af; margin-bottom: 10px;">📋 Sujet du message</h3>
+            <p style="background-color: #f8fafc; padding: 10px; border-left: 4px solid #2563eb; margin: 0;">
+              ${subject}
+            </p>
+          </div>
+
+          <div style="margin-bottom: 20px;">
+            <h3 style="color: #1e40af; margin-bottom: 10px;">💬 Contenu du message</h3>
+            <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0;">
+              ${content.replace(/\n/g, '<br>')}
+            </div>
+          </div>
+
+          ${attachmentsList}
+
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #6b7280; font-size: 12px;">
+            <p style="margin: 0;">
+              Ce message a été envoyé depuis le formulaire d'aide de l'espace client.<br>
+              Vous pouvez répondre directement à l'utilisateur via l'interface d'administration.
+            </p>
+            <p style="margin: 10px 0 0 0;">
+              <strong>Staka Livres</strong> - Système de messagerie automatique
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const textContent = `
+Nouveau message depuis l'espace client
+
+Informations utilisateur :
+- Nom : ${userName}
+- Email : ${userEmail}
+- ID utilisateur : ${userId}
+
+Sujet : ${subject}
+
+Message :
+${content}
+
+${attachments.length > 0 ? `\nPièces jointes :\n${attachments.map(f => `- ${f.filename} (${Math.round(f.size / 1024)} KB)`).join('\n')}` : ''}
+
+---
+Ce message a été envoyé depuis le formulaire d'aide de l'espace client.
+Vous pouvez répondre directement à l'utilisateur via l'interface d'administration.
+    `;
+
+    // Envoyer l'email
+    await MailerService.sendEmail({
+      to: supportEmail,
+      subject: `Nouveau message depuis l'espace client – ${subject}`,
+      html: htmlContent,
+      text: textContent,
+    });
+
+    // Log d'audit
+    await AuditService.logAdminAction(
+      userEmail,
+      AUDIT_ACTIONS.USER_MESSAGE_SUPPORT_EMAIL_SENT,
+      'user',
+      userId,
+      {
+        supportEmail,
+        subject,
+        hasAttachments: attachments.length > 0,
+        attachmentCount: attachments.length,
+        contentLength: content.length
+      },
+      req.ip,
+      req.get('user-agent'),
+      'MEDIUM'
+    );
+
+    console.log(`✅ [Messages] Email de support envoyé pour l'utilisateur ${userEmail} (sujet: ${subject})`);
+
+  } catch (error) {
+    console.error('❌ [Messages] Erreur lors de l\'envoi de l\'email de support:', error);
+    // Ne pas faire échouer la création du message si l'email échoue
+  }
+}
 
 /**
  * Valide les pièces jointes d'un message
@@ -142,6 +269,7 @@ export const createConversation = async (
       displayFirstName,
       displayLastName,
       displayRole,
+      source, // Nouveau champ pour identifier la source du message (ex: "client-help")
     } = req.body;
 
     if (!content && (!attachments || attachments.length === 0)) {
@@ -194,6 +322,8 @@ export const createConversation = async (
         content: content || "",
         type: MessageType.USER_MESSAGE,
         statut: MessageStatut.ENVOYE,
+        // Stocker la source dans les metadata pour identifier les messages d'aide
+        metadata: source ? { source } : null,
         // Ajouter le nom d'affichage personnalisé si fourni (pour les admins)
         ...(displayFirstName && { displayFirstName }),
         ...(displayLastName && { displayLastName }),
@@ -251,6 +381,30 @@ export const createConversation = async (
         },
       },
     });
+
+    // 🔥 NOUVELLE FONCTIONNALITÉ : Envoi d'email au support si le message provient du formulaire d'aide
+    if (source === 'client-help' && senderRole !== Role.ADMIN) {
+      // Préparer les informations utilisateur
+      const userFullName = `${req.user!.prenom} ${req.user!.nom}`;
+      const userEmail = req.user!.email;
+      const messageSubject = subject || `Message d'aide de ${userFullName}`;
+      
+      // Récupérer les fichiers attachés pour l'email
+      const attachedFiles = messageWithAttachments?.attachments?.map(att => att.file) || [];
+      
+      // Envoyer l'email au support (async, ne bloque pas la réponse)
+      sendHelpMessageToSupport(
+        userEmail,
+        userFullName,
+        messageSubject,
+        content || "",
+        attachedFiles,
+        senderId,
+        req
+      ).catch(error => {
+        console.error('❌ [Messages] Erreur asynchrone lors de l\'envoi de l\'email de support:', error);
+      });
+    }
 
     res.status(201).json({
       message: "Conversation démarrée avec succès.",
@@ -628,6 +782,7 @@ export const replyToThread = async (
       displayFirstName,
       displayLastName,
       displayRole,
+      source, // Nouveau champ pour identifier la source du message
     } = req.body;
 
     if (!content && (!attachments || attachments.length === 0)) {
@@ -688,6 +843,8 @@ export const replyToThread = async (
         content: content || "",
         type: MessageType.USER_MESSAGE,
         statut: MessageStatut.ENVOYE,
+        // Stocker la source dans les metadata pour identifier les messages d'aide
+        metadata: source ? { source } : null,
         // Ajouter le nom d'affichage personnalisé si fourni (pour les admins)
         ...(displayFirstName && { displayFirstName }),
         ...(displayLastName && { displayLastName }),
@@ -787,6 +944,37 @@ export const replyToThread = async (
         notificationError
       );
       // Ne pas faire échouer la création du message si la notification échoue
+    }
+
+    // 🔥 NOUVELLE FONCTIONNALITÉ : Envoi d'email au support si le message provient du formulaire d'aide
+    if (source === 'client-help' && senderRole !== Role.ADMIN) {
+      // Préparer les informations utilisateur
+      const senderUser = await prisma.user.findUnique({
+        where: { id: senderId },
+        select: { prenom: true, nom: true, email: true }
+      });
+      
+      if (senderUser) {
+        const userFullName = `${senderUser.prenom} ${senderUser.nom}`;
+        const userEmail = senderUser.email;
+        const messageSubject = `Suite de conversation d'aide de ${userFullName}`;
+        
+        // Récupérer les fichiers attachés pour l'email
+        const attachedFiles = messageWithAttachments?.attachments?.map(att => att.file) || [];
+        
+        // Envoyer l'email au support (async, ne bloque pas la réponse)
+        sendHelpMessageToSupport(
+          userEmail,
+          userFullName,
+          messageSubject,
+          content || "",
+          attachedFiles,
+          senderId,
+          req
+        ).catch(error => {
+          console.error('❌ [Messages] Erreur asynchrone lors de l\'envoi de l\'email de support (reply):', error);
+        });
+      }
     }
 
     res.status(201).json(messageWithAttachments);

@@ -19,6 +19,8 @@ import projectsRoutes from "./routes/projects";
 import statsRoutes from "./routes/stats";
 import webhookRoutes from "./routes/payments/webhook";
 import tarifsRoutes from "./routes/tarifs";
+import usersRoutes from "./routes/users";
+import publicRoutes from "./routes/public";
 
 // Configuration de l'environnement
 dotenv.config();
@@ -58,49 +60,55 @@ app.get("/health", (req, res) => {
 });
 
 // Routes d'authentification
-app.use("/auth", authRoutes);
+app.use("/api/auth", authRoutes);
+
+// Routes publiques (contact, etc.)
+app.use("/api/public", publicRoutes);
 
 // Routes FAQ publiques
-app.use("/faq", faqRoutes);
+app.use("/api/faq", faqRoutes);
 
 // Routes tarifs publiques
-app.use("/tarifs", tarifsRoutes);
+app.use("/api/tarifs", tarifsRoutes);
 
 // Routes consultations (publiques et admin)
-app.use("/consultations", consultationRoutes);
+app.use("/api/consultations", consultationRoutes);
 
 // Routes publiques pour les pages
-app.use("/pages", pagesRoutes);
+app.use("/api/pages", pagesRoutes);
 
 // Routes commandes (côté client)
-app.use("/commandes", commandesRoutes);
+app.use("/api/commandes", commandesRoutes);
 
 // Routes messages (authentifiées)
-app.use("/messages", messagesRoutes);
+app.use("/api/messages", messagesRoutes);
 
 // Routes fichiers (authentifiées)
-app.use("/files", filesRoutes);
+app.use("/api/files", filesRoutes);
 
 // Routes notifications (authentifiées)
-app.use("/notifications", notificationsRoutes);
+app.use("/api/notifications", notificationsRoutes);
 
 // Routes paiements (sans webhook qui est déjà géré ci-dessus)
-app.use("/payments", paymentsRoutes);
+app.use("/api/payments", paymentsRoutes);
 
 // Routes moyens de paiement (authentifiées)
-app.use("/payment-methods", paymentMethodsRoutes);
+app.use("/api/payment-methods", paymentMethodsRoutes);
 
 // Routes statistiques utilisateur (authentifiées)
-app.use("/stats", statsRoutes);
+app.use("/api/stats", statsRoutes);
 
 // Routes projets (authentifiées)
-app.use("/projects", projectsRoutes);
+app.use("/api/projects", projectsRoutes);
+
+// Routes utilisateurs (authentifiées - RGPD)
+app.use("/api/users", usersRoutes);
 
 // Routes admin (protégées)
-app.use("/admin", adminRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Routes factures (côté client)
-app.use("/invoices", invoiceRoutes);
+app.use("/api/invoices", invoiceRoutes);
 
 // Gestionnaire d'erreur 404
 app.use("*", (req, res) => {
