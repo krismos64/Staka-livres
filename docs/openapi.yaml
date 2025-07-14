@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Staka Livres API
   description: API for the Staka Livres manuscript correction platform
-  version: 2.0.0
+  version: 2.1.0
   contact:
     name: Staka Livres
     email: contact@staka-editions.com
@@ -584,6 +584,144 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /users/me:
+    delete:
+      summary: Delete user account (GDPR)
+      description: Delete authenticated user account with GDPR compliance - soft delete with data anonymization
+      tags:
+        - User GDPR
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Account deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RGPDDeletionResponse'
+              example:
+                success: true
+                message: "Compte utilisateur supprimé avec succès"
+                deletedAt: "2025-07-14T10:30:00Z"
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/me/export:
+    get:
+      summary: Export user data (GDPR)
+      description: Export all personal data for the authenticated user in JSON format for GDPR compliance
+      tags:
+        - User GDPR
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User data export in JSON format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserExportData'
+              example:
+                user:
+                  id: "user-123e4567-e89b-12d3-a456-426614174000"
+                  email: "jean.dupont@example.com"
+                  createdAt: "2023-06-15T09:30:00Z"
+                commandes:
+                  - id: "cmd-789e4567-e89b-12d3-a456-426614174000"
+                    titre: "Mon premier roman"
+                    description: "Correction d'un manuscrit de 300 pages"
+                    statut: "TERMINE"
+                    createdAt: "2023-08-01T14:20:00Z"
+                    updatedAt: "2023-08-15T16:45:00Z"
+                factures:
+                  - id: "inv-456e4567-e89b-12d3-a456-426614174000"
+                    commandeId: "cmd-789e4567-e89b-12d3-a456-426614174000"
+                    pdfUrl: "https://bucket.s3.amazonaws.com/invoices/inv-456.pdf"
+                    createdAt: "2023-08-01T14:25:00Z"
+                    amount: 15000
+                messages:
+                  - id: "msg-321e4567-e89b-12d3-a456-426614174000"
+                    content: "Bonjour, j'ai quelques questions sur le projet"
+                    createdAt: "2023-08-03T10:15:00Z"
+                    isFromAdmin: false
+        '401':
+          description: Unauthorized - Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /public/contact:
+    post:
+      summary: Send public contact message
+      description: Send a contact message from public website without authentication
+      tags:
+        - Public Contact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactRequest'
+      responses:
+        '201':
+          description: Contact message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+              example:
+                success: true
+                message: "Message envoyé avec succès"
+                data:
+                  messageId: "msg-123e4567-e89b-12d3-a456-426614174000"
+        '400':
+          description: Invalid request data - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Données invalides"
+                message: "Le champ email est requis"
+                details:
+                  - field: "email"
+                    message: "Format d'email invalide"
+        '429':
+          description: Too many requests - rate limiting
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Trop de requêtes"
+                message: "Limite de 5 messages par heure atteinte"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Erreur interne"
+                message: "Impossible d'envoyer le message"
+
 components:
   schemas:
     Project:
@@ -846,6 +984,194 @@ components:
         - uploadUrl
         - fields
         - fileId
+
+    UserExportData:
+      type: object
+      description: User data export for GDPR compliance
+      properties:
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: User unique identifier
+            email:
+              type: string
+              format: email
+              description: User email address
+            createdAt:
+              type: string
+              format: date-time
+              description: Account creation date
+          required:
+            - id
+            - email
+            - createdAt
+        commandes:
+          type: array
+          description: User orders/projects
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              titre:
+                type: string
+                description: Project title
+              description:
+                type: string
+                nullable: true
+                description: Project description
+              statut:
+                type: string
+                description: Project status
+              createdAt:
+                type: string
+                format: date-time
+              updatedAt:
+                type: string
+                format: date-time
+            required:
+              - id
+              - titre
+              - statut
+              - createdAt
+              - updatedAt
+        factures:
+          type: array
+          description: User invoices
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              commandeId:
+                type: string
+                format: uuid
+              pdfUrl:
+                type: string
+                format: uri
+                nullable: true
+              createdAt:
+                type: string
+                format: date-time
+              amount:
+                type: integer
+                nullable: true
+                description: Amount in centimes
+            required:
+              - id
+              - commandeId
+              - createdAt
+        messages:
+          type: array
+          description: User messages
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              content:
+                type: string
+              createdAt:
+                type: string
+                format: date-time
+              isFromAdmin:
+                type: boolean
+                description: Whether message was sent by admin
+            required:
+              - id
+              - content
+              - createdAt
+              - isFromAdmin
+      required:
+        - user
+        - commandes
+        - factures
+        - messages
+
+    ContactRequest:
+      type: object
+      description: Contact form request payload
+      required:
+        - nom
+        - email
+        - sujet
+        - message
+      properties:
+        nom:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Contact person name
+          example: "Jean Dupont"
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: Contact email address
+          example: "jean@example.com"
+        sujet:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Message subject
+          example: "Question sur vos services"
+        message:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: Message content
+          example: "Bonjour, j'aimerais avoir plus d'informations sur vos services de correction."
+
+    ContactResponse:
+      type: object
+      description: Contact form success response
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          description: Operation success status
+          example: true
+        message:
+          type: string
+          description: Success message
+          example: "Message envoyé avec succès"
+        data:
+          type: object
+          required:
+            - messageId
+          properties:
+            messageId:
+              type: string
+              format: uuid
+              description: Unique identifier for the sent message
+              example: "msg-123e4567-e89b-12d3-a456-426614174000"
+
+    RGPDDeletionResponse:
+      type: object
+      description: RGPD account deletion confirmation
+      properties:
+        success:
+          type: boolean
+          description: Deletion success status
+          example: true
+        message:
+          type: string
+          description: Confirmation message
+          example: "Compte utilisateur supprimé avec succès"
+        deletedAt:
+          type: string
+          format: date-time
+          description: Deletion timestamp
+          example: "2025-07-14T10:30:00Z"
 
   securitySchemes:
     bearerAuth:

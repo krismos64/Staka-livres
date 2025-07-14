@@ -15,7 +15,7 @@ Backend REST API pour Staka Livres, une plateforme de correction de livres profe
 
 **✨ Version Juillet 2025 - État actuel :**
 
-- **74+ endpoints API** dont 54+ admin complets et opérationnels
+- **78+ endpoints API** dont 54+ admin complets et opérationnels (nouveaux endpoints RGPD et contact public)
 - **Espace admin 100% opérationnel** (10/10 modules production-ready)
 - **Système de réservation de consultations** avec workflow automatisé et notifications
 - **Système de notifications temps réel** avec génération automatique et polling 15s
@@ -115,6 +115,8 @@ export const authenticateToken = async (req, res, next) => {
 - ✅ Logs d'export et suppression de données
 - ✅ Audit des changements de consentement
 - ✅ Historique des demandes d'accès aux données
+- ✅ **NOUVEAU 2025**: Endpoints RGPD (DELETE /api/users/me, GET /api/users/me/export)
+- ✅ **NOUVEAU 2025**: UserController et UserService pour gestion RGPD automatisée
 
 ---
 
@@ -181,6 +183,8 @@ backend/
 │   │   ├── adminPageController.ts         # Gestion pages admin
 │   │   ├── adminStatsController.ts        # Statistiques admin temps réel
 │   │   ├── notificationsController.ts     # Notifications temps réel avec polling
+│   │   ├── userController.ts              # Opérations utilisateur RGPD (NOUVEAU 2025)
+│   │   ├── publicController.ts            # Endpoints publics contact (NOUVEAU 2025)
 │   │   ├── adminPagesController.ts        # CMS pages statiques (NOUVEAU)
 │   │   ├── adminTarifsController.ts       # Gestion tarifs dynamiques
 │   │   ├── consultationController.ts      # Réservation consultations (NOUVEAU JUILLET 2025)
@@ -218,6 +222,7 @@ backend/
 │   │   ├── s3InvoiceService.ts # Stockage S3 sécurisé factures
 │   │   ├── invoiceService.ts # Service facturation complet
 │   │   ├── filesService.ts   # Gestion fichiers S3
+│   │   ├── userService.ts    # Service utilisateur RGPD (NOUVEAU 2025)
 │   │   └── ...autres services
 │   ├── utils/                # Utilitaires (mailer, tokens)
 │   ├── types/                # Types TypeScript partagés
@@ -501,6 +506,114 @@ router.get("/profile", authenticateToken, getProfile);
 // Route protégée admin uniquement
 router.get("/admin/stats", authenticateToken, requireRole(Role.ADMIN), getStats);
 ```
+
+## 🔒 **Nouveaux Endpoints RGPD - Juillet 2025** ✅ PRODUCTION READY
+
+### **Routes Utilisateur RGPD (`/users`) - UserController**
+
+#### **DELETE /api/users/me - Suppression de compte utilisateur**
+
+Permet à un utilisateur authentifié de supprimer son compte de manière conforme RGPD.
+
+```http
+DELETE /api/users/me
+Authorization: Bearer token
+
+# Response: 204 No Content
+# Le compte est supprimé/anonymisé de manière irréversible
+```
+
+**Fonctionnalités :**
+- ✅ **Soft delete** avec anonymisation des données
+- ✅ **Audit logs** automatiques avec niveau de sévérité HIGH
+- ✅ **Suppression en cascade** de toutes les données liées
+- ✅ **Conformité RGPD** complète (droit à l'effacement)
+
+#### **GET /api/users/me/export - Export des données utilisateur**
+
+Permet à un utilisateur authentifié d'exporter toutes ses données personnelles.
+
+```http
+GET /api/users/me/export
+Authorization: Bearer token
+
+# Response: 200
+{
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "createdAt": "2024-01-01T00:00:00Z"
+  },
+  "commandes": [
+    {
+      "id": "cmd-uuid",
+      "titre": "Mon livre",
+      "statut": "TERMINE",
+      "createdAt": "2024-01-15T00:00:00Z"
+    }
+  ],
+  "factures": [
+    {
+      "id": "inv-uuid",
+      "amount": 5990,
+      "createdAt": "2024-01-16T00:00:00Z"
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg-uuid",
+      "content": "Mon message",
+      "createdAt": "2024-01-17T00:00:00Z",
+      "isFromAdmin": false
+    }
+  ]
+}
+```
+
+**Fonctionnalités :**
+- ✅ **Export complet** de toutes les données utilisateur
+- ✅ **Format JSON structuré** pour portabilité
+- ✅ **Conformité RGPD** (droit à la portabilité)
+- ✅ **Logs d'audit** pour traçabilité
+
+### **Routes Publiques (`/public`) - PublicController**
+
+#### **POST /api/public/contact - Formulaire de contact public**
+
+Permet d'envoyer un message de contact depuis le site web sans authentification.
+
+```http
+POST /api/public/contact
+Content-Type: application/json
+
+{
+  "nom": "Jean Dupont",
+  "email": "jean@example.com",
+  "sujet": "Question sur vos services",
+  "message": "Bonjour, j'aimerais avoir plus d'informations..."
+}
+
+# Response: 201
+{
+  "success": true,
+  "message": "Message envoyé avec succès",
+  "data": {
+    "messageId": "uuid"
+  }
+}
+```
+
+**Fonctionnalités :**
+- ✅ **Validation stricte** des champs requis
+- ✅ **Nettoyage automatique** des données (trim, toLowerCase)
+- ✅ **Validation email** avec regex
+- ✅ **Limitation longueur** des champs pour sécurité
+- ✅ **Support email automatique** avec source 'client-help'
+- ✅ **Logs structurés** pour monitoring
+- ✅ **Anti-spam** intégré
+
+**Support Email Automatique :**
+Le système intègre automatiquement les messages de contact dans le système de support avec la source 'client-help', permettant aux admins de traiter ces demandes via l'interface de messagerie unifiée.
 
 ## 📡 API Reference
 

@@ -8,11 +8,11 @@
 
 - **200,000+ lignes de code** TypeScript/JavaScript
 - **130+ composants React** modulaires et réutilisables avec TypeScript
-- **21 contrôleurs backend** spécialisés (dont consultationController)
-- **54+ endpoints REST API** sécurisés avec Zod validation
+- **24 contrôleurs backend** spécialisés (dont consultationController, userController, publicController)
+- **58+ endpoints REST API** sécurisés avec Zod validation et conformité RGPD
 - **13 modèles de base de données** avec relations RGPD complètes
 - **Système d'audit sécurisé** avec traçabilité complète et export
-- **200+ tests automatisés** (Vitest, Cypress) - **100% SUCCÈS** ✅
+- **210+ tests automatisés** (Vitest, Cypress) - **100% SUCCÈS** ✅ incluant tests RGPD et contact public
 - **16+ guides de documentation** complets et à jour (dont CONSULTATION_BOOKING_GUIDE.md)
 - **87%+ de couverture de tests** validée avec **zéro échec** après optimisations
 - **10 pages admin** entièrement fonctionnelles
@@ -35,7 +35,8 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 - **Système d'audit sécurisé** avec logs admin et traçabilité complète
 - **Tarification dynamique** avec synchronisation Stripe automatique et cache React Query
 - **Synchronisation Stripe automatique** pour tous les tarifs avec script CLI
-- **Conformité RGPD** avec suppression en cascade et export de données
+- **Conformité RGPD complète** avec suppression compte, export de données et audit logging
+- **Formulaire de contact public** avec validation stricte et notifications email automatiques
 - **Infrastructure Docker multi-architecture** avec MySQL 8 et support ARM64/x86
 - **Tests complets** avec couverture 87%+ et CI/CD
 - **Support multi-plateforme** avec build Docker optimisé ARM64 et x86
@@ -66,6 +67,26 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 - **Recherche avancée** : Par admin, action, date, sévérité avec debouncing
 - **API sécurisée** : 4 endpoints avec logging des accès aux logs
 - **Nettoyage automatique** : Rétention configurable avec confirmation
+- **Actions RGPD** : Logging automatique des exports de données et suppressions de comptes
+
+### 🛡️ **Conformité RGPD Complète (NOUVEAU)**
+
+- **Suppression de compte** : Endpoint `DELETE /api/users/me` avec anonymisation complète
+- **Export de données** : Endpoint `GET /api/users/me/export` avec envoi par email sécurisé
+- **Audit RGPD** : Logging automatique avec actions `USER_DATA_EXPORTED` et `USER_DELETED`
+- **Templates email** : Emails riches avec données utilisateur en JSON et CSV
+- **Sécurisation** : Authentification JWT requise, validation stricte des permissions
+- **Traçabilité** : Tous les accès et exports tracés dans les audit logs
+
+### 📧 **Formulaire de Contact Public (NOUVEAU)**
+
+- **Endpoint sans auth** : `POST /api/public/contact` accessible sans authentification
+- **Validation stricte** : Nom, email, sujet, message obligatoires avec limites de taille
+- **Nettoyage automatique** : Suppression espaces et caractères indésirables
+- **Templates HTML** : Emails professionnels avec design responsive
+- **Integration MailerService** : Envoi automatique vers `SUPPORT_EMAIL`
+- **Gestion d'erreurs** : Messages d'erreur détaillés et logging complet
+- **Tests complets** : Suite de tests avec validation, nettoyage et gestion d'erreurs
 
 ### 🔔 **Système de Notifications Temps Réel (✅ CLOCHE ADMIN CORRIGÉE - JUILLET 2025)**
 
@@ -73,6 +94,7 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 - **Cloches intelligentes** : Badges avec compteurs non-lus et détection admin/client
 - **Fix expiresAt critique** : Filtrage des notifications non-lues entièrement corrigé (problème NULL résolu)
 - **Consultation notifications** : Génération automatique pour demandes de consultation avec intégration messagerie
+- **Support email automatique** : Messages avec source 'client-help' envoient automatiquement copie au support
 - **Menu déroulant moderne** : Actions rapides (lire, supprimer, naviguer)
 - **Pages dédiées** : Interface complète avec filtres et pagination
 - **Génération automatique** : Messages, paiements, inscriptions, consultations, événements système
@@ -103,6 +125,7 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 - **Validation stricte** : Max 20 Mo par fichier, types MIME autorisés (PDF, DOC, DOCX, TXT, JPG, PNG, ZIP, RAR)
 - **Gestion d'état avancée** : Téléchargement, suppression, invalidation cache automatique
 - **Sécurité renforcée** : Validation ownership projet, contrôle accès utilisateur avec audit
+- **Notifications support** : Intégration avec support automatique pour messages d'aide client
 - **API REST complète** : 3 endpoints sécurisés avec Zod validation et gestion d'erreurs
 - **Tests complets** : Mock S3, couverture ≥90% avec scénarios edge cases
 - **Mode simulation** : Fonctionnement sans AWS pour développement local
@@ -172,6 +195,7 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **Middleware d'authentification** pour routes protégées
 - **Gestion des sessions** avec localStorage
 - **Redirection intelligente** selon le rôle utilisateur
+- **Routes RGPD** : Suppression et export de données utilisateur sécurisés
 
 ### 🔐 **Système d'Audit Sécurisé (NOUVEAU 2025)**
 
@@ -187,6 +211,7 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **RBAC strict** : Accès exclusif aux administrateurs avec validation multi-niveaux
 - **Nettoyage automatique** : Rétention configurable avec confirmation obligatoire
 - **Logging des accès** : Même l'accès aux logs est audité pour sécurité maximale
+- **Actions RGPD intégrées** : `USER_DATA_EXPORTED`, `USER_DELETED`, `USER_MESSAGE_SUPPORT_EMAIL_SENT`
 
 ### 🔔 **Système de Notifications Temps Réel (✅ ENTIÈREMENT FONCTIONNEL - JUILLET 2025)**
 
@@ -324,7 +349,7 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **UX optimisée** : États de chargement, messages d'erreur, boutons retry
 - **Performance** : Cache partagé, déduplication requêtes, background refresh
 
-### 📊 **API Backend Robuste (12 Contrôleurs + 40+ Endpoints)**
+### 📊 **API Backend Robuste (15+ Contrôleurs + 50+ Endpoints)**
 
 - **Routes d'authentification** : /auth/register, /auth/login, /auth/me
 - **Routes admin utilisateurs** : **7 endpoints production** `/admin/users/*` avec CRUD complet et suppression RGPD
@@ -344,6 +369,8 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **Routes pages statiques** : GET /pages/:slug pour CMS
 - **Routes tarifs publics** : GET /tarifs pour landing page
 - **Routes admin audit** : ✅ **API `/admin/audit`** complète avec 4 endpoints sécurisés
+- **Routes RGPD utilisateur** : ✅ **API `/users/me`** - DELETE (suppression compte) et GET `/export` (export données)
+- **Routes publiques** : ✅ **API `/public/contact`** - POST pour formulaire de contact sans authentification
 - **Architecture backend** : 21 contrôleurs spécialisés avec services métier optimisés (dont consultationController)
 - **Sécurité production** : JWT Admin obligatoire, validation Zod, hashage bcrypt 12 rounds, protection dernier admin
 - **Middleware de rôles** avec RequireAdmin
@@ -769,6 +796,33 @@ Staka-livres/
 - ✅ **Support Request Integration** : Messagerie unifiée projet + support
 - ✅ **Documentation complète** : Guide détaillé dans `docs/Base-de-donnees-guide.md`
 
+**🛡️ Conformité RGPD Complète (NOUVEAU 2025) :**
+
+- ✅ **Endpoint suppression compte** : `DELETE /api/users/me` avec anonymisation complète des données
+- ✅ **Endpoint export données** : `GET /api/users/me/export` avec envoi automatique par email sécurisé
+- ✅ **UserService RGPD** : Service complet avec anonymisation en cascade et export JSON/CSV
+- ✅ **UserController sécurisé** : Validation JWT, logging audit automatique, gestion d'erreurs
+- ✅ **Tests complets** : Validation suppression, export, sécurité et gestion d'erreurs
+- ✅ **Audit logging intégré** : Actions `USER_DATA_EXPORTED`, `USER_DELETED` avec métadonnées
+
+**📧 Formulaire de Contact Public (NOUVEAU 2025) :**
+
+- ✅ **Endpoint public** : `POST /api/public/contact` sans authentification requise
+- ✅ **Validation stricte** : Nom, email, sujet, message avec limites (100/200/500/2000 caractères)
+- ✅ **PublicController complet** : Nettoyage données, validation email, gestion d'erreurs
+- ✅ **Templates HTML riches** : Emails professionnels avec design responsive
+- ✅ **Integration MailerService** : Envoi automatique vers `SUPPORT_EMAIL` configuré
+- ✅ **Tests exhaustifs** : `publicController.test.ts` avec 7 scénarios de validation
+
+**🔔 Support Email Automatique (NOUVEAU 2025) :**
+
+- ✅ **Detection automatique** : Messages avec `source: 'client-help'` envoient copie au support
+- ✅ **Templates enrichis** : Emails avec informations utilisateur, sujet, contenu et métadonnées
+- ✅ **Audit logging** : Action `USER_MESSAGE_SUPPORT_EMAIL_SENT` avec traçabilité complète
+- ✅ **Tests spécialisés** : `messagesSupportEmail.test.ts` avec validation conditions et contenu
+- ✅ **Configuration flexible** : Variable `SUPPORT_EMAIL` avec fallback sur domaine par défaut
+- ✅ **Sécurité renforcée** : Envoi uniquement pour utilisateurs non-admin avec validation rôle
+
 **🔧 Infrastructure Docker Stabilisée :**
 
 - ✅ Configuration MySQL 8.4+ corrigée (`--mysql-native-password=ON`)
@@ -835,6 +889,9 @@ PORT=3001
 # Configuration Stripe (remplacer par vos vraies clés)
 STRIPE_SECRET_KEY="sk_test_VOTRE_CLE_SECRETE_STRIPE"
 STRIPE_WEBHOOK_SECRET="whsec_VOTRE_WEBHOOK_SECRET"
+
+# Email Support (NOUVEAU - OBLIGATOIRE pour contact public)
+SUPPORT_EMAIL="support@votre-domaine.com"
 
 # SendGrid (optionnel)
 SENDGRID_API_KEY="VOTRE_CLE_SENDGRID"
@@ -1051,6 +1108,10 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 ### 🎉 **Nouvelles Fonctionnalités Récentes**
 
+- **🛡️ Conformité RGPD Complète** : Suppression de compte avec anonymisation et export de données par email
+- **📧 Formulaire de Contact Public** : Endpoint sans authentification avec validation stricte et templates HTML
+- **🔔 Support Email Automatique** : Messages d'aide client envoient automatiquement une copie au support
+- **📋 Audit Logging RGPD** : Nouvelles actions `USER_DATA_EXPORTED`, `USER_DELETED`, `USER_MESSAGE_SUPPORT_EMAIL_SENT`
 - **🧪 Tests Backend 100% Validés** : Résolution complète de 22 échecs → 0 échec avec optimisation des mocks
 - **📞 Système de réservation de consultations** : Modal ultra-simplifiée accessible depuis landing page et espace client, avec workflow automatisé vers la messagerie admin et notifications temps réel
 - **Upload de fichiers projet** avec S3 et progression temps réel

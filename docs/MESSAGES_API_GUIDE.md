@@ -15,6 +15,7 @@ Le système de messagerie de **Staka Livres** a été entièrement refactorisé 
 ### 🆕 **Nouvelles Fonctionnalités 2025 + Optimisations**
 
 - **📞 Messages de consultation** : Nouveau type CONSULTATION_REQUEST avec métadonnées structurées (JUILLET 2025)
+- **📧 Support email automatique** : Nouveau type CLIENT_HELP avec source 'client-help' pour messages de contact public (JUILLET 2025)
 - **🔔 Intégration notifications** : Génération automatique de notifications pour nouveaux messages et consultations
 - **📎 Pièces jointes avancées** : Support multi-fichiers avec validation stricte (max 10 fichiers, 50MB/fichier, 100MB total)
 - **📁 Archivage intelligent** : Fonctions archivage/désarchivage avec API dédiée
@@ -25,9 +26,10 @@ Le système de messagerie de **Staka Livres** a été entièrement refactorisé 
 ### 🏗️ **Architecture Unifiée**
 
 - **Messagerie Visiteur** : Contact public avec captcha et validation anti-spam
+- **Support Email Automatique** : Formulaire de contact public intégré au système de messagerie admin
 - **Messagerie Client/Admin** : Interface temps réel avec threading et pièces jointes
 - **Système de consultation** : Demandes de rendez-vous automatiquement intégrées aux messages admin
-- **API Backend** : 8 endpoints REST optimisés avec `conversationId` unique (6 messages + 2 consultations)
+- **API Backend** : 9 endpoints REST optimisés avec `conversationId` unique (6 messages + 2 consultations + 1 contact public)
 - **Hooks React Query** : 1000+ lignes de logique métier avec pagination infinie
 
 ---
@@ -42,7 +44,7 @@ Le système de messagerie de **Staka Livres** a été entièrement refactorisé 
 Authorization: Bearer <votre-token-jwt>
 ```
 
-### **📬 Route Publique**
+### **📬 Routes Publiques**
 
 #### **1. POST /messages/visitor - Envoyer un message en tant que visiteur**
 
@@ -70,6 +72,45 @@ Content-Type: application/json
   "conversationId": "uuid-de-la-conversation"
 }
 ```
+
+#### **2. POST /api/public/contact - Formulaire de contact public (NOUVEAU 2025)**
+
+Permet d'envoyer un message de contact depuis le site web sans authentification. Les messages sont automatiquement intégrés au système de support admin avec la source 'client-help'.
+
+**Requête :**
+
+```http
+POST /api/public/contact
+Content-Type: application/json
+
+{
+  "nom": "Jean Dupont",
+  "email": "jean@example.com",
+  "sujet": "Question sur vos services",
+  "message": "Bonjour, j'aimerais avoir plus d'informations sur vos tarifs."
+}
+```
+
+**Réponse 201 :**
+
+```json
+{
+  "success": true,
+  "message": "Message envoyé avec succès",
+  "data": {
+    "messageId": "uuid-du-message"
+  }
+}
+```
+
+**Fonctionnalités avancées :**
+
+- ✅ **Validation stricte** : Champs requis, format email, longueur limitée
+- ✅ **Nettoyage automatique** : trim() et toLowerCase() sur email
+- ✅ **Intégration support** : Messages visibles dans l'interface admin
+- ✅ **Source tracking** : Marquage automatique 'client-help' pour classification
+- ✅ **Anti-spam** : Validation et limitation des champs
+- ✅ **Logs structurés** : Monitoring et débogage facilités
 
 ### **👤 Routes Authentifiées (Clients & Admins)**
 
@@ -581,17 +622,27 @@ enum MessageType {
   NOTIFICATION = "NOTIFICATION",
   SUPPORT_MESSAGE = "SUPPORT_MESSAGE",
   ADMIN_MESSAGE = "ADMIN_MESSAGE",
-  CONSULTATION_REQUEST = "CONSULTATION_REQUEST" // ✅ NOUVEAU
+  CONSULTATION_REQUEST = "CONSULTATION_REQUEST", // ✅ NOUVEAU CONSULTATIONS
+  CLIENT_HELP = "CLIENT_HELP" // ✅ NOUVEAU CONTACT PUBLIC
 }
 ```
 
-### **Workflow d'Intégration**
+### **Workflow d'Intégration Consultation**
 
 1. **Visiteur** remplit le formulaire de consultation sur landing page
 2. **API** `/consultations/book` crée un message avec `type: "CONSULTATION_REQUEST"`
 3. **Message** apparaît automatiquement dans les conversations admin avec `receiverId` 
 4. **Notification** générée en parallèle pour l'admin
 5. **Admin** voit la demande dans sa messagerie et répond par email
+
+### **Workflow d'Intégration Contact Public (NOUVEAU 2025)**
+
+1. **Visiteur** remplit le formulaire de contact public sur le site
+2. **API** `/api/public/contact` valide et nettoie les données
+3. **Message** créé automatiquement avec `type: "CLIENT_HELP"` et `source: "client-help"`
+4. **Intégration** : Message visible dans l'interface de messagerie admin
+5. **Classification** : Marquage automatique pour traitement par l'équipe support
+6. **Workflow admin** : Traitement via l'interface de messagerie unifiée
 
 ### **Format des Messages de Consultation**
 

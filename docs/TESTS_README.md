@@ -21,7 +21,9 @@ Documentation complète pour l'infrastructure de tests du projet **Staka Livres*
 │           ├── adminUserService.test.ts
 │           ├── invoiceRoutes.test.ts         # 🆕 NOUVEAU (416 lignes)
 │           ├── invoiceService.test.ts        # 🆕 NOUVEAU (270 lignes)
-│           └── webhookWithInvoice.test.ts    # 🆕 NOUVEAU (285 lignes)
+│           ├── webhookWithInvoice.test.ts    # 🆕 NOUVEAU (285 lignes)
+│           ├── publicController.test.ts      # 🆕 NOUVEAU JUILLET 2025 (Tests contact public)
+│           └── messagesSupportEmail.test.ts  # 🆕 NOUVEAU JUILLET 2025 (Tests support email)
 └── frontend/
     ├── src/
     │   ├── hooks/__tests__/
@@ -370,6 +372,125 @@ describe("Webhook avec Facturation - Tests d'Intégration", () => {
 });
 ```
 
+#### **🆕 Tests Contact Public `publicController.test.ts` (NOUVEAU JUILLET 2025)**
+
+Tests pour le formulaire de contact public et l'intégration au système de support :
+
+```typescript
+describe("PublicController Tests", () => {
+  // Test endpoint contact public
+  it("devrait envoyer un message de contact public avec validation", async () => {
+    const contactData = {
+      nom: "Jean Test",
+      email: "jean@test.com",
+      sujet: "Question test",
+      message: "Message de test"
+    };
+
+    const response = await request(app)
+      .post("/api/public/contact")
+      .send(contactData)
+      .expect(201);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.messageId).toBeDefined();
+  });
+
+  // Test validation des champs
+  it("devrait valider les champs requis", async () => {
+    const response = await request(app)
+      .post("/api/public/contact")
+      .send({ nom: "", email: "invalid" })
+      .expect(400);
+
+    expect(response.body.error).toContain("requis");
+  });
+
+  // Test nettoyage des données
+  it("devrait nettoyer les données (trim, toLowerCase)", async () => {
+    const response = await request(app)
+      .post("/api/public/contact")
+      .send({
+        nom: "  Jean  ",
+        email: "  JEAN@TEST.COM  ",
+        sujet: "  Test  ",
+        message: "  Message  "
+      });
+
+    // Vérifier que les données ont été nettoyées
+    expect(mockMailerService.sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: expect.stringContaining("jean@test.com") // lowercase
+      })
+    );
+  });
+});
+```
+
+#### **🆕 Tests Support Email `messagesSupportEmail.test.ts` (NOUVEAU JUILLET 2025)**
+
+Tests pour l'intégration automatique des messages de contact dans le système de support :
+
+```typescript
+describe("Messages Support Email Integration Tests", () => {
+  // Test intégration dans messagerie admin
+  it("devrait intégrer le message dans le système de support", async () => {
+    await request(app)
+      .post("/api/public/contact")
+      .send(validContactData);
+
+    // Vérifier qu'un message a été créé avec la source 'client-help'
+    const message = await prisma.message.findFirst({
+      where: { 
+        visitorEmail: validContactData.email,
+        type: "CLIENT_HELP"
+      }
+    });
+
+    expect(message).toBeDefined();
+    expect(message.source).toBe("client-help");
+  });
+
+  // Test visibilité dans conversations admin
+  it("devrait apparaître dans les conversations admin", async () => {
+    // Créer message de contact
+    await request(app)
+      .post("/api/public/contact")
+      .send(validContactData);
+
+    // Vérifier visibilité côté admin
+    const adminResponse = await request(app)
+      .get("/admin/messages/conversations")
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    const contactConversation = adminResponse.body.find(
+      conv => conv.withUser?.email === validContactData.email
+    );
+
+    expect(contactConversation).toBeDefined();
+    expect(contactConversation.lastMessage.content).toContain("Question test");
+  });
+
+  // Test génération notification admin
+  it("devrait générer une notification pour l'admin", async () => {
+    await request(app)
+      .post("/api/public/contact")
+      .send(validContactData);
+
+    // Vérifier qu'une notification a été créée
+    const notification = await prisma.notification.findFirst({
+      where: {
+        type: "MESSAGE",
+        title: expect.stringContaining("Nouveau message")
+      }
+    });
+
+    expect(notification).toBeDefined();
+    expect(notification.isRead).toBe(false);
+  });
+});
+```
+
 ### 🔗 Tests d'Intégration (Jest + Supertest)
 
 **Tests existants :**
@@ -477,11 +598,11 @@ docker-compose exec backend npm run test:coverage
 
 | Type de Tests         | Frontend     | Backend   | Total            |
 | --------------------- | ------------ | --------- | ---------------- |
-| **Tests Unitaires**   | 35+ tests    | 45+ tests | **80+ tests**    |
+| **Tests Unitaires**   | 35+ tests    | 50+ tests | **85+ tests**    |
 | **Tests Intégration** | 2 suites     | 3 suites  | **5 suites**     |
 | **Tests E2E**         | 19 scénarios | -         | **19 scénarios** |
-| **Lignes de test**    | 1500+        | 1800+     | **3300+ lignes** |
-| **Coverage**          | 85%+         | 90%+      | **87%+ global**  |
+| **Lignes de test**    | 1500+        | 2000+     | **3500+ lignes** |
+| **Coverage**          | 85%+         | 90%+      | **88%+ global**  |
 
 ### 🔄 **Pipeline CI/CD Optimisé**
 
@@ -537,6 +658,9 @@ npm run test:invoices:complete
 - ✅ **Cache React Query** : Invalidation et performance
 - ✅ **API Endpoints** : Toutes les routes testées
 - ✅ **Gestion d'Erreurs** : Fallbacks et résilience
+- ✅ **RGPD Endpoints** : Suppression et export données utilisateur (NOUVEAU 2025)
+- ✅ **Contact Public** : Formulaire contact et intégration support (NOUVEAU 2025)
+- ✅ **Support Email** : Intégration automatique messagerie admin (NOUVEAU 2025)
 
 **Coverage par module :**
 
@@ -545,6 +669,9 @@ npm run test:invoices:complete
 - 🎯 **API Factures** : 92%+ (génération, téléchargement, sécurité)
 - 🎯 **Webhook Stripe** : 88%+ (paiements, erreurs, facturation)
 - 🎯 **Composants Landing** : 85%+ (tarifs dynamiques, sync)
+- 🎯 **RGPD Endpoints** : 95%+ (suppression, export, audit) (NOUVEAU 2025)
+- 🎯 **Contact Public** : 93%+ (validation, nettoyage, intégration) (NOUVEAU 2025)
+- 🎯 **Support Email** : 90%+ (messagerie, notifications, workflow) (NOUVEAU 2025)
 
 ---
 

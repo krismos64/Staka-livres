@@ -33,8 +33,8 @@ Staka-livres/
 ### 2.1 Back‑end
 
 - **src/server.ts** : bootstrap express
-- **src/controllers/** : 14 contrôleurs (auth, admin\*, files, notifications…)
-- **src/routes/** : 45+ endpoints REST déjà câblés
+- **src/controllers/** : 16 contrôleurs (auth, admin\*, files, notifications…)
+- **src/routes/** : 49+ endpoints REST déjà câblés
 - **src/services/** : logique métier (Stripe, Invoice, Audit…) – _à tester de préférence en isolation_
 - **src/tests/** : Vitest (`vitest run --coverage`)
 - **test‑helpers/utils.ts** : `hasValidAwsCreds()` & `skipIfNoAws` pour skipper les tests S3 lorsqu’`AWS_ACCESS_KEY_ID` commence par `test-` ou est vide.
