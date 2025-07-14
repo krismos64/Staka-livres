@@ -110,17 +110,39 @@ export default function HelpPage() {
 
     setIsSubmitting(true);
 
-    // Simulation d'un appel API
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
     try {
-      // Simule un succès ou un échec aléatoire
-      if (Math.random() > 0.1) {
+      // TODO: Upload du fichier en premier si présent
+      let attachments: string[] = [];
+      
+      if (file) {
+        // Pour l'instant, on ignore les fichiers - à implémenter plus tard
+        console.warn("Upload de fichiers non implémenté pour le moment");
+      }
+
+      // Appel à l'API de messagerie avec source 'client-help'
+      const response = await fetch('/api/messages/conversations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          subject: subject,
+          content: message,
+          attachments: attachments,
+          source: 'client-help' // Important : déclenche l'envoi email au support
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
         showToast(
           "success",
           "Message envoyé",
-          "Notre équipe vous répondra dans les meilleurs délais."
+          "Notre équipe a été notifiée et vous répondra dans les meilleurs délais."
         );
+        
         // Reset form
         setSubject(contactSubjects[0]);
         setMessage("");
@@ -130,13 +152,14 @@ export default function HelpPage() {
           fileInputRef.current.value = "";
         }
       } else {
-        throw new Error("Erreur serveur simulée");
+        throw new Error(result.error || 'Erreur lors de l\'envoi');
       }
     } catch (error) {
+      console.error('Erreur lors de l\'envoi du message d\'aide:', error);
       showToast(
         "error",
         "Erreur d'envoi",
-        "Un problème est survenu. Veuillez réessayer plus tard."
+        error instanceof Error ? error.message : "Un problème est survenu. Veuillez réessayer plus tard."
       );
     } finally {
       setIsSubmitting(false);
