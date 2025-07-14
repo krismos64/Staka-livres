@@ -160,6 +160,7 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 - **Hook personnalisé** : `usePricing.ts` avec React Query et cache intelligent 5 minutes
 - **Navigation intelligente** : Détection scroll, menu mobile, sticky CTA bar
 - **Tarifs dynamiques** : Synchronisation admin → landing sans rechargement
+- **Navigation vers inscription optimisée** : 4 points d'entrée depuis la landing + persistance du pack sélectionné
 
 ---
 
@@ -213,6 +214,7 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **Gestion des sessions** avec localStorage
 - **Redirection intelligente** selon le rôle utilisateur
 - **Routes RGPD** : Suppression et export de données utilisateur sécurisés
+- **Navigation cross-page optimisée** : Liens intelligents connexion ↔ inscription avec persistance des choix
 
 ### 🔐 **Sécurité des Mots de Passe & Réinitialisation (NOUVEAU 2025)**
 
@@ -834,6 +836,7 @@ Staka-livres/
 - ✅ **Design responsive** : Mobile-first avec micro-interactions optimisées
 - ✅ **SEO optimisé** : Structure sémantique HTML5 production-ready
 - ✅ **Performance** : Cache partagé, déduplication requêtes, background refresh
+- ✅ **Navigation vers inscription optimisée** : 4 points d'entrée (bouton Commander + 3 packs) avec persistance localStorage du pack sélectionné
 
 **🗄️ Base de Données Complète (13 Modèles) :**
 
@@ -1169,3 +1172,4 @@ curl -H "Authorization: Bearer $TOKEN" \
 - **📊 Statistiques annuelles** pour les clients avec statut VIP automatique
 - **🧪 Tests renforcés** avec couverture étendue et mocks S3
 - **🔗 API Projects** avec endpoints de listage et pagination
+- **🔄 Navigation cross-page optimisée** : Système intelligent de navigation connexion ↔ inscription avec 4 points d'entrée depuis la landing page et persistance des choix utilisateur
