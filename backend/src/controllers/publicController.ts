@@ -1,8 +1,14 @@
 import { Request, Response } from "express";
 import { MailerService } from "../utils/mailer";
-import { PrismaClient, Role, MessageType, MessageStatut } from "@prisma/client";
+import { PrismaClient, Role, MessageType, MessageStatut, FileType } from "@prisma/client";
 import { notifyAdminNewMessage } from "./notificationsController";
 import { AuditService, AUDIT_ACTIONS } from "../services/auditService";
+import fs from "fs";
+
+// Interface pour étendre Request avec le fichier multer
+interface RequestWithFile extends Request {
+  file?: Express.Multer.File;
+}
 
 const prisma = new PrismaClient();
 
@@ -173,11 +179,12 @@ Staka Livres - Système de contact automatique
  * Traite les demandes d'échantillon gratuit depuis la landing page
  */
 export const sendFreeSampleRequest = async (
-  req: Request,
+  req: RequestWithFile,
   res: Response
 ): Promise<void> => {
   try {
-    const { nom, email, telephone, genre, description, fichier } = req.body;
+    const { nom, email, telephone, genre, description } = req.body;
+    const fichier = req.file; // Le fichier uploadé via multer
 
     // Validation des champs requis
     if (!nom || !email) {
@@ -259,7 +266,7 @@ export const sendFreeSampleRequest = async (
 
 📝 Demande : 10 pages de correction gratuite sans engagement
 
-${cleanData.fichier ? '📎 Fichier joint : ' + cleanData.fichier : '⚠️ Aucun fichier joint pour le moment'}
+${cleanData.fichier ? '📎 Fichier joint : ' + cleanData.fichier.originalname + ' (' + Math.round(cleanData.fichier.size / 1024) + ' Ko)' : '⚠️ Aucun fichier joint pour le moment'}
 
 ---
 Cette demande provient de la landing page section "Testez notre expertise gratuitement".
@@ -278,6 +285,39 @@ Cette demande provient de la landing page section "Testez notre expertise gratui
         // Note: source serait utile mais pas défini dans le schéma Prisma
       },
     });
+
+    // Si un fichier est fourni, le sauvegarder et l'associer au message
+    if (cleanData.fichier) {
+      try {
+        // Créer l'entrée File dans la base de données
+        const fileRecord = await prisma.file.create({
+          data: {
+            filename: cleanData.fichier.originalname,
+            storedName: cleanData.fichier.filename,
+            mimeType: cleanData.fichier.mimetype,
+            size: cleanData.fichier.size,
+            url: cleanData.fichier.path,
+            type: FileType.DOCUMENT,
+            uploadedById: admin.id, // Associer à l'admin pour simplifier
+            description: `Fichier joint à la demande d'échantillon gratuit de ${cleanData.nom}`,
+            isPublic: false,
+          },
+        });
+
+        // Associer le fichier au message
+        await prisma.messageAttachment.create({
+          data: {
+            messageId: message.id,
+            fileId: fileRecord.id,
+          },
+        });
+
+        console.log(`✅ [FreeSample] Fichier ${cleanData.fichier.originalname} sauvegardé et associé au message`);
+      } catch (fileError) {
+        console.error(`❌ [FreeSample] Erreur lors de la sauvegarde du fichier:`, fileError);
+        // Ne pas faire échouer la demande pour un problème de fichier
+      }
+    }
 
     // Adresse email de support
     const supportEmail = process.env.SUPPORT_EMAIL || "contact@staka.fr";
@@ -311,7 +351,7 @@ Cette demande provient de la landing page section "Testez notre expertise gratui
           <div style="background-color: #fef3c7; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #f59e0b;">
             <h3 style="margin: 0 0 10px 0; color: #d97706;">🎯 Action requise</h3>
             <p style="margin: 0; font-weight: bold;">Le prospect souhaite recevoir 10 pages corrigées gratuitement</p>
-            ${cleanData.fichier ? '<p style="margin: 5px 0 0 0; color: #059669;">✅ Fichier joint fourni</p>' : '<p style="margin: 5px 0 0 0; color: #dc2626;">⚠️ Aucun fichier joint - contacter le prospect</p>'}
+            ${cleanData.fichier ? '<p style="margin: 5px 0 0 0; color: #059669;">✅ Fichier joint fourni : ' + cleanData.fichier.originalname + ' (' + Math.round(cleanData.fichier.size / 1024) + ' Ko)</p>' : '<p style="margin: 5px 0 0 0; color: #dc2626;">⚠️ Aucun fichier joint - contacter le prospect</p>'}
           </div>
 
           <div style="background-color: #eff6ff; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
@@ -347,7 +387,7 @@ Détails du projet :
 ${cleanData.description ? `- Description : ${cleanData.description}` : ''}
 
 Action requise : Le prospect souhaite recevoir 10 pages corrigées gratuitement
-${cleanData.fichier ? '✅ Fichier joint fourni' : '⚠️ Aucun fichier joint - contacter le prospect'}
+${cleanData.fichier ? '✅ Fichier joint fourni : ' + cleanData.fichier.originalname + ' (' + Math.round(cleanData.fichier.size / 1024) + ' Ko)' : '⚠️ Aucun fichier joint - contacter le prospect'}
 
 Cette demande a été automatiquement ajoutée à la messagerie de ${admin.prenom} ${admin.nom}
 ID conversation : ${message.conversationId}
@@ -359,12 +399,21 @@ Réponse attendue sous 48h selon les engagements du site.
 Staka Livres - Système d'échantillons gratuits automatique
     `;
 
-    // Envoi de l'email à l'équipe
+    // Préparer les attachments pour l'email (format SendGrid)
+    const attachments = cleanData.fichier ? [{
+      content: fs.readFileSync(cleanData.fichier.path, { encoding: 'base64' }),
+      filename: cleanData.fichier.originalname,
+      type: cleanData.fichier.mimetype,
+      disposition: 'attachment'
+    }] : [];
+
+    // Envoi de l'email à l'équipe avec le fichier joint
     await MailerService.sendEmail({
       to: supportEmail,
       subject: `🎯 Échantillon gratuit demandé par ${cleanData.nom}`,
       html: htmlContent,
       text: textContent,
+      attachments: attachments,
     });
 
     // Notification dans l'interface admin
@@ -389,6 +438,8 @@ Staka Livres - Système d'échantillons gratuits automatique
         prospectName: cleanData.nom,
         genre: cleanData.genre,
         hasFile: !!cleanData.fichier,
+        fileName: cleanData.fichier?.originalname || null,
+        fileSize: cleanData.fichier?.size || null,
         assignedToAdmin: admin.email,
         conversationId: message.conversationId
       },

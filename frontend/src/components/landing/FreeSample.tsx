@@ -33,23 +33,23 @@ export default function FreeSample() {
     setIsSubmitted(true);
 
     try {
-      // Préparer les données à envoyer
-      const requestData = {
-        nom: formData.nom.trim(),
-        email: formData.email.trim().toLowerCase(),
-        telephone: formData.telephone.trim(),
-        genre: formData.genre,
-        description: formData.description.trim(),
-        fichier: formData.fichier ? formData.fichier.name : null // Pour l'instant juste le nom
-      };
+      // Préparer les données avec FormData pour inclure le fichier
+      const formDataToSend = new FormData();
+      formDataToSend.append("nom", formData.nom.trim());
+      formDataToSend.append("email", formData.email.trim().toLowerCase());
+      formDataToSend.append("telephone", formData.telephone.trim());
+      formDataToSend.append("genre", formData.genre);
+      formDataToSend.append("description", formData.description.trim());
+      
+      // Ajouter le fichier s'il existe
+      if (formData.fichier) {
+        formDataToSend.append("fichier", formData.fichier);
+      }
 
-      // Appel à l'API
+      // Appel à l'API avec FormData (pas de Content-Type header)
       const response = await fetch("/api/public/free-sample", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
+        body: formDataToSend,
       });
 
       const data = await response.json();

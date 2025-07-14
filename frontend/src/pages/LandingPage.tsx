@@ -46,7 +46,7 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
         {/* Services Section */}
         <Services />
         {/* Pricing Calculator Section */}
-        <PricingCalculator />
+        <PricingCalculator onChatClick={handleChatButtonClick} />
         {/* Packs Section */}
         <Packs />
         {/* Blog Section */}

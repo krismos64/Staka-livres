@@ -3,7 +3,11 @@ import ErrorMessage from "../ui/ErrorMessage";
 import Loader from "../ui/Loader";
 import { usePricing } from "./hooks/usePricing";
 
-export default function PricingCalculator() {
+interface PricingCalculatorProps {
+  onChatClick?: () => void;
+}
+
+export default function PricingCalculator({ onChatClick }: PricingCalculatorProps) {
   const {
     pages,
     setPages,
@@ -53,7 +57,9 @@ export default function PricingCalculator() {
 
   const handleExpertChatClick = () => {
     console.log("Ouverture chat expert");
-    // TODO: Ouvrir le chat ou rediriger vers contact
+    if (onChatClick) {
+      onChatClick();
+    }
   };
 
   // Fonction pour générer les cartes de tarification depuis les règles de pricing
