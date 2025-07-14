@@ -21,6 +21,7 @@ model User {
   adresse                 String?          @db.Text
   avatar                  String?          @db.VarChar(500)
   telephone               String?          @db.VarChar(20)
+  preferences             Json?            @default("{\"emailNotifications\": true}")
   commandes               Commande[]
   files                   File[]           @relation("FileOwner")
   receivedMessages        Message[]        @relation("MessageReceiver")

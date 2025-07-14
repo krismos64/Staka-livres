@@ -161,6 +161,27 @@ Staka Livres - Système de contact automatique
       // Continue even if notification fails
     }
 
+    // Envoyer une confirmation par e-mail au visiteur
+    try {
+      const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || "http://localhost:3001";
+      
+      await MailerService.sendEmail({
+        to: cleanData.email,
+        subject: "Nous avons bien reçu votre message - Staka Livres",
+        template: "visitor-contact-confirmation.hbs",
+        variables: {
+          name: cleanData.nom,
+          supportDelay: "24 h",
+          siteUrl: appUrl
+        }
+      });
+
+      console.log(`✅ [Contact] E-mail de confirmation envoyé à ${cleanData.email}`);
+    } catch (emailError) {
+      console.error("❌ [Contact] Erreur lors de l'envoi de l'e-mail de confirmation:", emailError);
+      // Continue même si l'e-mail de confirmation échoue
+    }
+
     console.log(`✅ [Contact] Message reçu depuis le site par ${cleanData.nom} (${cleanData.email})`);
 
     // Réponse de succès
@@ -445,6 +466,27 @@ Staka Livres - Système d'échantillons gratuits automatique
       req.get('user-agent'),
       'MEDIUM'
     );
+
+    // Envoyer une confirmation par e-mail au visiteur
+    try {
+      const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || "http://localhost:3001";
+      
+      await MailerService.sendEmail({
+        to: cleanData.email,
+        subject: "Demande d'échantillon bien reçue - Staka Livres",
+        template: "visitor-sample-confirmation.hbs",
+        variables: {
+          name: cleanData.nom,
+          supportDelay: "48 h",
+          siteUrl: appUrl
+        }
+      });
+
+      console.log(`✅ [FreeSample] E-mail de confirmation envoyé à ${cleanData.email}`);
+    } catch (emailError) {
+      console.error("❌ [FreeSample] Erreur lors de l'envoi de l'e-mail de confirmation:", emailError);
+      // Continue même si l'e-mail de confirmation échoue
+    }
 
     console.log(`✅ [FreeSample] Demande d'échantillon gratuit reçue de ${cleanData.nom} (${cleanData.email})`);
 
