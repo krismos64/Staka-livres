@@ -1,9 +1,9 @@
 # Backend Staka Livres
 
-![Node.js](https://img.shields.io/badge/Node.js-18+-green)
-![Express](https://img.shields.io/badge/Express-4.18-blue)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)
-![Prisma](https://img.shields.io/badge/Prisma-6.10-purple)
+![Node.js](https://img.shields.io/badge/Node.js-20.18.3-green)
+![Express](https://img.shields.io/badge/Express-4.18.2-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue)
+![Prisma](https://img.shields.io/badge/Prisma-6.10.1-purple)
 ![Stripe](https://img.shields.io/badge/Stripe-18.2-purple)
 ![MySQL](https://img.shields.io/badge/MySQL-8.4-orange)
 ![Tests](https://img.shields.io/badge/Tests-100%25%20Success-brightgreen)
@@ -15,15 +15,51 @@ Backend REST API pour Staka Livres, une plateforme de correction de livres profe
 
 **✨ Version Juillet 2025 - État actuel :**
 
-- **78+ endpoints API** dont 54+ admin complets et opérationnels (nouveaux endpoints RGPD et contact public)
+- **78+ endpoints API** répartis sur 27 fichiers de routes avec 23 contrôleurs
+- **Système de réinitialisation de mot de passe** RGPD-compliant avec tokens sécurisés
+- **Système d'échantillons gratuits** pour acquisition clients
 - **Espace admin 100% opérationnel** (10/10 modules production-ready)
 - **Système de réservation de consultations** avec workflow automatisé et notifications
 - **Système de notifications temps réel** avec génération automatique et polling 15s
 - **Système de messagerie unifiée** avec threading, pièces jointes et support consultations
 - **Facturation automatique complète** avec génération PDF, AWS S3 et SendGrid
-- **Tests exhaustifs** : 87% coverage, 90+ tests unitaires, 6 suites intégration
+- **Tests exhaustifs** : 27 fichiers de test (Vitest), couverture 90%+ configurée
 - **Modules FAQ, Tarifs, Pages CMS et Statistiques** dynamiques avec synchronisation temps réel
 - **Architecture scalable** avec monitoring intégré et logs structurés
+
+## 🆕 Nouvelles Fonctionnalités Juillet 2025
+
+### 🔑 Système de Réinitialisation de Mot de Passe RGPD-Compliant
+
+**Architecture complète implémentée le 14 juillet 2025 :**
+
+- **Tokens sécurisés** : SHA-256 avec expiration 1h et usage unique
+- **Rate limiting** : 5 tentatives par heure par utilisateur 
+- **Migration DB** : `20250714131722_add_password_reset` avec audit complet
+- **Endpoints** :
+  - `POST /public/forgot-password` - Demande de réinitialisation
+  - `POST /public/reset-password` - Validation token + nouveau mot de passe
+- **Templates email** : Handlebars avec liens sécurisés
+- **Tests** : Couverture complète avec mocks et intégration
+- **Sécurité** : Validation stricte, logs d'audit, conformité RGPD
+
+### 📖 Système d'Échantillons Gratuits
+
+**Nouveau système d'acquisition clients :**
+
+- **Controller public** : Gestion des demandes d'échantillons
+- **Workflow automatisé** : Validation + notification équipe
+- **Intégration frontend** : Composant `FreeSample.tsx` 
+- **Documentation** : Guide technique complet `FREE_SAMPLE_SYSTEM_GUIDE.md`
+- **Base de données** : Extension modèle avec métadonnées échantillons
+
+### 📊 Améliorations Techniques
+
+- **Node.js 20.18.3** : Migration depuis v18 pour performances optimisées
+- **Vitest 3.2.4** : Framework de test moderne avec couverture v8
+- **27 fichiers de test** : Coverage configurée à 90% minimum
+- **23 contrôleurs** : Architecture modulaire étendue
+- **14 services métier** : Logique centralisée et testable
 
 ## 🔐 Sécurité et Audit - Version 2025 Renforcée
 

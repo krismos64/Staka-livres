@@ -2,9 +2,9 @@
 
 ![React](https://img.shields.io/badge/React-18+-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
-![Tailwind](https://img.shields.io/badge/Tailwind-3.4-cyan)
-![Vite](https://img.shields.io/badge/Vite-5.0-purple)
-![React Query](https://img.shields.io/badge/React%20Query-5.17-red)
+![Tailwind](https://img.shields.io/badge/Tailwind-3.4.17-cyan)
+![Vite](https://img.shields.io/badge/Vite-6.3.5-purple)
+![React Query](https://img.shields.io/badge/React%20Query-5.81.5-red)
 ![Framer Motion](https://img.shields.io/badge/Framer%20Motion-12.18-pink)
 ![Tests](https://img.shields.io/badge/Tests-95%25-brightgreen)
 ![Production](https://img.shields.io/badge/Status-Production%20Ready-green)
@@ -15,13 +15,15 @@
 
 Architecture frontend complète et **production-ready** avec React 18, TypeScript, Tailwind CSS et React Query. Le frontend comprend une **landing page marketing optimisée**, une **application dashboard fonctionnelle**, un **espace d'administration moderne** avec **intégration backend opérationnelle**, un **système de notifications temps réel** et un **système de réservation de consultations**.
 
-### 🆕 **Nouvelles Fonctionnalités 2025**
+### 🆕 **Nouvelles Fonctionnalités Juillet 2025**
 
+- **🔑 Système de réinitialisation de mot de passe** avec interface RGPD-compliant
+- **📖 Système d'échantillons gratuits** pour acquisition clients
 - **📞 Système de réservation de consultations** avec modal responsive et workflow automatisé
 - **🔔 Système de notifications temps réel** avec polling automatique et API sécurisée
 - **📊 Statistiques admin refactorisées** avec données réelles Prisma
-- **🚀 Architecture React Query avancée** : 16+ hooks spécialisés (3200+ lignes)
-- **💫 Composants UI modernes** : 93+ composants avec animations Framer Motion
+- **🚀 Architecture React Query avancée** : 22+ hooks spécialisés (mis à jour)
+- **💫 Composants UI modernes** : 69+ composants avec animations Framer Motion
 - **🎨 Design System unifié** : Variables CSS, tokens design et accessibilité WCAG 2.1
 - **⚡ Performance optimisée** : Lazy loading, code splitting et cache intelligent
 
@@ -29,7 +31,7 @@ Architecture frontend complète et **production-ready** avec React 18, TypeScrip
 
 ```
 frontend/src/
-├── 🏗️ Components (93+ composants modulaires)
+├── 🏗️ Components (69+ composants modulaires)
 │   ├── admin/           # 👨‍💼 Administration (10 composants) - REFACTORISÉ 2025
 │   ├── billing/         # 💳 Facturation Stripe (7 composants)
 │   ├── common/          # 🎭 Composants génériques (8 composants)
@@ -41,7 +43,7 @@ frontend/src/
 │   ├── notifications/   # 🔔 Notifications temps réel (6 composants) - NOUVEAU
 │   ├── project/         # 📚 Projets (3 composants)
 │   └── ui/              # 🎨 Composants UI réutilisables (15 composants)
-├── 🎣 Hooks (16 hooks personnalisés + React Query)
+├── 🎣 Hooks (22 hooks personnalisés + React Query)
 │   ├── useAdminUsers.ts         # Hook admin utilisateurs (263 lignes)
 │   ├── useAdminCommandes.ts     # Hook admin commandes (359 lignes)
 │   ├── useAdminFactures.ts      # Hook admin factures (240 lignes)
@@ -58,8 +60,10 @@ frontend/src/
 │   ├── useIntersectionObserver.ts # Pagination infinie (44 lignes)
 │   ├── usePricing.ts            # Hook tarifs dynamiques (440 lignes)
 │   └── __tests__/              # Tests des hooks (15 suites)
-├── 📄 Pages (12 pages USER + 10 pages ADMIN)
+├── 📄 Pages (14 pages USER + 10 pages ADMIN + 4 publiques)
 │   ├── LandingPage.tsx          # Marketing conversion-optimisée
+│   ├── ForgotPassword.tsx       # Réinitialisation mot de passe (NOUVEAU)
+│   ├── ResetPassword.tsx        # Nouveau mot de passe (NOUVEAU)
 │   ├── [Pages Application]      # Dashboard, projets, messagerie, facturation
 │   └── admin/                  # Interface admin complète (10 pages)
 ├── 🎨 Styles & Design System
@@ -79,9 +83,9 @@ frontend/src/
 
 ### 📈 **Métriques Production**
 
-- **🏗️ Composants** : 93+ composants React modulaires et réutilisables
-- **📄 Pages** : 25 pages TOUTES FONCTIONNELLES (12 USER + 10 ADMIN + 3 publiques)
-- **🎣 Hooks** : 16 hooks personnalisés + React Query (3200+ lignes)
+- **🏗️ Composants** : 69+ composants React modulaires et réutilisables
+- **📄 Pages** : 28 pages TOUTES FONCTIONNELLES (14 USER + 10 ADMIN + 4 publiques)
+- **🎣 Hooks** : 22 hooks personnalisés + React Query (mis à jour)
 - **🎨 Styles** : Tailwind + CSS custom (870 lignes) + Framer Motion
 - **⚡ Performance** : < 1.5s chargement, < 50ms interactions
 - **🔐 Sécurité** : JWT + AuthContext + RBAC complet + CSP
@@ -97,7 +101,7 @@ frontend/src/
 
 ### 🎯 **Architecture Landing Complète**
 
-La landing page Staka Éditions représente **2700+ lignes** de code React optimisé avec 15 composants spécialisés pour la conversion, incluant le nouveau formulaire de contact intégré.
+La landing page Staka Éditions représente **2700+ lignes** de code React optimisé avec 15+ composants spécialisés pour la conversion, incluant le nouveau formulaire de contact intégré et le **système d'échantillons gratuits** (juillet 2025).
 
 #### **📦 Composants Principaux**
 
@@ -2293,7 +2297,7 @@ export interface PaginatedResponse<T> {
 | **Dashboard USER**         | 1800+      | 12 pages           | ✅ Production           |
 | **Administration**         | 3800+      | 10 pages           | ✅ Backend intégré      |
 | **Notifications Système**  | 850+       | 6 composants       | ✅ **NOUVEAU 2025**     |
-| **React Query Hooks**      | 3200+      | 16 hooks           | ✅ Production           |
+| **React Query Hooks**      | 3200+      | 22 hooks           | ✅ Production           |
 | **Design System**          | 870        | CSS/Styles         | ✅ Production           |
 | **Services API**           | 1780+      | API calls          | ✅ Backend intégré      |
 | **Types TypeScript**       | 800+       | Interfaces         | ✅ Production           |
