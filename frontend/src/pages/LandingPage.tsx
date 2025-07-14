@@ -17,9 +17,10 @@ import TrustIndicators from "../components/landing/TrustIndicators";
 
 interface LandingPageProps {
   onLoginClick?: () => void;
+  onSignupClick?: () => void;
 }
 
-export default function LandingPage({ onLoginClick }: LandingPageProps) {
+export default function LandingPage({ onLoginClick, onSignupClick }: LandingPageProps) {
   const chatWidgetRef = useRef<ChatWidgetRef>(null);
 
   const handleChatButtonClick = () => {
@@ -46,9 +47,12 @@ export default function LandingPage({ onLoginClick }: LandingPageProps) {
         {/* Services Section */}
         <Services />
         {/* Pricing Calculator Section */}
-        <PricingCalculator onChatClick={handleChatButtonClick} />
+        <PricingCalculator 
+          onChatClick={handleChatButtonClick} 
+          onSignupClick={onSignupClick}
+        />
         {/* Packs Section */}
-        <Packs />
+        <Packs onSignupClick={onSignupClick} />
         {/* Blog Section */}
         <Blog />
         {/* Free Sample Section */}

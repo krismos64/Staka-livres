@@ -91,7 +91,12 @@ const AppRoutes: React.FC = () => {
       {/* Routes publiques */}
       <Route
         path="/"
-        element={<LandingPage onLoginClick={() => navigate("/login")} />}
+        element={
+          <LandingPage 
+            onLoginClick={() => navigate("/login")} 
+            onSignupClick={() => navigate("/signup")}
+          />
+        }
       />
       <Route
         path="/login"
@@ -111,6 +116,7 @@ const AppRoutes: React.FC = () => {
                 }
               }
             }}
+            onGoToSignup={() => navigate("/signup")}
           />
         }
       />

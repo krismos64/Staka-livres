@@ -5,9 +5,10 @@ import { usePricing } from "./hooks/usePricing";
 
 interface PricingCalculatorProps {
   onChatClick?: () => void;
+  onSignupClick?: () => void;
 }
 
-export default function PricingCalculator({ onChatClick }: PricingCalculatorProps) {
+export default function PricingCalculator({ onChatClick, onSignupClick }: PricingCalculatorProps) {
   const {
     pages,
     setPages,
@@ -43,7 +44,9 @@ export default function PricingCalculator({ onChatClick }: PricingCalculatorProp
 
   const handleOrderClick = () => {
     console.log(`Commande pour ${pricing.total}€, ${pages} pages`);
-    // TODO: Rediriger vers le formulaire de commande ou ouvrir une modal
+    if (onSignupClick) {
+      onSignupClick();
+    }
   };
 
   const handleFreeTestClick = () => {

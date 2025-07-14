@@ -3,6 +3,7 @@ import { TarifAPI } from "../../utils/api";
 import ErrorMessage from "../ui/ErrorMessage";
 import Loader from "../ui/Loader";
 import { usePricing } from "./hooks/usePricing";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface Pack {
   id: string;
@@ -15,15 +16,31 @@ interface Pack {
   buttonStyle: string;
 }
 
-export default function Packs() {
+interface PacksProps {
+  onSignupClick?: () => void;
+}
+
+export default function Packs({ onSignupClick }: PacksProps) {
   // Utilisation du hook usePricing au lieu de useState+useEffect
   const { tarifs, isLoading, error, refreshTarifs } = usePricing({
     enableDebugLogs: process.env.NODE_ENV === "development",
   });
+  
+  const { user } = useAuth();
 
   const handlePackClick = (packId: string) => {
     console.log(`Pack sélectionné: ${packId}`);
-    // TODO: Rediriger vers le formulaire de commande ou ouvrir une modal
+    
+    if (!user) {
+      // Utilisateur non connecté - stocker le pack et rediriger vers signup
+      localStorage.setItem("selected_pack", packId);
+      if (onSignupClick) {
+        onSignupClick();
+      }
+    } else {
+      // Utilisateur connecté - rediriger vers checkout (TODO: implémenter plus tard)
+      console.log("TODO: Rediriger vers checkout avec packId:", packId);
+    }
   };
 
   const handleFreeTestClick = () => {
