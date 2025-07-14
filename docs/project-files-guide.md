@@ -380,4 +380,4 @@ Supprime un fichier avec validation ownership.
 
 ---
 
-_Documentation mise à jour le 12 janvier 2025 - Version 2.0.0_
+_Documentation mise à jour le 12 juillet 2025 - Version 2.0.0_

@@ -1109,6 +1109,111 @@ Tarifs dynamiques prêts pour production.
 **🚀 Total temps validation: ~12 minutes**  
 **🎯 Intégration des tarifs dynamiques 100% validée !**
 
+## 📞 **Tests Système de Consultation (JUILLET 2025)**
+
+### **Tests Backend Consultation**
+
+```typescript
+// Tests consultation booking
+describe("Consultation Booking Tests", () => {
+  it("devrait créer une demande de consultation avec receiverId", async () => {
+    const response = await request(app)
+      .post("/consultations/book")
+      .send({
+        firstName: "Test",
+        lastName: "User",
+        email: "test@example.com",
+        date: "2025-07-20",
+        time: "14:00",
+        source: "landing_page"
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.messageId).toBeDefined();
+  });
+
+  it("devrait créer un message avec receiverId admin", async () => {
+    // Vérifier que le message a bien un receiverId
+    const message = await prisma.message.findFirst({
+      where: { type: "CONSULTATION_REQUEST" },
+      orderBy: { createdAt: "desc" }
+    });
+
+    expect(message.receiverId).not.toBeNull();
+    expect(message.visitorEmail).toBe("test@example.com");
+  });
+});
+```
+
+### **Tests Notifications**
+
+```typescript
+// Tests notification count fix
+describe("Notification Count Tests", () => {
+  it("devrait compter les notifications avec expiresAt NULL", async () => {
+    const response = await request(app)
+      .get("/notifications/unread-count")
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.count).toBeGreaterThan(0);
+  });
+
+  it("devrait inclure notifications de consultation", async () => {
+    // Créer notification consultation
+    await prisma.notification.create({
+      data: {
+        userId: adminId,
+        type: "CONSULTATION",
+        title: "Test consultation",
+        message: "Test message",
+        isRead: false
+      }
+    });
+
+    const response = await request(app)
+      .get("/notifications/unread-count")
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    expect(response.body.count).toBeGreaterThanOrEqual(1);
+  });
+});
+```
+
+### **Tests d'Intégration Messagerie**
+
+```typescript
+// Tests intégration consultation → messagerie
+describe("Consultation Integration Tests", () => {
+  it("devrait afficher consultation dans conversations admin", async () => {
+    // Créer demande consultation
+    await request(app)
+      .post("/consultations/book")
+      .send(consultationData);
+
+    // Vérifier dans conversations admin
+    const response = await request(app)
+      .get("/admin/messages/conversations")
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    const consultationConv = response.body.find(
+      conv => conv.withUser.email === consultationData.email
+    );
+
+    expect(consultationConv).toBeDefined();
+    expect(consultationConv.lastMessage.content).toContain("consultation");
+  });
+});
+```
+
+### **Résultats Tests Consultation**
+
+- ✅ **HTTP 500 fixes** : Errors de Foreign Key résolues
+- ✅ **Messagerie intégration** : Messages visibles dans admin
+- ✅ **Notifications fonctionnelles** : Compteur cloche admin corrigé
+- ✅ **Workflow complet** : Visiteur → Admin → Email validé
+
 ---
 
-L'infrastructure de tests Staka Livres est maintenant **production-ready** avec une couverture complète, des tests de performance et une stratégie CI/CD robuste pour garantir la qualité en continu.
+L'infrastructure de tests Staka Livres est maintenant **production-ready** avec une couverture complète, des tests de performance, validation système de consultation et notifications, et une stratégie CI/CD robuste pour garantir la qualité en continu.

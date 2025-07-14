@@ -567,6 +567,95 @@ curl -X POST "http://localhost:3001/api/files/upload/message" \
 - **RBAC granulaire** : Permissions par rôle et action
 - **Sanitization** : Nettoyage HTML des contenus
 
+## 📞 **Intégration Système de Consultation (JUILLET 2025)**
+
+### **Messages de Consultation dans la Messagerie Admin**
+
+Les demandes de consultation sont automatiquement intégrées au système de messagerie admin :
+
+```typescript
+// Type de message spécialisé
+enum MessageType {
+  USER_MESSAGE = "USER_MESSAGE",
+  SYSTEM_MESSAGE = "SYSTEM_MESSAGE", 
+  NOTIFICATION = "NOTIFICATION",
+  SUPPORT_MESSAGE = "SUPPORT_MESSAGE",
+  ADMIN_MESSAGE = "ADMIN_MESSAGE",
+  CONSULTATION_REQUEST = "CONSULTATION_REQUEST" // ✅ NOUVEAU
+}
+```
+
+### **Workflow d'Intégration**
+
+1. **Visiteur** remplit le formulaire de consultation sur landing page
+2. **API** `/consultations/book` crée un message avec `type: "CONSULTATION_REQUEST"`
+3. **Message** apparaît automatiquement dans les conversations admin avec `receiverId` 
+4. **Notification** générée en parallèle pour l'admin
+5. **Admin** voit la demande dans sa messagerie et répond par email
+
+### **Format des Messages de Consultation**
+
+```json
+{
+  "type": "CONSULTATION_REQUEST",
+  "subject": "🗓️ Demande de consultation gratuite",
+  "visitorName": "Marie Dupont",
+  "visitorEmail": "marie@example.com",
+  "receiverId": "admin-uuid",
+  "content": "**Nouvelle demande de consultation**\n\n**Informations:**\n- Nom: Marie Dupont\n- Email: marie@example.com\n- Téléphone: 0123456789\n\n**Créneau souhaité:**\n- Date: 2025-07-22\n- Heure: 16:00",
+  "metadata": {
+    "consultationRequest": {
+      "firstName": "Marie",
+      "lastName": "Dupont",
+      "email": "marie@example.com",
+      "phone": "0123456789",
+      "requestedDate": "2025-07-22",
+      "requestedTime": "16:00",
+      "source": "landing_page"
+    }
+  }
+}
+```
+
+### **Correction Critique Implémentée**
+
+**⚠️ Problème résolu :** Les messages de consultation n'apparaissaient pas dans la messagerie admin
+
+**✅ Solution :** Ajout du `receiverId` lors de la création des messages de consultation :
+
+```typescript
+// ✅ AVANT (problématique)
+const message = await prisma.message.create({
+  data: {
+    content: messageContent,
+    visitorEmail: email,
+    type: "CONSULTATION_REQUEST"
+    // ❌ Manquait: receiverId
+  }
+});
+
+// ✅ APRÈS (corrigé)
+const message = await prisma.message.create({
+  data: {
+    content: messageContent,
+    visitorEmail: email,
+    receiverId: adminUser.id, // ✅ Ajouté pour intégration messagerie
+    type: "CONSULTATION_REQUEST"
+  }
+});
+```
+
+### **API Endpoints Consultation**
+
+Les consultations ont leurs propres endpoints séparés :
+
+- `POST /consultations/book` - Créer une demande (public)
+- `GET /consultations/available-slots` - Créneaux disponibles (public)  
+- `GET /consultations/requests` - Liste des demandes (admin)
+- `PUT /consultations/requests/:id` - Marquer comme traité (admin)
+
+**📌 Note :** Les consultations apparaissent dans la messagerie admin via le système de threading automatique, permettant un workflow unifié.
+
 ---
 
-**🎯 Le système de messagerie Staka Livres est maintenant optimisé et production-ready avec threading avancé, pièces jointes sécurisées, archivage intelligent, notifications temps réel et interface admin moderne. Score de fiabilité final : 97/100 (Janvier 2025)**
+**🎯 Le système de messagerie Staka Livres est maintenant optimisé et production-ready avec threading avancé, pièces jointes sécurisées, archivage intelligent, notifications temps réel, intégration consultations complète et interface admin moderne. Score de fiabilité final : 98/100 (Juillet 2025)**

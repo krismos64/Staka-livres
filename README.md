@@ -72,13 +72,14 @@ Démocratiser l'accès aux services éditoriaux professionnels en offrant une pl
 - **Notifications en temps réel** : Polling automatique toutes les 15 secondes
 - **Cloches intelligentes** : Badges avec compteurs non-lus et détection admin/client
 - **Fix expiresAt critique** : Filtrage des notifications non-lues entièrement corrigé (problème NULL résolu)
+- **Consultation notifications** : Génération automatique pour demandes de consultation avec intégration messagerie
 - **Menu déroulant moderne** : Actions rapides (lire, supprimer, naviguer)
 - **Pages dédiées** : Interface complète avec filtres et pagination
-- **Génération automatique** : Messages, paiements, inscriptions, événements système
-- **Types spécialisés** : INFO, SUCCESS, WARNING, ERROR, PAYMENT, ORDER, MESSAGE, SYSTEM
+- **Génération automatique** : Messages, paiements, inscriptions, consultations, événements système
+- **Types spécialisés** : INFO, SUCCESS, WARNING, ERROR, PAYMENT, ORDER, MESSAGE, SYSTEM, CONSULTATION
 - **UX professionnelle** : Animations Framer Motion et design responsive
 - **API sécurisée** : `/notifications` avec authentification et rôles
-- **Cloche admin fonctionnelle** : Compteur de notifications non-lues précis et fiable
+- **Cloche admin fonctionnelle** : Point rouge/compteur de notifications non-lues précis et fiable
 
 ### 💬 **Système de Messagerie Temps Réel (OPTIMISÉ 2025)**
 
@@ -222,14 +223,16 @@ Le projet dispose d'une documentation exhaustive dans le dossier `docs/` couvran
 - **API 4 endpoints** : POST /consultations/book (public), GET /available-slots (public), GET /requests (admin), PUT /requests/:id (admin)
 - **Intégration double** : Landing page (section dédiée) + Espace client (bouton "Planifier un appel")
 - **Modal ultra-simplifiée** : Nom, prénom, email, téléphone, date, heure, message optionnel
-- **Workflow automatisé** : Soumission → Message admin → Notification → Confirmation email manuelle
-- **Fix receiverId critique** : Messages de consultation apparaissent correctement dans la messagerie admin
+- **Workflow automatisé** : Soumission → Message admin (avec receiverId) → Notification → Réponse email obligatoire
+- **Fix receiverId critique** : Messages de consultation apparaissent correctement dans la messagerie admin (problème résolu)
+- **Intégration messagerie** : Consultation requests visibles dans conversations admin avec thread par email visiteur
 - **Validation robuste** : Schema Zod côté backend, validation temps réel côté frontend
 - **Base de données** : Nouveau type CONSULTATION_REQUEST, métadonnées JSON structurées
 - **Hook React Query** : `useBookConsultation()` avec gestion d'erreurs et toasts
 - **UX optimisée** : Sélection créneaux (7 jours ouvrés), états loading/succès, responsive design
 - **Gestion admin** : Demandes visibles dans messagerie avec toutes les informations contextuelles
-- **Résolution HTTP 500** : Erreurs de réservation entièrement corrigées
+- **Résolution HTTP 500** : Erreurs Foreign Key Constraint (userId NULL) entièrement corrigées
+- **Fix frontend TypeScript** : Suppression du champ requestedDateTime redondant causant validation Zod
 - **Documentation complète** : Guide détaillé CONSULTATION_BOOKING_GUIDE.md (650+ lignes)
 
 ### 💳 **Système de Moyens de Paiement et Statistiques (NOUVEAU 2025)**

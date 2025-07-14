@@ -19,12 +19,12 @@ Staka Livres utilise une architecture Docker containerisée avec support multi-p
 
 ### 🏗️ Services Containerisés
 
-| Service | Port | Description | Image Base |
-|---------|------|-------------|------------|
-| **Frontend** | 3000 → 80 | React + Vite → Nginx | `nginx:1.25-alpine` |
-| **Backend** | 3001 | Node.js + Express + Prisma | `node:18-alpine` |
-| **Database** | 3306 | MySQL 8 avec native auth | `mysql:8` |
-| **Prisma Studio** | 5555 | Interface base de données | Intégré au backend |
+| Service           | Port      | Description                | Image Base          |
+| ----------------- | --------- | -------------------------- | ------------------- |
+| **Frontend**      | 3000 → 80 | React + Vite → Nginx       | `nginx:1.25-alpine` |
+| **Backend**       | 3001      | Node.js + Express + Prisma | `node:18-alpine`    |
+| **Database**      | 3306      | MySQL 8 avec native auth   | `mysql:8`           |
+| **Prisma Studio** | 5555      | Interface base de données  | Intégré au backend  |
 
 ### 🔄 Architecture Multi-Platform
 
@@ -33,13 +33,13 @@ graph TD
     A[Developer Machine] --> B{Platform Detection}
     B --> C[ARM64 - Apple Silicon]
     B --> D[x86_64 - Intel/AMD]
-    
+
     C --> E[Docker Buildx ARM64]
     D --> F[Docker Buildx x86_64]
-    
+
     E --> G[Multi-stage Build]
     F --> G
-    
+
     G --> H[Node.js Build Stage]
     H --> I[Nginx Runtime Stage]
     I --> J[Production Image]
@@ -100,7 +100,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    platform: linux/arm64  # Auto-détection si ARM64
+    platform: linux/arm64 # Auto-détection si ARM64
     ports:
       - "3000:80"
     environment:
@@ -114,7 +114,7 @@ services:
       dockerfile: backend/Dockerfile
     ports:
       - "3001:3001"
-      - "5555:5555"  # Prisma Studio
+      - "5555:5555" # Prisma Studio
     environment:
       - DATABASE_URL=mysql://staka:staka@db:3306/stakalivres
     depends_on:
@@ -136,6 +136,7 @@ services:
 ### Variables d'Environnement
 
 **Backend (.env)**
+
 ```bash
 # Base de données
 DATABASE_URL="mysql://staka:staka@db:3306/stakalivres"
@@ -162,6 +163,7 @@ AWS_S3_BUCKET="staka-livres-files"
 ```
 
 **Frontend (injection automatique)**
+
 ```bash
 VITE_API_URL=http://backend:3001
 DOCKER_ENV=true
@@ -230,28 +232,29 @@ CMD ["nginx", "-g", "daemon off;"]
 ### Optimisations Performance
 
 **Frontend - nginx.conf**
+
 ```nginx
 server {
     listen 80;
     root /usr/share/nginx/html;
-    
+
     # Compression gzip
     gzip on;
     gzip_types application/javascript text/css application/json;
-    
+
     # Cache assets statiques
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
         expires 1y;
         add_header Cache-Control "public, immutable";
     }
-    
+
     # Proxy API
     location /api {
         proxy_pass http://backend:3001;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
-    
+
     # SPA fallback
     location / {
         try_files $uri $uri/ /index.html;
@@ -260,19 +263,22 @@ server {
 ```
 
 **Backend - Configuration**
+
 ```typescript
 // src/app.ts
-app.use(helmet({
-  crossOriginEmbedderPolicy: false,
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
+app.use(
+  helmet({
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:"],
+      },
     },
-  },
-}));
+  })
+);
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
@@ -309,28 +315,30 @@ docker exec -i staka_db mysql -u root -proot stakalivres < backup-20250112.sql
 ### Logs Structurés
 
 **Backend Logging**
+
 ```typescript
 // Backend utilise Winston pour logs structurés
-import winston from 'winston';
+import winston from "winston";
 
 const logger = winston.createLogger({
-  level: 'info',
+  level: "info",
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.errors({ stack: true }),
     winston.format.json()
   ),
   transports: [
-    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'logs/combined.log' }),
+    new winston.transports.File({ filename: "logs/error.log", level: "error" }),
+    new winston.transports.File({ filename: "logs/combined.log" }),
     new winston.transports.Console({
-      format: winston.format.simple()
-    })
+      format: winston.format.simple(),
+    }),
   ],
 });
 ```
 
 **Collecte des Logs**
+
 ```bash
 # Logs en temps réel avec filtres
 docker compose logs -f backend | grep ERROR
@@ -358,6 +366,7 @@ docker system events --filter container=staka_backend
 #### 1. Erreur Module Rollup ARM64
 
 **Symptôme :**
+
 ```
 Error: Cannot find module @rollup/rollup-linux-arm64-gnu
 ```
@@ -380,6 +389,7 @@ docker volume prune
 #### 2. Frontend Ne Démarre Pas
 
 **Symptôme :**
+
 ```
 frontend | npm ERR! Cannot find module 'esbuild'
 ```
@@ -401,6 +411,7 @@ docker compose exec frontend ls -la node_modules/.bin/
 #### 3. Base de Données Connection Refused
 
 **Symptôme :**
+
 ```
 Error: connect ECONNREFUSED 127.0.0.1:3306
 ```
@@ -423,6 +434,7 @@ docker compose up db
 #### 4. Port Déjà Utilisé
 
 **Symptôme :**
+
 ```
 Error: listen EADDRINUSE: address already in use :::3001
 ```
@@ -519,6 +531,7 @@ export DOCKER_BUILDKIT_PROGRESS=plain
 ### Sécurisation Production
 
 **1. Variables d'Environnement**
+
 ```bash
 # Utiliser Docker secrets en production
 echo "super_secret_jwt_key" | docker secret create jwt_secret -
@@ -526,6 +539,7 @@ echo "stripe_live_key" | docker secret create stripe_key -
 ```
 
 **2. Non-Root User**
+
 ```dockerfile
 # Dans Dockerfile
 RUN addgroup -g 1001 -S nodejs
@@ -534,12 +548,13 @@ USER nextjs
 ```
 
 **3. Network Isolation**
+
 ```yaml
 # docker-compose.prod.yml
 networks:
   frontend:
   backend:
-  
+
 services:
   frontend:
     networks:
@@ -570,11 +585,13 @@ hadolint backend/Dockerfile
 ### Optimisations Build
 
 **Multi-stage Build Benefits:**
+
 - **Taille image réduite** : ~90% moins volumineux (3GB → 300MB)
 - **Sécurité améliorée** : Pas de sources ni build tools en production
 - **Cache intelligent** : Layers optimisés pour CI/CD
 
 **Cache Strategies:**
+
 ```bash
 # Build avec cache registry
 docker buildx build \
@@ -606,4 +623,4 @@ docker buildx build \
 
 ---
 
-*Documentation mise à jour le 12 janvier 2025 - Version 2.0.0*
+_Documentation mise à jour le 12 juillet 2025 - Version 2.0.0_
