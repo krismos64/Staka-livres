@@ -1,19 +1,20 @@
 import { AnimatePresence, motion } from "framer-motion";
-import React, { ChangeEvent, FormEvent, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useRef, useState } from "react";
 import { useToast } from "../components/layout/ToastProvider";
 import ModalConsultationBooking from "../components/modals/ModalConsultationBooking";
+import { useAuth } from "../contexts/AuthContext";
+import { getAuthHeaders } from "../utils/api";
 
-// Mock FAQ (à remplacer par ta vraie source)
 const faqs = [
   {
     question: "Comment suivre l'avancement de mon projet ?",
     answer:
-      "Vous pouvez suivre l'avancement de votre projet depuis l'onglet « Mes projets » dans votre espace client.",
+      "Vous pouvez suivre l'avancement de votre projet depuis l'onglet « Mes projets » dans votre espace client.",
   },
   {
     question: "Comment puis-je communiquer avec mon correcteur ?",
     answer:
-      "Une messagerie est intégrée sur chaque projet. Accédez à votre projet et cliquez sur « Messages ».",
+      "Une messagerie est intégrée sur chaque projet. Accédez à votre projet et cliquez sur « Messages ».",
   },
   {
     question: "Puis-je modifier mon projet après l'avoir soumis ?",
@@ -23,7 +24,7 @@ const faqs = [
   {
     question: "Comment télécharger mes fichiers corrigés ?",
     answer:
-      "Rendez-vous dans l'onglet « Mes fichiers » pour télécharger tous vos fichiers corrigés.",
+      "Rendez-vous dans l'onglet « Mes fichiers » pour télécharger tous vos fichiers corrigés.",
   },
   {
     question: "Que faire si je ne suis pas satisfait du résultat ?",
@@ -59,6 +60,7 @@ export default function HelpPage() {
 
   // --- Form state ---
   const { showToast } = useToast();
+  const { user } = useAuth();
   const [subject, setSubject] = useState(contactSubjects[0]);
   const [message, setMessage] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -77,7 +79,6 @@ export default function HelpPage() {
       return;
     }
 
-    // Validation du type
     if (!ALLOWED_FILE_TYPES.includes(selectedFile.type)) {
       setFileError(
         `Format invalide. Formats acceptés : ${ALLOWED_EXTENSIONS_DISPLAY}`
@@ -87,7 +88,6 @@ export default function HelpPage() {
       return;
     }
 
-    // Validation de la taille
     if (selectedFile.size > MAX_FILE_SIZE_BYTES) {
       setFileError(`Fichier trop volumineux (max ${MAX_FILE_SIZE_MB} Mo)`);
       setFile(null);
@@ -111,28 +111,64 @@ export default function HelpPage() {
     setIsSubmitting(true);
 
     try {
-      // TODO: Upload du fichier en premier si présent
       let attachments: string[] = [];
-      
       if (file) {
-        // Pour l'instant, on ignore les fichiers - à implémenter plus tard
         console.warn("Upload de fichiers non implémenté pour le moment");
       }
 
-      // Appel à l'API de messagerie avec source 'client-help'
-      const response = await fetch('/api/messages/conversations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          subject: subject,
-          content: message,
-          attachments: attachments,
-          source: 'client-help' // Important : déclenche l'envoi email au support
-        })
-      });
+      // 1. Vérifier si une conversation support existe déjà
+      let supportThreadId: string | null = null;
+      try {
+        const convRes = await fetch("/api/messages/conversations", {
+          headers: getAuthHeaders(),
+        });
+        if (convRes.ok) {
+          const convs = await convRes.json();
+          // Cherche un thread support (threadId === 'admin-support' ou similaire)
+          const supportConv = Array.isArray(convs)
+            ? convs.find(
+                (c) =>
+                  c.threadId === "admin-support" ||
+                  c.conversationId === "admin-support"
+              )
+            : null;
+          if (supportConv) {
+            supportThreadId =
+              supportConv.threadId || supportConv.conversationId;
+          }
+        }
+      } catch (err) {
+        // Ignore, on tentera la création si pas trouvé
+      }
+
+      let response;
+      if (supportThreadId) {
+        // 2. Si conversation support existe, reply dessus
+        response = await fetch(
+          `/api/messages/threads/${supportThreadId}/reply`,
+          {
+            method: "POST",
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              content: message,
+              attachments,
+              source: "client-help",
+            }),
+          }
+        );
+      } else {
+        // 3. Sinon, crée une nouvelle conversation
+        response = await fetch("/api/messages/conversations", {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            subject: subject,
+            content: message,
+            attachments: attachments,
+            source: "client-help",
+          }),
+        });
+      }
 
       const result = await response.json();
 
@@ -142,24 +178,22 @@ export default function HelpPage() {
           "Message envoyé",
           "Notre équipe a été notifiée et vous répondra dans les meilleurs délais."
         );
-        
-        // Reset form
         setSubject(contactSubjects[0]);
         setMessage("");
         setFile(null);
         setFileError(null);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
+        if (fileInputRef.current) fileInputRef.current.value = "";
       } else {
-        throw new Error(result.error || 'Erreur lors de l\'envoi');
+        throw new Error(result.error || "Erreur lors de l'envoi");
       }
     } catch (error) {
-      console.error('Erreur lors de l\'envoi du message d\'aide:', error);
+      console.error("Erreur lors de l'envoi du message d'aide:", error);
       showToast(
         "error",
         "Erreur d'envoi",
-        error instanceof Error ? error.message : "Un problème est survenu. Veuillez réessayer plus tard."
+        error instanceof Error
+          ? error.message
+          : "Un problème est survenu. Veuillez réessayer plus tard."
       );
     } finally {
       setIsSubmitting(false);
@@ -391,9 +425,10 @@ export default function HelpPage() {
               <button className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-2 shadow transition">
                 <i className="fas fa-comments"></i>Chat en direct
               </button>
-              <button 
+              <button
                 onClick={() => setIsConsultationModalOpen(true)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-2 shadow transition">
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-2 shadow transition"
+              >
                 <i className="fas fa-phone"></i>Planifier un appel
               </button>
               <button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 rounded-lg flex items-center justify-center gap-2 shadow transition">
