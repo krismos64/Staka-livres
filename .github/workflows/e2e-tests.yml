@@ -26,6 +26,7 @@ jobs:
 
       - name: Build and start services
         run: |
+          docker-compose --profile test build --parallel
           docker-compose --profile test up -d db backend frontend-dev
 
       - name: Wait for services to be ready
@@ -51,16 +52,9 @@ jobs:
             exit 1
           fi
           
-          # Debug: Check filesystem structure and vitest availability
-          echo "Checking filesystem structure:"
-          docker-compose exec -T frontend-dev ls -la /app/
-          docker-compose exec -T frontend-dev ls -la /app/../shared/ || true
+          # Quick vitest check
           echo "Checking vitest availability:"
-          docker-compose exec -T frontend-dev npm list vitest || echo "Warning: vitest not in npm list"
-          docker-compose exec -T frontend-dev which npx || echo "Warning: npx not found"
           docker-compose exec -T frontend-dev npx vitest --version || echo "Warning: vitest not accessible via npx"
-          echo "Checking node_modules structure:"
-          docker-compose exec -T frontend-dev ls -la /app/node_modules/.bin/ | grep vitest || echo "Warning: vitest binary not found"
           
           # Run Vitest tests
           docker-compose exec -T frontend-dev npm run test:unit
@@ -89,6 +83,7 @@ jobs:
 
       - name: Build and start services
         run: |
+          docker-compose --profile test build --parallel
           docker-compose --profile test up -d db backend frontend-dev
 
       - name: Wait for services to be ready
