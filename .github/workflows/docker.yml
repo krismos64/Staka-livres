@@ -1,80 +1,17 @@
-name: Docker Build and Push
+name: Docker Build and Deploy
 
 on:
   push:
-    tags:
-      - "v*"
     branches:
       - main
-      - develop
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Docker tag to use"
-        required: false
-        default: "latest"
-      push:
-        description: "Push to registry"
-        required: false
-        default: "false"
-        type: choice
-        options:
-          - "true"
-          - "false"
+  workflow_dispatch: # déclenchement manuel possible
 
 env:
   REGISTRY: ghcr.io
   NAMESPACE: krismos64
 
 jobs:
-  unit-tests:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: all
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Create test environment file
-        run: |
-          cp backend/.env.test backend/.env
-
-      - name: Setup Node.js for frontend tests
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'yarn'
-          cache-dependency-path: frontend/yarn.lock
-
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: yarn install --frozen-lockfile
-
-      - name: Run frontend unit tests
-        working-directory: frontend
-        run: yarn test:unit
-
-      - name: Run Docker health checks
-        run: |
-          docker compose --profile test build --parallel
-          docker compose --profile test up -d
-          timeout 120 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
-          timeout 120 bash -c 'until curl -f http://localhost:3002/health; do sleep 2; done'
-          docker compose down -v
-
-  docker:
+  build-and-push:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -92,25 +29,19 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to Container Registry
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
+      - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/livres-${{ matrix.service }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -118,110 +49,26 @@ jobs:
           context: .
           file: ${{ matrix.service }}/Dockerfile
           platforms: linux/amd64
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  test-docker-compose:
+  deploy:
     runs-on: ubuntu-latest
-    needs: docker
-    if: github.event_name == 'pull_request'
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' && false # ❗️remplace "false" par "true" quand tu veux activer
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Create test environment file
-        run: |
-          cp backend/.env.test backend/.env
-
-      - name: Build images locally
-        run: docker compose build --parallel
-
-      - name: Verify docker-compose configuration
-        run: docker compose config --quiet
-
-      - name: Start services
-        run: docker compose up -d
-
-      - name: Wait for services
-        run: |
-          timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
-          timeout 60 bash -c 'until curl -f http://localhost:3002/health; do sleep 2; done'
-
-      - name: Test backend API
-        run: |
-          curl -f http://localhost:3001/health
-          curl -f http://localhost:3001/
-
-      - name: Test frontend
-        run: |
-          curl -f http://localhost:3002/health
-          curl -I http://localhost:3002/
-
-      - name: Check logs
-        if: failure()
-        run: docker compose logs
-
-      - name: Cleanup
-        if: always()
-        run: docker compose down -v
-
-      - name: Remove test environment file
-        if: always()
-        run: rm -f backend/.env
-
-  release:
-    runs-on: ubuntu-latest
-    needs: docker
-    if: startsWith(github.ref, 'refs/tags/v')
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Extract tag
-        id: tag
-        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-
-      - name: Create Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@v0.1.10
         with:
-          tag_name: ${{ steps.tag.outputs.tag }}
-          release_name: Release ${{ steps.tag.outputs.tag }}
-          body: |
-            ## Docker Images
-
-            This release includes the following Docker images:
-
-            ### Frontend
-            ```bash
-            docker pull ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/livres-frontend:${{ steps.tag.outputs.tag }}
-            ```
-
-            ### Backend
-            ```bash
-            docker pull ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/livres-backend:${{ steps.tag.outputs.tag }}
-            ```
-
-            ### Quick Start
-            ```bash
-            git clone https://github.com/${{ github.repository }}.git
-            cd $(basename ${{ github.repository }})
-            git checkout ${{ steps.tag.outputs.tag }}
-            docker compose up -d
-            ```
-
-            ## What's Changed
-
-            <!-- Add changelog here -->
-
-          draft: false
-          prerelease: ${{ contains(steps.tag.outputs.tag, '-') }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /home/staka-livres
+            docker compose pull
+            docker compose down
+            docker compose up -d --build
