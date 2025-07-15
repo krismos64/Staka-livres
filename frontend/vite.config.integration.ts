@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import { defineConfig } from "vite";
 
-// https://vitejs.dev/config/
+// Configuration Vitest pour les tests d'intégration (inclut TOUT)
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -27,7 +27,6 @@ export default defineConfig({
       "/api": {
         target: "http://backend:3001",
         changeOrigin: true,
-        // Ne pas supprimer /api car le backend l'attend maintenant
       },
     },
   },
@@ -41,17 +40,8 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/test-setup.ts"],
     include: ["**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
-    exclude: [
-      "node_modules", 
-      "dist", 
-      ".idea", 
-      ".git", 
-      ".cache",
-      // Exclure les tests d'intégration qui nécessitent un backend
-      "**/tests/integration/**",
-      "tests/integration/**"
-    ],
-    testTimeout: 10000,
-    hookTimeout: 10000,
+    exclude: ["node_modules", "dist", ".idea", ".git", ".cache"],
+    testTimeout: 30000, // Plus long pour les tests d'intégration
+    hookTimeout: 30000,
   },
 });
