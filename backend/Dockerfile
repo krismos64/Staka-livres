@@ -12,7 +12,8 @@ COPY shared/package*.json ./shared/
 
 # Installer les dépendances
 WORKDIR /app/backend
-RUN npm ci --no-audit --legacy-peer-deps || npm install --no-audit --legacy-peer-deps
+RUN npm ci --legacy-peer-deps --no-optional
+
 
 
 # Copier le code source
