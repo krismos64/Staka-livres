@@ -1,30 +1,36 @@
 # Dockerfile.dev pour le développement frontend avec Vitest
 FROM node:20.19.0-alpine
 
-
 # Install curl and netcat for healthchecks
 RUN apk add --no-cache curl netcat-openbsd
 
 WORKDIR /app
 
-# Étape 1 : copier les fichiers nécessaires à l'install Yarn
-COPY frontend/package.json frontend/yarn.lock ./
-
-# Étape 2 : installer les dépendances
-RUN yarn install --frozen-lockfile
-
-# Étape 3 : copier le reste du code (APRÈS installation pour garder node_modules)
+# Étape 1 : copier TOUS les fichiers frontend d'un coup
 COPY frontend/ .
 
-# Étape 4 : copier les types partagés
+# Étape 2 : copier les types partagés
 COPY shared/ ../shared/
 
-# Réinstaller pour s'assurer que tout est en place
+# Étape 3 : installer les dépendances (une seule fois)
 RUN yarn install --frozen-lockfile
 
 # Vérifier que vite et vitest sont installés
 RUN yarn list vite || echo "⚠️ Vite non trouvé dans yarn list"
 RUN yarn list vitest || echo "⚠️ Vitest non trouvé dans yarn list"
+
+# Debug complet de l'installation
+RUN echo "=== DIAGNOSTIC COMPLET ==="
+RUN echo "PATH: $PATH"
+RUN echo "Working directory: $(pwd)"
+RUN echo "Files in /app:"
+RUN ls -la
+RUN echo "Node modules exists?"
+RUN test -d node_modules && echo "✅ node_modules existe" || echo "❌ node_modules manquant"
+RUN echo "Vite binary exists?"
+RUN test -f node_modules/.bin/vite && echo "✅ vite binary existe" || echo "❌ vite binary manquant"
+RUN echo "All binaries in node_modules/.bin:"
+RUN ls -la node_modules/.bin/ | grep -E "(vite|vitest)" || echo "❌ Aucun binary vite/vitest trouvé"
 
 # Exposer les ports
 EXPOSE 5173 8080
@@ -42,5 +48,5 @@ RUN yarn vite --version || echo "⚠️ Vite introuvable via yarn"
 RUN yarn vitest --version || echo "⚠️ Vitest introuvable via yarn"
 RUN npx vite --version || echo "⚠️ Vite introuvable via npx"
 
-# Dev + healthcheck avec restart automatique
-CMD ["/bin/sh", "-c", "/healthcheck.sh & yarn dev --host 0.0.0.0 --port 5173 || (echo 'Yarn dev failed, restarting...' && sleep 5 && yarn dev --host 0.0.0.0 --port 5173)"]
+# Dev + healthcheck avec restart automatique - utiliser le chemin absolu
+CMD ["/bin/sh", "-c", "/healthcheck.sh & ./node_modules/.bin/vite --host 0.0.0.0 --port 5173 || (echo 'Direct vite failed, trying yarn...' && yarn dev)"]
