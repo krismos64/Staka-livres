@@ -92,9 +92,23 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         
+      - name: Create test environment file
+        run: |
+          cp backend/.env.test backend/.env
+          echo "✅ Copied backend/.env.test to backend/.env for CI"
+          echo "🔍 Verifying .env file exists:"
+          ls -la backend/.env
+          echo "📋 Environment file content (first 3 lines):"
+          head -n 3 backend/.env
+        
       - name: Build images locally
         run: |
           docker compose build --parallel
+          
+      - name: Verify docker-compose configuration
+        run: |
+          docker compose config --quiet
+          echo "✅ Docker Compose configuration is valid"
           
       - name: Start services
         run: |
@@ -124,6 +138,12 @@ jobs:
         if: always()
         run: |
           docker compose down -v
+          
+      - name: Remove test environment file
+        if: always()
+        run: |
+          rm -f backend/.env
+          echo "🗑️ Removed temporary .env file"
           
   release:
     runs-on: ubuntu-latest
