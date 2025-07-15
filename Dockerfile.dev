@@ -37,5 +37,5 @@ RUN ls -la node_modules/.bin | grep vitest || echo "⚠️ Vitest non trouvé da
 RUN yarn vitest --version || echo "⚠️ Vitest introuvable via yarn"
 RUN npx vitest --version || echo "⚠️ Vitest introuvable via npx"
 
-# Dev + healthcheck
-CMD ["/bin/sh", "-c", "/healthcheck.sh & yarn dev"]
+# Dev + healthcheck avec restart automatique
+CMD ["/bin/sh", "-c", "/healthcheck.sh & yarn dev --host 0.0.0.0 --port 5173 || (echo 'Yarn dev failed, restarting...' && sleep 5 && yarn dev --host 0.0.0.0 --port 5173)"]

@@ -34,9 +34,29 @@ jobs:
           echo "Waiting for services to be ready..."
           timeout 120s bash -c 'until curl -f http://localhost:3001/health 2>/dev/null; do sleep 2; done' || true
           echo "Backend is ready"
+          
+          echo "Waiting for frontend-dev container to stabilize..."
+          sleep 15
+          docker-compose ps
+          
+          # Wait for frontend-dev health check to be ready
+          echo "Waiting for frontend-dev health check..."
+          for i in {1..30}; do
+            if docker-compose ps frontend-dev | grep -q "healthy"; then
+              echo "Frontend-dev is healthy on attempt $i"
+              break
+            elif docker-compose ps frontend-dev | grep -q "Up"; then
+              echo "Frontend-dev is running but not healthy yet (attempt $i)"
+              sleep 5
+            else
+              echo "Frontend-dev not running on attempt $i, checking logs..."
+              docker-compose logs --tail=10 frontend-dev
+              sleep 5
+            fi
+          done
+          
           timeout 120s bash -c 'until curl -f http://localhost:8080/ 2>/dev/null; do sleep 2; done' || true
           echo "Frontend-dev health check is ready"
-          docker-compose ps
 
       - name: Check frontend-dev logs
         run: |
