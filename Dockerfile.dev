@@ -13,6 +13,9 @@ COPY frontend/package.json frontend/yarn.lock ./
 # Étape 2 : installer les dépendances
 RUN yarn install --frozen-lockfile
 
+# Vérifier que vitest est installé
+RUN yarn list vitest || echo "⚠️ Vitest non trouvé dans yarn list"
+
 # Étape 3 : copier le reste du code
 COPY frontend/ .
 
@@ -30,8 +33,9 @@ RUN echo '#!/bin/sh' > /healthcheck.sh && \
     chmod +x /healthcheck.sh
 
 # Debug vitest
-RUN npx vitest --version || echo "⚠️ Vitest introuvable"
 RUN ls -la node_modules/.bin | grep vitest || echo "⚠️ Vitest non trouvé dans .bin"
+RUN yarn vitest --version || echo "⚠️ Vitest introuvable via yarn"
+RUN npx vitest --version || echo "⚠️ Vitest introuvable via npx"
 
 # Dev + healthcheck
 CMD ["/bin/sh", "-c", "/healthcheck.sh & yarn dev"]

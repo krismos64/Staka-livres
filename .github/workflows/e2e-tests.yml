@@ -46,18 +46,28 @@ jobs:
       - name: Run unit tests
         run: |
           # Check if container is running
+          echo "Checking container status..."
+          docker-compose ps frontend-dev || echo "Container status check failed"
+          
           if ! docker-compose ps frontend-dev | grep -q "Up"; then
             echo "Error: frontend-dev container is not running"
+            echo "Container logs:"
             docker-compose logs frontend-dev
-            exit 1
+            echo "Restarting container..."
+            docker-compose restart frontend-dev
+            sleep 10
+            if ! docker-compose ps frontend-dev | grep -q "Up"; then
+              echo "Failed to restart container"
+              exit 1
+            fi
           fi
           
           # Quick vitest check
           echo "Checking vitest availability:"
-          docker-compose exec -T frontend-dev npx vitest --version || echo "Warning: vitest not accessible via npx"
+          docker-compose exec -T frontend-dev yarn vitest --version || echo "Warning: vitest not accessible via yarn"
           
           # Run Vitest tests
-          docker-compose exec -T frontend-dev npm run test:unit
+          docker-compose exec -T frontend-dev yarn test:unit
 
       - name: Stop services
         if: always()
