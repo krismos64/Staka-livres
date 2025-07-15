@@ -21,6 +21,7 @@ Backend REST API pour Staka Livres, une plateforme de correction de livres profe
 - **Espace admin 100% opérationnel** (10/10 modules production-ready)
 - **Système de réservation de consultations** avec workflow automatisé et notifications
 - **Système de notifications temps réel** avec génération automatique et polling 15s
+- **Système d'emails centralisé** avec EventBus + 18 templates automatiques (NOUVEAU 2025)
 - **Système de messagerie unifiée** avec threading, pièces jointes et support consultations
 - **Facturation automatique complète** avec génération PDF, AWS S3 et SendGrid
 - **Tests exhaustifs** : 27 fichiers de test (Vitest), couverture 90%+ configurée
@@ -43,12 +44,34 @@ Backend REST API pour Staka Livres, une plateforme de correction de livres profe
 - **Tests** : Couverture complète avec mocks et intégration
 - **Sécurité** : Validation stricte, logs d'audit, conformité RGPD
 
+### 📧 Système d'Emails Centralisé PRODUCTION-READY
+
+**🆕 Architecture événementielle complète remplace l'ancienne approche manuelle :**
+
+- **EventBus** (`src/events/eventBus.ts`) : Émetteur d'événements centralisé
+- **Double notification automatique** : Interface + Email pour chaque événement
+- **18 templates HTML professionnels** : 9 admin + 9 utilisateurs + 2 visiteurs
+- **Queue asynchrone** (`src/queues/emailQueue.ts`) : Performance optimisée
+- **Zero code duplication** : Plus besoin d'appeler `MailerService.sendEmail()` manuellement
+- **Listeners spécialisés** :
+  - `adminNotificationEmailListener.ts` : Notifications admin
+  - `userNotificationEmailListener.ts` : Notifications utilisateurs avec opt-out
+- **Emails visiteurs** : Confirmations automatiques pour contact/échantillons
+- **Tests production validés** : 5+ emails réels envoyés et confirmés
+
+**Usage simple :**
+```typescript
+// Un seul appel - double effet automatique !
+await createAdminNotification("Nouveau paiement", "...", PAYMENT, HAUTE);
+// → 1. Notification interface + 2. Email admin automatique
+```
+
 ### 📖 Système d'Échantillons Gratuits
 
 **Nouveau système d'acquisition clients :**
 
 - **Controller public** : Gestion des demandes d'échantillons
-- **Workflow automatisé** : Validation + notification équipe
+- **Workflow automatisé** : Validation + notification équipe + emails automatiques
 - **Intégration frontend** : Composant `FreeSample.tsx` 
 - **Documentation** : Guide technique complet `FREE_SAMPLE_SYSTEM_GUIDE.md`
 - **Base de données** : Extension modèle avec métadonnées échantillons
@@ -648,8 +671,46 @@ Content-Type: application/json
 - ✅ **Logs structurés** pour monitoring
 - ✅ **Anti-spam** intégré
 
-**Support Email Automatique :**
-Le système intègre automatiquement les messages de contact dans le système de support avec la source 'client-help', permettant aux admins de traiter ces demandes via l'interface de messagerie unifiée.
+**🔄 Workflow automatique complet :**
+1. **Message créé** dans la messagerie admin avec source 'client-help'
+2. **Email automatique visiteur** : Confirmation envoyée avec template `visitor-contact-confirmation.hbs`
+3. **Notification admin automatique** : Alerte créée dans l'interface admin
+4. **Email admin automatique** : Email envoyé à `ADMIN_EMAIL` avec template `admin-message.hbs`
+
+#### **POST /api/public/free-sample - Demande d'échantillon gratuit**
+
+Permet de demander un échantillon gratuit depuis la landing page.
+
+```http
+POST /api/public/free-sample
+Content-Type: application/json
+
+{
+  "nom": "Marie Martin",
+  "email": "marie@example.com",
+  "genre": "Roman",
+  "pages": "150",
+  "details": "Premier roman, besoin d'aide pour améliorer le style"
+}
+
+# Response: 201
+{
+  "success": true,
+  "message": "Demande d'échantillon envoyée avec succès"
+}
+```
+
+**🔄 Workflow automatique complet :**
+1. **Message créé** dans la messagerie admin avec type spécialisé
+2. **Email automatique visiteur** : Confirmation envoyée avec template `visitor-sample-confirmation.hbs`
+3. **Notification admin automatique** : Alerte créée avec détails de la demande
+4. **Email admin automatique** : Email envoyé à `ADMIN_EMAIL` avec template `admin-message.hbs`
+
+**🎯 Avantages centralisés :**
+- **Zero code duplication** : Même logique pour contact et échantillons
+- **Templates cohérents** : Design uniforme pour toutes les communications
+- **Traçabilité complète** : Tous les emails et notifications automatiquement générés
+- **Maintenance facile** : Un seul endroit pour modifier les templates
 
 ## 📡 API Reference
 
@@ -1212,11 +1273,41 @@ enum InvoiceStatus {
 - **`uploadInvoicePdf()`** : Upload sur AWS S3 avec gestion d'erreurs
 - **`processInvoiceForCommande()`** : Processus complet de facturation
 
-### MailerService
+### MailerService - Email Centralisé
 
+**🆕 Architecture événementielle complète** remplace l'ancienne approche manuelle :
+
+**Ancien système ❌ :**
+```typescript
+// Code dupliqué dans chaque contrôleur
+await MailerService.sendEmail({
+  to: "admin@example.com",
+  subject: "Nouveau paiement",
+  template: "admin-payment.hbs",
+  variables: { amount }
+});
+```
+
+**Nouveau système ✅ :**
+```typescript
+// Un seul appel - email automatique !
+await createAdminNotification(
+  "Nouveau paiement reçu",
+  `Paiement de ${amount}€ reçu`,
+  NotificationType.PAYMENT,
+  NotificationPriority.HAUTE
+);
+// → Interface + Email automatique avec template approprié
+```
+
+**Fonctionnalités :**
 - **SendGrid** intégré pour l'envoi d'emails
-- Templates HTML responsives
-- Gestion des erreurs et fallback
+- **18 templates HTML professionnels** avec Handlebars
+- **Queue asynchrone** pour performance optimale
+- **Gestion d'erreurs complète** avec retry automatique
+- **Templates centralisés** pour maintenance facile
+- **Opt-out utilisateurs** via préférences JSON
+- **Confirmation visiteurs** pour contact/échantillons
 
 ### Routes factures client (`/invoices`) - ✅ PRODUCTION READY
 
@@ -1640,10 +1731,49 @@ Authorization: Bearer admin-token
 }
 ```
 
-### 🔔 **Module AdminNotifications - Système Temps Réel** ✅ NOUVEAU 2025
+### 🔔 **Module Notifications Email Centralisé** ✅ PRODUCTION-READY 2025
+
+**🆕 Architecture Événementielle Complète** avec système d'emails automatiques centralisé
+
+#### **📧 Système d'emails automatiques**
+
+**Architecture EventBus + Listeners + Queue :**
+- **EventBus** (`src/events/eventBus.ts`) : Émetteur d'événements Node.js
+- **Listeners** : 
+  - `adminNotificationEmailListener.ts` : Écoute `admin.notification.created`
+  - `userNotificationEmailListener.ts` : Écoute `user.notification.created`
+- **Queue** (`src/queues/emailQueue.ts`) : Traitement asynchrone des emails
+- **Templates** (`src/emails/templates/*.hbs`) : 18 templates HTML professionnels
+
+**🎯 Zero code duplication :** Tous les appels à `createAdminNotification()` ou `createUserNotification()` génèrent automatiquement :
+1. Une notification dans l'interface (clochette)
+2. Un email envoyé automatiquement
+
+#### **📬 Templates disponibles**
+
+**Admin (9 templates) :**
+- `admin-message.hbs` : Nouveau message client/visiteur
+- `admin-payment.hbs` : Paiement reçu
+- `admin-order.hbs` : Nouvelle commande
+- `admin-system-alert.hbs` : Alerte système
+- `admin-error.hbs` : Erreur critique
+- `admin-warning.hbs` : Avertissement
+- `admin-success.hbs` : Succès opération
+- `admin-info.hbs` : Information générale
+- `admin-consultation.hbs` : Nouvelle consultation
+
+**Utilisateurs (9 templates) :**
+- `message-user.hbs` : Message reçu
+- `payment-user.hbs` : Confirmation paiement
+- `order-user.hbs` : Commande traitée
+- Etc. (même logique que admin)
+
+**Visiteurs (2 templates) :**
+- `visitor-contact-confirmation.hbs` : Confirmation contact
+- `visitor-sample-confirmation.hbs` : Confirmation échantillon gratuit
 
 ```http
-# Liste des notifications avec pagination
+# Interface notifications (API REST classique)
 GET /notifications?page=1&limit=20&unread=false
 Authorization: Bearer token
 
@@ -1662,13 +1792,55 @@ Authorization: Bearer token
 # Supprimer une notification
 DELETE /notifications/:id
 Authorization: Bearer token
-
-# Génération automatique pour événements système
-- Nouveaux messages reçus
-- Paiements réussis/échoués
-- Nouvelles inscriptions
-- Événements système importants
 ```
+
+#### **🔧 Usage développeur**
+
+```typescript
+// Dans un contrôleur - l'email est automatique !
+await createAdminNotification(
+  "Nouveau paiement reçu",
+  `${customerName} a payé ${amount}€`,
+  NotificationType.PAYMENT,
+  NotificationPriority.HAUTE,
+  "/admin/invoices",
+  { customerName, amount, commandeTitle }
+);
+// → Génère automatiquement :
+// 1. Notification interface admin
+// 2. Email à ADMIN_EMAIL avec template admin-payment.hbs
+
+// Pour les utilisateurs
+await createUserNotification(
+  userId,
+  "Commande traitée",
+  "Votre commande a été traitée avec succès",
+  NotificationType.ORDER,
+  NotificationPriority.NORMALE,
+  "/dashboard/orders"
+);
+// → Génère automatiquement :
+// 1. Notification interface utilisateur
+// 2. Email avec template order-user.hbs (si opt-in)
+```
+
+#### **⚙️ Préférences utilisateur**
+
+```json
+// Champ preferences dans User
+{
+  "emailNotifications": true  // Opt-out possible
+}
+```
+
+#### **🚀 Avantages**
+
+- **DRY** : Plus de duplication `MailerService.sendEmail()` dans les contrôleurs
+- **Zéro oubli** : Tout appel génère automatiquement un email
+- **Templates centralisés** : Design cohérent, maintenance facile
+- **Extensible** : Ajouter un type = ajouter un template
+- **Performance** : Queue asynchrone, pas de blocage
+- **Robuste** : Gestion d'erreurs, retry automatique
 
 ### Routes admin principales (`/admin`) - **65+ ENDPOINTS DISPONIBLES**
 
@@ -1918,8 +2090,15 @@ PORT=3001
 STRIPE_SECRET_KEY=sk_test_51...
 STRIPE_WEBHOOK_SECRET=whsec_...
 
-# Optionnel
-SENDGRID_API_KEY="your_sendgrid_key"
+# Emails et notifications (NOUVEAU SYSTÈME CENTRALISÉ)
+SENDGRID_API_KEY="SG.xxx..."                    # Clé API SendGrid
+FROM_EMAIL="noreply@staka-livres.com"           # Email expéditeur par défaut
+FROM_NAME="Staka Livres"                        # Nom expéditeur
+SUPPORT_EMAIL="support@staka-livres.fr"         # Email support client
+ADMIN_EMAIL="admin@staka-livres.fr"             # Email notifications admin centralisées
+APP_URL="http://localhost:3001"                 # URL frontend pour liens emails
+
+# AWS S3 (optionnel)
 AWS_ACCESS_KEY_ID="your_aws_key"
 AWS_SECRET_ACCESS_KEY="your_aws_secret"
 AWS_REGION="eu-west-3"

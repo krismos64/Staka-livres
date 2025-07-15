@@ -187,12 +187,16 @@ try {
    - URL PDF S3 pour téléchargement
    - Relations avec `Commande` et `User`
 
-4. **Email SendGrid** : Notification automatique
+4. **🆕 Email via Système Centralisé** : Notification automatique modernisée (JUILLET 2025)
 
-   - Template HTML professionnel
-   - PDF en pièce jointe
-   - Personnalisation client
-   - Gestion d'erreurs emailing
+   - **Double notification automatique** : Interface + Email
+   - **Templates HTML professionnels** : `admin-payment.hbs` + email facture client
+   - **EventBus intégré** : Émission `admin.notification.created` + `user.notification.created`
+   - **Queue asynchrone** : Traitement emails sans blocage webhook
+   - **PDF en pièce jointe** : Intégration avec facturation
+   - **Opt-out utilisateur** : Respect des préférences email
+   - **Gestion d'erreurs** : Retry automatique et fallback
+   - **Zero code duplication** : Plus d'appels `MailerService.sendEmail()` manuels
 
 5. **Robustesse** : Le webhook retourne toujours 200 à Stripe même si la facturation échoue
 
@@ -291,9 +295,12 @@ AWS_SECRET_ACCESS_KEY=...
 AWS_REGION=eu-west-3
 S3_BUCKET_NAME=staka-invoices
 
-# SendGrid pour emails (optionnel)
+# SendGrid pour emails (requis pour système centralisé)
 SENDGRID_API_KEY=SG...
-SENDGRID_FROM_EMAIL=factures@staka-livres.com
+FROM_EMAIL=noreply@staka-livres.com
+FROM_NAME="Staka Livres"
+ADMIN_EMAIL=admin@staka-livres.fr
+APP_URL=https://votre-domaine.com
 
 # Base de données
 DATABASE_URL=mysql://...
@@ -367,9 +374,14 @@ stripe logs tail
    - Génération PDF professionnel (InvoiceService)
    - Upload sécurisé AWS S3
    - Création enregistrement Invoice en base
-   - Envoi email avec PDF joint (SendGrid)
+   - **🆕 Système d'emails centralisé** :
+     - Émission automatique `admin.notification.created` (paiement reçu)
+     - Émission automatique `user.notification.created` (facture générée)
+     - Templates HTML professionnels (`admin-payment.hbs`, `payment-user.hbs`)
+     - Queue asynchrone pour performance optimale
+     - Double notification : Interface + Email
    - Logging détaillé de chaque étape
-8. **Client** → Redirection vers page succès + email facture reçu
+8. **Client** → Redirection vers page succès + email facture reçu + notification interface
 
 ## 🔍 Monitoring et Logs Production
 
@@ -392,7 +404,12 @@ stripe logs tail
 📤 [Invoice] Upload vers S3: invoices/INV-5678-1704117600000.pdf
 ☁️ [Invoice] Fichier uploadé: https://staka-invoices.s3.eu-west-3.amazonaws.com/...
 💾 [Invoice] Facture créée en base: inv-9876
-📧 [Mailer] Envoi email à jean@example.com avec PDF joint
+🆕 [EventBus] Émission admin.notification.created: Paiement de 468€ reçu
+🆕 [EventBus] Émission user.notification.created: Facture générée pour Jean Dupont
+🆕 [EmailQueue] Email admin queueé avec template admin-payment.hbs
+🆕 [EmailQueue] Email utilisateur queueé avec template payment-user.hbs
+📧 [Mailer] Envoi email admin: admin@staka-livres.fr (paiement reçu)
+📧 [Mailer] Envoi email client: jean@example.com (facture avec PDF joint)
 ✅ [Stripe Webhook] Facture générée et envoyée avec succès
 ✅ [Stripe Webhook] Événement checkout.session.completed traité avec succès
 ```
@@ -474,6 +491,121 @@ npm test -- tests/unit/webhookWithInvoice.test.ts
 # ✅ Performance totale < 1 seconde
 # ✅ Logs structurés pour monitoring
 ```
+
+## 📧 **Intégration Système d'Emails Centralisé - NOUVEAU JUILLET 2025**
+
+### **🎯 Architecture Webhook + Emails**
+
+Le système d'emails centralisé est automatiquement intégré aux webhooks Stripe pour **zéro code duplication** :
+
+```typescript
+// Dans src/routes/payments/webhook.ts - checkout.session.completed
+try {
+  // ... Traitement paiement et facturation ...
+
+  // 🆕 Génération automatique des notifications avec emails
+  await createAdminNotification(
+    "Nouveau paiement reçu",
+    `Paiement de ${(session.amount_total / 100).toFixed(2)}€ reçu de ${user.prenom} ${user.nom}`,
+    NotificationType.PAYMENT,
+    NotificationPriority.HAUTE,
+    "/admin/invoices",
+    {
+      amount: session.amount_total / 100,
+      customerName: `${user.prenom} ${user.nom}`,
+      commandeTitle: updatedCommande.titre,
+      invoiceNumber: invoice?.number
+    }
+  );
+
+  await createUserNotification(
+    userId,
+    "Paiement confirmé - Facture générée",
+    `Votre paiement de ${(session.amount_total / 100).toFixed(2)}€ a été confirmé. Votre facture est disponible.`,
+    NotificationType.PAYMENT,
+    NotificationPriority.NORMALE,
+    "/dashboard/invoices"
+  );
+
+} catch (error) {
+  console.error("Erreur notifications webhook:", error);
+  // Webhook continue même si notifications échouent
+}
+```
+
+### **🔄 Workflow Automatique Webhook**
+
+1. **Paiement Stripe confirmé** → Webhook `checkout.session.completed`
+2. **Commande mise à jour** → `paymentStatus: "paid"` + `statut: "EN_COURS"`
+3. **Facturation automatique** → PDF + S3 + Base de données
+4. **🆕 EventBus automatique** → Émission de 2 événements :
+   - `admin.notification.created` : Notification équipe avec détails paiement
+   - `user.notification.created` : Notification client avec confirmation
+5. **🆕 Listeners automatiques** → Traitement asynchrone des emails :
+   - **Admin** : Template `admin-payment.hbs` envoyé à `ADMIN_EMAIL`
+   - **Client** : Template `payment-user.hbs` envoyé à l'utilisateur (si opt-in)
+6. **🆕 Interface temps réel** → Notifications dans l'admin + dashboard client
+
+### **📧 Templates Emails Webhook**
+
+**Admin (`admin-payment.hbs`) :**
+```html
+<h2>Nouveau paiement reçu - {{amount}}€</h2>
+<p>Paiement confirmé pour la commande <strong>{{commandeTitle}}</strong></p>
+<ul>
+  <li>Client : {{customerName}}</li>
+  <li>Montant : {{amount}}€</li>
+  <li>Facture : {{invoiceNumber}}</li>
+</ul>
+<a href="{{siteUrl}}/admin/invoices">Voir dans l'admin</a>
+```
+
+**Client (`payment-user.hbs`) :**
+```html
+<h2>Paiement confirmé ✅</h2>
+<p>Bonjour {{firstName}},</p>
+<p>Votre paiement de <strong>{{amount}}€</strong> a été confirmé avec succès.</p>
+<p>Votre facture est disponible dans votre espace client.</p>
+<a href="{{siteUrl}}/dashboard/invoices">Accéder à mes factures</a>
+```
+
+### **🧪 Tests Système d'Emails + Webhook**
+
+```bash
+# Tests intégration webhook + emails
+npm test -- tests/unit/webhookWithEmailNotifications.test.ts
+
+# Vérifications automatisées :
+# ✅ Webhook génère notifications admin et client
+# ✅ EventBus émet les bons événements avec métadonnées
+# ✅ Templates correctement sélectionnés selon le type
+# ✅ Queue emails fonctionne avec retry automatique
+# ✅ Opt-out utilisateur respecté pour emails client
+# ✅ Webhook continue même si emails échouent
+# ✅ Performance totale webhook + emails < 1.5 seconde
+```
+
+### **⚙️ Configuration Emails Webhook**
+
+**Variables requises (ajout aux existantes) :**
+```env
+# Système d'emails centralisé
+FROM_EMAIL="noreply@staka-livres.com"
+FROM_NAME="Staka Livres"
+ADMIN_EMAIL="admin@staka-livres.fr"     # Reçoit notifications paiements
+APP_URL="https://votre-domaine.com"     # Pour liens dans emails
+```
+
+### **🎯 Avantages Intégration**
+
+- **🆕 Zero code duplication** : Plus d'appels `MailerService.sendEmail()` manuels
+- **🆕 Double notification** : Interface + Email automatiques
+- **🆕 Templates centralisés** : Design cohérent avec autres emails
+- **🆕 Performance optimisée** : Queue asynchrone, pas de blocage webhook
+- **🆕 Gestion d'erreurs** : Retry automatique, webhook continue si emails échouent
+- **🆕 Monitoring unifié** : Logs structurés pour emails + webhook
+- **🆕 Opt-out respecté** : Préférences utilisateur honorées
+- **🆕 Extensible** : Facile d'ajouter nouveaux types de notifications
 
 ## 🚨 Nettoyage Architecture URGENT - Action Requise
 
@@ -653,9 +785,10 @@ app.use("/payments", paymentsRoutes); // Sans route /webhook en conflit
 - ✅ **Sécurité cryptographique** : Vérification signature Stripe
 - ✅ **Événements essentiels** : checkout.session.completed + payment_intent.payment_failed
 - ✅ **Facturation automatique** : PDF + S3 + email + base de données
-- ✅ **Robustesse** : Webhook continue même si facturation échoue
-- ✅ **Logging structuré** : Monitoring et debugging complets
-- ✅ **Tests d'intégration** : Validation complète du processus
+- ✅ **🆕 Système d'emails centralisé** : EventBus + Templates + Queue asynchrone (JUILLET 2025)
+- ✅ **Robustesse** : Webhook continue même si facturation ou emails échouent
+- ✅ **Logging structuré** : Monitoring webhook + emails + facturation complets
+- ✅ **Tests d'intégration** : Validation complète du processus + emails
 
 ### **✅ Action Critique Terminée**
 

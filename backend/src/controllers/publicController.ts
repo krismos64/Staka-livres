@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { MailerService } from "../utils/mailer";
+import { emailQueue } from "../queues/emailQueue";
 import { PrismaClient, Role, MessageType, MessageStatut, FileType } from "@prisma/client";
 import { notifyAdminNewMessage } from "./notificationsController";
 import { AuditService, AUDIT_ACTIONS } from "../services/auditService";
@@ -165,14 +166,14 @@ Staka Livres - Système de contact automatique
     try {
       const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || "http://localhost:3001";
       
-      await MailerService.sendEmail({
+      await emailQueue.add("sendVisitorContactConfirmation", {
         to: cleanData.email,
-        subject: "Nous avons bien reçu votre message - Staka Livres",
         template: "visitor-contact-confirmation.hbs",
         variables: {
           name: cleanData.nom,
           supportDelay: "24 h",
-          siteUrl: appUrl
+          siteUrl: appUrl,
+          subject: "Nous avons bien reçu votre message - Staka Livres"
         }
       });
 
@@ -471,14 +472,14 @@ Staka Livres - Système d'échantillons gratuits automatique
     try {
       const appUrl = process.env.APP_URL || process.env.FRONTEND_URL || "http://localhost:3001";
       
-      await MailerService.sendEmail({
+      await emailQueue.add("sendVisitorSampleConfirmation", {
         to: cleanData.email,
-        subject: "Demande d'échantillon bien reçue - Staka Livres",
         template: "visitor-sample-confirmation.hbs",
         variables: {
           name: cleanData.nom,
           supportDelay: "48 h",
-          siteUrl: appUrl
+          siteUrl: appUrl,
+          subject: "Demande d'échantillon bien reçue - Staka Livres"
         }
       });
 

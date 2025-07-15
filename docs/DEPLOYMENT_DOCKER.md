@@ -154,8 +154,15 @@ PORT=3001
 STRIPE_SECRET_KEY="sk_live_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."
 
-# Services externes (optionnels)
+# Système d'emails centralisé (NOUVEAU 2025)
 SENDGRID_API_KEY="SG...."
+FROM_EMAIL="noreply@staka-livres.com"
+FROM_NAME="Staka Livres"
+ADMIN_EMAIL="admin@staka-livres.fr"
+SUPPORT_EMAIL="support@staka-livres.fr"
+APP_URL="https://yourdomain.com"
+
+# Services externes (optionnels)
 AWS_ACCESS_KEY_ID="AKIA..."
 AWS_SECRET_ACCESS_KEY="..."
 AWS_REGION="eu-west-3"
@@ -284,6 +291,46 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 ```
 
+### 📧 Configuration Système d'Emails Centralisé
+
+**Initialisation EventBus et Listeners**
+
+```typescript
+// src/app.ts - Chargement automatique des listeners
+import "./listeners/adminNotificationEmailListener";
+import "./listeners/userNotificationEmailListener";
+
+// src/events/eventBus.ts - EventBus global
+import { EventEmitter } from "events";
+export const eventBus = new EventEmitter();
+eventBus.setMaxListeners(50); // Augmenter pour production
+```
+
+**Configuration Queue Emails (Optionnel)**
+
+```yaml
+# docker-compose.prod.yml - Service Redis pour queue emails
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  backend:
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  redis_data:
+```
+
 ### Surveillance des Ressources
 
 ```bash
@@ -344,8 +391,38 @@ const logger = winston.createLogger({
 docker compose logs -f backend | grep ERROR
 docker compose logs -f frontend | grep nginx
 
+# Logs système d'emails centralisé
+docker compose logs -f backend | grep "\[EventBus\]"
+docker compose logs -f backend | grep "\[EmailQueue\]"
+docker compose logs -f backend | grep "\[EmailListener\]"
+
 # Export logs pour analyse
 docker compose logs --no-color > staka-logs-$(date +%Y%m%d).log
+```
+
+**Monitoring Emails Spécifique**
+
+```bash
+# Vérification EventBus en temps réel
+docker compose exec backend node -e "
+  const { eventBus } = require('./dist/events/eventBus');
+  console.log('EventBus listeners:', eventBus.eventNames());
+  console.log('Max listeners:', eventBus.getMaxListeners());
+"
+
+# Vérification templates emails
+docker compose exec backend ls -la src/emails/templates/
+
+# Test envoi email (dev)
+docker compose exec backend node -e "
+  const { MailerService } = require('./dist/services/MailerService');
+  MailerService.sendEmail({
+    to: 'test@example.com',
+    subject: 'Test Docker',
+    html: '<h1>Test email système</h1>'
+  }).then(() => console.log('✅ Email envoyé'))
+    .catch(err => console.error('❌ Erreur:', err));
+"
 ```
 
 ### Métriques de Performance
@@ -514,6 +591,51 @@ docker compose up
 docker --platform linux/amd64 compose up frontend
 ```
 
+#### 5. Emails Ne S'Envoient Pas (NOUVEAU 2025)
+
+**Symptôme :**
+
+```
+[EmailQueue] ❌ Erreur envoi email: Invalid API key
+[EventBus] ⚠️ Listener adminNotificationEmailListener failed
+```
+
+**Solutions :**
+
+```bash
+# Vérifier configuration SendGrid
+docker compose exec backend env | grep SENDGRID
+docker compose exec backend env | grep FROM_EMAIL
+docker compose exec backend env | grep ADMIN_EMAIL
+
+# Tester configuration email
+docker compose exec backend node -e "
+  console.log('SENDGRID_API_KEY:', !!process.env.SENDGRID_API_KEY);
+  console.log('FROM_EMAIL:', process.env.FROM_EMAIL);
+  console.log('ADMIN_EMAIL:', process.env.ADMIN_EMAIL);
+"
+
+# Vérifier EventBus listeners
+docker compose exec backend node -e "
+  const { eventBus } = require('./dist/events/eventBus');
+  console.log('Event listeners:', eventBus.eventNames());
+"
+
+# Tester émission événement
+docker compose exec backend node -e "
+  const { eventBus } = require('./dist/events/eventBus');
+  eventBus.emit('admin.notification.created', {
+    title: 'Test Docker',
+    message: 'Test depuis container',
+    type: 'INFO'
+  });
+  console.log('✅ Événement émis');
+"
+
+# Vérifier templates disponibles
+docker compose exec backend find src/emails/templates/ -name "*.hbs" -type f
+```
+
 ### Logs de Debug
 
 ```bash
@@ -611,6 +733,19 @@ docker buildx build \
 - [ ] Secrets Docker utilisés
 - [ ] Network isolation activée
 - [ ] Images scannées pour vulnérabilités
+
+#### 📧 Checklist Système d'Emails Centralisé
+
+- [ ] **SendGrid configuré** : API key valide et domaine vérifié
+- [ ] **Variables email** : FROM_EMAIL, ADMIN_EMAIL, SUPPORT_EMAIL définies
+- [ ] **Templates présents** : 18 fichiers .hbs dans src/emails/templates/
+- [ ] **EventBus actif** : Listeners chargés automatiquement au démarrage
+- [ ] **Queue fonctionnelle** : Redis configuré si mode queue asynchrone
+- [ ] **Tests envoi** : Email test envoyé et reçu avec succès
+- [ ] **Monitoring emails** : Logs EventBus/EmailQueue surveillés
+- [ ] **Gestion d'erreurs** : Retry automatique et fallback configurés
+- [ ] **Performance** : Queue asynchrone pour éviter blocage API
+- [ ] **Opt-out utilisateur** : Préférences email respectées
 
 ---
 

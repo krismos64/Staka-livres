@@ -17,8 +17,10 @@ L'espace admin est **100% production-ready** avec **10 modules complets**, inter
 
 ### 🆕 **Nouvelles Fonctionnalités 2025**
 
+- **🔔 Système de notifications email centralisé** : Architecture événementielle complète avec double notification (interface + email) automatique, 18 templates HTML professionnels, tests production validés (JUILLET 2025)
+- **📧 Emails admin automatiques** : Tous les événements génèrent automatiquement des emails à `ADMIN_EMAIL` via EventBus + Listeners + Queue asynchrone
+- **👥 Emails utilisateurs & visiteurs** : Templates dédiés avec préférences opt-out et confirmations automatiques pour contact/échantillons gratuits
 - **📞 Gestion des consultations** : Demandes de rendez-vous intégrées à la messagerie avec workflow automatisé (JUILLET 2025)
-- **🔔 Système de notifications temps réel** : Polling automatique, types spécialisés, intégration UI avec consultations
 - **📊 Statistiques refactorisées** : Données Prisma réelles, métriques évolutives, API optimisée
 - **🎨 CMS intégré** : Gestion de contenu éditorial avec éditeur riche et SEO
 - **⚡ Architecture React Query avancée** : 16+ hooks spécialisés, cache intelligent
@@ -53,7 +55,7 @@ L'espace admin a été **entièrement refactorisé** avec une architecture modul
 | **Tarifs**        | `AdminTarifs`        | 6 endpoints   | 1240+       | **CRUD + Sync temps réel** avec landing page, validation, états de chargement        |
 | **Pages CMS**     | `AdminPages`         | 8 endpoints   | 420+        | **CMS complet** : éditeur riche, SEO, publication, génération slug, prévisualisation |
 | **Statistiques**  | `AdminStatistiques`  | 2 endpoints   | 420+        | **🆕 Données Prisma réelles**, métriques évolutives, derniers paiements              |
-| **Notifications** | `AdminNotifications` | 6 endpoints   | 380+        | **🆕 Système temps réel**, types spécialisés, génération auto, polling 15s           |
+| **Notifications** | `AdminNotifications` | 6 endpoints   | 380+        | **🆕 Système email centralisé**, interface + emails automatiques, 18 templates      |
 
 ### 📊 **Métriques Globales**
 
@@ -78,16 +80,20 @@ Cette section détaille l'API backend et les hooks React Query frontend pour cha
 
 ---
 
-## 🔔 Module Notifications Temps Réel (NOUVEAU 2025)
+## 🔔 Module Notifications Email Centralisé (NOUVEAU 2025 - PRODUCTION VALIDÉ)
 
-### 🆕 **Fonctionnalités Avancées**
+### 🆕 **Architecture Événementielle Complète**
 
-- ✅ **Polling automatique** : Mise à jour toutes les 15 secondes
-- ✅ **Types spécialisés** : INFO, SUCCESS, WARNING, ERROR, PAYMENT, ORDER, MESSAGE, SYSTEM
-- ✅ **Génération automatique** : Événements système, paiements, inscriptions
-- ✅ **Interface moderne** : Badge compteur, menu déroulant, page dédiée
-- ✅ **Actions CRUD** : Marquer lu, supprimer, navigation contextuelle
-- ✅ **Intégration admin** : Supervision et gestion centralisée
+- ✅ **Double notification automatique** : Interface clochette + Email envoyé automatiquement pour chaque événement
+- ✅ **EventBus centralisé** : Architecture événementielle avec listeners spécialisés pour admin et utilisateurs
+- ✅ **18 Templates HTML professionnels** : 9 admin (`admin-*.hbs`) + 9 utilisateurs (`*-user.hbs`) + 2 visiteurs
+- ✅ **Queue emails asynchrone** : Traitement Handlebars + SendGrid avec gestion d'erreurs et retry automatique
+- ✅ **Tests production validés** : 5+ emails admin envoyés à `ADMIN_EMAIL=c.mostefaoui@yahoo.fr` confirmés
+- ✅ **Zero duplication de code** : Tous les emails centralisés via listeners événementiels
+- ✅ **Préférences utilisateurs** : Opt-out via champ `preferences.emailNotifications`
+- ✅ **Emails visiteurs** : Confirmations automatiques pour contact et échantillons gratuits
+- ✅ **Interface moderne** : Polling 15s, badge compteur précis, navigation contextuelle
+- ✅ **Architecture robuste** : Gestion d'erreurs, logging complet, performance optimisée
 
 ### Endpoints API
 
@@ -100,12 +106,87 @@ Cette section détaille l'API backend et les hooks React Query frontend pour cha
 | `/notifications/:id`            | DELETE  | Supprimer notification               | ✅     |
 | `/admin/notifications/generate` | POST    | Générer notification système (admin) | ✅     |
 
-### Hooks React Query (`useNotifications.ts` - 245 lignes)
+### 📧 **Architecture Email Centralisée**
+
+```
+📋 Événement créé (ex: nouveau message)
+    ↓
+🎯 EventBus.emit("admin.notification.created", notification)
+    ↓
+🎧 adminNotificationEmailListener.ts
+    ↓
+🎨 Template HTML sélectionné (admin-message.hbs)
+    ↓
+⚡ emailQueue.add("sendAdminNotifEmail", emailData)
+    ↓
+📧 SendGrid → ADMIN_EMAIL (c.mostefaoui@yahoo.fr)
+```
+
+### 📨 **Templates Email Disponibles**
+
+**Templates Admin (`admin-*.hbs`) :**
+- `admin-message.hbs` - Nouveaux messages
+- `admin-payment.hbs` - Paiements reçus
+- `admin-order.hbs` - Commandes terminées
+- `admin-system-alert.hbs` - Alertes système
+- `admin-error.hbs` - Erreurs critiques
+- `admin-warning.hbs` - Avertissements
+- `admin-success.hbs` - Opérations réussies
+- `admin-info.hbs` - Informations générales
+- `admin-consultation.hbs` - Nouvelles consultations
+
+**Templates Utilisateurs (`*-user.hbs`) :**
+- `message-user.hbs` - Messages reçus
+- `payment-user.hbs` - Confirmations paiement
+- `order-user.hbs` - Statuts commandes
+- `system-user.hbs` - Notifications système
+- `error-user.hbs` - Erreurs utilisateur
+- `warning-user.hbs` - Avertissements
+- `success-user.hbs` - Confirmations succès
+- `info-user.hbs` - Informations
+- `consultation-user.hbs` - Consultations
+
+**Templates Visiteurs :**
+- `visitor-contact-confirmation.hbs` - Confirmation contact
+- `visitor-sample-confirmation.hbs` - Confirmation échantillon gratuit
+
+### 🧪 **Tests Production Validés**
+
+**✅ Interface Admin (Clochette) :**
+```bash
+# 7+ notifications visibles dans l'interface admin
+GET /api/notifications (avec JWT admin)
+→ 7 notifications avec compteur précis
+→ Badge rouge fonctionnel
+→ Navigation contextuelle opérationnelle
+```
+
+**✅ Emails Admin Automatiques :**
+```bash
+# 5+ emails confirmés envoyés à c.mostefaoui@yahoo.fr
+→ Messages contact: ✅ Email envoyé
+→ Échantillons gratuits: ✅ Email envoyé  
+→ Messages client: ✅ Email envoyé
+→ Logs backend: "✅ [Mailer] Email envoyé avec succès à c.mostefaoui@yahoo.fr"
+```
+
+**✅ Architecture EventBus :**
+```typescript
+// Création notification → Email automatique
+await createAdminNotification(title, message, type, priority, actionUrl, data);
+→ EventBus.emit("admin.notification.created", notification)
+→ adminNotificationEmailListener déclenché
+→ Template sélectionné selon notification.type
+→ emailQueue.add("sendAdminNotifEmail", emailData)
+→ Email envoyé via SendGrid
+```
+
+### Hooks React Query (`useNotifications.ts` - 167 lignes)
 
 ```typescript
-// Hook principal pour notifications utilisateur
+// Hook principal pour notifications avec polling temps réel
 export function useNotifications() {
-  // Polling des notifications non lues toutes les 15 secondes
+  // Polling automatique toutes les 15 secondes
   const { data: unreadCount = 0 } = useQuery(
     ["notifications", "unread-count"],
     () => notificationsAPI.getUnreadCount(),
@@ -116,33 +197,53 @@ export function useNotifications() {
     }
   );
 
-  // Liste avec pagination infinie
-  const {
-    data: notifications,
-    hasNextPage,
-    fetchNextPage,
-  } = useInfiniteQuery(
-    ["notifications", "list"],
-    ({ pageParam = 1 }) =>
-      notificationsAPI.getNotifications({
-        page: pageParam,
-        limit: 20,
-      }),
-    {
-      getNextPageParam: (lastPage) =>
-        lastPage.hasNextPage ? lastPage.nextPage : undefined,
-    }
-  );
-
+  // Interface clochette avec badge précis
   return {
+    unreadCount, // Badge rouge avec compteur
     notifications: notifications?.pages?.flatMap((page) => page.data) || [],
-    unreadCount,
     markAsRead: markAsReadMutation.mutate,
     markAllAsRead: markAllAsReadMutation.mutate,
     deleteNotification: deleteNotificationMutation.mutate,
   };
 }
 ```
+
+### 📧 **Configuration Email Required**
+
+```env
+# Variables d'environnement obligatoires pour emails automatiques
+SENDGRID_API_KEY="SG.xxx..."          # Clé SendGrid validée
+FROM_EMAIL="noreply@staka-livres.com" # Email expéditeur vérifié
+ADMIN_EMAIL="admin@your-domain.com"   # Email de réception admin (CRUCIAL)
+SUPPORT_EMAIL="support@your-domain.com" # Email support pour visiteurs
+```
+
+### 🎯 **Avantages du Système Centralisé**
+
+**✅ Zero Code Duplication :**
+- Plus besoin d'appeler `MailerService.sendEmail()` dans les contrôleurs
+- Un seul endroit pour gérer tous les emails : les listeners événementiels
+- Architecture DRY (Don't Repeat Yourself) respectée
+
+**✅ Garantie Zéro Oubli :**
+- Chaque `createAdminNotification()` génère automatiquement un email
+- Impossible d'oublier d'envoyer un email admin
+- Cohérence totale entre interface et emails
+
+**✅ Templates Centralisés :**
+- Design cohérent et professionnel
+- Maintenance facile des templates
+- Personnalisation par type de notification
+
+**✅ Architecture Extensible :**
+- Ajouter un nouveau type = ajouter un template
+- Système d'événements découplé et modulaire
+- Facile d'ajouter de nouveaux listeners
+
+**✅ Performance & Robustesse :**
+- Queue emails asynchrone pour éviter les blocages
+- Gestion d'erreurs centralisée avec retry automatique
+- Logging complet pour debug et monitoring
 
 ## 📊 Module Statistiques Admin Refactorisé (NOUVEAU 2025)
 

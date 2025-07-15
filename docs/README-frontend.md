@@ -13,11 +13,12 @@
 
 **✨ Version Juillet 2025 - État actuel :**
 
-Architecture frontend complète et **production-ready** avec React 18, TypeScript, Tailwind CSS et React Query. Le frontend comprend une **landing page marketing optimisée**, une **application dashboard fonctionnelle**, un **espace d'administration moderne** avec **intégration backend opérationnelle**, un **système de notifications temps réel** et un **système de réservation de consultations**.
+Architecture frontend complète et **production-ready** avec React 18, TypeScript, Tailwind CSS et React Query. Le frontend comprend une **landing page marketing optimisée**, une **application dashboard fonctionnelle**, un **espace d'administration moderne** avec **intégration backend opérationnelle**, un **système de notifications temps réel**, un **système d'emails centralisé automatique** et un **système de réservation de consultations**.
 
 ### 🆕 **Nouvelles Fonctionnalités Juillet 2025**
 
 - **🔑 Système de réinitialisation de mot de passe** avec interface RGPD-compliant
+- **📧 Système d'emails centralisé** avec EventBus backend et 18 templates automatiques
 - **📖 Système d'échantillons gratuits** pour acquisition clients
 - **📞 Système de réservation de consultations** avec modal responsive et workflow automatisé
 - **🔔 Système de notifications temps réel** avec polling automatique et API sécurisée
@@ -440,8 +441,10 @@ const HelpPage = () => {
 - ✅ **Reset automatique** : Formulaire vidé après envoi réussi
 - ✅ **Gestion d'erreurs** : Messages spécifiques selon le type d'erreur
 
-##### **🌐 Intégration API Backend**
+##### **🌐 Intégration API Backend avec Emails Automatiques**
 - ✅ **Endpoint POST** : `/api/public/contact` avec headers JSON
+- ✅ **🆕 Double email automatique** : Confirmation visiteur + notification admin
+- ✅ **🆕 Templates HTML professionnels** : Design cohérent et responsive
 - ✅ **Validation côté serveur** : Traitement sécurisé des données
 - ✅ **Réponses structurées** : Messages personnalisés selon le contexte
 - ✅ **Gestion des erreurs réseau** : Fallback pour problèmes de connexion
@@ -469,12 +472,14 @@ const HelpPage = () => {
 
 ##### **✅ Solution Appliquée - Intégration API Messagerie**
 
-**Workflow Complet Fonctionnel :**
+**Workflow Complet Fonctionnel avec Système d'Emails Centralisé :**
 1. **Formulaire d'aide** → Validation côté client + serveur
 2. **API `/api/messages`** → Création message avec `source: 'client-help'`
 3. **Base de données** → Persistance dans table `Message` avec paramètres support
-4. **Email automatique** → Notification équipe support via SendGrid
-5. **Dashboard admin** → Accès aux demandes d'aide centralisées
+4. **🆕 EventBus automatique** → Émission événement `admin.notification.created`
+5. **🆕 Email listener** → Traitement automatique avec template HTML professionnel
+6. **🆕 Queue asynchrone** → Envoi email via SendGrid sans blocage
+7. **Dashboard admin** → Accès aux demandes d'aide centralisées + notification interface
 
 **Paramètres Spécifiques :**
 ```typescript
@@ -495,11 +500,13 @@ const HelpPage = () => {
 - Gestion d'erreurs robuste avec messages spécifiques
 - Traitement asynchrone avec états de chargement
 
-**✅ Workflow Support Automatisé :**
+**✅ Workflow Support Automatisé - Architecture Événementielle :**
 - **Réception** : Demande enregistrée en base avec métadonnées
-- **Notification** : Email automatique équipe support (SendGrid)
+- **🆕 Double notification automatique** : Interface admin + Email professionnel
+- **🆕 Templates centralisés** : `admin-message.hbs` + `visitor-contact-confirmation.hbs`
+- **🆕 Zero code duplication** : Plus besoin d'appeler `MailerService.sendEmail()` manuellement
 - **Tracking** : ID unique pour suivi et réponse
-- **Dashboard** : Interface admin pour gestion centralisée
+- **Dashboard** : Interface admin pour gestion centralisée avec notifications temps réel
 
 **✅ Expérience Utilisateur Améliorée :**
 - **États de chargement** : Spinner + bouton désactivé pendant traitement
@@ -2307,8 +2314,21 @@ export interface PaginatedResponse<T> {
 
 ### 🆕 **Nouvelles Fonctionnalités 2025**
 
+#### **📧 Système d'Emails Centralisé - NOUVEAU JUILLET 2025**
+- ✅ **🆕 Zero configuration frontend** : Plus besoin de gérer l'envoi d'emails manuellement
+- ✅ **🆕 Double notification automatique** : Interface + Email pour chaque action
+- ✅ **🆕 Templates HTML professionnels** : 18 templates responsive et cohérents
+- ✅ **🆕 Architecture événementielle** : EventBus backend transparent pour le frontend
+- ✅ **Integration transparente** : Formulaires contact/aide génèrent automatiquement :
+  - ✉️ Email confirmation visiteur avec template personnalisé
+  - 🔔 Notification admin dans l'interface temps réel
+  - 📧 Email admin avec détails complets et call-to-action
+- ✅ **Performance optimisée** : Queue asynchrone, pas de blocage UI
+- ✅ **Gestion d'erreurs robuste** : Retry automatique, fallback notifications
+
 #### **📞 Formulaire de Contact Intégré - NOUVEAU JUILLET 2025**
 - ✅ **API Backend intégrée** : Endpoint POST `/api/public/contact` opérationnel
+- ✅ **🆕 Emails automatiques intégrés** : Confirmation visiteur + notification admin
 - ✅ **Validation complète** : Côté client (HTML5) + serveur (Zod)
 - ✅ **États de chargement** : Spinner animé + bouton désactivé pendant envoi
 - ✅ **Feedback utilisateur** : Messages success/error avec styles visuels
