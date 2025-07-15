@@ -1,4 +1,4 @@
-# Dockerfile.dev pour le développement frontend avec Jest
+# Dockerfile.dev pour le développement frontend avec Vitest
 FROM node:18.20.2-alpine
 
 # Install curl and netcat for healthchecks
@@ -9,8 +9,8 @@ WORKDIR /app
 # Copy package files from frontend directory (context is root)
 COPY frontend/package*.json ./
 
-# Install all dependencies (including dev dependencies for Jest)
-RUN npm install
+# Install all dependencies (including dev dependencies for Vitest)
+RUN npm ci --include=dev
 
 # Copy frontend source code
 COPY frontend/ .
@@ -27,6 +27,10 @@ RUN echo '#!/bin/sh' > /healthcheck.sh && \
     echo '  echo "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 2\n\nOK" | nc -l -p 8080 -q 1' >> /healthcheck.sh && \
     echo 'done' >> /healthcheck.sh && \
     chmod +x /healthcheck.sh
+
+# Verify that vitest is available
+RUN npm list vitest || echo "Warning: vitest not found in dependencies"
+RUN which npx || echo "Warning: npx not found"
 
 # Start health check server in background and keep container running
 CMD ["/bin/sh", "-c", "/healthcheck.sh & tail -f /dev/null"]

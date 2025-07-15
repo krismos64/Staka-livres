@@ -51,12 +51,18 @@ jobs:
             exit 1
           fi
           
-          # Debug: Check filesystem structure
+          # Debug: Check filesystem structure and vitest availability
           echo "Checking filesystem structure:"
           docker-compose exec -T frontend-dev ls -la /app/
           docker-compose exec -T frontend-dev ls -la /app/../shared/ || true
+          echo "Checking vitest availability:"
+          docker-compose exec -T frontend-dev npm list vitest || echo "Warning: vitest not in npm list"
+          docker-compose exec -T frontend-dev which npx || echo "Warning: npx not found"
+          docker-compose exec -T frontend-dev npx vitest --version || echo "Warning: vitest not accessible via npx"
+          echo "Checking node_modules structure:"
+          docker-compose exec -T frontend-dev ls -la /app/node_modules/.bin/ | grep vitest || echo "Warning: vitest binary not found"
           
-          # Run Jest tests
+          # Run Vitest tests
           docker-compose exec -T frontend-dev npm run test:unit
 
       - name: Stop services

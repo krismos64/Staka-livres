@@ -29,6 +29,7 @@ services:
     volumes:
       - ./frontend:/app
       - ./shared:/app/shared
+      - /app/node_modules
     depends_on:
       backend:
         condition: service_healthy
