@@ -26,19 +26,37 @@ jobs:
 
       - name: Build and start services
         run: |
-          docker-compose up -d db backend frontend-dev
+          docker-compose --profile test up -d db backend frontend-dev
 
       - name: Wait for services to be ready
         run: |
           echo "Waiting for services to be ready..."
           timeout 120s bash -c 'until curl -f http://localhost:3001/health 2>/dev/null; do sleep 2; done' || true
           echo "Backend is ready"
-          timeout 120s bash -c 'until curl -f http://localhost:5173/ 2>/dev/null; do sleep 2; done' || true
-          echo "Frontend is ready"
+          timeout 120s bash -c 'until curl -f http://localhost:8080/ 2>/dev/null; do sleep 2; done' || true
+          echo "Frontend-dev health check is ready"
           docker-compose ps
+
+      - name: Check frontend-dev logs
+        run: |
+          echo "Frontend-dev container logs:"
+          docker-compose logs frontend-dev
 
       - name: Run unit tests
         run: |
+          # Check if container is running
+          if ! docker-compose ps frontend-dev | grep -q "Up"; then
+            echo "Error: frontend-dev container is not running"
+            docker-compose logs frontend-dev
+            exit 1
+          fi
+          
+          # Debug: Check filesystem structure
+          echo "Checking filesystem structure:"
+          docker-compose exec -T frontend-dev ls -la /app/
+          docker-compose exec -T frontend-dev ls -la /app/../shared/ || true
+          
+          # Run Jest tests
           docker-compose exec -T frontend-dev npm run test:unit
 
       - name: Stop services
@@ -65,15 +83,15 @@ jobs:
 
       - name: Build and start services
         run: |
-          docker-compose up -d db backend frontend-dev
+          docker-compose --profile test up -d db backend frontend-dev
 
       - name: Wait for services to be ready
         run: |
           echo "Waiting for services to be ready..."
           timeout 120s bash -c 'until curl -f http://localhost:3001/health 2>/dev/null; do sleep 2; done' || true
           echo "Backend is ready"
-          timeout 120s bash -c 'until curl -f http://localhost:5173/ 2>/dev/null; do sleep 2; done' || true
-          echo "Frontend is ready"
+          timeout 120s bash -c 'until curl -f http://localhost:8080/ 2>/dev/null; do sleep 2; done' || true
+          echo "Frontend-dev health check is ready"
           docker-compose ps
 
       - name: Check services status

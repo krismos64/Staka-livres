@@ -3,7 +3,7 @@ module.exports = {
   testEnvironment: "jsdom",
   setupFilesAfterEnv: ["<rootDir>/src/setupTests.ts"],
   moduleNameMapping: {
-    "^@shared/(.*)$": "<rootDir>/../shared/dist/$1",
+    "^@shared/(.*)$": "<rootDir>/../shared/types/$1",
   },
   collectCoverageFrom: [
     "src/**/*.{ts,tsx}",
