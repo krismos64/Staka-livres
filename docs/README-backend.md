@@ -25,6 +25,7 @@ Backend REST API pour Staka Livres, une plateforme de correction de livres profe
 - **Système de messagerie unifiée** avec threading, pièces jointes et support consultations
 - **Facturation automatique complète** avec génération PDF, AWS S3 et SendGrid
 - **Tests exhaustifs** : 27 fichiers de test (Vitest), couverture 90%+ configurée
+- **Architecture CI/CD optimisée** : Backend tests isolés, frontend tests séparés unitaires/intégration
 - **Modules FAQ, Tarifs, Pages CMS et Statistiques** dynamiques avec synchronisation temps réel
 - **Architecture scalable** avec monitoring intégré et logs structurés
 
@@ -76,6 +77,21 @@ await createAdminNotification("Nouveau paiement", "...", PAYMENT, HAUTE);
 - **Documentation** : Guide technique complet `FREE_SAMPLE_SYSTEM_GUIDE.md`
 - **Base de données** : Extension modèle avec métadonnées échantillons
 
+### 🧪 Architecture CI/CD Optimisée (NOUVEAU - JUILLET 2025)
+
+**Séparation des tests pour stabilité maximale :**
+
+- **Backend tests** : Isolés et indépendants, exécutés avec base de données test
+- **Frontend tests** : Architecture séparée unitaires (CI/CD) vs intégration (local)
+- **GitHub Actions** : Pipeline optimisé avec tests unitaires uniquement
+- **Développement local** : Tests complets avec backend requis pour intégration
+
+**Bénéfices :**
+- **Plus d'échecs CI/CD** dus aux dépendances backend
+- **Tests rapides** : < 30s pour les tests unitaires
+- **Architecture robuste** : Séparation claire des responsabilités
+- **Couverture maintenue** : 87%+ avec tests ciblés par environnement
+
 ### 📊 Améliorations Techniques
 
 - **Node.js 20.18.3** : Migration depuis v18 pour performances optimisées
@@ -83,6 +99,7 @@ await createAdminNotification("Nouveau paiement", "...", PAYMENT, HAUTE);
 - **27 fichiers de test** : Coverage configurée à 90% minimum
 - **23 contrôleurs** : Architecture modulaire étendue
 - **14 services métier** : Logique centralisée et testable
+- **CI/CD optimisé** : Tests backend isolés, architecture frontend séparée unitaires/intégration
 
 ## 🔐 Sécurité et Audit - Version 2025 Renforcée
 
@@ -1993,6 +2010,7 @@ const isMockMode = !process.env.STRIPE_SECRET_KEY?.startsWith("sk_test_");
 - **Coverage 87%+ global** avec détail par module
 - **3300+ lignes de tests** tous niveaux confondus
 - **Pipeline CI/CD optimisé** avec parallélisation
+- **Architecture séparée** : Backend tests isolés, frontend tests unitaires/intégration séparés
 
 ### **Nouveaux tests 2025 ⚡**
 
@@ -2005,17 +2023,13 @@ const isMockMode = !process.env.STRIPE_SECRET_KEY?.startsWith("sk_test_");
 - `adminUserEndpoints.test.ts` (364 lignes) : Tests intégration admin users
 - `adminCommandeEndpoints.test.ts` (293 lignes) : Tests intégration commandes
 
-### Configuration Jest
+### Configuration Vitest et Scripts
 
 ```bash
-# Tous les tests
-npm test
-
-# Mode watch
-npm run test:watch
-
-# Coverage détaillée
-npm test -- --coverage
+# Backend - Tests isolés
+npm test                                    # Tous les tests backend
+npm run test:watch                          # Mode watch
+npm test -- --coverage                     # Coverage détaillée
 
 # Tests spécifiques nouveaux modules
 npm test -- tests/unit/invoice*.test.ts
@@ -2023,6 +2037,31 @@ npm test -- tests/integration/admin*.test.ts
 
 # Test API statistiques admin
 node test-admin-stats.js
+
+# Frontend - Architecture séparée (depuis frontend/)
+npm run test:unit                           # Tests unitaires (CI/CD)
+npm run test:integration                    # Tests intégration (local + backend)
+npm run test:all                           # Tous les tests (local)
+```
+
+### Pipeline CI/CD Optimisé
+
+```yaml
+# GitHub Actions - Tests séparés
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Backend
+        run: npm test
+        working-directory: ./backend
+        
+  test-frontend:
+    runs-on: ubuntu-latest  
+    steps:
+      - name: Test Frontend Unit Only
+        run: npm run test:unit
+        working-directory: ./frontend
 ```
 
 ### Structure des tests mise à jour
@@ -2217,7 +2256,7 @@ services:
 - ✅ **Système de statistiques** admin avec données réelles
 - ✅ **Système de facturation** avec PDF et S3
 - ✅ **Messagerie complète** avec administration
-- ✅ **Tests 87% coverage** avec CI/CD automatisé
+- ✅ **Tests 87% coverage** avec CI/CD automatisé et architecture séparée
 - ✅ **Architecture Docker** optimisée et scalable
 
 ### Production checklist
@@ -2231,6 +2270,7 @@ services:
 - [x] Monitoring/alertes (Webhook + API)
 - [x] Backup base de données
 - [x] Tests 87% coverage passants ⚡ NOUVEAU
+- [x] Architecture CI/CD optimisée (tests séparés) ⚡ NOUVEAU
 - [x] Documentation API complète ⚡ NOUVEAU
 - [x] Facturation automatique S3 ⚡ NOUVEAU
 - [x] Système notifications temps réel ⚡ NOUVEAU
@@ -2566,7 +2606,7 @@ GET /admin/messages?page=1&limit=100&search=visitor&isRead=false
 
 - **✅ 66+ endpoints API** dont 46+ admin opérationnels
 - **✅ 9/9 modules admin** production-ready (100% complétude)
-- **✅ Tests 87% coverage** : 80+ unitaires, 5 suites intégration
+- **✅ Tests 87% coverage** : 80+ unitaires, 5 suites intégration, architecture CI/CD optimisée
 - **✅ 3300+ lignes de tests** validés en conditions réelles
 - **✅ Architecture Docker** optimisée avec CI/CD
 

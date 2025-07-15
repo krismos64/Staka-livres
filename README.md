@@ -12,8 +12,8 @@
 - **60+ endpoints REST API** sécurisés avec Zod validation et conformité RGPD
 - **13 modèles de base de données** avec relations RGPD complètes
 - **Système d'audit sécurisé** avec traçabilité complète et export
-- **Tests automatisés stabilisés** : Tests unitaires séparés des tests d'intégration
-- **CI/CD optimisé** : Tests unitaires en GitHub Actions, tests d'intégration en local
+- **Architecture de Tests Robuste** : Tests unitaires séparés des tests d'intégration avec configurations Vitest duales
+- **CI/CD optimisé** : Tests unitaires en GitHub Actions, tests d'intégration en local avec backend
 - **16+ guides de documentation** complets et à jour (dont CONSULTATION_BOOKING_GUIDE.md)
 - **87%+ de couverture de tests** validée avec architecture de tests robuste
 - **10 pages admin** entièrement fonctionnelles
@@ -665,7 +665,8 @@ Staka-livres/
 │   │   └── styles/         # Styles CSS globaux
 │   ├── package.json        # Dépendances frontend + @tanstack/react-query@5.81.5
 │   ├── Dockerfile          # Container frontend
-│   ├── vite.config.ts      # Config Vite avec optimizeDeps
+│   ├── vite.config.ts      # Config Vite avec optimizeDeps (CI/CD - tests unitaires)
+│   ├── vite.config.integration.ts # Config intégration complète (local - tous tests)
 │   └── tailwind.config.js  # Config Tailwind
 ├── shared/                  # Types et utils partagés
 │   ├── types/
@@ -743,19 +744,91 @@ Staka-livres/
 
 ---
 
+## 🧪 **Architecture de Tests Robuste (NOUVEAU - JUILLET 2025)**
+
+### 🎯 **Séparation Tests Unitaires / Intégration**
+
+- **Tests unitaires** : Exclusivement pour CI/CD GitHub Actions
+  - Configuration : `vite.config.ts` avec exclusion `**/tests/integration/**`
+  - Environnement : jsdom uniquement, mocks complets
+  - Commande : `npm run test:unit`
+  - Cible : Composants, hooks, fonctions isolées
+
+- **Tests d'intégration** : Exclusivement pour environnement local
+  - Configuration : `vite.config.integration.ts` avec inclusion complète
+  - Environnement : Nécessite backend en fonctionnement
+  - Commande : `npm run test:integration`
+  - Cible : API calls, workflows complets
+
+### 🔧 **Configurations Vitest Duales**
+
+```typescript
+// vite.config.ts - CI/CD optimisé
+test: {
+  exclude: [
+    "node_modules", "dist",
+    "**/tests/integration/**",  // Exclusion CI/CD
+    "tests/integration/**"
+  ]
+}
+
+// vite.config.integration.ts - Local complet
+test: {
+  include: ["**/*.{test,spec}.{js,ts,jsx,tsx}"], // Tous les tests
+  testTimeout: 30000,  // Plus long pour intégration
+  hookTimeout: 30000
+}
+```
+
+### 📊 **Scripts de Test Optimisés**
+
+```bash
+# Scripts frontend (package.json)
+npm run test:unit        # Tests unitaires (CI/CD)
+npm run test:integration # Tests intégration (local + backend)
+npm run test:all         # Tous les tests (local)
+npm run test:e2e         # Tests E2E Cypress
+```
+
+### 🚀 **Avantages de l'Architecture**
+
+- **CI/CD stable** : Plus d'échecs dus aux dépendances backend
+- **Tests rapides** : Unitaires < 30s, intégration complète en local
+- **Développement efficace** : Séparation claire des responsabilités
+- **Couverture maintenue** : 87%+ avec tests ciblés par environnement
+
+### 📁 **Structure des Tests**
+
+```
+frontend/
+├── src/__tests__/           # Tests unitaires (CI/CD)
+│   ├── components/
+│   ├── hooks/
+│   └── utils/
+├── tests/
+│   ├── integration/         # Tests intégration (local)
+│   │   ├── admin-users-integration.test.ts
+│   │   └── billing-integration.test.ts
+│   ├── unit/               # Tests unitaires complémentaires
+│   └── README.md           # Documentation tests
+└── cypress/                # Tests E2E
+    ├── e2e/
+    └── fixtures/
+```
+
+---
+
 ## 📋 **Changelog Récent**
 
 ### ✅ **Version Actuelle (Juillet 2025) - Architecture CI/CD Robuste & Multi-Architecture**
 
-**🧪 Tests Frontend Restructurés (NOUVEAU - CRITIQUE) :**
-
-- ✅ **Séparation tests unitaires/intégration** : Architecture claire pour CI/CD et développement local
-- ✅ **GitHub Actions optimisées** : Tests unitaires uniquement en CI pour stabilité
-- ✅ **Tests d'intégration locaux** : Nécessitent backend, exclus du CI automatiquement
-- ✅ **Configuration double** : vite.config.ts (CI) vs vite.config.integration.ts (local)
-- ✅ **Scripts npm spécialisés** : test:unit, test:integration, test:all pour tous les besoins
-- ✅ **Documentation complète** : frontend/tests/README.md explique l'architecture
-- ✅ **CI/CD stable** : Élimination des erreurs Network Error en Actions
+**🧪 Architecture de Tests Robuste (NOUVEAU - CRITIQUE) :**
+- ✅ **Séparation tests unitaires/intégration** : Stabilité CI/CD et développement local optimisé
+- ✅ **Configurations Vitest duales** : `vite.config.ts` (CI) et `vite.config.integration.ts` (local)
+- ✅ **Scripts optimisés** : `test:unit`, `test:integration`, `test:all` pour différents contextes
+- ✅ **GitHub Actions stabilisé** : Plus d'échecs dus aux dépendances backend
+- ✅ **Documentation complète** : `frontend/tests/README.md` avec guides d'utilisation
+- ✅ **CI/CD stable** : Élimination des erreurs Network Error en GitHub Actions
 - ✅ **Développement local flexible** : Tests complets disponibles avec backend
 - ✅ **Couverture maintenue** : Tests unitaires + intégration séparés sans perte de qualité
 

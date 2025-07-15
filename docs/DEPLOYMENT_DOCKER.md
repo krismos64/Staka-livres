@@ -7,6 +7,7 @@
 - [Démarrage Rapide](#démarrage-rapide)
 - [Configuration Docker Compose](#configuration-docker-compose)
 - [Build Multi-Architecture](#build-multi-architecture)
+- [Tests et CI/CD](#tests-et-cicd)
 - [Configuration de Production](#configuration-de-production)
 - [Monitoring et Logs](#monitoring-et-logs)
 - [Troubleshooting](#troubleshooting)
@@ -232,6 +233,137 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
+```
+
+## 🧪 Tests et CI/CD
+
+### Architecture de Tests Séparée (NOUVEAU - JUILLET 2025)
+
+Le projet utilise une architecture de tests sophistiquée avec séparation claire entre tests unitaires et tests d'intégration pour optimiser la CI/CD :
+
+**Tests Unitaires (CI/CD GitHub Actions)**
+```bash
+# Exclusivement pour environnement CI/CD
+docker compose exec frontend npm run test:unit
+
+# Configuration: vite.config.ts avec exclusions
+exclude: [
+  "node_modules", "dist",
+  "**/tests/integration/**",
+  "tests/integration/**"
+]
+```
+
+**Tests d'Intégration (Développement Local)**
+```bash
+# Nécessite backend en fonctionnement
+docker compose up -d  # Démarrer tous les services
+docker compose exec frontend npm run test:integration
+
+# Configuration: vite.config.integration.ts complète
+include: ["**/*.{test,spec}.{js,ts,jsx,tsx}"]
+testTimeout: 30000
+```
+
+### Scripts de Tests Docker
+
+```bash
+# Tests unitaires seulement (rapides)
+docker compose exec frontend npm run test:unit
+
+# Tests d'intégration avec backend
+docker compose exec frontend npm run test:integration
+
+# Tous les tests (local complet)
+docker compose exec frontend npm run test:all
+
+# Tests E2E avec Cypress
+docker compose exec frontend npm run test:e2e
+```
+
+### Structure des Tests
+
+```
+frontend/
+├── src/__tests__/           # Tests unitaires (CI/CD)
+│   ├── components/
+│   ├── hooks/
+│   └── utils/
+├── tests/
+│   ├── integration/         # Tests intégration (local)
+│   │   ├── admin-users-integration.test.ts
+│   │   └── billing-integration.test.ts
+│   ├── unit/               # Tests unitaires complémentaires
+│   └── README.md           # Documentation architecture
+└── cypress/                # Tests E2E
+    ├── e2e/
+    └── fixtures/
+```
+
+### CI/CD Pipeline Optimisé
+
+Le pipeline GitHub Actions utilise maintenant exclusivement les tests unitaires pour une stabilité maximale :
+
+```yaml
+# .github/workflows/ci.yml
+jobs:
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./frontend
+      - name: Run unit tests only
+        run: npm run test:unit
+        working-directory: ./frontend
+```
+
+### Avantages de l'Architecture
+
+- **CI/CD stable** : Plus d'échecs dus aux dépendances backend
+- **Tests rapides** : Unitaires < 30s vs intégration complète
+- **Développement efficace** : Séparation claire des responsabilités
+- **Couverture maintenue** : 87%+ avec tests ciblés par environnement
+
+### Tests dans Docker
+
+```bash
+# Démarrer environnement de test complet
+docker compose up -d
+
+# Vérifier que les services sont prêts
+docker compose ps
+
+# Lancer tests unitaires
+docker compose exec frontend npm run test:unit
+
+# Lancer tests d'intégration (nécessite backend)
+docker compose exec frontend npm run test:integration
+
+# Vérifier logs backend pendant tests
+docker compose logs -f backend
+```
+
+### Debug Tests en Container
+
+```bash
+# Accès shell pour debug
+docker compose exec frontend sh
+
+# Vérifier configuration Vitest
+docker compose exec frontend cat vite.config.ts
+docker compose exec frontend cat vite.config.integration.ts
+
+# Vérifier variables d'environnement
+docker compose exec frontend env | grep VITE
+
+# Tests avec output détaillé
+docker compose exec frontend npm run test:unit -- --reporter=verbose
 ```
 
 ## 🔧 Configuration de Production
@@ -636,6 +768,55 @@ docker compose exec backend node -e "
 docker compose exec backend find src/emails/templates/ -name "*.hbs" -type f
 ```
 
+#### 6. Tests Frontend Échouent (NOUVEAU 2025)
+
+**Symptôme :**
+
+```
+Network Error - connect ECONNREFUSED 127.0.0.1:3001
+Tests d'intégration échouent en CI/CD
+```
+
+**Solutions :**
+
+```bash
+# Vérifier type de tests à exécuter
+docker compose exec frontend npm run test:unit        # CI/CD
+docker compose exec frontend npm run test:integration # Local seulement
+
+# Vérifier configuration Vitest
+docker compose exec frontend cat vite.config.ts
+docker compose exec frontend cat vite.config.integration.ts
+
+# Vérifier exclusions tests intégration
+docker compose exec frontend npx vitest list --config vite.config.ts
+
+# Redémarrer services pour tests intégration
+docker compose restart backend
+docker compose exec frontend npm run test:integration
+
+# Vérifier connectivité backend
+docker compose exec frontend wget -qO- http://backend:3001/health || echo "Backend non accessible"
+
+# Debug tests unitaires isolés
+docker compose exec frontend npm run test:unit -- --reporter=verbose --no-coverage
+```
+
+**Architecture recommandée :**
+
+```bash
+# En développement local
+docker compose up -d                                # Tous services
+docker compose exec frontend npm run test:all       # Tous tests
+
+# En CI/CD GitHub Actions
+npm run test:unit                                   # Tests unitaires seulement
+
+# Debug spécifique
+docker compose exec frontend npm run test:unit -- --run --reporter=verbose
+docker compose exec frontend npm run test:integration -- --run --reporter=verbose
+```
+
 ### Logs de Debug
 
 ```bash
@@ -733,6 +914,9 @@ docker buildx build \
 - [ ] Secrets Docker utilisés
 - [ ] Network isolation activée
 - [ ] Images scannées pour vulnérabilités
+- [ ] **Tests CI/CD** : Architecture séparée unitaires/intégration
+- [ ] **Pipeline optimisé** : Tests unitaires uniquement en CI/CD
+- [ ] **Tests locaux** : Configuration complète pour développement
 
 #### 📧 Checklist Système d'Emails Centralisé
 
@@ -758,4 +942,4 @@ docker buildx build \
 
 ---
 
-_Documentation mise à jour le 12 juillet 2025 - Version 2.0.0_
+_Documentation mise à jour le 15 juillet 2025 - Version 2.1.0_

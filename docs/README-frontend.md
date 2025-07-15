@@ -6,14 +6,14 @@
 ![Vite](https://img.shields.io/badge/Vite-6.3.5-purple)
 ![React Query](https://img.shields.io/badge/React%20Query-5.81.5-red)
 ![Framer Motion](https://img.shields.io/badge/Framer%20Motion-12.18-pink)
-![Tests](https://img.shields.io/badge/Tests-95%25-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-95%25%20(Architecture%20Séparée)-brightgreen)
 ![Production](https://img.shields.io/badge/Status-Production%20Ready-green)
 
 ## 📊 Vue d'Ensemble
 
 **✨ Version Juillet 2025 - État actuel :**
 
-Architecture frontend complète et **production-ready** avec React 18, TypeScript, Tailwind CSS et React Query. Le frontend comprend une **landing page marketing optimisée**, une **application dashboard fonctionnelle**, un **espace d'administration moderne** avec **intégration backend opérationnelle**, un **système de notifications temps réel**, un **système d'emails centralisé automatique** et un **système de réservation de consultations**.
+Architecture frontend complète et **production-ready** avec React 18, TypeScript, Tailwind CSS et React Query. Le frontend comprend une **landing page marketing optimisée**, une **application dashboard fonctionnelle**, un **espace d'administration moderne** avec **intégration backend opérationnelle**, un **système de notifications temps réel**, un **système d'emails centralisé automatique**, un **système de réservation de consultations** et une **architecture de tests robuste** avec séparation unitaires/intégration.
 
 ### 🆕 **Nouvelles Fonctionnalités Juillet 2025**
 
@@ -23,6 +23,7 @@ Architecture frontend complète et **production-ready** avec React 18, TypeScrip
 - **📞 Système de réservation de consultations** avec modal responsive et workflow automatisé
 - **🔔 Système de notifications temps réel** avec polling automatique et API sécurisée
 - **📊 Statistiques admin refactorisées** avec données réelles Prisma
+- **🧪 Architecture de tests robuste** : Séparation unitaires (CI/CD) vs intégration (local)
 - **🚀 Architecture React Query avancée** : 22+ hooks spécialisés (mis à jour)
 - **💫 Composants UI modernes** : 69+ composants avec animations Framer Motion
 - **🎨 Design System unifié** : Variables CSS, tokens design et accessibilité WCAG 2.1
@@ -60,7 +61,7 @@ frontend/src/
 │   ├── useDebouncedSearch.ts    # Recherche optimisée (83 lignes)
 │   ├── useIntersectionObserver.ts # Pagination infinie (44 lignes)
 │   ├── usePricing.ts            # Hook tarifs dynamiques (440 lignes)
-│   └── __tests__/              # Tests des hooks (15 suites)
+│   └── __tests__/              # Tests des hooks (15 suites unitaires)
 ├── 📄 Pages (14 pages USER + 10 pages ADMIN + 4 publiques)
 │   ├── LandingPage.tsx          # Marketing conversion-optimisée
 │   ├── ForgotPassword.tsx       # Réinitialisation mot de passe (NOUVEAU)
@@ -72,14 +73,25 @@ frontend/src/
 │   ├── tailwind.config.js      # Configuration Tailwind étendue
 │   ├── animations.css          # Animations custom (120 lignes)
 │   └── Design tokens           # Couleurs, ombres, typographie
+├── 🧪 Tests (Architecture Séparée)
+│   ├── src/__tests__/              # Tests unitaires (CI/CD GitHub Actions)
+│   │   ├── components/             # Tests composants isolés
+│   │   ├── hooks/                  # Tests hooks React Query
+│   │   └── utils/                  # Tests utilitaires
+│   ├── tests/
+│   │   ├── integration/            # Tests intégration (local + backend)
+│   │   ├── unit/                   # Tests unitaires complémentaires
+│   │   └── README.md               # Documentation architecture tests
+│   ├── vite.config.ts              # Configuration CI/CD (tests unitaires)
+│   └── vite.config.integration.ts  # Configuration locale (tous tests)
 └── 🔧 Utils & Types
-    ├── api.ts                  # Services API principales
-    ├── adminAPI.ts             # Services admin avec backend intégré (1500+ lignes)
-    ├── notificationsAPI.ts     # Services notifications (280 lignes) - NOUVEAU
-    ├── mockData.ts             # Données de test (1200+ lignes)
-    ├── auth.ts                 # Authentification (150 lignes)
-    ├── toast.ts                # Notifications (250 lignes)
-    └── types/shared.ts         # Types TypeScript complets (800+ lignes)
+    ├── api.ts                      # Services API principales
+    ├── adminAPI.ts                 # Services admin avec backend intégré (1500+ lignes)
+    ├── notificationsAPI.ts         # Services notifications (280 lignes) - NOUVEAU
+    ├── mockData.ts                 # Données de test (1200+ lignes)
+    ├── auth.ts                     # Authentification (150 lignes)
+    ├── toast.ts                    # Notifications (250 lignes)
+    └── types/shared.ts             # Types TypeScript complets (800+ lignes)
 ```
 
 ### 📈 **Métriques Production**
@@ -2308,7 +2320,7 @@ export interface PaginatedResponse<T> {
 | **Design System**          | 870        | CSS/Styles         | ✅ Production           |
 | **Services API**           | 1780+      | API calls          | ✅ Backend intégré      |
 | **Types TypeScript**       | 800+       | Interfaces         | ✅ Production           |
-| **Tests & Documentation**  | 1300+      | 100% coverage      | ✅ Production           |
+| **Tests & Documentation**  | 1300+      | 95% coverage (Architecture Séparée) | ✅ Production           |
 | **Formulaires Corrigés**   | 500+       | API intégrée       | ✅ **CORRIGÉ JUILLET**  |
 | **TOTAL**                  | **15300+** | **93+ composants** | **✅ PRODUCTION READY** |
 
@@ -2351,6 +2363,39 @@ export interface PaginatedResponse<T> {
 - ✅ **Dashboard interactif** : Cartes métriques avec graphiques d'évolution
 - ✅ **API optimisée** : Endpoint `/admin/stats` avec agrégations performantes
 
+#### **🧪 Architecture de Tests Robuste - NOUVEAU JUILLET 2025**
+- ✅ **Séparation claire** : Tests unitaires (CI/CD) vs tests d'intégration (local)
+- ✅ **Configurations duales** : `vite.config.ts` (CI) et `vite.config.integration.ts` (local)
+- ✅ **GitHub Actions optimisé** : Tests unitaires uniquement pour stabilité maximale
+- ✅ **Développement local** : Tests complets avec backend requis pour intégration
+- ✅ **Scripts spécialisés** : `test:unit`, `test:integration`, `test:all` pour tous contextes
+- ✅ **Documentation complète** : Guide d'architecture dans `tests/README.md`
+- ✅ **Couverture maintenue** : 95%+ avec tests ciblés par environnement
+- ✅ **Pipeline stable** : Plus d'échecs CI/CD dus aux dépendances backend
+
+**Structure des tests :**
+```
+frontend/
+├── src/__tests__/           # Tests unitaires (CI/CD)
+│   ├── components/          # Tests composants isolés
+│   ├── hooks/               # Tests hooks React Query
+│   └── utils/               # Tests utilitaires
+├── tests/
+│   ├── integration/         # Tests intégration (local + backend)
+│   ├── unit/                # Tests unitaires complémentaires
+│   └── README.md            # Documentation architecture
+├── vite.config.ts           # Config CI/CD (unitaires)
+└── vite.config.integration.ts # Config locale (tous tests)
+```
+
+**Scripts de test :**
+```bash
+npm run test:unit        # Tests unitaires (CI/CD)
+npm run test:integration # Tests intégration (local + backend)
+npm run test:all         # Tous les tests (local)
+npm run test:e2e         # Tests E2E Cypress
+```
+
 #### **🚀 Architecture React Query Avancée**
 - ✅ **15 hooks spécialisés** : 3000+ lignes de logique métier
 - ✅ **Cache intelligent** : Invalidation ciblée et background refresh
@@ -2392,7 +2437,8 @@ Le frontend Staka Livres est maintenant **100% opérationnel** avec les dernièr
 
 #### **🔄 Workflows Automatisés**
 - **CI/CD ready** : Pipeline de déploiement automatisé
-- **Tests automatisés** : 95%+ coverage avec Jest, Vitest et Cypress
+- **Tests automatisés** : 95%+ coverage avec architecture séparée (Vitest + Cypress)
+- **Pipeline optimisé** : Tests unitaires en CI/CD, intégration en local
 - **Documentation vivante** : Guides techniques maintenus automatiquement
 
 Le système est **enterprise-ready**, **scalable** et **maintenu selon les meilleures pratiques** avec une expérience utilisateur complète et moderne, de la découverte marketing jusqu'à la gestion avancée des projets et de l'administration.
@@ -2455,6 +2501,67 @@ docker compose exec app node -e "
   }).then(() => console.log('✅ SendGrid OK'))
     .catch(err => console.error('❌ SendGrid Error:', err));
 "
+```
+
+#### **🧪 Problèmes Tests Frontend**
+
+##### **Tests d'intégration échouent en CI/CD**
+```bash
+# Problème : Tests d'intégration tentent de se connecter au backend
+# Solution : Utiliser les scripts appropriés selon l'environnement
+
+# CI/CD GitHub Actions - Tests unitaires uniquement
+npm run test:unit
+
+# Développement local - Tests complets
+npm run test:all
+
+# Tests d'intégration - Backend requis
+docker compose up -d  # Démarrer backend
+npm run test:integration
+
+# Vérifier configuration
+cat vite.config.ts | grep -A 10 "exclude"
+cat vite.config.integration.ts | grep -A 10 "include"
+```
+
+##### **Tests unitaires échouent**
+```bash
+# Vérifier mocks et isolation
+npm run test:unit -- --reporter=verbose
+
+# Nettoyer cache Vitest
+rm -rf node_modules/.vitest
+npm run test:unit
+
+# Debug tests spécifiques
+npm run test:unit -- --run src/__tests__/components/
+npm run test:unit -- --run src/__tests__/hooks/
+```
+
+##### **Configuration tests incorrecte**
+```bash
+# Vérifier exclusions CI/CD
+npx vitest list --config vite.config.ts
+
+# Vérifier inclusions locales
+npx vitest list --config vite.config.integration.ts
+
+# Comparer configurations
+diff vite.config.ts vite.config.integration.ts
+```
+
+##### **Network Error dans tests**
+```bash
+# Vérifier que les tests unitaires n'appellent pas d'API
+npm run test:unit -- --reporter=verbose | grep -i "network\|fetch\|axios"
+
+# Vérifier les mocks
+cat src/__tests__/setup.ts
+cat src/__tests__/utils/mockApi.ts
+
+# Debug tests d'intégration
+npm run test:integration -- --reporter=verbose
 ```
 
 #### **🔑 Configuration Token Authentification**
