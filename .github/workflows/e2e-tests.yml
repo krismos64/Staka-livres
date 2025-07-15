@@ -15,83 +15,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install docker-compose
-        run: |
-          sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: frontend/yarn.lock
 
-      - name: Create test environment file
-        run: |
-          cp backend/.env.test backend/.env
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: yarn install --frozen-lockfile
 
-      - name: Build and start services
-        run: |
-          docker-compose --profile test build --no-cache --parallel
-          docker-compose --profile test up -d db backend frontend-dev
-
-      - name: Wait for services to be ready
-        run: |
-          echo "Waiting for services to be ready..."
-          timeout 120s bash -c 'until curl -f http://localhost:3001/health 2>/dev/null; do sleep 2; done' || true
-          echo "Backend is ready"
-          
-          echo "Waiting for frontend-dev container to stabilize..."
-          sleep 15
-          docker-compose ps
-          
-          # Wait for frontend-dev health check to be ready
-          echo "Waiting for frontend-dev health check..."
-          for i in {1..30}; do
-            if docker-compose ps frontend-dev | grep -q "healthy"; then
-              echo "Frontend-dev is healthy on attempt $i"
-              break
-            elif docker-compose ps frontend-dev | grep -q "Up"; then
-              echo "Frontend-dev is running but not healthy yet (attempt $i)"
-              sleep 5
-            else
-              echo "Frontend-dev not running on attempt $i, checking logs..."
-              docker-compose logs --tail=10 frontend-dev
-              sleep 5
-            fi
-          done
-          
-          timeout 120s bash -c 'until curl -f http://localhost:8080/ 2>/dev/null; do sleep 2; done' || true
-          echo "Frontend-dev health check is ready"
-
-      - name: Check frontend-dev logs
-        run: |
-          echo "Frontend-dev container logs:"
-          docker-compose logs frontend-dev
-
-      - name: Run unit tests
-        run: |
-          # Check if container is running
-          echo "Checking container status..."
-          docker-compose ps frontend-dev || echo "Container status check failed"
-          
-          if ! docker-compose ps frontend-dev | grep -q "Up"; then
-            echo "Error: frontend-dev container is not running"
-            echo "Container logs:"
-            docker-compose logs frontend-dev
-            echo "Restarting container..."
-            docker-compose restart frontend-dev
-            sleep 10
-            if ! docker-compose ps frontend-dev | grep -q "Up"; then
-              echo "Failed to restart container"
-              exit 1
-            fi
-          fi
-          
-          # Quick vitest check
-          echo "Checking vitest availability:"
-          docker-compose exec -T frontend-dev npm run test --version || echo "Warning: vitest not accessible"
-          
-          # Run Vitest tests
-          docker-compose exec -T frontend-dev npm run test:unit
-
-      - name: Stop services
-        if: always()
-        run: docker-compose down
+      - name: Run Vitest unit tests
+        working-directory: frontend
+        run: yarn test:unit
 
   e2e-tests:
     runs-on: ubuntu-latest
