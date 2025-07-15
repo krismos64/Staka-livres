@@ -17,7 +17,7 @@ services:
   frontend-dev:
     build:
       context: .
-      dockerfile: frontend/Dockerfile.dev
+      dockerfile: Dockerfile.dev
     container_name: staka_frontend_dev
     ports:
       - "5173:5173"
@@ -29,7 +29,6 @@ services:
     volumes:
       - ./frontend:/app
       - ./shared:/app/shared
-      - /app/node_modules
     depends_on:
       backend:
         condition: service_healthy
@@ -129,7 +128,17 @@ services:
       - db_data:/var/lib/mysql
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "staka", "-pstaka"]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "staka",
+          "-pstaka",
+        ]
       interval: 30s
       timeout: 10s
       retries: 5

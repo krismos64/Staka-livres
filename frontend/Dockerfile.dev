@@ -1,28 +1,36 @@
+# Dockerfile.dev pour le développement frontend avec Vitest
 FROM node:18.20.2-alpine
 
-# Dépendances pour healthcheck
+# Install curl and netcat for healthchecks
 RUN apk add --no-cache curl netcat-openbsd
 
-# Créer répertoire de travail global (racine repo)
-WORKDIR /repo
+WORKDIR /app
 
-# Copier tous les fichiers nécessaires pour build complet
-COPY package*.json ./
-COPY frontend/package*.json frontend/
-COPY shared/ shared/
-COPY frontend/ frontend/
+# Étape 1 : copier les fichiers nécessaires à l'install Yarn
+COPY package.json yarn.lock ./
 
-# Installer les dépendances depuis la racine
-RUN npm install
+# Étape 2 : installer les dépendances
+RUN yarn install --frozen-lockfile
 
-# Exposer les ports (Vite + healthcheck)
+# Étape 3 : copier le reste du code
+COPY frontend/ .
+
+# Étape 4 : copier les types partagés
+COPY shared/ ../shared/
+
+# Exposer les ports
 EXPOSE 5173 8080
 
-# Healthcheck server
+# Script de healthcheck simple
 RUN echo '#!/bin/sh' > /healthcheck.sh && \
     echo 'while true; do' >> /healthcheck.sh && \
     echo '  echo "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 2\n\nOK" | nc -l -p 8080 -q 1' >> /healthcheck.sh && \
     echo 'done' >> /healthcheck.sh && \
     chmod +x /healthcheck.sh
 
-CMD ["/bin/sh", "-c", "/healthcheck.sh & tail -f /dev/null"]
+# Debug vitest
+RUN npx vitest --version || echo "⚠️ Vitest introuvable"
+RUN ls -la node_modules/.bin | grep vitest || echo "⚠️ Vitest non trouvé dans .bin"
+
+# Dev + healthcheck
+CMD ["/bin/sh", "-c", "/healthcheck.sh & yarn dev"]
