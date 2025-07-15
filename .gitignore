@@ -13,7 +13,6 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Fichiers de lock optionnels
-yarn.lock
 pnpm-lock.yaml
 
 # Répertoires de runtime

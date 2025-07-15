@@ -1,24 +1,24 @@
-FROM --platform=linux/amd64 node:18-slim   
+FROM --platform=linux/amd64 node:20.19.0-slim
 
 # Install curl for healthchecks
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copier le package.json racine et les package.json des workspaces
+# Copier les package.json racine + backend + shared
 COPY package*.json ./
 COPY backend/package*.json ./backend/
 COPY shared/package*.json ./shared/
 
-# Installer les dépendances du backend (avec devDependencies pour nodemon/ts-node et rollup ARM64)
+# Installer les dépendances
 WORKDIR /app/backend
-RUN npm ci --include=dev --ignore-optional --force --no-audit
+RUN npm ci --include=dev --ignore-optional --no-audit --legacy-peer-deps
 
 # Copier le code source
 COPY backend/ ./
 COPY shared/ ../shared/
 
-# Générer Prisma
+# Générer Prisma Client
 RUN npx prisma generate
 
 EXPOSE 3001

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.6
-ARG NODE_VERSION=18.20.2
+ARG NODE_VERSION=20.19.0
 
 # ---- deps ----
 FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS deps
@@ -15,7 +15,7 @@ COPY frontend/package.json frontend/package-lock.json* frontend/pnpm-lock.yaml* 
 RUN if [ -f pnpm-lock.yaml ]; then \
       pnpm install --frozen-lockfile; \
     else \
-      npm install --omit=dev; \
+      npm install --omit=dev --legacy-peer-deps; \
     fi
 
 # ---- builder ----
@@ -38,7 +38,7 @@ COPY shared/ /shared
 RUN if [ -f pnpm-lock.yaml ]; then \
       pnpm install --frozen-lockfile; \
     else \
-      npm install; \
+      npm install --legacy-peer-deps; \
     fi
 
 # Build the application
