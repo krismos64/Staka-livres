@@ -1,36 +1,28 @@
-# Dockerfile.dev pour le développement frontend avec Vitest
 FROM node:18.20.2-alpine
 
-# Install curl and netcat for healthchecks
+# Dépendances pour healthcheck
 RUN apk add --no-cache curl netcat-openbsd
 
-WORKDIR /app
+# Créer répertoire de travail global (racine repo)
+WORKDIR /repo
 
-# Copy package files from frontend directory (context is root)
-COPY frontend/package*.json ./
+# Copier tous les fichiers nécessaires pour build complet
+COPY package*.json ./
+COPY frontend/package*.json frontend/
+COPY shared/ shared/
+COPY frontend/ frontend/
 
-# Install all dependencies 
-RUN npm ci 
+# Installer les dépendances depuis la racine
+RUN npm install
 
-# Copy frontend source code
-COPY frontend/ .
-
-# Copy shared types to make them accessible
-COPY shared/ ../shared/
-
-# Expose the dev server port and health check port
+# Exposer les ports (Vite + healthcheck)
 EXPOSE 5173 8080
 
-# Create a simple health check server that responds on port 8080
+# Healthcheck server
 RUN echo '#!/bin/sh' > /healthcheck.sh && \
     echo 'while true; do' >> /healthcheck.sh && \
     echo '  echo "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 2\n\nOK" | nc -l -p 8080 -q 1' >> /healthcheck.sh && \
     echo 'done' >> /healthcheck.sh && \
     chmod +x /healthcheck.sh
 
-# Verify that vitest is available
-RUN npm list vitest || echo "Warning: vitest not found in dependencies"
-RUN which npx || echo "Warning: npx not found"
-
-# Start health check server in background and keep container running
 CMD ["/bin/sh", "-c", "/healthcheck.sh & tail -f /dev/null"]
