@@ -428,12 +428,19 @@ SUPPORT_EMAIL="contact@staka.fr"
 # Configuration SendGrid pour emails automatiques
 SENDGRID_API_KEY="your-sendgrid-api-key"
 FROM_EMAIL="noreply@staka-livres.com"
+FROM_NAME="Staka Livres"
+
+# Email admin pour notifications automatiques (système centralisé)
+ADMIN_EMAIL="admin@staka-livres.fr"
 
 # JWT pour authentification (si messages admin)
 JWT_SECRET="your-jwt-secret"
 
 # Base de données pour messages et notifications
 DATABASE_URL="mysql://user:password@localhost:3306/staka_livres"
+
+# URL frontend pour liens dans les emails
+FRONTEND_URL="http://localhost:3001"
 ```
 
 ### 📧 Configuration email
@@ -599,6 +606,17 @@ Le système d'échantillon gratuit de Staka Livres offre un **workflow automatis
 
 Le système est **production-ready** avec tests validés et monitoring complet.
 
+### 📧 Mise à jour importante - Système d'email centralisé
+
+Le système d'échantillon gratuit utilise désormais le **système centralisé de notifications** introduit en 2025 :
+
+- **Envoi automatique** : L'appel à `notifyAdminNewMessage()` déclenche automatiquement l'envoi d'un email vers `ADMIN_EMAIL`
+- **Template `admin-message.hbs`** : Email formaté automatiquement via le listener `adminNotificationEmailListener.ts`
+- **Variables d'environnement** : `ADMIN_EMAIL` et `FRONTEND_URL` requises pour le fonctionnement
+- **EventBus** : Écoute l'événement `admin.notification.created` pour traitement asynchrone
+
+Cette évolution garantit une gestion centralisée et cohérente de toutes les notifications admin.
+
 ---
 
-*Guide rédigé en Juillet 2025 - Version 1.0*
+*Guide rédigé en Juillet 2025 - Version 1.1 (Système email centralisé)*

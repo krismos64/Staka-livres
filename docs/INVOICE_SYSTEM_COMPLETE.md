@@ -1,7 +1,7 @@
 # 🧾 Système de Facturation Complet - Guide Unifié 2025
 
 > Guide complet unifié pour la facturation Staka Livres : gestion des factures, génération PDF avec pdf-lib, stockage S3, et intégration Stripe.
-> **Dernière mise à jour :** 13 juillet 2025
+> **Dernière mise à jour :** 15 juillet 2025
 
 ## 📋 Vue d'ensemble
 
@@ -10,13 +10,13 @@ Le système de facturation de Staka Livres est une solution complète et moderne
 - **Facturation automatique** lors des paiements Stripe réussis
 - **Génération PDF professionnelle** avec pdf-lib v1.17.1
 - **Stockage sécurisé S3** avec URLs signées (TTL 30 jours)
-- **Interface d'administration** complète (7 endpoints dédiés)
+- **Interface d'administration** complète (8 endpoints dédiés)
 - **API REST optimisée** pour les opérations CRUD
 - **Tests d'intégration** complets (1756+ lignes validées)
 
 **🎯 Nouveautés 2025 :**
 - Architecture modernisée avec pdf-lib (remplace PDFKit)
-- Interface admin complète avec 7 endpoints factures
+- Interface admin complète avec 8 endpoints factures
 - 284 lignes de hooks React Query spécialisés
 - Mode mock intelligent pour développement
 - Coverage 87%+ avec tests production
@@ -29,13 +29,14 @@ Le système de facturation de Staka Livres est une solution complète et moderne
 ```
 Paiement Stripe → Webhook → Validation Commande → PDF Generation → S3 Upload → Email Client
      ↓              ↓            ↓                ↓              ↓           ↓
-   Event        Validation     InvoiceService    pdf-lib      AWS S3    MailerService
-   Handler      Commande      + PdfService      Template     Upload     + Template
+   Event        Validation     InvoiceService    pdf-lib      AWS S3    EmailQueue
+   Handler      Commande      + PdfService      Template     Upload     + Templates
+                              + Notifications
 ```
 
 ### Services Principaux
 
-#### 1. InvoiceService (`/src/services/invoiceService.ts`) - 245 lignes
+#### 1. InvoiceService (`/src/services/invoiceService.ts`) - 115 lignes
 ```typescript
 export class InvoiceService {
   // Génération PDF complète avec pdf-lib
@@ -98,7 +99,7 @@ enum InvoiceStatus {
 
 ## 🔧 API Endpoints Administration
 
-### Routes Admin (`/admin/factures`) - 7 Endpoints
+### Routes Admin (`/admin/factures`) - 8 Endpoints
 
 | Méthode  | Endpoint                       | Description                    | Implémentation |
 |----------|--------------------------------|--------------------------------|----------------|
@@ -109,6 +110,7 @@ enum InvoiceStatus {
 | `DELETE` | `/admin/factures/:id`          | Suppression facture            | ✅ Complete    |
 | `POST`   | `/admin/factures/:id/reminder` | Envoi rappel email             | ✅ Complete    |
 | `GET`    | `/admin/factures/:id/pdf`      | Téléchargement PDF             | ✅ Complete    |
+| `GET`    | `/admin/factures/:id/download` | Téléchargement direct PDF     | ✅ Complete    |
 
 ### Endpoint PDF Spécialisé
 
@@ -275,21 +277,49 @@ export function useDownloadFacture();   // Téléchargement PDF
 // Architecture webhook robuste
 ✅ Validation signature Stripe cryptographique
 ✅ Mode mock développement sans clés Stripe
-✅ Facturation automatique : PDF + S3 + Email
+✅ Facturation automatique : PDF + S3 + Email + Notifications
 ✅ Gestion d'erreurs avec logs structurés
 ✅ Tests 1756+ lignes validés
 
 // Événements gérés
-1. `checkout.session.completed` → Paiement réussi + Facture auto
+1. `checkout.session.completed` → Paiement réussi + Facture auto + Notifications
 2. `payment_intent.payment_failed` → Échec paiement + Log
 ```
 
 ### Processus Paiement Intégré
 1. **Sélection Service** → Redirection Stripe Checkout
 2. **Paiement Réussi** → Webhook déclenché automatiquement  
-3. **Facture PDF Générée** → pdf-lib + upload S3 + email
+3. **Facture PDF Générée** → pdf-lib + upload S3 + email + notifications
 4. **UI Synchronisée** → `useInvalidateInvoices()` rafraîchit frontend
 5. **Téléchargement** → PDF disponible immédiatement via URL signée
+
+### Flux Webhook → Invoice → Notification
+
+```typescript
+// Dans webhook.ts - Traitement checkout.session.completed
+case "checkout.session.completed": {
+  const session = event.data.object;
+  
+  // 1. Mise à jour commande
+  await prisma.commande.update({
+    where: { stripeSessionId: session.id },
+    data: { 
+      statut: "PAYE",
+      paidAt: new Date(),
+      amount: session.amount_total
+    }
+  });
+  
+  // 2. Génération facture automatique
+  await InvoiceService.processInvoiceForCommande(commande);
+  
+  // 3. Notifications automatiques
+  await notifyAdminNewPayment(customerName, amount, commandeTitle);
+  await notifyPaymentSuccess(commande.user.email, commande.titre);
+  
+  break;
+}
+```
 
 ---
 
@@ -499,9 +529,9 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 ### Métriques Architecture
 **Backend (Factures) :**
-- ✅ **531 lignes** AdminFactureController complet
-- ✅ **245 lignes** InvoiceService avec PDF + S3 + Email
-- ✅ **7 endpoints** admin factures opérationnels
+- ✅ **AdminFactureController** complet avec 8 endpoints
+- ✅ **115 lignes** InvoiceService avec PDF + S3 + Email
+- ✅ **8 endpoints** admin factures opérationnels
 - ✅ **pdf-lib v1.17.1** génération moderne
 
 **Frontend (Client + Admin) :**
@@ -521,4 +551,45 @@ Le système de facturation Staka Livres 2025 est **production-ready** avec une a
 
 ---
 
-*Guide unifié mis à jour le 13 juillet 2025 - Consolidation BILLING_AND_INVOICES.md + PDF_INVOICE_GENERATION.md*
+*Guide unifié mis à jour le 15 juillet 2025 - Consolidation BILLING_AND_INVOICES.md + PDF_INVOICE_GENERATION.md*
+
+---
+
+## 📧 Mise à jour 2025 - Système de notification centralisé
+
+Le système de facturation est maintenant intégré au **système de notification admin centralisé** :
+
+- **Notifications automatiques** : Chaque facture générée déclenche une notification admin
+- **Emails centralisés** : Utilisation du système `eventBus` + `adminNotificationEmailListener`
+- **Templates uniformisés** : Cohérence avec le système de notification global
+- **Queue email** : Traitement asynchrone avec templates Handlebars
+
+### Intégration Webhook → Invoice → Notification
+
+```typescript
+// Dans webhook.ts - Traitement paiement réussi
+await InvoiceService.processInvoiceForCommande(commande);
+
+// Notifications automatiques
+await notifyAdminNewPayment(customerName, amount, commandeTitle);
+await notifyPaymentSuccess(commande.user.email, commande.titre);
+```
+
+### Système de Queue Email
+
+```typescript
+// EmailQueue centralisée avec templates
+await emailQueue.add("sendInvoiceEmail", {
+  to: customerEmail,
+  template: "invoice-generated.hbs",
+  variables: {
+    customerName: customer.nom,
+    invoiceNumber: invoice.number,
+    amount: invoice.amount,
+    pdfUrl: invoice.pdfUrl,
+    subject: `Facture ${invoice.number} - Staka Livres`
+  }
+});
+```
+
+Cette intégration assure une gestion centralisée des notifications pour toutes les actions critiques du système.
