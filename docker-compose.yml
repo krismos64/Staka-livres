@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
     container_name: staka_frontend
-    platform: linux/arm64
+    platform: linux/amd64
     ports:
       - "3002:80"
     environment:
@@ -28,9 +28,16 @@ services:
       - ./frontend:/app
       - ./shared:/app/shared
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     profiles:
       - test
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   cypress:
     image: cypress/included:13.6.0
@@ -39,7 +46,7 @@ services:
     volumes:
       - ./frontend:/e2e
     environment:
-      - CYPRESS_baseUrl=http://host.docker.internal:3000
+      - CYPRESS_baseUrl=http://host.docker.internal:5173
       - CYPRESS_video=false
       - CYPRESS_screenshotOnRunFailure=false
     depends_on:
@@ -74,8 +81,15 @@ services:
       - ./backend:/app/backend
       - ./shared:/app/shared
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   app:
     build:
@@ -111,6 +125,12 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "staka", "-pstaka"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
 volumes:
   db_data:

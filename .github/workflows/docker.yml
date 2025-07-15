@@ -103,7 +103,7 @@ jobs:
       - name: Wait for services
         run: |
           timeout 60 bash -c 'until curl -f http://localhost:3001/health; do sleep 2; done'
-          timeout 60 bash -c 'until curl -f http://localhost:3000/health; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://localhost:3002/health; do sleep 2; done'
           
       - name: Test backend API
         run: |
@@ -112,8 +112,8 @@ jobs:
           
       - name: Test frontend
         run: |
-          curl -f http://localhost:3000/health
-          curl -I http://localhost:3000/
+          curl -f http://localhost:3002/health
+          curl -I http://localhost:3002/
           
       - name: Check logs
         if: failure()
