@@ -1,31 +1,32 @@
+import { vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 import { Role } from "../../types/shared";
 
 // Mock complet d'adminAPI pour éviter l'import du vrai module
 const mockAdminAPI = {
-  getUsers: jest.fn(),
-  getUserStats: jest.fn(),
-  createUser: jest.fn(),
-  deleteUser: jest.fn(),
-  toggleUserStatus: jest.fn(),
-  updateUser: jest.fn(),
-  getUserById: jest.fn(),
+  getUsers: vi.fn(),
+  getUserStats: vi.fn(),
+  createUser: vi.fn(),
+  deleteUser: vi.fn(),
+  toggleUserStatus: vi.fn(),
+  updateUser: vi.fn(),
+  getUserById: vi.fn(),
 };
 
 // Mock de useToasts
-const mockShowToast = jest.fn();
+const mockShowToast = vi.fn();
 
 // Mocks des modules avant l'import du hook
-jest.mock("../../utils/adminAPI", () => ({
+vi.mock("../../utils/adminAPI", () => ({
   adminAPI: mockAdminAPI,
 }));
 
-jest.mock("../../utils/toast", () => ({
+vi.mock("../../utils/toast", () => ({
   useToasts: () => ({
     showToast: mockShowToast,
-    addToast: jest.fn(),
-    removeToast: jest.fn(),
-    clearAllToasts: jest.fn(),
+    addToast: vi.fn(),
+    removeToast: vi.fn(),
+    clearAllToasts: vi.fn(),
     toasts: [],
   }),
 }));
@@ -100,7 +101,7 @@ const mockDetailedUser = {
 
 describe("useAdminUsers - Tests unitaires avec mocks", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Mocks par défaut
     mockAdminAPI.getUsers.mockResolvedValue(mockUsersResponse);

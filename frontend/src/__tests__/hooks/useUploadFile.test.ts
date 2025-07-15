@@ -1,27 +1,28 @@
+import { vi } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode } from "react";
 import { useUploadFile } from "../../hooks/useUploadFile";
 
 // Mock fetch
-global.fetch = jest.fn();
-const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
+global.fetch = vi.fn();
+const mockFetch = fetch as ReturnType<typeof vi.fn>;
 
 // Mock localStorage
 const mockLocalStorage = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
 };
 Object.defineProperty(window, "localStorage", { value: mockLocalStorage });
 
 // Mock XMLHttpRequest
 class MockXMLHttpRequest {
-  upload = { addEventListener: jest.fn() };
-  addEventListener = jest.fn();
-  open = jest.fn();
-  send = jest.fn();
+  upload = { addEventListener: vi.fn() };
+  addEventListener = vi.fn();
+  open = vi.fn();
+  send = vi.fn();
   status = 200;
   statusText = "OK";
 
@@ -61,18 +62,18 @@ const createWrapper = () => {
 
 describe("useUploadFile", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockLocalStorage.getItem.mockReturnValue("mock-token");
   });
 
   afterEach(() => {
-    jest.clearAllTimers();
+    vi.clearAllTimers();
   });
 
   it("should upload file successfully", async () => {
-    const onProgress = jest.fn();
-    const onSuccess = jest.fn();
-    const onError = jest.fn();
+    const onProgress = vi.fn();
+    const onSuccess = vi.fn();
+    const onError = vi.fn();
 
     // Mock successful API response for file creation
     mockFetch.mockResolvedValueOnce({
@@ -129,7 +130,7 @@ describe("useUploadFile", () => {
   });
 
   it("should handle API error during file creation", async () => {
-    const onError = jest.fn();
+    const onError = vi.fn();
 
     mockFetch.mockResolvedValueOnce({
       ok: false,
@@ -163,7 +164,7 @@ describe("useUploadFile", () => {
   });
 
   it("should handle S3 upload error", async () => {
-    const onError = jest.fn();
+    const onError = vi.fn();
 
     // Mock successful API response but failed S3 upload
     mockFetch.mockResolvedValueOnce({
@@ -177,10 +178,10 @@ describe("useUploadFile", () => {
 
     // Mock XMLHttpRequest with error
     class MockXMLHttpRequestError {
-      upload = { addEventListener: jest.fn() };
-      addEventListener = jest.fn();
-      open = jest.fn();
-      send = jest.fn();
+      upload = { addEventListener: vi.fn() };
+      addEventListener = vi.fn();
+      open = vi.fn();
+      send = vi.fn();
       status = 500;
       statusText = "Internal Server Error";
 
@@ -221,7 +222,7 @@ describe("useUploadFile", () => {
   });
 
   it("should track upload progress", async () => {
-    const onProgress = jest.fn();
+    const onProgress = vi.fn();
 
     mockFetch.mockResolvedValueOnce({
       ok: true,

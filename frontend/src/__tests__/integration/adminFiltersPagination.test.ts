@@ -3,6 +3,7 @@
  * tri et pagination entre frontend et backend
  */
 
+import { vi } from "vitest";
 import { Role, StatutCommande } from "../../types/shared";
 import {
   adminAPI,
@@ -11,12 +12,12 @@ import {
 } from "../../utils/adminAPI";
 
 // Mock fetch pour intercepter les appels HTTP
-global.fetch = jest.fn();
-const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
+global.fetch = vi.fn();
+const mockFetch = fetch as ReturnType<typeof vi.fn>;
 
 describe("Admin Filters and Pagination Integration", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Mock de réponse par défaut
     mockFetch.mockResolvedValue({

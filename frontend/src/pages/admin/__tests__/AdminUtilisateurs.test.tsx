@@ -1,21 +1,22 @@
+import { vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Role } from "../../../types/shared";
 
 // Mock complet d'useAdminUsers pour éviter l'import d'adminAPI
-const mockUseAdminUsers = jest.fn();
+const mockUseAdminUsers = vi.fn();
 
 // Mocks des modules avant les imports
-jest.mock("../../../hooks/useAdminUsers", () => ({
+vi.mock("../../../hooks/useAdminUsers", () => ({
   useAdminUsers: mockUseAdminUsers,
 }));
 
-jest.mock("../../../utils/toast", () => ({
+vi.mock("../../../utils/toast", () => ({
   useToasts: () => ({
-    showToast: jest.fn(),
-    addToast: jest.fn(),
-    removeToast: jest.fn(),
-    clearAllToasts: jest.fn(),
+    showToast: vi.fn(),
+    addToast: vi.fn(),
+    removeToast: vi.fn(),
+    clearAllToasts: vi.fn(),
     toasts: [],
   }),
 }));
@@ -62,18 +63,18 @@ const mockHookReturnValue = {
   isLoading: false,
   error: null,
   stats: mockStats,
-  loadUsers: jest.fn(),
-  loadUserStats: jest.fn(),
-  toggleUserStatus: jest.fn(),
-  changeUserRole: jest.fn(),
-  deleteUser: jest.fn(),
-  viewUser: jest.fn(),
-  refreshUsers: jest.fn(),
+  loadUsers: vi.fn(),
+  loadUserStats: vi.fn(),
+  toggleUserStatus: vi.fn(),
+  changeUserRole: vi.fn(),
+  deleteUser: vi.fn(),
+  viewUser: vi.fn(),
+  refreshUsers: vi.fn(),
 };
 
 describe("AdminUtilisateurs - Tests unitaires avec mocks", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUseAdminUsers.mockReturnValue(mockHookReturnValue);
   });
 

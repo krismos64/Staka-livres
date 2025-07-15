@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 import { CommandeDetailed, Role, StatutCommande } from "../../types/shared";
 import {
@@ -10,22 +11,22 @@ import { useToasts } from "../../utils/toast";
 import { useAdminCommandes } from "../useAdminCommandes";
 
 // Mocks
-jest.mock("../../utils/adminAPI", () => ({
-  getCommandes: jest.fn(),
-  getCommandeById: jest.fn(),
-  updateCommande: jest.fn(),
-  deleteCommande: jest.fn(),
+vi.mock("../../utils/adminAPI", () => ({
+  getCommandes: vi.fn(),
+  getCommandeById: vi.fn(),
+  updateCommande: vi.fn(),
+  deleteCommande: vi.fn(),
 }));
-jest.mock("../../utils/toast");
+vi.mock("../../utils/toast");
 
-const mockGetCommandes = getCommandes as jest.Mock;
-const mockGetCommandeById = getCommandeById as jest.Mock;
-const mockUpdateCommande = updateCommande as jest.Mock;
-const mockDeleteCommande = deleteCommande as jest.Mock;
+const mockGetCommandes = getCommandes as ReturnType<typeof vi.fn>;
+const mockGetCommandeById = getCommandeById as ReturnType<typeof vi.fn>;
+const mockUpdateCommande = updateCommande as ReturnType<typeof vi.fn>;
+const mockDeleteCommande = deleteCommande as ReturnType<typeof vi.fn>;
 
-const mockUseToasts = useToasts as jest.MockedFunction<typeof useToasts>;
+const mockUseToasts = useToasts as ReturnType<typeof vi.fn>;
 
-const mockShowToast = jest.fn();
+const mockShowToast = vi.fn();
 
 const mockDetailedCommande: CommandeDetailed = {
   id: "cmd-1",
@@ -50,14 +51,14 @@ const mockDetailedCommande: CommandeDetailed = {
 
 describe("useAdminCommandes", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockUseToasts.mockReturnValue({
       showToast: mockShowToast,
       toasts: [],
-      addToast: jest.fn(),
-      removeToast: jest.fn(),
-      clearAllToasts: jest.fn(),
+      addToast: vi.fn(),
+      removeToast: vi.fn(),
+      clearAllToasts: vi.fn(),
     });
 
     // Mock de réponse par défaut
@@ -506,8 +507,8 @@ describe("useAdminCommandes", () => {
     });
 
     it("should call onError and onSuccess callbacks", async () => {
-      const onError = jest.fn();
-      const onSuccess = jest.fn();
+      const onError = vi.fn();
+      const onSuccess = vi.fn();
 
       const { result } = renderHook(() =>
         useAdminCommandes({ onError, onSuccess })

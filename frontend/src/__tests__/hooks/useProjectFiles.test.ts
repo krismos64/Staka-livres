@@ -3,26 +3,28 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode } from "react";
 import { useProjectFiles, useDeleteFile, useDownloadFile, fileUtils } from "../../hooks/useProjectFiles";
 
+import { vi } from "vitest";
+
 // Mock fetch
-global.fetch = jest.fn();
-const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
+global.fetch = vi.fn();
+const mockFetch = fetch as ReturnType<typeof vi.fn>;
 
 // Mock localStorage
 const mockLocalStorage = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
 };
 Object.defineProperty(window, "localStorage", { value: mockLocalStorage });
 
 // Mock DOM methods
-const mockCreateElement = jest.fn();
-const mockClick = jest.fn();
-const mockAppendChild = jest.fn();
-const mockRemoveChild = jest.fn();
-const mockCreateObjectURL = jest.fn();
-const mockRevokeObjectURL = jest.fn();
+const mockCreateElement = vi.fn();
+const mockClick = vi.fn();
+const mockAppendChild = vi.fn();
+const mockRemoveChild = vi.fn();
+const mockCreateObjectURL = vi.fn();
+const mockRevokeObjectURL = vi.fn();
 
 Object.defineProperty(document, "createElement", { value: mockCreateElement });
 Object.defineProperty(document.body, "appendChild", { value: mockAppendChild });
@@ -164,8 +166,8 @@ describe("useDeleteFile", () => {
   });
 
   it("should delete file successfully", async () => {
-    const onSuccess = jest.fn();
-    const onError = jest.fn();
+    const onSuccess = vi.fn();
+    const onError = vi.fn();
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -195,8 +197,8 @@ describe("useDeleteFile", () => {
   });
 
   it("should handle delete error", async () => {
-    const onSuccess = jest.fn();
-    const onError = jest.fn();
+    const onSuccess = vi.fn();
+    const onError = vi.fn();
 
     mockFetch.mockResolvedValueOnce({
       ok: false,
