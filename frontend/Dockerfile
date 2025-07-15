@@ -8,8 +8,8 @@ WORKDIR /app
 # Enable corepack and install pnpm
 RUN corepack enable
 
-# Copy package files
-COPY frontend/package.json frontend/package-lock.json* frontend/pnpm-lock.yaml* ./
+# Copy package files (depuis le contexte frontend/)
+COPY package.json package-lock.json* pnpm-lock.yaml* ./
 
 # Install dependencies - use npm if no pnpm lockfile exists
 RUN if [ -f pnpm-lock.yaml ]; then \
@@ -28,9 +28,8 @@ RUN corepack enable
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 
-# Copy source code
-COPY frontend/ ./
-COPY shared/ ../shared/
+# Copy source code (depuis le contexte frontend/)
+COPY . ./
 
 # Install all dependencies (including dev dependencies)
 RUN if [ -f pnpm-lock.yaml ]; then \
@@ -53,7 +52,7 @@ FROM --platform=$TARGETPLATFORM nginx:1.25-alpine AS runtime
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy custom nginx configuration
-COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Set permissions for static files
 RUN chown -R nginx:nginx /usr/share/nginx/html
