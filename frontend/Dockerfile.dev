@@ -9,8 +9,8 @@ WORKDIR /app
 # Copy package files from frontend directory (context is root)
 COPY frontend/package*.json ./
 
-# Install all dependencies (including dev dependencies for Vitest)
-RUN npm ci --include=dev
+# Install all dependencies 
+RUN npm ci 
 
 # Copy frontend source code
 COPY frontend/ .
