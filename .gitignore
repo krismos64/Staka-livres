@@ -326,6 +326,13 @@ config.local.json
 test.local.*
 *.test.local.*
 
+# ===== AI TOOLS =====
+# Claude Code & assistants
+claude/
+CLAUDE.md
+.cursorignore
+.mcp.json
+
 # ===== FIN =====
 # Toujours à la fin : fichiers très spécifiques
 .vscode/settings.json.bak
