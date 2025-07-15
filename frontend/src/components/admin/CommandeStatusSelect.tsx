@@ -1,4 +1,4 @@
-import { StatutCommande } from "@shared";
+import { StatutCommande } from "@shared/index";
 import React from "react";
 
 interface CommandeStatusSelectProps {
