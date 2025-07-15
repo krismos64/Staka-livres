@@ -42,7 +42,7 @@ L'espace admin a été **entièrement refactorisé** avec une architecture modul
 
 # 📱 Interface Admin 100% Complète
 
-## ✅ **Modules Admin Production-Ready - Janvier 2025**
+## ✅ **Modules Admin Production-Ready - Juillet 2025**
 
 | Section           | Composant            | API Endpoints | Lignes Code | Fonctionnalités                                                                      |
 | ----------------- | -------------------- | ------------- | ----------- | ------------------------------------------------------------------------------------ |
@@ -55,7 +55,7 @@ L'espace admin a été **entièrement refactorisé** avec une architecture modul
 | **Tarifs**        | `AdminTarifs`        | 6 endpoints   | 1240+       | **CRUD + Sync temps réel** avec landing page, validation, états de chargement        |
 | **Pages CMS**     | `AdminPages`         | 8 endpoints   | 420+        | **CMS complet** : éditeur riche, SEO, publication, génération slug, prévisualisation |
 | **Statistiques**  | `AdminStatistiques`  | 2 endpoints   | 420+        | **🆕 Données Prisma réelles**, métriques évolutives, derniers paiements              |
-| **Notifications** | `AdminNotifications` | 6 endpoints   | 380+        | **🆕 Système email centralisé**, interface + emails automatiques, 18 templates      |
+| **Notifications** | `AdminNotifications` | 6 endpoints   | 380+        | **🆕 Système email centralisé**, interface + emails automatiques, 18 templates       |
 
 ### 📊 **Métriques Globales**
 
@@ -125,6 +125,7 @@ Cette section détaille l'API backend et les hooks React Query frontend pour cha
 ### 📨 **Templates Email Disponibles**
 
 **Templates Admin (`admin-*.hbs`) :**
+
 - `admin-message.hbs` - Nouveaux messages
 - `admin-payment.hbs` - Paiements reçus
 - `admin-order.hbs` - Commandes terminées
@@ -136,6 +137,7 @@ Cette section détaille l'API backend et les hooks React Query frontend pour cha
 - `admin-consultation.hbs` - Nouvelles consultations
 
 **Templates Utilisateurs (`*-user.hbs`) :**
+
 - `message-user.hbs` - Messages reçus
 - `payment-user.hbs` - Confirmations paiement
 - `order-user.hbs` - Statuts commandes
@@ -147,12 +149,14 @@ Cette section détaille l'API backend et les hooks React Query frontend pour cha
 - `consultation-user.hbs` - Consultations
 
 **Templates Visiteurs :**
+
 - `visitor-contact-confirmation.hbs` - Confirmation contact
 - `visitor-sample-confirmation.hbs` - Confirmation échantillon gratuit
 
 ### 🧪 **Tests Production Validés**
 
 **✅ Interface Admin (Clochette) :**
+
 ```bash
 # 7+ notifications visibles dans l'interface admin
 GET /api/notifications (avec JWT admin)
@@ -162,15 +166,17 @@ GET /api/notifications (avec JWT admin)
 ```
 
 **✅ Emails Admin Automatiques :**
+
 ```bash
 # 5+ emails confirmés envoyés à c.mostefaoui@yahoo.fr
 → Messages contact: ✅ Email envoyé
-→ Échantillons gratuits: ✅ Email envoyé  
+→ Échantillons gratuits: ✅ Email envoyé
 → Messages client: ✅ Email envoyé
 → Logs backend: "✅ [Mailer] Email envoyé avec succès à c.mostefaoui@yahoo.fr"
 ```
 
 **✅ Architecture EventBus :**
+
 ```typescript
 // Création notification → Email automatique
 await createAdminNotification(title, message, type, priority, actionUrl, data);
@@ -221,26 +227,31 @@ SUPPORT_EMAIL="support@your-domain.com" # Email support pour visiteurs
 ### 🎯 **Avantages du Système Centralisé**
 
 **✅ Zero Code Duplication :**
+
 - Plus besoin d'appeler `MailerService.sendEmail()` dans les contrôleurs
 - Un seul endroit pour gérer tous les emails : les listeners événementiels
 - Architecture DRY (Don't Repeat Yourself) respectée
 
 **✅ Garantie Zéro Oubli :**
+
 - Chaque `createAdminNotification()` génère automatiquement un email
 - Impossible d'oublier d'envoyer un email admin
 - Cohérence totale entre interface et emails
 
 **✅ Templates Centralisés :**
+
 - Design cohérent et professionnel
 - Maintenance facile des templates
 - Personnalisation par type de notification
 
 **✅ Architecture Extensible :**
+
 - Ajouter un nouveau type = ajouter un template
 - Système d'événements découplé et modulaire
 - Facile d'ajouter de nouveaux listeners
 
 **✅ Performance & Robustesse :**
+
 - Queue emails asynchrone pour éviter les blocages
 - Gestion d'erreurs centralisée avec retry automatique
 - Logging complet pour debug et monitoring
@@ -257,10 +268,10 @@ SUPPORT_EMAIL="support@your-domain.com" # Email support pour visiteurs
 
 ### Endpoints API
 
-| Endpoint           | Méthode | Description                                      | Status |
-| ------------------ | ------- | ------------------------------------------------ | ------ |
-| `/admin/stats`     | GET     | **Statistiques mensuelles 12 derniers mois**    | ✅     |
-| `/admin/stats/kpi` | GET     | KPIs temps réel pour dashboard                   | ✅     |
+| Endpoint           | Méthode | Description                                  | Status |
+| ------------------ | ------- | -------------------------------------------- | ------ |
+| `/admin/stats`     | GET     | **Statistiques mensuelles 12 derniers mois** | ✅     |
+| `/admin/stats/kpi` | GET     | KPIs temps réel pour dashboard               | ✅     |
 
 ### Structure de Réponse API
 
@@ -274,8 +285,24 @@ SUPPORT_EMAIL="support@your-domain.com" # Email support pour visiteurs
 
 ```json
 {
-  "months": ["2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07"],
-  "revenue": [1234.56, 2156.78, 3456.90, 2890.45, 4567.23, 3421.67, 2987.34, 4123.89, 3675.12, 4892.56, 5234.78, 4567.89],
+  "months": [
+    "2024-08",
+    "2024-09",
+    "2024-10",
+    "2024-11",
+    "2024-12",
+    "2025-01",
+    "2025-02",
+    "2025-03",
+    "2025-04",
+    "2025-05",
+    "2025-06",
+    "2025-07"
+  ],
+  "revenue": [
+    1234.56, 2156.78, 3456.9, 2890.45, 4567.23, 3421.67, 2987.34, 4123.89,
+    3675.12, 4892.56, 5234.78, 4567.89
+  ],
   "newUsers": [32, 45, 67, 54, 78, 89, 65, 92, 76, 103, 87, 95],
   "orders": [54, 67, 89, 76, 98, 112, 85, 134, 97, 156, 123, 145]
 }
@@ -334,11 +361,12 @@ startDate.setHours(0, 0, 0, 0);
 #### Requêtes Prisma Optimisées
 
 **Chiffre d'affaires (Revenue) :**
+
 ```javascript
 const revenueData = await prisma.invoice.groupBy({
-  by: ['createdAt'],
+  by: ["createdAt"],
   where: {
-    status: 'PAID',
+    status: "PAID",
     createdAt: {
       gte: startDate,
       lte: endDate,
@@ -351,9 +379,10 @@ const revenueData = await prisma.invoice.groupBy({
 ```
 
 **Nouveaux utilisateurs :**
+
 ```javascript
 const usersData = await prisma.user.groupBy({
-  by: ['createdAt'],
+  by: ["createdAt"],
   where: {
     createdAt: {
       gte: startDate,
@@ -367,9 +396,10 @@ const usersData = await prisma.user.groupBy({
 ```
 
 **Commandes :**
+
 ```javascript
 const ordersData = await prisma.order.groupBy({
-  by: ['createdAt'],
+  by: ["createdAt"],
   where: {
     createdAt: {
       gte: startDate,
@@ -411,18 +441,18 @@ export const useAdminStats = () => {
 // Hook pour statistiques mensuelles
 export const useAdminMonthlyStats = () => {
   return useQuery<MonthlyStats>({
-    queryKey: ['adminStats'],
+    queryKey: ["adminStats"],
     queryFn: async () => {
-      const response = await fetch('/api/admin/stats', {
+      const response = await fetch("/api/admin/stats", {
         headers: {
-          'Authorization': `Bearer ${getToken()}`,
+          Authorization: `Bearer ${getToken()}`,
         },
       });
-      
+
       if (!response.ok) {
-        throw new Error('Failed to fetch admin stats');
+        throw new Error("Failed to fetch admin stats");
       }
-      
+
       return response.json();
     },
     staleTime: 30 * 1000, // 30 secondes
@@ -444,17 +474,17 @@ curl -X GET "http://localhost:3001/api/admin/stats" \
 #### Avec fetch (JavaScript)
 
 ```javascript
-const response = await fetch('/api/admin/stats', {
-  method: 'GET',
+const response = await fetch("/api/admin/stats", {
+  method: "GET",
   headers: {
-    'Authorization': `Bearer ${adminToken}`,
-    'Content-Type': 'application/json'
-  }
+    Authorization: `Bearer ${adminToken}`,
+    "Content-Type": "application/json",
+  },
 });
 
 const statsData = await response.json();
-console.log('Derniers 12 mois:', statsData.months);
-console.log('CA mensuel:', statsData.revenue);
+console.log("Derniers 12 mois:", statsData.months);
+console.log("CA mensuel:", statsData.revenue);
 ```
 
 #### Usage dans un Composant
@@ -469,7 +499,7 @@ const AdminStatsPage = () => {
   return (
     <div>
       <h1>Statistiques des 12 derniers mois</h1>
-      
+
       {stats?.months.map((month, index) => (
         <div key={month}>
           <h3>{month}</h3>
@@ -493,16 +523,17 @@ const AdminStatsPage = () => {
 
 ### Gestion d'Erreurs
 
-| Code | Description | Réponse |
-|------|-------------|---------|
-| `200` | Succès | Données des statistiques |
-| `401` | Non authentifié | `{"error": "Token manquant ou invalide"}` |
-| `403` | Non autorisé | `{"error": "Accès refusé - Admin requis"}` |
-| `500` | Erreur serveur | `{"error": "Internal server error"}` |
+| Code  | Description     | Réponse                                    |
+| ----- | --------------- | ------------------------------------------ |
+| `200` | Succès          | Données des statistiques                   |
+| `401` | Non authentifié | `{"error": "Token manquant ou invalide"}`  |
+| `403` | Non autorisé    | `{"error": "Accès refusé - Admin requis"}` |
+| `500` | Erreur serveur  | `{"error": "Internal server error"}`       |
 
 ### Tests et Validation
 
 L'endpoint dispose de tests complets couvrant :
+
 - ✅ Authentification admin requise (403 pour utilisateurs normaux)
 - ✅ Retour de 12 mois exacts
 - ✅ Format ISO YYYY-MM des mois
