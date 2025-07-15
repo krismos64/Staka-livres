@@ -12,12 +12,14 @@
 - **60+ endpoints REST API** sécurisés avec Zod validation et conformité RGPD
 - **13 modèles de base de données** avec relations RGPD complètes
 - **Système d'audit sécurisé** avec traçabilité complète et export
-- **210+ tests automatisés** (Vitest, Cypress) - **100% SUCCÈS** ✅ incluant tests RGPD et contact public
+- **Tests automatisés stabilisés** : Tests unitaires séparés des tests d'intégration
+- **CI/CD optimisé** : Tests unitaires en GitHub Actions, tests d'intégration en local
 - **16+ guides de documentation** complets et à jour (dont CONSULTATION_BOOKING_GUIDE.md)
-- **87%+ de couverture de tests** validée avec **zéro échec** après optimisations
+- **87%+ de couverture de tests** validée avec architecture de tests robuste
 - **10 pages admin** entièrement fonctionnelles
 - **15+ composants landing page** production-ready (dont FreeSample optimisé)
 - **Support multi-architecture** Docker (ARM64/x86)
+- **Infrastructure CI/CD robuste** avec déploiement automatique
 
 ### 🌟 **Vision**
 
@@ -743,19 +745,19 @@ Staka-livres/
 
 ## 📋 **Changelog Récent**
 
-### ✅ **Version Actuelle (Juillet 2025) - Tests 100% Validés & Multi-Architecture**
+### ✅ **Version Actuelle (Juillet 2025) - Architecture CI/CD Robuste & Multi-Architecture**
 
-**🧪 Tests Backend 100% Validés (NOUVEAU - CRITIQUE) :**
+**🧪 Tests Frontend Restructurés (NOUVEAU - CRITIQUE) :**
 
-- ✅ **Résolution complète des échecs** : De 22 tests échoués à **0 échec** (100% succès)
-- ✅ **Suite de tests robuste** : 63 tests passés | 7 ignorés (70 total)
-- ✅ **Validation PdfService** : Ajout de validation d'entrée pour éviter les TypeError
-- ✅ **Correction FilesService** : Gestion du cache S3 statique avec reset entre tests
-- ✅ **Mock Prisma optimisé** : Structure auth middleware et Role enum correctement mockés
-- ✅ **Stream handling fixé** : Gestion des Readable streams avec async iterators
-- ✅ **UUID validation** : Tous les tests utilisent des UUIDs valides
-- ✅ **Service mocks alignés** : Mocks adaptés à l'implémentation réelle
-- ✅ **Couverture étendue** : Tests d'intégration S3, auth, payments, PDF, facturation
+- ✅ **Séparation tests unitaires/intégration** : Architecture claire pour CI/CD et développement local
+- ✅ **GitHub Actions optimisées** : Tests unitaires uniquement en CI pour stabilité
+- ✅ **Tests d'intégration locaux** : Nécessitent backend, exclus du CI automatiquement
+- ✅ **Configuration double** : vite.config.ts (CI) vs vite.config.integration.ts (local)
+- ✅ **Scripts npm spécialisés** : test:unit, test:integration, test:all pour tous les besoins
+- ✅ **Documentation complète** : frontend/tests/README.md explique l'architecture
+- ✅ **CI/CD stable** : Élimination des erreurs Network Error en Actions
+- ✅ **Développement local flexible** : Tests complets disponibles avec backend
+- ✅ **Couverture maintenue** : Tests unitaires + intégration séparés sans perte de qualité
 
 **🐳 Infrastructure Docker Multi-Architecture :**
 
@@ -1004,14 +1006,20 @@ npm run dev
 - **Prisma Studio** : http://localhost:5555
 - **Base de données** : localhost:3306
 
-### 🧪 **Tests et Validation - 100% SUCCÈS ✅**
+### 🧪 **Tests et Validation - Architecture Robuste ✅**
 
 ```bash
-# Tests backend - TOUS PASSENT (63 passed | 7 skipped)
+# Tests backend complets
 npm run test:backend
 
-# Tests frontend
-cd frontend && npm run test
+# Tests frontend unitaires (CI/CD)
+cd frontend && npm run test:unit
+
+# Tests frontend d'intégration (local avec backend)
+cd frontend && npm run test:integration
+
+# Tests frontend complets (local)
+cd frontend && npm run test:all
 
 # Tests E2E Cypress
 cd frontend && npm run test:e2e
@@ -1022,13 +1030,13 @@ node test-admin-stats.js
 # Linting
 npm run lint --workspace=frontend
 
-# 🎯 RÉSULTATS ACTUELS - VALIDÉS
-# ✅ Tests Backend: 63 passed | 7 skipped (70 total) - 0 FAILED
-# ✅ PdfService: Validation d'entrée robuste avec gestion d'erreurs propres
-# ✅ FilesService: Cache S3 statique correctement réinitialisé entre tests
-# ✅ AdminFactures: Stream handling et redirections mockés correctement
-# ✅ Auth middleware: Prisma et Role enum mockés en structure cohérente
-# ✅ UUID validation: Tous les tests utilisent des UUIDs au format valide
+# 🎯 ARCHITECTURE DE TESTS OPTIMISÉE
+# ✅ Tests unitaires: Exécution rapide en CI/CD sans dépendances externes
+# ✅ Tests d'intégration: Exécution locale avec backend requis
+# ✅ Séparation claire: vite.config.ts (CI) vs vite.config.integration.ts (local)
+# ✅ Scripts npm différenciés: test:unit, test:integration, test:all
+# ✅ CI/CD stable: Pas d'échecs liés aux tests d'intégration
+# ✅ Documentation: frontend/tests/README.md explicite les différences
 
 # ⚠️ Note importante : Tests S3
 # Tous les tests S3 sont automatiquement ignorés si :
@@ -1183,28 +1191,28 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 **✅ Version Production-Ready** avec système de notifications temps réel, statistiques admin refaites, infrastructure Docker stable, et architecture backend complète de 45+ endpoints.
 
-**🚀 Prêt pour déploiement** avec **tests 100% validés** (63/63 passés), documentation complète, infrastructure Docker multi-architecture, et système d'upload de fichiers complet.
+**🚀 Prêt pour déploiement** avec **architecture CI/CD robuste**, documentation complète, infrastructure Docker multi-architecture, et système d'upload de fichiers complet.
 
-**🏆 Tests Backend Stabilisés** : Résolution complète de tous les échecs de tests grâce à l'optimisation des mocks Prisma, validation d'entrée PdfService, gestion du cache S3 statique, et correction du stream handling.
+**🏆 Tests Restructurés** : Séparation claire tests unitaires (CI/CD) et intégration (local), élimination des erreurs GitHub Actions, et amélioration de la stabilité des pipelines.
 
 ### 🎉 **Nouvelles Fonctionnalités Récentes**
 
-- **🔔 Système de Notifications Email Centralisé (NOUVEAU - JUILLET 2025)** : Architecture événementielle complète avec double notification (interface + email) automatique, 18 templates HTML professionnels, et tests production 100% validés
+- **🧪 Architecture de Tests Robuste (NOUVEAU - JUILLET 2025)** : Séparation claire tests unitaires (CI/CD) et intégration (local), élimination des erreurs GitHub Actions, documentation complète
+- **🔄 CI/CD Optimisé** : Tests unitaires stables en GitHub Actions, tests d'intégration pour développement local, configurations Vitest séparées
+- **📚 Documentation Tests** : Guide complet frontend/tests/README.md expliquant l'architecture et les commandes
+- **🔔 Système de Notifications Email Centralisé** : Architecture événementielle complète avec double notification (interface + email) automatique, 18 templates HTML professionnels
 - **📧 Emails Admin Automatiques** : 5+ emails confirmés envoyés avec EventBus + Listeners pour zéro duplication de code
 - **👥 Emails Utilisateurs & Visiteurs** : Templates dédiés avec préférences opt-out et confirmations automatiques pour contact/échantillons gratuits
-- **✅ Tests Production Validés** : Interface clochette (7 notifications) + Emails admin (5 envoyés) + API complète avec authentification JWT confirmés en production
 - **📧 Système de Support Client Entièrement Fonctionnel** : Formulaire d'aide HelpPage.tsx corrigé avec workflow automatisé vers messagerie et emails support
 - **🔧 Configuration SendGrid Opérationnelle** : FROM_EMAIL vérifiée, SUPPORT_EMAIL configuré, templates HTML professionnels, tests curl validés
 - **🔄 Intégration API Messagerie Complète** : Source 'client-help' détectée automatiquement avec envoi email support et notifications temps réel
 - **🛡️ Conformité RGPD Complète** : Suppression de compte avec anonymisation et export de données par email
 - **📋 Audit Logging Avancé** : Actions `USER_DATA_EXPORTED`, `USER_DELETED`, `USER_MESSAGE_SUPPORT_EMAIL_SENT` avec traçabilité complète
-- **🧪 Tests Backend 100% Validés** : Résolution complète de 22 échecs → 0 échec avec optimisation des mocks
 - **📞 Système de réservation de consultations** : Modal ultra-simplifiée accessible depuis landing page et espace client, avec workflow automatisé vers la messagerie admin et notifications temps réel
 - **📁 Upload de fichiers projet** avec S3 et progression temps réel
 - **🐳 Support Docker ARM64/x86** natif avec script de build automatisé
 - **🌐 Routing API Nginx** optimisé avec strip prefix pour compatibilité
 - **💳 Moyens de paiement Stripe** avec gestion des cartes par défaut
 - **📊 Statistiques annuelles** pour les clients avec statut VIP automatique
-- **🧪 Tests renforcés** avec couverture étendue et mocks S3
 - **🔗 API Projects** avec endpoints de listage et pagination
 - **🔄 Navigation cross-page optimisée** : Système intelligent de navigation connexion ↔ inscription avec 4 points d'entrée depuis la landing page et persistance des choix utilisateur
