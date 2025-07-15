@@ -12,8 +12,12 @@ COPY frontend/ .
 # Étape 2 : copier les types partagés
 COPY shared/ ../shared/
 
-# Étape 3 : installer les dépendances (une seule fois)
+# Étape 3 : installer TOUTES les dépendances (forcer devDependencies)
+ENV NODE_ENV=development
 RUN yarn install --frozen-lockfile
+
+# Forcer l'installation de vite et vitest au cas où
+RUN yarn add vite vitest --dev || echo "Vite/vitest already installed"
 
 # Vérifier que vite et vitest sont installés
 RUN yarn list vite || echo "⚠️ Vite non trouvé dans yarn list"
