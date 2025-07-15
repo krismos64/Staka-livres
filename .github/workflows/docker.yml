@@ -27,7 +27,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  NAMESPACE: staka
+  NAMESPACE: krismos64
 
 jobs:
   unit-tests:

@@ -9,10 +9,12 @@ WORKDIR /app
 RUN corepack enable
 
 # Copy package files (depuis le contexte racine)
-COPY frontend/package.json frontend/package-lock.json* frontend/pnpm-lock.yaml* ./
+COPY frontend/package.json frontend/yarn.lock* frontend/package-lock.json* frontend/pnpm-lock.yaml* ./
 
-# Install dependencies - use npm if no pnpm lockfile exists
-RUN if [ -f pnpm-lock.yaml ]; then \
+# Install dependencies - use yarn if yarn.lock exists, npm otherwise
+RUN if [ -f yarn.lock ]; then \
+      yarn install --frozen-lockfile --production; \
+    elif [ -f pnpm-lock.yaml ]; then \
       pnpm install --frozen-lockfile; \
     else \
       npm install --omit=dev --legacy-peer-deps; \
@@ -35,14 +37,18 @@ COPY frontend/ ./
 COPY shared/ /shared
 
 # Install all dependencies (including dev dependencies)
-RUN if [ -f pnpm-lock.yaml ]; then \
+RUN if [ -f yarn.lock ]; then \
+      yarn install --frozen-lockfile; \
+    elif [ -f pnpm-lock.yaml ]; then \
       pnpm install --frozen-lockfile; \
     else \
       npm install --legacy-peer-deps; \
     fi
 
 # Build the application
-RUN if [ -f pnpm-lock.yaml ]; then \
+RUN if [ -f yarn.lock ]; then \
+      yarn build; \
+    elif [ -f pnpm-lock.yaml ]; then \
       pnpm run build; \
     else \
       npm run build; \
