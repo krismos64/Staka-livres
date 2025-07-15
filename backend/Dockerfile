@@ -9,7 +9,7 @@ COPY shared/package*.json ./shared/
 
 # Installer les dépendances du backend (avec devDependencies pour nodemon/ts-node et rollup ARM64)
 WORKDIR /app/backend
-RUN npm ci --include=dev
+RUN npm ci --include=dev --ignore-optional
 
 # Copier le code source
 COPY backend/ ./
