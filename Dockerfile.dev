@@ -13,14 +13,18 @@ COPY frontend/package.json frontend/yarn.lock ./
 # Étape 2 : installer les dépendances
 RUN yarn install --frozen-lockfile
 
-# Vérifier que vitest est installé
-RUN yarn list vitest || echo "⚠️ Vitest non trouvé dans yarn list"
-
-# Étape 3 : copier le reste du code
+# Étape 3 : copier le reste du code (APRÈS installation pour garder node_modules)
 COPY frontend/ .
 
 # Étape 4 : copier les types partagés
 COPY shared/ ../shared/
+
+# Réinstaller pour s'assurer que tout est en place
+RUN yarn install --frozen-lockfile
+
+# Vérifier que vite et vitest sont installés
+RUN yarn list vite || echo "⚠️ Vite non trouvé dans yarn list"
+RUN yarn list vitest || echo "⚠️ Vitest non trouvé dans yarn list"
 
 # Exposer les ports
 EXPOSE 5173 8080
@@ -32,10 +36,11 @@ RUN echo '#!/bin/sh' > /healthcheck.sh && \
     echo 'done' >> /healthcheck.sh && \
     chmod +x /healthcheck.sh
 
-# Debug vitest
-RUN ls -la node_modules/.bin | grep vitest || echo "⚠️ Vitest non trouvé dans .bin"
+# Debug vite et vitest
+RUN ls -la node_modules/.bin | grep -E "(vite|vitest)" || echo "⚠️ Vite/Vitest non trouvé dans .bin"
+RUN yarn vite --version || echo "⚠️ Vite introuvable via yarn"
 RUN yarn vitest --version || echo "⚠️ Vitest introuvable via yarn"
-RUN npx vitest --version || echo "⚠️ Vitest introuvable via npx"
+RUN npx vite --version || echo "⚠️ Vite introuvable via npx"
 
 # Dev + healthcheck avec restart automatique
 CMD ["/bin/sh", "-c", "/healthcheck.sh & yarn dev --host 0.0.0.0 --port 5173 || (echo 'Yarn dev failed, restarting...' && sleep 5 && yarn dev --host 0.0.0.0 --port 5173)"]

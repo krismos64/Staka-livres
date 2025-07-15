@@ -1,4 +1,4 @@
-name: E2E Tests with Cypress
+name: Frontend Tests (Vitest + Cypress)
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
-    name: Unit Tests (Jest)
+    name: Unit Tests (Vitest)
 
     steps:
       - name: Checkout code
