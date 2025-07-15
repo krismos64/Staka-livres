@@ -26,7 +26,7 @@ jobs:
 
       - name: Build and start services
         run: |
-          docker-compose --profile test build --parallel
+          docker-compose --profile test build --no-cache --parallel
           docker-compose --profile test up -d db backend frontend-dev
 
       - name: Wait for services to be ready
@@ -84,10 +84,10 @@ jobs:
           
           # Quick vitest check
           echo "Checking vitest availability:"
-          docker-compose exec -T frontend-dev yarn vitest --version || echo "Warning: vitest not accessible via yarn"
+          docker-compose exec -T frontend-dev npm run test --version || echo "Warning: vitest not accessible"
           
           # Run Vitest tests
-          docker-compose exec -T frontend-dev yarn test:unit
+          docker-compose exec -T frontend-dev npm run test:unit
 
       - name: Stop services
         if: always()
@@ -113,7 +113,7 @@ jobs:
 
       - name: Build and start services
         run: |
-          docker-compose --profile test build --parallel
+          docker-compose --profile test build --no-cache --parallel
           docker-compose --profile test up -d db backend frontend-dev
 
       - name: Wait for services to be ready

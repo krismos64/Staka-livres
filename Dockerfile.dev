@@ -6,35 +6,25 @@ RUN apk add --no-cache curl netcat-openbsd
 
 WORKDIR /app
 
-# Étape 1 : copier TOUS les fichiers frontend d'un coup
+# Copier package.json ET package-lock.json si il existe
+COPY frontend/package.json frontend/package-lock.json* ./
+
+# Installer avec npm (plus fiable que yarn dans Docker)
+ENV NODE_ENV=development
+RUN npm install --legacy-peer-deps
+
+# Copier le reste du code
 COPY frontend/ .
 
-# Étape 2 : copier les types partagés
+# Copier les types partagés
 COPY shared/ ../shared/
 
-# Étape 3 : installer TOUTES les dépendances (forcer devDependencies)
-ENV NODE_ENV=development
-RUN yarn install --frozen-lockfile
-
-# Forcer l'installation de vite et vitest au cas où
-RUN yarn add vite vitest --dev || echo "Vite/vitest already installed"
-
-# Vérifier que vite et vitest sont installés
-RUN yarn list vite || echo "⚠️ Vite non trouvé dans yarn list"
-RUN yarn list vitest || echo "⚠️ Vitest non trouvé dans yarn list"
-
-# Debug complet de l'installation
-RUN echo "=== DIAGNOSTIC COMPLET ==="
-RUN echo "PATH: $PATH"
-RUN echo "Working directory: $(pwd)"
-RUN echo "Files in /app:"
-RUN ls -la
-RUN echo "Node modules exists?"
-RUN test -d node_modules && echo "✅ node_modules existe" || echo "❌ node_modules manquant"
-RUN echo "Vite binary exists?"
-RUN test -f node_modules/.bin/vite && echo "✅ vite binary existe" || echo "❌ vite binary manquant"
-RUN echo "All binaries in node_modules/.bin:"
-RUN ls -la node_modules/.bin/ | grep -E "(vite|vitest)" || echo "❌ Aucun binary vite/vitest trouvé"
+# Vérifier l'installation
+RUN echo "=== VÉRIFICATIONS ==="
+RUN npm list vite || echo "⚠️ Vite non installé"
+RUN npm list vitest || echo "⚠️ Vitest non installé"
+RUN ls -la node_modules/.bin/ | grep -E "(vite|vitest)" || echo "⚠️ Binaires manquants"
+RUN test -f node_modules/.bin/vite && echo "✅ vite binary trouvé" || echo "❌ vite binary manquant"
 
 # Exposer les ports
 EXPOSE 5173 8080
@@ -46,11 +36,5 @@ RUN echo '#!/bin/sh' > /healthcheck.sh && \
     echo 'done' >> /healthcheck.sh && \
     chmod +x /healthcheck.sh
 
-# Debug vite et vitest
-RUN ls -la node_modules/.bin | grep -E "(vite|vitest)" || echo "⚠️ Vite/Vitest non trouvé dans .bin"
-RUN yarn vite --version || echo "⚠️ Vite introuvable via yarn"
-RUN yarn vitest --version || echo "⚠️ Vitest introuvable via yarn"
-RUN npx vite --version || echo "⚠️ Vite introuvable via npx"
-
-# Dev + healthcheck avec restart automatique - utiliser le chemin absolu
-CMD ["/bin/sh", "-c", "/healthcheck.sh & ./node_modules/.bin/vite --host 0.0.0.0 --port 5173 || (echo 'Direct vite failed, trying yarn...' && yarn dev)"]
+# Utiliser npm run dev au lieu de vite directement
+CMD ["/bin/sh", "-c", "/healthcheck.sh & npm run dev"]
