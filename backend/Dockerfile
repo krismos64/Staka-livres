@@ -1,7 +1,9 @@
 FROM node:20.19.0-slim
 
-# Install curl for healthchecks
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# Installer OpenSSL et curl pour les healthchecks
+RUN apt-get update && \
+    apt-get install -y curl openssl && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -13,7 +15,6 @@ COPY shared/package*.json ./shared/
 # Installer les dépendances
 WORKDIR /app/backend
 RUN npm ci --legacy-peer-deps --no-optional
-
 
 
 # Copier le code source

@@ -21,16 +21,16 @@ model User {
   adresse                 String?          @db.Text
   avatar                  String?          @db.VarChar(500)
   telephone               String?          @db.VarChar(20)
-  preferences             Json?            @default("{\"emailNotifications\": true}")
+  preferences             Json?
   commandes               Commande[]
   files                   File[]           @relation("FileOwner")
   receivedMessages        Message[]        @relation("MessageReceiver")
   sentMessages            Message[]        @relation("MessageSender")
   notifications           Notification[]
+  passwordResets          PasswordReset[]
   paymentMethods          PaymentMethod[]
   assignedSupportRequests SupportRequest[] @relation("SupportAssignee")
   supportRequests         SupportRequest[]
-  passwordResets          PasswordReset[]
 
   @@index([email])
   @@index([role])
@@ -59,7 +59,6 @@ model Commande {
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   files           File[]         @relation("CommandeFiles")
   invoices        Invoice[]
-  // Le champ 'messages' est supprimé ici
 
   @@index([userId])
   @@index([statut])
@@ -96,49 +95,40 @@ model File {
 
 /// Messages entre utilisateurs (clients <-> admins <-> visiteurs)
 model Message {
-  id             String @id @default(uuid())
-  conversationId String @default(uuid()) // Regroupe les messages d'une même conversation
-
-  senderId   String? // Optionnel: ID de l'utilisateur connecté
-  receiverId String? // Toujours un admin pour le premier message
-
-  // Champs pour les visiteurs non connectés
-  visitorEmail String? @db.VarChar(255)
-  visitorName  String? @db.VarChar(100)
-
-  // Champs pour nom d'affichage personnalisé (admin)
-  displayFirstName String? @db.VarChar(100)
-  displayLastName  String? @db.VarChar(100)
-  displayRole      String? @db.VarChar(100)
-
-  subject        String?       @db.VarChar(255)
-  content        String        @db.Text
-  type           MessageType   @default(USER_MESSAGE)
-  statut         MessageStatut @default(ENVOYE)
-  isRead         Boolean       @default(false)
-  isArchived     Boolean       @default(false)
-  isPinned       Boolean       @default(false)
-  deletedByAdmin Boolean       @default(false) // Masquer la conversation pour l'admin
-  parentId       String?
-  
-  // Champs additionnels pour les demandes de consultation
-  metadata       Json?         // Données spécifiques au type de message
-  status         String?       @db.VarChar(50) // Statut personnalisé
-  isFromVisitor  Boolean       @default(false) // Indique si c'est un visiteur non connecté
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  attachments MessageAttachment[]
-  parent      Message?            @relation("MessageThread", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  replies     Message[]           @relation("MessageThread")
-  receiver    User?               @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: SetNull)
-  sender      User?               @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  id               String              @id @default(uuid())
+  senderId         String?
+  receiverId       String?
+  subject          String?             @db.VarChar(255)
+  content          String              @db.Text
+  type             MessageType         @default(USER_MESSAGE)
+  statut           MessageStatut       @default(ENVOYE)
+  isRead           Boolean             @default(false)
+  isArchived       Boolean             @default(false)
+  isPinned         Boolean             @default(false)
+  parentId         String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  conversationId   String              @default(uuid())
+  visitorEmail     String?             @db.VarChar(255)
+  visitorName      String?             @db.VarChar(100)
+  deletedByAdmin   Boolean             @default(false)
+  displayFirstName String?             @db.VarChar(100)
+  displayLastName  String?             @db.VarChar(100)
+  displayRole      String?             @db.VarChar(100)
+  isFromVisitor    Boolean             @default(false)
+  metadata         Json?
+  status           String?             @db.VarChar(50)
+  attachments      MessageAttachment[]
+  parent           Message?            @relation("MessageThread", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies          Message[]           @relation("MessageThread")
+  receiver         User?               @relation("MessageReceiver", fields: [receiverId], references: [id])
+  sender           User?               @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
 
   @@index([conversationId])
   @@index([senderId])
   @@index([receiverId])
   @@index([visitorEmail])
+  @@index([parentId], map: "messages_parentId_fkey")
   @@map("messages")
 }
 
@@ -173,10 +163,8 @@ model SupportRequest {
   closedAt        DateTime?
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
-
-  assignedTo User? @relation("SupportAssignee", fields: [assignedToId], references: [id])
-  user       User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  // Le champ 'messages' est supprimé ici
+  assignedTo      User?                @relation("SupportAssignee", fields: [assignedToId], references: [id])
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([assignedToId])
@@ -312,17 +300,16 @@ model Tarif {
   id              String   @id @default(uuid())
   nom             String   @db.VarChar(255)
   description     String   @db.Text
-  prix            Int // Prix en centimes (pour éviter les problèmes de float)
-  prixFormate     String   @db.VarChar(50) // Prix formaté pour affichage (ex: "2€", "350€")
-  typeService     String   @db.VarChar(100) // Type de service (Correction, Relecture, etc.)
-  dureeEstimee    String?  @db.VarChar(100) // Durée estimée (ex: "7-8 jours")
+  prix            Int
+  prixFormate     String   @db.VarChar(50)
+  typeService     String   @db.VarChar(100)
+  dureeEstimee    String?  @db.VarChar(100)
   actif           Boolean  @default(true)
   ordre           Int      @default(0)
-  // Intégration Stripe pour synchronisation automatique
-  stripeProductId String?  @db.VarChar(255) // ID du produit Stripe associé
-  stripePriceId   String?  @db.VarChar(255) // ID du prix Stripe associé
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  stripePriceId   String?  @db.VarChar(255)
+  stripeProductId String?  @db.VarChar(255)
 
   @@index([actif])
   @@index([ordre])
@@ -335,17 +322,17 @@ model Tarif {
 
 /// Logs d'audit système
 model AuditLog {
-  id          String               @id @default(uuid())
-  timestamp   DateTime             @default(now())
-  adminEmail  String               @db.VarChar(255)
-  action      String               @db.VarChar(100)
-  targetType  AuditTargetType
-  targetId    String?              @db.VarChar(191)
-  details     String?              @db.Text
-  ipAddress   String?              @db.VarChar(45)
-  userAgent   String?              @db.Text
-  severity    AuditSeverity        @default(MEDIUM)
-  createdAt   DateTime             @default(now())
+  id         String          @id @default(uuid())
+  timestamp  DateTime        @default(now())
+  adminEmail String          @db.VarChar(255)
+  action     String          @db.VarChar(100)
+  targetType AuditTargetType
+  targetId   String?
+  details    String?         @db.Text
+  ipAddress  String?         @db.VarChar(45)
+  userAgent  String?         @db.Text
+  severity   AuditSeverity   @default(MEDIUM)
+  createdAt  DateTime        @default(now())
 
   @@index([adminEmail])
   @@index([action])
