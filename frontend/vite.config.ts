@@ -25,7 +25,7 @@ export default defineConfig({
     },
     proxy: {
       "/api": {
-        target: "http://backend:3001",
+        target: "http://localhost:3001",
         changeOrigin: true,
         // Ne pas supprimer /api car le backend l'attend maintenant
       },

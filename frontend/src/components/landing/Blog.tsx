@@ -8,8 +8,9 @@ interface BlogArticle {
   summary: string;
   readTime: string;
   bgGradient: string;
-  icon: string;
-  iconColor: string;
+  icon?: string;
+  iconColor?: string;
+  image?: string;
 }
 
 export default function Blog() {
@@ -17,7 +18,6 @@ export default function Blog() {
 
   const handleNewsletterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implémenter l'inscription newsletter
     console.log("Newsletter blog inscription:", newsletterEmail);
     setNewsletterEmail("");
   };
@@ -32,8 +32,7 @@ export default function Blog() {
         "Découvrez les techniques des auteurs à succès pour accrocher vos lecteurs dès les premières lignes.",
       readTime: "5 min de lecture",
       bgGradient: "bg-gradient-to-br from-blue-400 to-blue-600",
-      icon: "fas fa-pen-fancy",
-      iconColor: "text-white",
+      image: "/images/chapitre-captivant.webp",
     },
     {
       id: "amazon-kdp-guide",
@@ -44,8 +43,7 @@ export default function Blog() {
         "Tout ce que vous devez savoir pour publier et vendre votre livre sur la plus grande plateforme mondiale.",
       readTime: "12 min de lecture",
       bgGradient: "bg-gradient-to-br from-green-400 to-green-600",
-      icon: "fas fa-chart-line",
-      iconColor: "text-white",
+      image: "/images/Amazon-KDP-2025.webp",
     },
     {
       id: "erreurs-autoedition",
@@ -56,13 +54,11 @@ export default function Blog() {
         "Évitez les pièges les plus fréquents et maximisez vos chances de succès avec nos conseils d'experts.",
       readTime: "8 min de lecture",
       bgGradient: "bg-gradient-to-br from-purple-400 to-purple-600",
-      icon: "fas fa-exclamation-triangle",
-      iconColor: "text-white",
+      image: "/images/Les-erreurs-courantes-en-auto-edition.webp",
     },
   ];
 
   const handleArticleClick = (articleId: string) => {
-    // TODO: Navigation vers l'article
     console.log("Navigation vers l'article:", articleId);
   };
 
@@ -93,14 +89,21 @@ export default function Blog() {
               key={article.id}
               className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300"
             >
-              <div className={`h-48 ${article.bgGradient} relative`}>
-                <div className="absolute inset-0 flex items-center justify-center">
+              <div className="h-48 relative overflow-hidden rounded-t-2xl">
+                {article.image ? (
+                  <img
+                    src={article.image}
+                    alt={article.title}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
                   <i
                     className={`${article.icon} ${article.iconColor} text-4xl`}
                     aria-hidden="true"
                   ></i>
-                </div>
-                <div className="absolute top-4 left-4 bg-white/20 backdrop-blur rounded-full px-3 py-1 text-white text-sm">
+                )}
+                <div className="absolute top-4 left-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full px-3 py-1 text-sm font-medium shadow-lg">
                   {article.category}
                 </div>
               </div>

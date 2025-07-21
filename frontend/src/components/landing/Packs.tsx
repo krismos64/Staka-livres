@@ -1,9 +1,9 @@
 import React from "react";
+import { useAuth } from "../../contexts/AuthContext";
 import { TarifAPI } from "../../utils/api";
 import ErrorMessage from "../ui/ErrorMessage";
 import Loader from "../ui/Loader";
 import { usePricing } from "./hooks/usePricing";
-import { useAuth } from "../../contexts/AuthContext";
 
 interface Pack {
   id: string;
@@ -25,12 +25,12 @@ export default function Packs({ onSignupClick }: PacksProps) {
   const { tarifs, isLoading, error, refreshTarifs } = usePricing({
     enableDebugLogs: process.env.NODE_ENV === "development",
   });
-  
+
   const { user } = useAuth();
 
   const handlePackClick = (packId: string) => {
     console.log(`Pack sélectionné: ${packId}`);
-    
+
     if (!user) {
       // Utilisateur non connecté - stocker le pack et rediriger vers signup
       localStorage.setItem("selected_pack", packId);
@@ -87,7 +87,7 @@ export default function Packs({ onSignupClick }: PacksProps) {
             </p>
           </div>
 
-          {/* Message d'erreur avec bouton retry */}
+          {/* Message d'erreur éventuel */}
           {error && (
             <ErrorMessage
               message="Offres indisponibles, affichage des offres par défaut"
@@ -100,7 +100,7 @@ export default function Packs({ onSignupClick }: PacksProps) {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {packs.map((pack, index) => (
+          {packs.map((pack) => (
             <div
               key={pack.id}
               className={`${
@@ -114,6 +114,21 @@ export default function Packs({ onSignupClick }: PacksProps) {
                   <span className="bg-yellow-400 text-gray-800 px-4 py-1 rounded-full text-sm font-semibold">
                     ⭐ Le plus populaire
                   </span>
+                </div>
+              )}
+
+              {/* Image spécifique pour le pack de rédaction */}
+              {(pack.id === "pack-redaction-default" ||
+                pack.nom.toLowerCase().includes("rédaction")) && (
+                <div className="mb-4">
+                  <div className="relative h-32 overflow-hidden rounded-lg">
+                    <img
+                      src="/images/Pack-Redaction.webp"
+                      alt="Pack Rédaction - Femme écrivant à son bureau"
+                      className="w-full h-full object-cover opacity-80"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                  </div>
                 </div>
               )}
 
@@ -205,11 +220,6 @@ function buildPacksFromTarifs(tarifs: TarifAPI[]): Pack[] {
       t.typeService === "Correction" ||
       t.nom.toLowerCase().includes("correction")
   );
-  const maquetteTarifs = activeTarifs.filter(
-    (t) =>
-      t.typeService === "Mise en forme" ||
-      t.nom.toLowerCase().includes("maquette")
-  );
   const reecritureTarifs = activeTarifs.filter(
     (t) =>
       t.typeService === "Réécriture" ||
@@ -252,22 +262,21 @@ function buildPacksFromTarifs(tarifs: TarifAPI[]): Pack[] {
   if (correctionStandard) {
     packs.push({
       id: correctionStandard.id,
-      nom: correctionStandard.nom || "Correction Standard",
+      nom: correctionStandard.nom || "Pack Intégral",
       prix: correctionStandard.prixFormate,
-      description:
-        correctionStandard.description ||
-        "Correction complète de votre manuscrit",
+      description: correctionStandard.description || "Solution complète",
       services: [
         "Correction complète",
         "Maquette intérieure",
         "Conception couverture",
         "Fichiers ePub & Mobi",
+        "Rapport de correction détaillé",
         "Support prioritaire",
       ],
-      delai: correctionStandard.dureeEstimee || "7-10 jours",
+      delai: correctionStandard.dureeEstimee || "10-15 jours",
       featured: true,
       buttonStyle:
-        "w-full bg-white text-blue-600 py-3 px-6 rounded-xl font-semibold hover:bg-blue-50 transition border-2 border-white",
+        "w-full bg-white text-blue-600 py-3 px-6 rounded-xl font-semibold hover:bg-blue-50 transition",
     });
   }
 
@@ -304,7 +313,7 @@ function buildPacksFromTarifs(tarifs: TarifAPI[]): Pack[] {
       delai: reecritureAvancee.dureeEstimee || "10-14 jours",
       featured: false,
       buttonStyle:
-        "w-full bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-semibold transition",
+        "w-full bg-gray-600 hover:bg-gray-700 text-white py-3 px-6 rounded-xl font-semibold transition",
     });
   }
 
@@ -316,7 +325,7 @@ function buildPacksFromTarifs(tarifs: TarifAPI[]): Pack[] {
       .filter((t) => !usedIds.has(t.id))
       .slice(0, missingCount);
 
-    remainingTarifs.forEach((tarif, index) => {
+    remainingTarifs.forEach((tarif) => {
       packs.push({
         id: tarif.id,
         nom: tarif.nom,

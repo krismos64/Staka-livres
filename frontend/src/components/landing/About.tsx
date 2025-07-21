@@ -156,6 +156,75 @@ export default function About({ onChatClick }: AboutProps) {
             </div>
           </div>
         </div>
+
+        {/* Section images professionnelles */}
+        <div className="mt-20">
+          <div className="text-center mb-12">
+            <h3 className="text-2xl md:text-3xl font-bold mb-4">
+              Notre équipe à votre service
+            </h3>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Découvrez l'univers de Staka Éditions : des professionnels passionnés 
+              qui accompagnent chaque auteur dans la réalisation de son projet éditorial.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="aspect-[4/5] overflow-hidden">
+                <img
+                  src="/images/Qui-sommes-nous-1-.webp"
+                  alt="Notre expertise éditoriale"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+              <div className="absolute bottom-6 left-6 right-6">
+                <h4 className="text-white font-bold text-lg mb-2">Expertise éditoriale</h4>
+                <p className="text-white/90 text-sm">
+                  Une équipe de professionnels dédiée à l'excellence littéraire
+                </p>
+              </div>
+            </div>
+
+            <div className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="aspect-[4/5] overflow-hidden">
+                <img
+                  src="/images/Qui-sommes-nous-2-.webp"
+                  alt="Accompagnement personnalisé"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+              <div className="absolute bottom-6 left-6 right-6">
+                <h4 className="text-white font-bold text-lg mb-2">Accompagnement personnalisé</h4>
+                <p className="text-white/90 text-sm">
+                  Un suivi sur-mesure pour chaque projet d'auteur
+                </p>
+              </div>
+            </div>
+
+            <div className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="aspect-[4/5] overflow-hidden">
+                <img
+                  src="/images/Qui-sommes-nous-3-.webp"
+                  alt="Passion de l'écriture"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+              <div className="absolute bottom-6 left-6 right-6">
+                <h4 className="text-white font-bold text-lg mb-2">Passion de l'écriture</h4>
+                <p className="text-white/90 text-sm">
+                  L'amour des mots au cœur de notre métier
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
