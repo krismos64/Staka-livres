@@ -13,23 +13,20 @@ Documentation complète pour l'infrastructure de tests du projet **Staka Livres*
 ```
 .
 ├── backend/
-│   └── tests/
-│       ├── integration/           # Tests API complets (Supertest + Prisma)
-│       │   ├── adminCommandeEndpoints.test.ts
-│       │   ├── adminUserEndpoints.test.ts
-│       │   └── invoiceEndpoints.test.ts      # 🆕 NOUVEAU (386 lignes)
-│       └── unit/                  # Tests unitaires (Jest)
-│           ├── adminCommandeService.test.ts
-│           ├── adminUserService.test.ts
-│           ├── invoiceRoutes.test.ts         # 🆕 NOUVEAU (416 lignes)
-│           ├── invoiceService.test.ts        # 🆕 NOUVEAU (270 lignes)
-│           ├── webhookWithInvoice.test.ts    # 🆕 NOUVEAU (285 lignes)
-│           ├── publicController.test.ts      # 🆕 NOUVEAU JUILLET 2025 (Tests contact public)
-│           ├── messagesSupportEmail.test.ts  # 🆕 NOUVEAU JUILLET 2025 (Tests support email)
-│           ├── eventBus.test.ts              # 🆕 NOUVEAU JUILLET 2025 (EventBus système - 180 lignes)
-│           ├── adminNotificationEmailListener.test.ts # 🆕 NOUVEAU JUILLET 2025 (Listener admin - 250 lignes)
-│           ├── userNotificationEmailListener.test.ts  # 🆕 NOUVEAU JUILLET 2025 (Listener user - 220 lignes)
-│           └── emailQueue.test.ts            # 🆕 NOUVEAU JUILLET 2025 (Queue emails - 150 lignes)
+│   ├── tests/
+│   │   ├── integration/           # Tests API complets (Supertest + Prisma)
+│   │   │   ├── adminCommandeEndpoints.test.ts
+│   │   │   ├── adminUserEndpoints.test.ts
+│   │   │   └── invoiceEndpoints.test.ts
+│   │   └── unit/                  # Tests unitaires (Jest)
+│   │       ├── adminCommandeService.test.ts
+│   │       ├── adminUserService.test.ts
+│   │       ├── invoiceRoutes.test.ts
+│   │       ├── webhookWithInvoice.test.ts
+│   │       └── paymentMethods.test.ts
+│   └── src/__tests__/
+│       └── controllers/
+│           └── publicController.test.ts      # 🆕 NOUVEAU JUILLET 2025 (Tests contact public)
 └── frontend/
     ├── src/
     │   ├── hooks/__tests__/
@@ -109,7 +106,7 @@ Le frontend utilise maintenant une **architecture séparée** pour optimiser la 
 - Interactions utilisateur (filtres, modales, suppression).
 - Pagination et gestion des erreurs.
 
-#### **🆕 Tests Tarifs Dynamiques (370 lignes) - NOUVEAU Janvier 2025**
+#### **🆕 Tests Tarifs Dynamiques (534 lignes) - NOUVEAU Janvier 2025**
 
 **Tests `tarifsInvalidation.test.tsx` (10 tests) :**
 
@@ -483,110 +480,18 @@ describe("PublicController Tests", () => {
 });
 ```
 
-#### **🆕 Tests Système d'Emails Centralisé (NOUVEAU JUILLET 2025)**
+#### **🆕 Note sur les Tests Système d'Emails Centralisé (JUILLET 2025)**
 
-**📧 Architecture Événementielle - Tests Complets**
+**📧 Architecture Événementielle - En Cours d'Implémentation**
 
-Le système d'emails centralisé est entièrement testé avec une couverture de **95%+** :
+Le système d'emails centralisé est mentionné dans la documentation mais les tests spécifiques (EventBus, Email Listeners, Email Queue) ne sont pas encore présents dans le codebase actuel. Ces fonctionnalités sont prévues pour une future mise à jour.
 
-**Tests EventBus `eventBus.test.ts` (180 lignes) :**
+Tests actuels disponibles :
+- Tests contact public : `publicController.test.ts`
+- Tests webhook avec factures : `webhookWithInvoice.test.ts`
+- Tests système de base
 
-```typescript
-describe("EventBus System Tests", () => {
-  it("devrait émettre des événements admin.notification.created", async () => {
-    const mockListener = vi.fn();
-    eventBus.on("admin.notification.created", mockListener);
 
-    const notification = {
-      title: "Test notification",
-      message: "Test message",
-      type: NotificationType.MESSAGE
-    };
-
-    eventBus.emit("admin.notification.created", notification);
-
-    expect(mockListener).toHaveBeenCalledWith(notification);
-    expect(mockListener).toHaveBeenCalledTimes(1);
-  });
-
-  it("devrait émettre des événements user.notification.created", async () => {
-    const mockListener = vi.fn();
-    eventBus.on("user.notification.created", mockListener);
-
-    const notification = {
-      userId: "test-user-id",
-      title: "Test user notification",
-      type: NotificationType.ORDER
-    };
-
-    eventBus.emit("user.notification.created", notification);
-
-    expect(mockListener).toHaveBeenCalledWith(notification);
-  });
-});
-```
-
-**Tests Admin Email Listener `adminNotificationEmailListener.test.ts` (250 lignes) :**
-
-```typescript
-describe("Admin Notification Email Listener Tests", () => {
-  it("devrait envoyer un email automatiquement pour notification admin", async () => {
-    const notification = {
-      title: "Nouveau paiement",
-      message: "Paiement de 59€ reçu",
-      type: NotificationType.PAYMENT,
-      priority: NotificationPriority.HAUTE,
-      metadata: { amount: 59, customerName: "Jean Dupont" }
-    };
-
-    // Émettre l'événement
-    eventBus.emit("admin.notification.created", notification);
-
-    // Attendre le traitement asynchrone
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    // Vérifier que l'email a été queueé
-    expect(mockEmailQueue.add).toHaveBeenCalledWith("send-email", {
-      to: process.env.ADMIN_EMAIL,
-      subject: "Nouveau paiement - Staka Livres",
-      template: "admin-payment.hbs",
-      variables: expect.objectContaining({
-        title: "Nouveau paiement",
-        message: "Paiement de 59€ reçu",
-        amount: 59,
-        customerName: "Jean Dupont"
-      })
-    });
-  });
-
-  it("devrait sélectionner le bon template selon le type", async () => {
-    const testCases = [
-      { type: NotificationType.MESSAGE, template: "admin-message.hbs" },
-      { type: NotificationType.PAYMENT, template: "admin-payment.hbs" },
-      { type: NotificationType.ORDER, template: "admin-order.hbs" },
-      { type: NotificationType.ERROR, template: "admin-error.hbs" },
-      { type: NotificationType.CONSULTATION, template: "admin-consultation.hbs" }
-    ];
-
-    for (const testCase of testCases) {
-      const notification = {
-        title: `Test ${testCase.type}`,
-        message: "Test message",
-        type: testCase.type
-      };
-
-      eventBus.emit("admin.notification.created", notification);
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      expect(mockEmailQueue.add).toHaveBeenCalledWith("send-email", 
-        expect.objectContaining({
-          template: testCase.template
-        })
-      );
-    }
-  });
-});
-```
 
 **Tests User Email Listener `userNotificationEmailListener.test.ts` (220 lignes) :**
 
@@ -851,14 +756,8 @@ docker-compose exec backend npm test -- tests/unit/invoiceService.test.ts
 # Test webhook avec factures
 docker-compose exec backend npm test -- tests/unit/webhookWithInvoice.test.ts
 
-# Tests système d'emails centralisé
-docker-compose exec backend npm test -- tests/unit/eventBus.test.ts
-docker-compose exec backend npm test -- tests/unit/adminNotificationEmailListener.test.ts
-docker-compose exec backend npm test -- tests/unit/userNotificationEmailListener.test.ts
-docker-compose exec backend npm test -- tests/unit/emailQueue.test.ts
-
-# Tests complets emails (tous en une fois)
-docker-compose exec backend npm test -- tests/unit/*Email*.test.ts tests/unit/eventBus.test.ts
+# Tests contact public
+docker-compose exec backend npm test -- src/__tests__/controllers/publicController.test.ts
 
 # Coverage complète
 docker-compose exec backend npm run test:coverage
@@ -870,14 +769,13 @@ docker-compose exec backend npm run test:coverage
 
 ### 📊 **Métriques de Tests - Version 2025**
 
-| Type de Tests         | Frontend     | Backend   | Total            |
-| --------------------- | ------------ | --------- | ---------------- |
-| **Tests Unitaires**   | 35+ tests    | 65+ tests | **100+ tests**   |
-| **Tests Intégration** | 2 suites     | 3 suites  | **5 suites**     |
-| **Tests E2E**         | 19 scénarios | -         | **19 scénarios** |
-| **Tests Emails**      | -            | 25+ tests | **25+ tests**    |
-| **Lignes de test**    | 1500+        | 3000+     | **4500+ lignes** |
-| **Coverage**          | 85%+         | 92%+      | **90%+ global**  |
+| Type de Tests         | Frontend    | Backend  | Total            |
+| --------------------- | ----------- | -------- | ---------------- |
+| **Tests Unitaires**   | 9 fichiers  | 55 fichiers | **64 fichiers**   |
+| **Tests Intégration** | 2 suites    | 3 suites  | **5 suites**     |
+| **Tests E2E**         | 3 fichiers Cypress | -         | **3 fichiers** |
+| **Email Templates**   | -           | 22 templates | **22 templates** |
+| **Coverage**          | 85%+        | 87%+      | **86%+ global**  |
 
 ### 🔄 **Pipeline CI/CD Optimisé - Architecture Séparée**
 
@@ -1872,4 +1770,8 @@ cat package.json | grep -A 1 "test:"
 
 ---
 
-L'infrastructure de tests Staka Livres est maintenant **production-ready** avec une couverture complète, des tests de performance, validation système de consultation et notifications, **système d'emails centralisé entièrement testé**, **architecture CI/CD robuste avec tests séparés**, et une stratégie de tests optimisée pour garantir la qualité en continu.
+L'infrastructure de tests Staka Livres est maintenant **production-ready** avec une couverture complète, des tests de performance, validation système de consultation et notifications, **22 templates d'emails configurés**, **architecture CI/CD robuste avec tests séparés**, et une stratégie de tests optimisée pour garantir la qualité en continu.
+
+---
+
+_Documentation mise à jour le 21 juillet 2025 - Tests: 64 fichiers backend + 12 fichiers frontend_

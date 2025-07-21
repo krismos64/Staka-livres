@@ -7,7 +7,7 @@
 
 ## 📋 **Vue d'ensemble**
 
-**✨ Version Juillet 2025 - État actuel :**
+**✨ Version Juillet 2025 - Mise à jour du 21 juillet :**
 
 La base de données **Staka Livres** est une architecture complète MySQL 8 gérée par **Prisma ORM** et déployée avec **Docker**. Elle couvre tous les aspects d'une plateforme de correction de manuscrits moderne : utilisateurs, projets, **système de messagerie unifié**, **notifications temps réel**, **système de réservation de consultations**, support client, **facturation automatique** et contenu éditorial.
 
@@ -15,10 +15,15 @@ La base de données **Staka Livres** est une architecture complète MySQL 8 gér
 
 - **📞 Messages de consultation** : Nouveau type CONSULTATION_REQUEST avec métadonnées JSON
 - **🔔 Modèle Notification** : Système de notifications temps réel avec types spécialisés (dont CONSULTATION)
+- **🛡️ Modèle AuditLog** : Système d'audit sécurisé avec traçabilité complète
+- **🔐 Modèle PasswordReset** : Système de réinitialisation de mots de passe sécurisé
 - **📊 Optimisations Prisma** : Requêtes pour statistiques admin avec agrégations
 - **🎨 Modèle Page** : CMS complet pour gestion de contenu éditorial
 - **💳 Modèle PaymentMethod** : Intégration Stripe avec méthodes de paiement
 - **🗂️ Modèle File étendu** : Gestion avancée des fichiers avec pièces jointes
+- **💰 Extension Tarif** : Ajout des champs Stripe (stripePriceId, stripeProductId)
+- **👤 Extension User** : Ajout du champ preferences (JSON) pour paramètres utilisateur
+- **💬 Extensions Message** : Ajout des champs d'affichage pour l'admin (displayFirstName, displayLastName, displayRole)
 
 ### 🏗️ **Architecture Technique**
 
@@ -27,8 +32,8 @@ La base de données **Staka Livres** est une architecture complète MySQL 8 gér
 - **Environnement** : Docker Compose avec volumes persistants
 - **Port** : 3306 (MySQL), 5555 (Prisma Studio)
 - **Container** : `staka_db` (MySQL), `staka_backend` (API + Prisma)
-- **Modèles** : 13 modèles de données interconnectés (vs 9 précédemment)
-- **Relations** : 25+ relations avec contraintes d'intégrité
+- **Modèles** : 15 modèles de données interconnectés (AuditLog + PasswordReset ajoutés)
+- **Relations** : 30+ relations avec contraintes d'intégrité
 
 ---
 
@@ -52,6 +57,7 @@ model User {
   adresse                 String?          @db.Text
   avatar                  String?          @db.VarChar(500)
   telephone               String?          @db.VarChar(20)
+  preferences             Json?
 
   // Relations
   commandes               Commande[]
@@ -59,6 +65,7 @@ model User {
   receivedMessages        Message[]        @relation("MessageReceiver")
   sentMessages            Message[]        @relation("MessageSender")
   notifications           Notification[]
+  passwordResets          PasswordReset[]
   paymentMethods          PaymentMethod[]
   assignedSupportRequests SupportRequest[] @relation("SupportAssignee")
   supportRequests         SupportRequest[]
@@ -164,9 +171,12 @@ model Message {
   parentId        String?
   
   // Champs additionnels pour les demandes de consultation (JUILLET 2025)
-  metadata        Json?         @default({}) // Données spécifiques au type de message
-  status          String?       @db.VarChar(50) // Statut personnalisé
-  isFromVisitor   Boolean       @default(false) // Indique si c'est un visiteur non connecté
+  displayFirstName String?      @db.VarChar(100) // Nom d'affichage pour admin
+  displayLastName  String?      @db.VarChar(100) // Nom d'affichage pour admin
+  displayRole      String?      @db.VarChar(100) // Rôle d'affichage
+  isFromVisitor    Boolean       @default(false) // Indique si c'est un visiteur non connecté
+  metadata         Json?         @default({}) // Données spécifiques au type de message
+  status           String?       @db.VarChar(50) // Statut personnalisé
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -462,6 +472,60 @@ model Tarif {
   ordre        Int      @default(0)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  stripePriceId   String?  @db.VarChar(255) // ID Stripe du prix
+  stripeProductId String?  @db.VarChar(255) // ID Stripe du produit
+}
+```
+
+### 🛡️ **13. AuditLog - Logs d'Audit Sécurisés (NOUVEAU 2025)**
+
+**Table** : `audit_logs`
+
+```prisma
+model AuditLog {
+  id         String          @id @default(uuid())
+  timestamp  DateTime        @default(now())
+  adminEmail String          @db.VarChar(255)
+  action     String          @db.VarChar(100)
+  targetType AuditTargetType
+  targetId   String?
+  details    String?         @db.Text
+  ipAddress  String?         @db.VarChar(45)
+  userAgent  String?         @db.Text
+  severity   AuditSeverity   @default(MEDIUM)
+  createdAt  DateTime        @default(now())
+}
+
+enum AuditTargetType {
+  user
+  command
+  invoice
+  payment
+  file
+  auth
+  system
+}
+
+enum AuditSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+```
+
+### 🔐 **14. PasswordReset - Réinitialisation de Mots de Passe (NOUVEAU 2025)**
+
+**Table** : `password_resets`
+
+```prisma
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique @db.VarChar(255)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 ```
 
@@ -767,10 +831,10 @@ docker exec -it staka_backend node scripts/rebuild-indexes.js
 
 ### **📊 Statistiques Actuelles**
 
-- **13 modèles de données** interconnectés
-- **25+ relations** avec contraintes d'intégrité
-- **15+ index optimisés** pour les requêtes fréquentes
-- **8 enums** pour la validation des données
+- **15 modèles de données** interconnectés (ajout AuditLog + PasswordReset)
+- **30+ relations** avec contraintes d'intégrité
+- **25+ index optimisés** pour les requêtes fréquentes
+- **14 enums** pour la validation des données (ajout AuditTargetType + AuditSeverity)
 - **GDPR compliant** avec cascade délétions
 
 ### **⚡ Performance**

@@ -11,20 +11,20 @@
 
 ## 📊 Vue d'Ensemble
 
-**✨ Version Juillet 2025 - État actuel :**
+**✨ Version Juillet 2025 - Mise à jour du 21 juillet :**
 
 Architecture frontend complète et **production-ready** avec React 18, TypeScript, Tailwind CSS et React Query. Le frontend comprend une **landing page marketing optimisée**, une **application dashboard fonctionnelle**, un **espace d'administration moderne** avec **intégration backend opérationnelle**, un **système de notifications temps réel**, un **système d'emails centralisé automatique**, un **système de réservation de consultations** et une **architecture de tests robuste** avec séparation unitaires/intégration.
 
 ### 🆕 **Nouvelles Fonctionnalités Juillet 2025**
 
 - **🔑 Système de réinitialisation de mot de passe** avec interface RGPD-compliant
-- **📧 Système d'emails centralisé** avec EventBus backend et 18 templates automatiques
+- **📧 Système d'emails centralisé** avec EventBus backend et 22 templates automatiques
 - **📖 Système d'échantillons gratuits** pour acquisition clients
 - **📞 Système de réservation de consultations** avec modal responsive et workflow automatisé
 - **🔔 Système de notifications temps réel** avec polling automatique et API sécurisée
 - **📊 Statistiques admin refactorisées** avec données réelles Prisma
 - **🧪 Architecture de tests robuste** : Séparation unitaires (CI/CD) vs intégration (local)
-- **🚀 Architecture React Query avancée** : 22+ hooks spécialisés (mis à jour)
+- **🚀 Architecture React Query avancée** : 21 hooks spécialisés (vérifiés)
 - **💫 Composants UI modernes** : 69+ composants avec animations Framer Motion
 - **🎨 Design System unifié** : Variables CSS, tokens design et accessibilité WCAG 2.1
 - **⚡ Performance optimisée** : Lazy loading, code splitting et cache intelligent
@@ -45,7 +45,7 @@ frontend/src/
 │   ├── notifications/   # 🔔 Notifications temps réel (6 composants) - NOUVEAU
 │   ├── project/         # 📚 Projets (3 composants)
 │   └── ui/              # 🎨 Composants UI réutilisables (15 composants)
-├── 🎣 Hooks (22 hooks personnalisés + React Query)
+├── 🎣 Hooks (21 hooks personnalisés + React Query)
 │   ├── useAdminUsers.ts         # Hook admin utilisateurs (263 lignes)
 │   ├── useAdminCommandes.ts     # Hook admin commandes (359 lignes)
 │   ├── useAdminFactures.ts      # Hook admin factures (240 lignes)
@@ -98,7 +98,7 @@ frontend/src/
 
 - **🏗️ Composants** : 69+ composants React modulaires et réutilisables
 - **📄 Pages** : 28 pages TOUTES FONCTIONNELLES (14 USER + 10 ADMIN + 4 publiques)
-- **🎣 Hooks** : 22 hooks personnalisés + React Query (mis à jour)
+- **🎣 Hooks** : 21 hooks personnalisés + React Query (vérifiés)
 - **🎨 Styles** : Tailwind + CSS custom (870 lignes) + Framer Motion
 - **⚡ Performance** : < 1.5s chargement, < 50ms interactions
 - **🔐 Sécurité** : JWT + AuthContext + RBAC complet + CSP

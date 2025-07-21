@@ -6,11 +6,13 @@
 
 ### 📊 **Métriques du Projet (Juillet 2025)**
 
-- **200,000+ lignes de code** TypeScript/JavaScript
+- **283 fichiers de code** TypeScript/JavaScript
 - **130+ composants React** modulaires et réutilisables avec TypeScript
-- **24 contrôleurs backend** spécialisés (dont consultationController, userController, publicController)
+- **21 contrôleurs backend** spécialisés (dont consultationController, userController, publicController)
 - **60+ endpoints REST API** sécurisés avec Zod validation et conformité RGPD
 - **13 modèles de base de données** avec relations RGPD complètes
+- **42 tests backend** complets avec Vitest (33 fichiers de test)
+- **9 tests frontend** avec configurations Vitest duales
 - **Système d'audit sécurisé** avec traçabilité complète et export
 - **Architecture de Tests Robuste** : Tests unitaires séparés des tests d'intégration avec configurations Vitest duales
 - **CI/CD optimisé** : Tests unitaires en GitHub Actions, tests d'intégration en local avec backend
@@ -889,10 +891,10 @@ frontend/
 - ✅ **Pas de données mockées** : Tout depuis la vraie base MySQL via Prisma
 - ✅ **Tests d'intégration** : Validation API complète avec cas d'erreur et performance
 
-**🎯 Architecture Backend Complète (12 Contrôleurs + 45+ Endpoints) :**
+**🎯 Architecture Backend Complète (21 Contrôleurs + 60+ Endpoints) :**
 
 - ✅ **21 contrôleurs spécialisés** : authController, adminController, adminUserController, adminCommandeController, adminFactureController, adminPageController, adminStatsController, notificationsController, faqController, commandeClientController, commandeController, messagesController, paymentController, consultationController, fileController, filesController, paymentMethodsController, projectsController, statsController, adminAuditController
-- ✅ **45+ endpoints REST** : Authentification, administration complète, notifications, statistiques, commandes, factures, messagerie, paiements, FAQ, pages, tarifs
+- ✅ **60+ endpoints REST** : Authentification, administration complète, notifications, statistiques, commandes, factures, messagerie, paiements, FAQ, pages, tarifs
 - ✅ **Services métier** : adminCommandeService, adminUserService, stripeService, invoiceService, pageService
 - ✅ **Middleware de sécurité** : JWT, rôles, validation Zod
 - ✅ **Tests complets** : Unitaires et intégration avec Vitest

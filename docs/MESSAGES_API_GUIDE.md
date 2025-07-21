@@ -6,7 +6,7 @@
 ![React Query](https://img.shields.io/badge/React%20Query-5.17-red)
 ![Production](https://img.shields.io/badge/Status-Production%20Ready-green)
 
-**✨ Version Juillet 2025 - État actuel (Optimisé avec Consultations et Notifications Centralisées)**
+**✨ Version 21 Juillet 2025 - État actuel (Optimisé avec Consultations et Notifications Centralisées)**
 
 ## 📋 **Vue d'ensemble**
 
@@ -29,8 +29,8 @@ Le système de messagerie de **Staka Livres** a été entièrement refactorisé 
 - **Support Email Automatique** : Formulaire de contact public intégré au système de messagerie admin
 - **Messagerie Client/Admin** : Interface temps réel avec threading et pièces jointes
 - **Système de consultation** : Demandes de rendez-vous automatiquement intégrées aux messages admin
-- **API Backend** : 9 endpoints REST optimisés avec `conversationId` unique (6 messages + 2 consultations + 1 contact public)
-- **Hooks React Query** : 1000+ lignes de logique métier avec pagination infinie
+- **API Backend** : 14 endpoints REST optimisés avec `conversationId` unique (12 messages + 2 consultations)
+- **Hooks React Query** : 744+ lignes de logique métier avec pagination infinie
 
 ---
 
@@ -73,21 +73,21 @@ Content-Type: application/json
 }
 ```
 
-#### **2. POST /api/messages/conversations - Formulaire d'aide intégré (CORRIGÉ 2025)**
+#### **2. POST /api/public/contact - Formulaire de contact public (CORRIGÉ 2025)**
 
 Permet d'envoyer un message de contact depuis les pages publiques avec intégration complète au système de messagerie admin. **Note : La simulation Math.random a été supprimée et remplacée par une intégration API réelle.**
 
 **Requête :**
 
 ```http
-POST /api/messages/conversations
+POST /api/public/contact
 Content-Type: application/json
-Authorization: Bearer <token-si-connecté>
 
 {
-  "subject": "Demande d'aide - Contact public",
-  "content": "Bonjour, j'aimerais avoir plus d'informations sur vos tarifs.",
-  "source": "client-help"
+  "nom": "Jean Dupont",
+  "email": "jean@example.com",
+  "sujet": "Question sur vos services",
+  "message": "Bonjour, j'aimerais avoir plus d'informations sur vos tarifs."
 }
 ```
 
@@ -95,13 +95,11 @@ Authorization: Bearer <token-si-connecté>
 
 ```json
 {
-  "message": "Conversation démarrée avec succès.",
-  "conversationId": "uuid-de-la-conversation",
+  "success": true,
+  "message": "Message envoyé avec succès. Nous vous répondrons rapidement.",
   "data": {
-    "id": "message-uuid",
-    "content": "Bonjour, j'aimerais avoir plus d'informations sur vos tarifs.",
-    "type": "CLIENT_HELP",
-    "createdAt": "2025-07-14T10:30:00Z"
+    "messageId": "message-uuid",
+    "conversationId": "uuid-de-la-conversation"
   }
 }
 ```
@@ -109,7 +107,7 @@ Authorization: Bearer <token-si-connecté>
 **Fonctionnalités avancées :**
 
 - ✅ **Intégration API réelle** : Suppression de la simulation Math.random
-- ✅ **Source tracking** : Paramètre `source: 'client-help'` pour classification automatique
+- ✅ **Source tracking** : Classification automatique des messages de contact public
 - ✅ **Email automatique** : Notification directe à l'équipe support via SendGrid
 - ✅ **Authentification JWT** : Support des utilisateurs connectés et non connectés
 - ✅ **Validation stricte** : Validation Zod côté backend
@@ -239,14 +237,14 @@ Content-Type: application/json
 
 ### **👑 Route Spécifique Admin**
 
-#### **1. GET /admin/messages/unread-count - Compteur de conversations non lues**
+#### **1. GET /messages/unread-count - Compteur de conversations non lues (Admin seulement)**
 
 Fournit le nombre total de conversations qui contiennent des messages non lus par l'administrateur.
 
 **Requête :**
 
 ```http
-GET /api/admin/messages/unread-count
+GET /api/messages/unread-count
 Authorization: Bearer <token-admin>
 ```
 
@@ -569,7 +567,7 @@ Le système utilise le template `admin-message.hbs` pour les notifications admin
 
 ## 🎣 **Hooks React Query Frontend - Architecture Avancée**
 
-### **useMessages.ts (694 lignes) - Hook Utilisateur**
+### **useMessages.ts (340 lignes) - Hook Utilisateur**
 
 Hook principal pour la messagerie utilisateur avec pagination infinie et optimistic updates.
 
@@ -624,7 +622,7 @@ export const useMessages = (filters?: MessageFilters) => {
 };
 ```
 
-### **useAdminMessages.ts (321 lignes) - Hook Administration**
+### **useAdminMessages.ts (320 lignes) - Hook Administration**
 
 Hook spécialisé pour l'administration des messages avec actions en masse.
 
@@ -671,7 +669,7 @@ export const useAdminMessages = (filters?: AdminMessageFilters) => {
 };
 ```
 
-### **useInvalidateMessages.ts (85 lignes) - Invalidation Cache**
+### **useInvalidateMessages.ts (84 lignes) - Invalidation Cache**
 
 Hook pour l'invalidation ciblée du cache des messages.
 
@@ -724,7 +722,7 @@ curl -X GET "http://localhost:3001/api/messages/conversations?page=1&limit=10" \
   -H "Authorization: Bearer $TOKEN"
 
 # 4. Tester le compteur de conversations non lues
-curl -X GET "http://localhost:3001/api/admin/messages/unread-count" \
+curl -X GET "http://localhost:3001/api/messages/unread-count" \
   -H "Authorization: Bearer $TOKEN"
 
 # 5. Répondre à une conversation
@@ -751,14 +749,14 @@ curl -X POST "http://localhost:3001/api/files/upload/message" \
   -H "Authorization: Bearer $TOKEN" \
   -F "file=@/path/to/document.pdf"
 
-# 10. Test formulaire d'aide intégré (CORRIGÉ 2025)
-curl -X POST "http://localhost:3001/api/messages/conversations" \
-  -H "Authorization: Bearer $TOKEN" \
+# 10. Test formulaire de contact public (CORRIGÉ 2025)
+curl -X POST "http://localhost:3001/api/public/contact" \
   -H "Content-Type: application/json" \
   -d '{
-    "subject": "Demande d'aide - Test formulaire",
-    "content": "**Demande d'aide reçue via le formulaire**\n\nMessage de test depuis le formulaire d'aide",
-    "source": "client-help"
+    "nom": "Jean Test",
+    "email": "jean@test.com",
+    "sujet": "Question test",
+    "message": "Message de test depuis le formulaire de contact public"
   }'
 ```
 
@@ -776,9 +774,10 @@ curl -X POST "http://localhost:3001/api/messages/conversations" \
 
 ### **📈 Métriques Production (Optimisé 2025)**
 
-- **8 endpoints API** complets et documentés (+ archivage)
-- **1000+ lignes** hooks React Query spécialisés
-- **97%+ couverture tests** avec Jest et Supertest
+- **12 endpoints API messages** complets et documentés (+ archivage)
+- **2 endpoints API consultation** intégrés
+- **2 endpoints API contact public**
+- **744+ lignes** hooks React Query spécialisés
 - **Threading avancé** : Support réponses imbriquées
 - **Pièces jointes avancées** : Multi-fichiers avec validation stricte (10 max, 50MB/fichier)
 - **Archivage intelligent** : Gestion états conversations
@@ -806,8 +805,7 @@ enum MessageType {
   NOTIFICATION = "NOTIFICATION",
   SUPPORT_MESSAGE = "SUPPORT_MESSAGE",
   ADMIN_MESSAGE = "ADMIN_MESSAGE",
-  CONSULTATION_REQUEST = "CONSULTATION_REQUEST", // ✅ NOUVEAU CONSULTATIONS
-  CLIENT_HELP = "CLIENT_HELP" // ✅ NOUVEAU CONTACT PUBLIC
+  CONSULTATION_REQUEST = "CONSULTATION_REQUEST" // ✅ NOUVEAU CONSULTATIONS
 }
 ```
 
@@ -823,7 +821,7 @@ enum MessageType {
 
 1. **Visiteur** remplit le formulaire de contact public sur le site
 2. **API** `/api/public/contact` valide et nettoie les données
-3. **Message** créé automatiquement avec `type: "CLIENT_HELP"` et `source: "client-help"`
+3. **Message** créé automatiquement avec `type: "SUPPORT_MESSAGE"`
 4. **Intégration** : Message visible dans l'interface de messagerie admin
 5. **Classification** : Marquage automatique pour traitement par l'équipe support
 6. **Workflow admin** : Traitement via l'interface de messagerie unifiée
@@ -949,3 +947,7 @@ Les consultations ont leurs propres endpoints séparés :
 - **Zéro perte** : Tous les messages stockés et notifiés
 
 Le système de messagerie est désormais parfaitement intégré au système de notification centralisé 2025 ! 🚀
+
+---
+
+_Documentation mise à jour le 21 juillet 2025 - API: 14 endpoints messages + 2 consultations + 2 contact public_

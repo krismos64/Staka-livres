@@ -7,7 +7,7 @@
 ![Tests](https://img.shields.io/badge/Tests-95%25-brightgreen)
 ![Production](https://img.shields.io/badge/Status-Production%20Ready-green)
 
-**✨ Version Juillet 2025 - État actuel**
+**✨ Version Juillet 2025 - Mise à jour du 21 juillet**
 
 ## 📋 Vue d'ensemble
 
@@ -17,7 +17,7 @@ L'espace admin est **100% production-ready** avec **10 modules complets**, inter
 
 ### 🆕 **Nouvelles Fonctionnalités 2025**
 
-- **🔔 Système de notifications email centralisé** : Architecture événementielle complète avec double notification (interface + email) automatique, 18 templates HTML professionnels, tests production validés (JUILLET 2025)
+- **🔔 Système de notifications email centralisé** : Architecture événementielle complète avec double notification (interface + email) automatique, 22 templates HTML professionnels, tests production validés (JUILLET 2025)
 - **📧 Emails admin automatiques** : Tous les événements génèrent automatiquement des emails à `ADMIN_EMAIL` via EventBus + Listeners + Queue asynchrone
 - **👥 Emails utilisateurs & visiteurs** : Templates dédiés avec préférences opt-out et confirmations automatiques pour contact/échantillons gratuits
 - **📞 Gestion des consultations** : Demandes de rendez-vous intégrées à la messagerie avec workflow automatisé (JUILLET 2025)
@@ -55,7 +55,7 @@ L'espace admin a été **entièrement refactorisé** avec une architecture modul
 | **Tarifs**        | `AdminTarifs`        | 6 endpoints   | 1240+       | **CRUD + Sync temps réel** avec landing page, validation, états de chargement        |
 | **Pages CMS**     | `AdminPages`         | 8 endpoints   | 420+        | **CMS complet** : éditeur riche, SEO, publication, génération slug, prévisualisation |
 | **Statistiques**  | `AdminStatistiques`  | 2 endpoints   | 420+        | **🆕 Données Prisma réelles**, métriques évolutives, derniers paiements              |
-| **Notifications** | `AdminNotifications` | 6 endpoints   | 380+        | **🆕 Système email centralisé**, interface + emails automatiques, 18 templates       |
+| **Notifications** | `AdminNotifications` | 6 endpoints   | 380+        | **🆕 Système email centralisé**, interface + emails automatiques, 22 templates       |
 
 ### 📊 **Métriques Globales**
 
@@ -86,7 +86,7 @@ Cette section détaille l'API backend et les hooks React Query frontend pour cha
 
 - ✅ **Double notification automatique** : Interface clochette + Email envoyé automatiquement pour chaque événement
 - ✅ **EventBus centralisé** : Architecture événementielle avec listeners spécialisés pour admin et utilisateurs
-- ✅ **18 Templates HTML professionnels** : 9 admin (`admin-*.hbs`) + 9 utilisateurs (`*-user.hbs`) + 2 visiteurs
+- ✅ **22 Templates HTML professionnels** : Admin, utilisateurs et visiteurs avec design cohérent
 - ✅ **Queue emails asynchrone** : Traitement Handlebars + SendGrid avec gestion d'erreurs et retry automatique
 - ✅ **Tests production validés** : 5+ emails admin envoyés à `ADMIN_EMAIL=c.mostefaoui@yahoo.fr` confirmés
 - ✅ **Zero duplication de code** : Tous les emails centralisés via listeners événementiels

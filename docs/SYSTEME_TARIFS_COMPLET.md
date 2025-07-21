@@ -1,7 +1,7 @@
 # 🎯 Système de Tarification Complet - Staka Livres 2025
 
 > **Guide technique unifié** pour le système de tarification dynamique avec intégration Stripe complète et synchronisation temps réel.
-> **Dernière mise à jour** : 15 juillet 2025
+> **Dernière mise à jour** : 21 juillet 2025
 
 ---
 
@@ -67,12 +67,16 @@ model Tarif {
   ordre           Int      @default(0)
   
   // 🔄 Champs Stripe pour synchronisation
-  stripeProductId String?  @db.VarChar(255)
   stripePriceId   String?  @db.VarChar(255)
+  stripeProductId String?  @db.VarChar(255)
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  @@index([actif])
+  @@index([ordre])
+  @@index([typeService])
+  @@index([createdAt])
   @@index([stripeProductId])
   @@index([stripePriceId])
   @@map("tarifs")

@@ -922,7 +922,7 @@ docker buildx build \
 
 - [ ] **SendGrid configuré** : API key valide et domaine vérifié
 - [ ] **Variables email** : FROM_EMAIL, ADMIN_EMAIL, SUPPORT_EMAIL définies
-- [ ] **Templates présents** : 18 fichiers .hbs dans src/emails/templates/
+- [ ] **Templates présents** : 22 fichiers .hbs dans src/emails/templates/
 - [ ] **EventBus actif** : Listeners chargés automatiquement au démarrage
 - [ ] **Queue fonctionnelle** : Redis configuré si mode queue asynchrone
 - [ ] **Tests envoi** : Email test envoyé et reçu avec succès
@@ -942,4 +942,4 @@ docker buildx build \
 
 ---
 
-_Documentation mise à jour le 15 juillet 2025 - Version 2.1.0_
+_Documentation mise à jour le 21 juillet 2025 - Version 2.1.0_

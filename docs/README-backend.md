@@ -13,7 +13,7 @@
 
 Backend REST API pour Staka Livres, une plateforme de correction de livres professionnelle. Architecture moderne avec TypeScript, Express, Prisma ORM et intégration Stripe pour les paiements.
 
-**✨ Version Juillet 2025 - État actuel :**
+**✨ Version Juillet 2025 - Mise à jour du 21 juillet :**
 
 - **78+ endpoints API** répartis sur 27 fichiers de routes avec 23 contrôleurs
 - **Système de réinitialisation de mot de passe** RGPD-compliant avec tokens sécurisés
@@ -21,10 +21,10 @@ Backend REST API pour Staka Livres, une plateforme de correction de livres profe
 - **Espace admin 100% opérationnel** (10/10 modules production-ready)
 - **Système de réservation de consultations** avec workflow automatisé et notifications
 - **Système de notifications temps réel** avec génération automatique et polling 15s
-- **Système d'emails centralisé** avec EventBus + 18 templates automatiques (NOUVEAU 2025)
+- **Système d'emails centralisé** avec EventBus + 22 templates automatiques (NOUVEAU 2025)
 - **Système de messagerie unifiée** avec threading, pièces jointes et support consultations
 - **Facturation automatique complète** avec génération PDF, AWS S3 et SendGrid
-- **Tests exhaustifs** : 27 fichiers de test (Vitest), couverture 90%+ configurée
+- **Tests exhaustifs** : 56 fichiers de test (Vitest), couverture 90%+ configurée
 - **Architecture CI/CD optimisée** : Backend tests isolés, frontend tests séparés unitaires/intégration
 - **Modules FAQ, Tarifs, Pages CMS et Statistiques** dynamiques avec synchronisation temps réel
 - **Architecture scalable** avec monitoring intégré et logs structurés
@@ -51,7 +51,7 @@ Backend REST API pour Staka Livres, une plateforme de correction de livres profe
 
 - **EventBus** (`src/events/eventBus.ts`) : Émetteur d'événements centralisé
 - **Double notification automatique** : Interface + Email pour chaque événement
-- **18 templates HTML professionnels** : 9 admin + 9 utilisateurs + 2 visiteurs
+- **22 templates HTML professionnels** : Admin, utilisateurs et visiteurs
 - **Queue asynchrone** (`src/queues/emailQueue.ts`) : Performance optimisée
 - **Zero code duplication** : Plus besoin d'appeler `MailerService.sendEmail()` manuellement
 - **Listeners spécialisés** :
@@ -96,7 +96,7 @@ await createAdminNotification("Nouveau paiement", "...", PAYMENT, HAUTE);
 
 - **Node.js 20.18.3** : Migration depuis v18 pour performances optimisées
 - **Vitest 3.2.4** : Framework de test moderne avec couverture v8
-- **27 fichiers de test** : Coverage configurée à 90% minimum
+- **56 fichiers de test** : Coverage configurée à 90% minimum
 - **23 contrôleurs** : Architecture modulaire étendue
 - **14 services métier** : Logique centralisée et testable
 - **CI/CD optimisé** : Tests backend isolés, architecture frontend séparée unitaires/intégration
@@ -200,7 +200,7 @@ export const authenticateToken = async (req, res, next) => {
 
 ### Prérequis
 
-- Node.js 18.20+
+- Node.js 18.20+ (recommandé 20.18.3)
 - Docker & Docker Compose
 - MySQL 8.4+
 - Compte Stripe (test/production keys)
@@ -250,7 +250,7 @@ npm run dev
 ```
 backend/
 ├── src/
-│   ├── controllers/          # Logique métier (13+ fichiers)
+│   ├── controllers/          # Logique métier (23 fichiers)
 │   │   ├── authController.ts              # Authentification
 │   │   ├── adminController.ts             # Administration générale
 │   │   ├── adminUserController.ts         # Gestion utilisateurs admin
@@ -309,7 +309,7 @@ backend/
 │   ├── config/               # Configuration
 │   └── server.ts            # Point d'entrée principal
 ├── prisma/
-│   ├── schema.prisma        # Modèle de données (13 modèles actualisé)
+│   ├── schema.prisma        # Modèle de données (15 modèles actualisé)
 │   ├── seed.ts              # Données de test
 │   └── migrations/          # Migrations base de données
 ├── tests/                   # Tests unitaires et d'intégration
