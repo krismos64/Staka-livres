@@ -7,6 +7,8 @@
     "dev:watch": "nodemon src/server.ts",
     "build": "docker compose run --rm app npm run build:ci",
     "build:ci": "tsc -p tsconfig.build.json",
+    "build:secrets": "tsc -p tsconfig.scripts.json",
+    "build:scripts": "tsc -p tsconfig.scripts.json",
     "start": "node dist/server.js",
     "test": "docker compose run --rm app npm run test:ci",
     "test:ci": "vitest run --coverage",
@@ -21,7 +23,10 @@
     "prisma:seed": "ts-node prisma/seed.ts",
     "stripe:sync-all": "ts-node scripts/sync-tarifs-stripe.ts",
     "stripe:sync-dry": "ts-node scripts/sync-tarifs-stripe.ts --dry-run",
-    "stripe:sync-verbose": "ts-node scripts/sync-tarifs-stripe.ts --verbose"
+    "stripe:sync-verbose": "ts-node scripts/sync-tarifs-stripe.ts --verbose",
+    "secrets:generate": "npm run build:secrets && node dist/generateSecrets.js",
+    "secrets:help": "npm run build:secrets && node dist/generateSecrets.js --help",
+    "secrets:dry-run": "npm run build:secrets && node dist/generateSecrets.js --dry-run"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.837.0",

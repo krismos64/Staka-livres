@@ -6,7 +6,7 @@
 ![RGPD](https://img.shields.io/badge/RGPD-Compliant-brightgreen)
 ![Production](https://img.shields.io/badge/Status-Production%20Ready-green)
 
-**✨ Version Juillet 2025 - Nouvelles Fonctionnalités**
+**✨ Version Juillet 2025 - Dernière mise à jour : 22 Juillet 2025**
 
 ## 📋 Vue d'ensemble
 
@@ -605,12 +605,22 @@ router.post('/public/contact', PublicController.sendContactMessage);
 // Body parsing pour routes publiques
 app.use('/api/public', express.json({ limit: '1mb' }));
 
-// Rate limiting pour contact public (recommandé)
+// Rate limiting pour contact public (recommandé en production)
 const contactLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5 // 5 messages max par IP
+  max: 5, // 5 messages max par IP
+  message: {
+    error: "Trop de tentatives",
+    message: "Veuillez patienter avant de renvoyer un message"
+  }
 });
 app.use('/api/public/contact', contactLimiter);
+
+// CORS pour routes publiques si nécessaire
+app.use('/api/public', cors({
+  origin: process.env.FRONTEND_URL,
+  credentials: false
+}));
 ```
 
 ---

@@ -1,0 +1,105 @@
+{
+  "compilerOptions": {
+    /* 🎯 Configuration TypeScript pour Scripts Backend - Node.js 20+ */
+    
+    /* Cible et Module */
+    "target": "ES2022",                    /* Compatible Node.js 20+ */
+    "module": "CommonJS",                  /* Modules CommonJS pour compatibilité */
+    "moduleResolution": "Node",            /* Résolution modules Node.js */
+    "allowSyntheticDefaultImports": true,  /* Support import par défaut */
+    "esModuleInterop": true,              /* Interopérabilité ES/CommonJS */
+    
+    /* Sortie et Compilation */
+    "outDir": "./dist",                   /* Dossier de sortie */
+    "rootDir": "./scripts",               /* Dossier source */
+    "declaration": true,                  /* Génération fichiers .d.ts */
+    "declarationMap": true,               /* Source maps pour .d.ts */
+    "sourceMap": true,                    /* Source maps pour debug */
+    "removeComments": false,              /* Conserver commentaires JSDoc */
+    
+    /* Typage Strict */
+    "strict": true,                       /* Mode strict complet */
+    "noImplicitAny": true,               /* Interdire 'any' implicite */
+    "strictNullChecks": true,            /* Vérification null/undefined */
+    "strictFunctionTypes": true,         /* Types fonctions stricts */
+    "strictBindCallApply": true,         /* bind/call/apply stricts */
+    "strictPropertyInitialization": true, /* Init propriétés classes */
+    "noImplicitReturns": true,           /* Toutes branches return */
+    "noFallthroughCasesInSwitch": true,  /* Pas de fallthrough switch */
+    "noUncheckedIndexedAccess": true,    /* Accès index sécurisé */
+    "noImplicitOverride": true,          /* Override explicite */
+    "exactOptionalPropertyTypes": true,   /* Types propriétés optionnelles exacts */
+    
+    /* Vérifications Additionnelles */
+    "noUnusedLocals": true,              /* Variables locales inutilisées */
+    "noUnusedParameters": true,          /* Paramètres inutilisés */
+    "noPropertyAccessFromIndexSignature": false, /* Accès propriétés flexible */
+    "allowUnusedLabels": false,          /* Labels inutilisés interdits */
+    "allowUnreachableCode": false,       /* Code inaccessible interdit */
+    
+    /* Module et Résolution */
+    "baseUrl": ".",                      /* Base pour résolution */
+    "paths": {},                         /* Mapping chemins */
+    "resolveJsonModule": true,           /* Import fichiers JSON */
+    "allowImportingTsExtensions": false, /* Extensions .ts dans imports */
+    
+    /* Génération de Code */
+    "importHelpers": false,              /* Helpers TypeScript */
+    "downlevelIteration": true,          /* Itération compatible */
+    "experimentalDecorators": false,     /* Decorators expérimentaux */
+    "emitDecoratorMetadata": false,      /* Métadonnées decorators */
+    
+    /* Interopérabilité */
+    "isolatedModules": true,             /* Compilation module isolé */
+    "verbatimModuleSyntax": false,       /* Syntaxe module verbatim */
+    "allowJs": false,                    /* Pas de fichiers JS */
+    "checkJs": false,                    /* Pas de vérif JS */
+    
+    /* Emit */
+    "noEmit": false,                     /* Émettre fichiers compilés */
+    "noEmitOnError": true,               /* Pas d'emit si erreurs */
+    "preserveConstEnums": true,          /* Conserver const enums */
+    "skipLibCheck": true,                /* Skip vérif fichiers .d.ts */
+    "forceConsistentCasingInFileNames": true, /* Cohérence casse noms fichiers */
+    
+    /* Types */
+    "types": ["node"],                   /* Types Node.js uniquement */
+    "lib": [                             /* Bibliothèques incluses */
+      "ES2022",
+      "ES2022.String",
+      "ES2022.Array",
+      "ES2022.Object"
+    ]
+  },
+  
+  /* 📁 Fichiers et Dossiers */
+  "include": [
+    "scripts/generateSecrets.ts"
+  ],
+  
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/*.js",
+    "scripts/sync-tarifs-stripe.ts"
+  ],
+  
+  /* 🔧 Options du Compilateur */
+  "compileOnSave": false,
+  "buildOnSave": false,
+  
+  /* 📋 Métadonnées */
+  "$schema": "https://json.schemastore.org/tsconfig",
+  
+  /* 📖 Documentation des choix */
+  "_comments": {
+    "target": "ES2022 pour compatibilité Node.js 20+",
+    "module": "ESNext pour modules ES6 modernes",
+    "strict": "Typage strict complet pour sécurité maximale",
+    "declaration": "Génération .d.ts pour réutilisation",
+    "sourceMap": "Debug et développement facilités",
+    "outDir": "Séparation claire source/compilation"
+  }
+}
