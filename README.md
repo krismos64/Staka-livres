@@ -751,6 +751,7 @@ Staka-livres/
 ### 🎯 **Séparation Tests Unitaires / Intégration**
 
 - **Tests unitaires** : Exclusivement pour CI/CD GitHub Actions
+
   - Configuration : `vite.config.ts` avec exclusion `**/tests/integration/**`
   - Environnement : jsdom uniquement, mocks complets
   - Commande : `npm run test:unit`
@@ -825,6 +826,7 @@ frontend/
 ### ✅ **Version Actuelle (Juillet 2025) - Architecture CI/CD Robuste & Multi-Architecture**
 
 **🧪 Architecture de Tests Robuste (NOUVEAU - CRITIQUE) :**
+
 - ✅ **Séparation tests unitaires/intégration** : Stabilité CI/CD et développement local optimisé
 - ✅ **Configurations Vitest duales** : `vite.config.ts` (CI) et `vite.config.integration.ts` (local)
 - ✅ **Scripts optimisés** : `test:unit`, `test:integration`, `test:all` pour différents contextes
