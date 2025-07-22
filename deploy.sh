@@ -7,7 +7,7 @@ set -e
 # Configuration
 ENVIRONMENT=${1:-production}
 TAG=${2:-latest}
-DOCKER_REGISTRY="stakalivres"  # Remplacer par votre registry DockerHub
+DOCKER_REGISTRY="krismos64"  # Votre registry DockerHub
 
 # Couleurs pour les logs
 RED='\033[0;31m'

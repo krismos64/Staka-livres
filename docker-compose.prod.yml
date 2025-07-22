@@ -1,0 +1,132 @@
+services:
+  frontend:
+    image: ${DOCKER_REGISTRY:-krismos64}/frontend:${TAG:-latest}
+    container_name: staka_frontend_prod
+    platform: linux/amd64
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_API_URL=${BACKEND_URL:-https://api.staka-livres.com}
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  backend:
+    image: ${DOCKER_REGISTRY:-krismos64}/backend:${TAG:-latest}
+    container_name: staka_backend_prod
+    platform: linux/amd64
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./backend/.env.prod
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=mysql://staka:${MYSQL_PASSWORD}@db:3306/stakalivres
+    volumes:
+      # Volume pour les uploads (si pas S3)
+      - uploads_data:/app/uploads
+      # Volume pour les logs
+      - logs_data:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  db:
+    image: mysql:8.0
+    container_name: staka_db_prod
+    command: --mysql-native-password=ON --innodb-buffer-pool-size=512M
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=stakalivres
+      - MYSQL_USER=staka
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - db_data_prod:/var/lib/mysql
+      - ./backend/prisma/schema.prisma:/docker-entrypoint-initdb.d/schema.sql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "staka", "-p${MYSQL_PASSWORD}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # Nginx reverse proxy avec SSL
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: staka_nginx_prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/sites:/etc/nginx/sites-available:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - logs_nginx:/var/log/nginx
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Watchtower pour auto-update des images
+  watchtower:
+    image: containrrr/watchtower
+    container_name: staka_watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=300
+      - WATCHTOWER_INCLUDE_RESTARTING=true
+    restart: unless-stopped
+
+volumes:
+  db_data_prod:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/staka/data/mysql
+  uploads_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind  
+      device: /opt/staka/data/uploads
+  logs_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/staka/logs
+  logs_nginx:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/staka/logs/nginx
+
+networks:
+  default:
+    name: staka_prod_network

@@ -12,7 +12,7 @@ on:
       - main
 
 env:
-  DOCKER_REGISTRY: stakalivres  # Remplacer par votre nom d'utilisateur DockerHub
+  DOCKER_REGISTRY: krismos64  # Votre nom d'utilisateur DockerHub
 
 jobs:
   # Tests (existants dans votre CI actuel)
