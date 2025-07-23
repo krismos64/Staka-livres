@@ -70,8 +70,9 @@ build/
 # Fichiers Docker temporaires
 .dockerignore.bak
 docker-compose.override.yml
-docker-compose.*.yml
+# docker-compose.*.yml
 !docker-compose.yml
+!docker-compose.prod.yml
 
 # Volumes Docker
 .docker/
@@ -325,6 +326,13 @@ config.local.json
 # Fichiers de test locaux
 test.local.*
 *.test.local.*
+
+# Scripts de développement temporaires
+test_*.sh
+test-*.js
+fix-*.js
+frontend.log
+frontend.pid
 
 # ===== AI TOOLS =====
 # Claude Code & assistants

@@ -18,6 +18,8 @@
 
 Staka Livres utilise une architecture Docker containerisée avec support multi-plateforme (ARM64/x86) pour une compatibilité optimale avec les environnements de développement Apple Silicon et les serveurs de production x86.
 
+> 🚀 **Déploiement VPS :** Consultez [DEPLOYMENT.md](./DEPLOYMENT.md) pour un guide pratique de déploiement sur VPS OVH.
+
 ### 🏗️ Services Containerisés
 
 | Service           | Port      | Description                | Image Base          |

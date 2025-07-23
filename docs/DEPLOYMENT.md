@@ -2,6 +2,8 @@
 
 Ce guide détaille le déploiement de Staka-Livres sur un VPS OVH avec les images Docker hébergées sur DockerHub.
 
+> 📖 **Voir aussi :** [DEPLOYMENT_DOCKER.md](./DEPLOYMENT_DOCKER.md) pour la documentation technique complète de l'architecture Docker.
+
 ## 🎯 Architecture de déploiement
 
 - **Frontend** : React (Nginx) sur port 3000
