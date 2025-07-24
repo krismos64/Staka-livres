@@ -8,7 +8,9 @@ import {
 } from "../types/shared";
 import {
   getCommandes,
+  getCommandeById,
   updateCommande,
+  deleteCommande as deleteCommandeAPI,
   type AdminCommandesParams,
 } from "../utils/adminAPI";
 import { useToasts } from "../utils/toast";
@@ -268,13 +270,13 @@ export const useAdminCommandes = (
     async (commandeId: string): Promise<boolean> => {
       try {
         setIsOperationLoading(true);
-        await deleteCommande(commandeId);
+        await deleteCommandeAPI(commandeId);
 
         // Mise à jour optimiste de la liste
         setCommandes((prev) => prev.filter((cmd) => cmd.id !== commandeId));
         setTotalCommandes((prev) => prev - 1);
 
-        handleSuccess("Commande supprimée avec succès");
+        handleSuccess("Commande supprimée");
 
         // Si la page actuelle devient vide, retourner à la page précédente
         if (commandes.length === 1 && currentPage > 1) {

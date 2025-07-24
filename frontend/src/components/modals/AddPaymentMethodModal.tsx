@@ -123,6 +123,7 @@ export default function AddPaymentMethodModal({
       aria-labelledby="add-payment-method-title"
       role="dialog"
       aria-modal="true"
+      data-cy="add-payment-modal"
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -154,6 +155,7 @@ export default function AddPaymentMethodModal({
               disabled={isProcessing}
               className="text-gray-400 hover:text-gray-600 p-2 rounded-lg disabled:opacity-50"
               aria-label="Fermer"
+              data-cy="close-modal-btn"
             >
               <i className="fas fa-times"></i>
             </button>
@@ -175,6 +177,7 @@ export default function AddPaymentMethodModal({
                   placeholder="1234 5678 9012 3456"
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
                   disabled={isProcessing}
+                  data-cy="card-number-input"
                 />
                 <div className="flex gap-3">
                   <input
@@ -182,12 +185,14 @@ export default function AddPaymentMethodModal({
                     placeholder="MM/YY"
                     className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
                     disabled={isProcessing}
+                    data-cy="card-expiry-input"
                   />
                   <input
                     type="text"
                     placeholder="CVC"
                     className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
                     disabled={isProcessing}
+                    data-cy="card-cvc-input"
                   />
                 </div>
                 <input
@@ -195,6 +200,7 @@ export default function AddPaymentMethodModal({
                   placeholder="Nom sur la carte"
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
                   disabled={isProcessing}
+                  data-cy="card-name-input"
                 />
               </div>
               
@@ -223,6 +229,7 @@ export default function AddPaymentMethodModal({
               onClick={onClose}
               disabled={isProcessing}
               className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium disabled:opacity-50"
+              data-cy="cancel-btn"
             >
               Annuler
             </button>
@@ -230,6 +237,7 @@ export default function AddPaymentMethodModal({
               type="submit"
               disabled={isProcessing || !clientSecret}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+              data-cy="add-card-submit-btn"
             >
               {isProcessing ? (
                 <>

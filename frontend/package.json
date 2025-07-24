@@ -24,6 +24,7 @@
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/typography": "^0.5.16",
     "@tanstack/react-query": "^5.81.5",
+    "@testing-library/dom": "^10.4.0",
     "@types/react-dropzone": "^4.2.2",
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.10.0",

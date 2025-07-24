@@ -43,7 +43,7 @@ export function PaymentMethodsCard({
         Moyens de paiement
       </h3>
 
-      <div className="space-y-3">
+      <div className="space-y-3" data-cy="payment-methods-list">
         {/* Liste des cartes existantes */}
         {paymentMethods.map((method) => (
           <div
@@ -59,10 +59,10 @@ export function PaymentMethodsCard({
               {/* Informations de la carte */}
               <div>
                 <p className="font-medium text-gray-900">
-                  {formatCardDisplay(method)}
+                  •••• {method.last4}
                 </p>
                 <p className="text-sm text-gray-600">
-                  Exp. {method.expiryMonth.toString().padStart(2, "0")}/
+                  {cardNames[method.type]} - Exp. {method.expiryMonth.toString().padStart(2, "0")}/
                   {method.expiryYear.toString().slice(-2)}
                 </p>
               </div>
@@ -83,6 +83,7 @@ export function PaymentMethodsCard({
                   className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-blue-600 transition-all rounded-lg hover:bg-blue-50"
                   aria-label={`Définir ${formatCardDisplay(method)} comme méthode par défaut`}
                   title="Définir comme méthode par défaut"
+                  data-cy="set-default-btn"
                 >
                   <i className="fas fa-star text-sm"></i>
                 </button>
@@ -94,6 +95,7 @@ export function PaymentMethodsCard({
                 className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-red-600 transition-all rounded-lg hover:bg-red-50"
                 aria-label={`Supprimer la carte ${formatCardDisplay(method)}`}
                 title="Supprimer cette carte"
+                data-cy="delete-payment-method-btn"
               >
                 <i className="fas fa-trash text-sm"></i>
               </button>
@@ -103,9 +105,10 @@ export function PaymentMethodsCard({
 
         {/* Affichage si aucune carte */}
         {paymentMethods.length === 0 && (
-          <div className="text-center py-6 border-2 border-dashed border-gray-200 rounded-xl">
+          <div className="text-center py-6 border-2 border-dashed border-gray-200 rounded-xl" data-cy="empty-payment-methods">
             <i className="fas fa-credit-card text-gray-300 text-2xl mb-2"></i>
             <p className="text-gray-500 text-sm">Aucun moyen de paiement</p>
+            <p className="text-gray-400 text-xs mt-1">Vous n'avez pas encore ajouté de moyen de paiement</p>
           </div>
         )}
 
@@ -114,6 +117,7 @@ export function PaymentMethodsCard({
           onClick={onAdd}
           className="w-full border-2 border-dashed border-gray-300 rounded-xl p-3 text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all group"
           aria-label="Ajouter une nouvelle carte de paiement"
+          data-cy="add-payment-method-btn"
         >
           <div className="flex items-center justify-center gap-2">
             <i className="fas fa-plus group-hover:scale-110 transition-transform"></i>
