@@ -2,7 +2,7 @@ const { defineConfig } = require("cypress");
 
 module.exports = defineConfig({
   e2e: {
-    baseUrl: "http://host.docker.internal:3000",
+    baseUrl: "http://localhost:5173",
     specPattern: "cypress/e2e/**/*.cy.{js,jsx,ts,tsx}",
     supportFile: "cypress/support/e2e.ts",
     videosFolder: "cypress/videos",
@@ -17,7 +17,7 @@ module.exports = defineConfig({
     pageLoadTimeout: 30000,
 
     env: {
-      API_BASE_URL: "http://backend:3001",
+      API_BASE_URL: "http://localhost:3001",
     },
 
     setupNodeEvents(on, config) {

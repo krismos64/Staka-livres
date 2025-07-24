@@ -1,4 +1,21 @@
-// Commandes personnalisées pour les tests E2E Admin Users
+// Commandes personnalisées pour les tests E2E
+// Import des types Cypress
+/// <reference types="cypress" />
+import 'cypress-file-upload';
+
+declare global {
+  namespace Cypress {
+    interface Chainable {
+      loginAsAdmin(): Chainable<void>
+      loginAsUser(): Chainable<void>
+      logout(): Chainable<void>
+      resetDatabase(): Chainable<void>
+      simulateStripePayment(): Chainable<void>
+      simulateStripePaymentFailure(): Chainable<void>
+      createPaidProject(title: string): Chainable<string>
+    }
+  }
+}
 
 // Commande pour se connecter en tant qu'admin et accéder à la section utilisateurs
 Cypress.Commands.add("loginAsAdmin", () => {
@@ -76,8 +93,134 @@ Cypress.Commands.add("loginAsAdmin", () => {
   });
 });
 
-// Cette commande a été supprimée car la navigation vers la section utilisateurs
-// est maintenant intégrée dans loginAsAdmin()
+// Commande pour se connecter en tant qu'utilisateur client
+Cypress.Commands.add("loginAsUser", () => {
+  // Tentative d'authentification via API avec fallback
+  cy.request({
+    method: "POST",
+    url: `${Cypress.env("API_BASE_URL")}/auth/login`,
+    body: {
+      email: "test@example.com",
+      password: "password123",
+    },
+    failOnStatusCode: false,
+  }).then((response) => {
+    if (response.status === 200 && response.body.token) {
+      // Succès API - stocker le token
+      cy.window().then((win) => {
+        win.localStorage.setItem("auth_token", response.body.token);
+      });
+    } else {
+      // Échec API - fallback avec login manuel
+      cy.log("⚠️ API login failed, using manual login fallback");
+      cy.visit("/login");
+      cy.wait(2000);
+
+      cy.get("input").eq(0).type("test@example.com");
+      cy.get("input").eq(1).type("password123");
+      cy.get('button[type="submit"]').first().click();
+      cy.wait(3000);
+
+      // Token de fallback
+      cy.window().then((win) => {
+        win.localStorage.setItem("auth_token", "user-session-token");
+      });
+    }
+  });
+});
+
+// Commande pour se déconnecter
+Cypress.Commands.add("logout", () => {
+  cy.window().then((win) => {
+    win.localStorage.removeItem("auth_token");
+  });
+  cy.visit("/login");
+  cy.wait(1000);
+});
+
+// Commande pour simuler un paiement Stripe réussi
+Cypress.Commands.add("simulateStripePayment", () => {
+  // Vérifier que les éléments Stripe sont présents
+  cy.get('[data-cy="stripe-card-element"]', { timeout: 10000 }).should("be.visible");
+  
+  // Simuler la saisie des détails de carte (mode test Stripe)
+  cy.get('[data-cy="stripe-card-element"]').within(() => {
+    // Stripe Elements utilise des iframes, on simule donc avec des data attributes
+    cy.get('[data-testid="card-number"]').type("4242424242424242");
+    cy.get('[data-testid="card-expiry"]').type("12/25");
+    cy.get('[data-testid="card-cvc"]').type("123");
+  });
+  
+  // Cliquer sur le bouton de paiement
+  cy.get('[data-cy="pay-button"]').click();
+  
+  // Attendre la confirmation
+  cy.wait(3000);
+});
+
+// Commande pour simuler un échec de paiement Stripe
+Cypress.Commands.add("simulateStripePaymentFailure", () => {
+  // Vérifier que les éléments Stripe sont présents
+  cy.get('[data-cy="stripe-card-element"]', { timeout: 10000 }).should("be.visible");
+  
+  // Utiliser une carte qui déclenche un échec (4000000000000002)
+  cy.get('[data-cy="stripe-card-element"]').within(() => {
+    cy.get('[data-testid="card-number"]').type("4000000000000002");
+    cy.get('[data-testid="card-expiry"]').type("12/25");
+    cy.get('[data-testid="card-cvc"]').type("123");
+  });
+  
+  // Cliquer sur le bouton de paiement
+  cy.get('[data-cy="pay-button"]').click();
+  
+  // Attendre l'erreur
+  cy.wait(3000);
+  cy.contains("Paiement échoué", { timeout: 10000 }).should("be.visible");
+});
+
+// Commande pour créer un projet payé via API (pour les tests avancés)
+Cypress.Commands.add("createPaidProject", (title: string) => {
+  const apiBaseUrl = Cypress.env("API_BASE_URL");
+  
+  // D'abord créer le projet
+  return cy.window()
+    .its("localStorage")
+    .invoke("getItem", "auth_token")
+    .then((token) => {
+      return cy.request({
+        method: "POST",
+        url: `${apiBaseUrl}/projects`,
+        headers: {
+          Authorization: `Bearer ${token || "user-session-token"}`,
+        },
+        body: {
+          title,
+          type: "Roman",
+          pages: 150,
+          pack: "integral",
+          description: "Projet créé automatiquement pour les tests E2E"
+        },
+      });
+    })
+    .then((projectResponse) => {
+      const projectId = projectResponse.body.id;
+      
+      // Ensuite simuler un paiement réussi
+      return cy.request({
+        method: "POST",
+        url: `${apiBaseUrl}/payments/simulate-success`,
+        headers: {
+          Authorization: `Bearer ${cy.window().its("localStorage").invoke("getItem", "auth_token")}`,
+        },
+        body: {
+          projectId,
+          amount: 300, // 150 pages × 2€
+          stripeSessionId: `test_session_${Date.now()}`
+        },
+        failOnStatusCode: false
+      }).then(() => projectId);
+    });
+});
 
 // Commande pour réinitialiser la base de données via API
 Cypress.Commands.add("resetDatabase", () => {

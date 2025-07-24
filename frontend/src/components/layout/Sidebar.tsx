@@ -1,4 +1,6 @@
 import React from "react";
+import { useProjects } from "../../hooks/useProjects";
+import { useMessages } from "../../hooks/useMessages";
 
 type SectionName =
   | "dashboard"
@@ -26,6 +28,37 @@ function Sidebar({
   isOpen,
   onClose,
 }: SidebarProps) {
+  // Récupérer les projets pour calculer le nombre de projets actifs
+  const { data: projectsResponse } = useProjects({
+    page: 1,
+    limit: 100, // Récupérer tous les projets pour le comptage
+    status: 'all'
+  });
+
+  // Récupérer les messages pour vérifier s'il y a des messages non lus
+  const { data: messagesResponse } = useMessages({
+    page: 1,
+    limit: 10
+  });
+
+  const projects = projectsResponse?.data || [];
+  const messages = messagesResponse?.data || [];
+  
+  // Calculer le nombre de projets actifs (en cours, en attente, en correction)
+  const activeProjectsCount = projects.filter(p => 
+    p.status === "EN_COURS" || 
+    p.status === "EN_ATTENTE" || 
+    p.status === "En cours" || 
+    p.status === "En attente" ||
+    p.status === "En correction"
+  ).length;
+
+  // Vérifier s'il y a des messages non lus (messages récents de l'admin)
+  const hasUnreadMessages = messages.some(m => 
+    m.fromAdmin && !m.isRead && 
+    new Date(m.createdAt) > new Date(Date.now() - 24 * 60 * 60 * 1000) // Messages de moins de 24h
+  );
+
   const handleNavigation = (section: SectionName) => {
     onSectionChange(section);
     onClose(); // Ferme la sidebar après la navigation sur mobile
@@ -68,11 +101,13 @@ function Sidebar({
             >
               <i className="fas fa-folder mr-3 text-lg"></i>
               Mes projets
-              <span className="ml-auto flex items-center">
-                <span className="bg-blue-100 text-blue-700 text-sm font-semibold px-3 py-1 rounded-full ml-2">
-                  3
+              {activeProjectsCount > 0 && (
+                <span className="ml-auto flex items-center">
+                  <span className="bg-blue-100 text-blue-700 text-sm font-semibold px-3 py-1 rounded-full ml-2">
+                    {activeProjectsCount}
+                  </span>
                 </span>
-              </span>
+              )}
             </button>
           </li>
           {/* Mes fichiers */}
@@ -103,10 +138,12 @@ function Sidebar({
             >
               <i className="fas fa-comments mr-3 text-lg"></i>
               Messages
-              {/* Dot rouge */}
-              <span className="ml-auto">
-                <span className="w-3 h-3 bg-red-500 rounded-full block"></span>
-              </span>
+              {/* Indicateur de messages non lus */}
+              {hasUnreadMessages && (
+                <span className="ml-auto">
+                  <span className="w-3 h-3 bg-red-500 rounded-full block animate-pulse"></span>
+                </span>
+              )}
             </button>
           </li>
           {/* Facturation */}

@@ -1,80 +1,14 @@
 // src/components/RecentActivity.tsx
 import React, { useEffect, useState } from "react";
+import { useProjects } from "../../hooks/useProjects";
+import { useMessages } from "../../hooks/useMessages";
+import { formatDistanceToNow } from "date-fns";
+import { fr } from "date-fns/locale";
 
 /**
  * Activité récente du dashboard client.
- * Affiche les dernières actions avec couleurs/icônes.
+ * Affiche les dernières actions basées sur les données réelles.
  */
-const activities = [
-  {
-    color: "green",
-    bg: "bg-green-100",
-    icon: (
-      // Check
-      <svg
-        className="w-4 h-4 text-green-500"
-        fill="currentColor"
-        viewBox="0 0 20 20"
-      >
-        <path d="M16.707 7.293a1 1 0 00-1.414 0L9 13.586 6.707 11.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 000-1.414z" />
-      </svg>
-    ),
-    title: "Correction terminée",
-    desc: `"L'Écho du Temps" est prêt à télécharger`,
-    time: "Il y a 2 heures",
-  },
-  {
-    color: "blue",
-    bg: "bg-blue-100",
-    icon: (
-      // Message
-      <svg
-        className="w-4 h-4 text-blue-500"
-        fill="currentColor"
-        viewBox="0 0 20 20"
-      >
-        <path d="M18 10c0 3.866-3.134 7-7 7s-7-3.134-7-7 3.134-7 7-7 7 3.134 7 7zM9 13h2v2H9v-2zm0-8h2v6H9V5z" />
-      </svg>
-    ),
-    title: "Nouveau message",
-    desc: "Sarah a envoyé une mise à jour",
-    time: "Hier à 16:30",
-  },
-  {
-    color: "purple",
-    bg: "bg-purple-100",
-    icon: (
-      // Upload (ici pour l'exemple, on peut mettre un icône upload générique)
-      <svg
-        className="w-4 h-4 text-purple-500"
-        fill="currentColor"
-        viewBox="0 0 20 20"
-      >
-        <path d="M16.707 7.293a1 1 0 00-1.414 0L9 13.586 6.707 11.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 000-1.414z" />
-      </svg>
-    ),
-    title: "Fichier reçu",
-    desc: 'Manuscrit "Mémoires d\'une Vie" uploadé',
-    time: "Il y a 3 jours",
-  },
-  {
-    color: "yellow",
-    bg: "bg-yellow-100",
-    icon: (
-      // Star
-      <svg
-        className="w-4 h-4 text-yellow-500"
-        fill="currentColor"
-        viewBox="0 0 20 20"
-      >
-        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.18c.969 0 1.371 1.24.588 1.81l-3.388 2.46a1 1 0 00-.364 1.118l1.286 3.967c.3.921-.755 1.688-1.539 1.118l-3.388-2.46a1 1 0 00-1.175 0l-3.388 2.46c-.783.57-1.838-.197-1.539-1.118l1.286-3.967a1 1 0 00-.364-1.118L2.045 9.394c-.783-.57-.38-1.81.588-1.81h4.18a1 1 0 00.95-.69l1.286-3.967z" />
-      </svg>
-    ),
-    title: "Évaluation reçue",
-    desc: "Vous avez noté notre service 5/5 ⭐",
-    time: "Il y a 1 semaine",
-  },
-];
 
 // Composant Empty State
 const EmptyActivityState = () => (
@@ -93,14 +27,101 @@ const EmptyActivityState = () => (
 
 const RecentActivity: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
+  
+  // Récupérer les données réelles via les hooks
+  const { data: projectsResponse, isLoading: projectsLoading } = useProjects({
+    page: 1,
+    limit: 10,
+    status: 'all'
+  });
+  
+  const { data: messagesResponse, isLoading: messagesLoading } = useMessages({
+    page: 1,
+    limit: 5
+  });
+
+  const projects = projectsResponse?.data || [];
+  const messages = messagesResponse?.data || [];
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 200);
     return () => clearTimeout(timer);
   }, []);
 
-  // Pour demo, on peut mettre activities à [] pour tester l'empty state
-  const currentActivities = activities; // Changer en [] pour tester l'empty state
+  // Générer les activités basées sur les données réelles
+  const generateActivities = () => {
+    const activities: any[] = [];
+
+    // Activités des projets récents
+    projects.slice(0, 3).forEach(project => {
+      if (project.status === "TERMINE" || project.status === "Terminé") {
+        activities.push({
+          color: "green",
+          bg: "bg-green-100",
+          icon: (
+            <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M16.707 7.293a1 1 0 00-1.414 0L9 13.586 6.707 11.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 000-1.414z" />
+            </svg>
+          ),
+          title: "Correction terminée",
+          desc: `"${project.title}" est prêt à télécharger`,
+          time: formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true, locale: fr }),
+          date: new Date(project.updatedAt)
+        });
+      } else if (project.status === "EN_COURS" || project.status === "En cours") {
+        activities.push({
+          color: "blue",
+          bg: "bg-blue-100",
+          icon: (
+            <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+            </svg>
+          ),
+          title: "Projet en correction",
+          desc: `"${project.title}" est en cours de traitement`,
+          time: formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true, locale: fr }),
+          date: new Date(project.updatedAt)
+        });
+      } else if (project.status === "EN_ATTENTE" || project.status === "En attente") {
+        activities.push({
+          color: "yellow",
+          bg: "bg-yellow-100",
+          icon: (
+            <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 2C5.582 2 2 5.582 2 10s3.582 8 8 8 8-3.582 8-8-3.582-8-8-8zm0 14c-3.313 0-6-2.687-6-6s2.687-6 6-6 6 2.687 6 6-2.687 6-6 6z" />
+            </svg>
+          ),
+          title: "Projet créé",
+          desc: `"${project.title}" a été soumis et attend traitement`,
+          time: formatDistanceToNow(new Date(project.createdAt), { addSuffix: true, locale: fr }),
+          date: new Date(project.createdAt)
+        });
+      }
+    });
+
+    // Activités des messages récents
+    messages.slice(0, 2).forEach(message => {
+      activities.push({
+        color: "purple",
+        bg: "bg-purple-100",
+        icon: (
+          <svg className="w-4 h-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+          </svg>
+        ),
+        title: message.fromAdmin ? "Message reçu" : "Message envoyé",
+        desc: message.content.length > 50 ? `${message.content.substring(0, 50)}...` : message.content,
+        time: formatDistanceToNow(new Date(message.createdAt), { addSuffix: true, locale: fr }),
+        date: new Date(message.createdAt)
+      });
+    });
+
+    // Trier par date décroissante et limiter à 4 activités
+    return activities.sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 4);
+  };
+
+  const currentActivities = (projectsLoading || messagesLoading) ? [] : generateActivities();
 
   return (
     <div
@@ -127,7 +148,12 @@ const RecentActivity: React.FC = () => {
       </div>
 
       <div className="p-6">
-        {currentActivities.length > 0 ? (
+        {projectsLoading || messagesLoading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-500">Chargement des activités...</p>
+          </div>
+        ) : currentActivities.length > 0 ? (
           <div className="space-y-6">
             {currentActivities.map((activity, index) => (
               <div
