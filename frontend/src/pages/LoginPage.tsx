@@ -6,13 +6,15 @@ interface LoginPageProps {
   onLogin: (e: React.FormEvent) => void;
   onBackToLanding?: () => void;
   onGoToSignup?: () => void;
+  authError?: string | null;
+  clearAuthError?: () => void;
 }
 
 /**
  * Page de connexion/inscription.
  * Ce composant gère l'affichage du formulaire de connexion ou d'inscription.
  */
-function LoginPage({ onLogin, onBackToLanding, onGoToSignup }: LoginPageProps) {
+function LoginPage({ onLogin, onBackToLanding, onGoToSignup, authError, clearAuthError }: LoginPageProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 p-4">
       <div className="max-w-md w-full">
@@ -31,7 +33,7 @@ function LoginPage({ onLogin, onBackToLanding, onGoToSignup }: LoginPageProps) {
             </button>
           )}
         </div>
-        <LoginForm onShowSignup={onGoToSignup} onLogin={onLogin} />
+        <LoginForm onShowSignup={onGoToSignup} onLogin={onLogin} authError={authError} clearAuthError={clearAuthError} />
       </div>
     </div>
   );

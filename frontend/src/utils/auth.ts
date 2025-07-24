@@ -16,6 +16,7 @@ export interface AuthContextType {
   logout: () => void;
   isLoading: boolean;
   error: string | null;
+  clearError: () => void;
   isAdmin: () => boolean;
 }
 
@@ -46,7 +47,7 @@ export const authAPI = {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || "Erreur de connexion");
+      throw new Error(data.error || data.message || "Erreur de connexion");
     }
 
     return data;
@@ -64,7 +65,7 @@ export const authAPI = {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || "Erreur d'inscription");
+      throw new Error(data.error || data.message || "Erreur d'inscription");
     }
 
     return data;
@@ -82,7 +83,7 @@ export const authAPI = {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || "Erreur de récupération du profil");
+      throw new Error(data.error || data.message || "Erreur de récupération du profil");
     }
 
     return data;

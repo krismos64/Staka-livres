@@ -6,6 +6,7 @@ import { InvoiceHistoryCard } from "../components/billing/InvoiceHistoryCard";
 import { PaymentMethodsCard } from "../components/billing/PaymentMethodsCard";
 import { SupportCard } from "../components/billing/SupportCard";
 import EmptyState from "../components/common/EmptyState";
+import AddPaymentMethodModal from "../components/modals/AddPaymentMethodModal";
 import { useAnnualStats } from "../hooks/useAnnualStats";
 import { useInvoice, useInvoices } from "../hooks/useInvoices";
 import {
@@ -129,6 +130,7 @@ export default function BillingPage() {
   );
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+  const [isAddPaymentModalOpen, setIsAddPaymentModalOpen] = useState(false);
 
   const { showToast } = useToasts();
 
@@ -338,10 +340,14 @@ export default function BillingPage() {
   };
 
   const handleAddPaymentMethod = () => {
+    setIsAddPaymentModalOpen(true);
+  };
+
+  const handleAddPaymentMethodSuccess = () => {
     showToast(
-      "info",
-      "Fonctionnalité à venir",
-      "L'ajout de moyens de paiement sera bientôt disponible."
+      "success",
+      "Carte ajoutée",
+      "Votre nouveau moyen de paiement a été ajouté avec succès."
     );
   };
 
@@ -505,6 +511,13 @@ export default function BillingPage() {
           onPay={handlePayInvoice}
         />
       )}
+
+      {/* Modal d'ajout de carte de paiement */}
+      <AddPaymentMethodModal
+        isOpen={isAddPaymentModalOpen}
+        onClose={() => setIsAddPaymentModalOpen(false)}
+        onSuccess={handleAddPaymentMethodSuccess}
+      />
     </div>
   );
 }

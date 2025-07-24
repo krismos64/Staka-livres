@@ -167,6 +167,76 @@ export const stripeService = {
     return { success: true };
   },
 
+  // Créer un Setup Intent pour l'ajout de moyens de paiement
+  async createSetupIntent(customerEmail: string) {
+    if (isDevelopmentMock) {
+      // Mode mock pour le développement
+      const mockSetupIntent = {
+        id: `seti_mock_${Date.now()}`,
+        client_secret: `seti_mock_${Date.now()}_secret_mock`,
+        status: 'requires_payment_method',
+      };
+
+      console.log("🚧 [STRIPE MOCK] Setup Intent créé:", mockSetupIntent.id);
+      return mockSetupIntent;
+    }
+
+    if (!stripe) {
+      throw new Error("Stripe non configuré");
+    }
+
+    // Trouver ou créer le customer
+    let customer;
+    const customers = await stripe.customers.list({
+      email: customerEmail,
+      limit: 1,
+    });
+
+    if (customers.data.length > 0) {
+      customer = customers.data[0];
+    } else {
+      customer = await stripe.customers.create({
+        email: customerEmail,
+      });
+    }
+
+    // Créer le Setup Intent
+    const setupIntent = await stripe.setupIntents.create({
+      customer: customer.id,
+      usage: 'off_session',
+      payment_method_types: ['card'],
+    });
+
+    return setupIntent;
+  },
+
+  // Récupérer les détails d'un moyen de paiement
+  async getPaymentMethodDetails(paymentMethodId: string) {
+    if (isDevelopmentMock) {
+      // Mode mock pour le développement
+      const mockPaymentMethod = {
+        id: paymentMethodId,
+        type: 'card',
+        card: {
+          brand: 'visa',
+          last4: '4242',
+          exp_month: 12,
+          exp_year: 2025,
+          fingerprint: 'mock_fingerprint',
+        },
+      };
+
+      console.log("🚧 [STRIPE MOCK] Détails moyen de paiement:", paymentMethodId);
+      return mockPaymentMethod;
+    }
+
+    if (!stripe) {
+      throw new Error("Stripe non configuré");
+    }
+
+    return await stripe.paymentMethods.retrieve(paymentMethodId);
+  },
+
   // Webhook signature verification
   constructEvent(body: Buffer, signature: string) {
     if (isDevelopmentMock) {

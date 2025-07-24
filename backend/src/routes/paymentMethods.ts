@@ -7,6 +7,12 @@ const router = express.Router();
 // Toutes les routes nécessitent une authentification
 router.use(authenticateToken);
 
+// POST /payment-methods/setup-intent - Créer un Setup Intent pour l'ajout de carte
+router.post("/setup-intent", paymentMethodsController.createSetupIntent);
+
+// POST /payment-methods - Ajouter un nouveau moyen de paiement
+router.post("/", paymentMethodsController.addPaymentMethod);
+
 // GET /payment-methods - Récupérer les moyens de paiement de l'utilisateur
 router.get("/", paymentMethodsController.getPaymentMethods);
 

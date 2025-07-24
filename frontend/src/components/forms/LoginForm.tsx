@@ -8,13 +8,17 @@ interface LoginFormProps {
   onShowSignup?: () => void;
   /** Fonction pour gérer la soumission du formulaire de connexion */
   onLogin: (e: React.FormEvent<HTMLFormElement>) => void;
+  /** Erreur d'authentification provenant du contexte */
+  authError?: string | null;
+  /** Fonction pour effacer les erreurs d'authentification */
+  clearAuthError?: () => void;
 }
 
 /**
  * Composant LoginForm (TypeScript)
  * Affiche le formulaire de connexion avec gestion de la visibilité du mot de passe.
  */
-const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
+const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin, authError, clearAuthError }) => {
   // État pour gérer la visibilité du mot de passe
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   // États pour la gestion du feedback utilisateur
@@ -53,13 +57,21 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
     return errors;
   };
 
+  // Fonction pour effacer toutes les erreurs
+  const clearAllErrors = () => {
+    setError("");
+    setFieldErrors({});
+    if (clearAuthError) {
+      clearAuthError();
+    }
+  };
+
   // Gestion de la soumission avec validation côté client
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Reset des erreurs
-    setError("");
-    setFieldErrors({});
+    clearAllErrors();
 
     const formData = new FormData(e.currentTarget);
 
@@ -77,6 +89,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
       // Appel de la fonction onLogin fournie par le parent
       await onLogin(e);
     } catch (err) {
+      // L'erreur spécifique sera gérée par le contexte et transmise via authError
       setError("Erreur de connexion. Veuillez réessayer.");
     } finally {
       setIsLoading(false);
@@ -118,6 +131,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
               }`}
               placeholder="votre@email.com"
               disabled={isLoading}
+              onChange={() => {
+                // Effacer les erreurs dès que l'utilisateur commence à taper
+                if (fieldErrors.email || authError || error) {
+                  clearAllErrors();
+                }
+              }}
             />
           </div>
           {fieldErrors.email && (
@@ -151,6 +170,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
               }`}
               placeholder="••••••••"
               disabled={isLoading}
+              onChange={() => {
+                // Effacer les erreurs dès que l'utilisateur commence à taper
+                if (fieldErrors.password || authError || error) {
+                  clearAllErrors();
+                }
+              }}
             />
             {/* Bouton pour afficher/cacher le mot de passe */}
             <button
@@ -213,9 +238,26 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
         </button>
 
         {/* Message d'erreur global */}
-        {error && (
-          <div className="text-red-600 bg-red-50 rounded-xl p-2 mt-3 text-sm">
-            {error}
+        {(authError || error) && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mt-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <i className="fas fa-exclamation-circle text-red-500 text-lg"></i>
+              </div>
+              <div className="flex-1">
+                <div className="text-red-800 font-medium text-sm">
+                  Erreur de connexion
+                </div>
+                <div className="text-red-700 text-sm mt-1">
+                  {authError || error}
+                </div>
+                {(authError === "Identifiants incorrects") && (
+                  <div className="text-red-600 text-xs mt-2">
+                    Vérifiez votre email et mot de passe, puis réessayez.
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </form>

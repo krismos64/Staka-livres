@@ -64,6 +64,42 @@ async function deletePaymentMethod(id: string): Promise<{ success: boolean; mess
   return response.json();
 }
 
+async function createSetupIntent(): Promise<{ clientSecret: string; setupIntentId: string }> {
+  const response = await fetch(buildApiUrl("/payment-methods/setup-intent"), {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.error || `HTTP ${response.status}: ${response.statusText}`
+    );
+  }
+
+  return response.json();
+}
+
+async function addPaymentMethod(paymentMethodId: string): Promise<{ success: boolean; message: string; paymentMethod: PaymentMethod }> {
+  const response = await fetch(buildApiUrl("/payment-methods"), {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ paymentMethodId }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.error || `HTTP ${response.status}: ${response.statusText}`
+    );
+  }
+
+  return response.json();
+}
+
 // Hook pour récupérer les moyens de paiement
 export function usePaymentMethods() {
   return useQuery<PaymentMethod[], Error>({
@@ -103,6 +139,32 @@ export function useDeletePaymentMethod() {
     },
     onError: (error) => {
       console.error("❌ [PaymentMethods] Erreur suppression:", error);
+    },
+  });
+}
+
+// Hook pour créer un Setup Intent
+export function useCreateSetupIntent() {
+  return useMutation({
+    mutationFn: createSetupIntent,
+    onError: (error) => {
+      console.error("❌ [PaymentMethods] Erreur création Setup Intent:", error);
+    },
+  });
+}
+
+// Hook pour ajouter un moyen de paiement
+export function useAddPaymentMethod() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: addPaymentMethod,
+    onSuccess: () => {
+      // Invalider le cache des moyens de paiement
+      queryClient.invalidateQueries({ queryKey: ["paymentMethods"] });
+    },
+    onError: (error) => {
+      console.error("❌ [PaymentMethods] Erreur ajout moyen de paiement:", error);
     },
   });
 }

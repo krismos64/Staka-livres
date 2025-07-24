@@ -103,6 +103,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return roleCheckers.isAdmin(user);
   };
 
+  const clearError = () => {
+    setError(null);
+  };
+
   const value: AuthContextType = {
     user,
     login,
@@ -110,6 +114,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     isLoading,
     error,
+    clearError,
     isAdmin,
   };
 

@@ -79,7 +79,7 @@ const App: React.FC = () => (
 );
 
 const AppRoutes: React.FC = () => {
-  const { user, isLoading, login, logout } = useAuth();
+  const { user, isLoading, login, logout, error, clearError } = useAuth();
   const navigate = useNavigate();
 
   if (isLoading) {
@@ -117,6 +117,8 @@ const AppRoutes: React.FC = () => {
               }
             }}
             onGoToSignup={() => navigate("/signup")}
+            authError={error}
+            clearAuthError={clearError}
           />
         }
       />

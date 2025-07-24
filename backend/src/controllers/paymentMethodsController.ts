@@ -18,7 +18,131 @@ const deletePaymentMethodSchema = z.object({
   }),
 });
 
+const addPaymentMethodSchema = z.object({
+  body: z.object({
+    paymentMethodId: z.string().min(1, "ID du moyen de paiement Stripe requis"),
+  }),
+});
+
 export const paymentMethodsController = {
+  // POST /payment-methods/setup-intent - Créer un Setup Intent pour ajouter un moyen de paiement
+  async createSetupIntent(req: Request, res: Response) {
+    try {
+      const userId = req.user!.id;
+
+      // Récupérer l'utilisateur
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        return res.status(404).json({ 
+          error: "Utilisateur introuvable" 
+        });
+      }
+
+      // Créer un Setup Intent avec Stripe
+      const setupIntent = await stripeService.createSetupIntent(user.email);
+
+      res.json({ 
+        clientSecret: setupIntent.client_secret,
+        setupIntentId: setupIntent.id
+      });
+    } catch (error) {
+      console.error("❌ [PaymentMethods] Erreur création Setup Intent:", error);
+      res.status(500).json({ 
+        error: "Erreur lors de la création du Setup Intent" 
+      });
+    }
+  },
+
+  // POST /payment-methods - Ajouter un nouveau moyen de paiement
+  async addPaymentMethod(req: Request, res: Response) {
+    try {
+      const { body } = addPaymentMethodSchema.parse({ body: req.body });
+      const userId = req.user!.id;
+
+      // Récupérer l'utilisateur
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        return res.status(404).json({ 
+          error: "Utilisateur introuvable" 
+        });
+      }
+
+      // Récupérer les détails du moyen de paiement depuis Stripe
+      const paymentMethodDetails = await stripeService.getPaymentMethodDetails(body.paymentMethodId);
+
+      if (!paymentMethodDetails.card) {
+        return res.status(400).json({ 
+          error: "Type de moyen de paiement non supporté" 
+        });
+      }
+
+      // Vérifier si c'est le premier moyen de paiement (sera par défaut)
+      const existingPaymentMethods = await prisma.paymentMethod.findMany({
+        where: { userId, isActive: true },
+      });
+      const isDefault = existingPaymentMethods.length === 0;
+
+      // Enregistrer dans la base de données
+      const newPaymentMethod = await prisma.paymentMethod.create({
+        data: {
+          userId,
+          stripePaymentMethodId: body.paymentMethodId,
+          brand: paymentMethodDetails.card.brand,
+          last4: paymentMethodDetails.card.last4,
+          expMonth: paymentMethodDetails.card.exp_month,
+          expYear: paymentMethodDetails.card.exp_year,
+          fingerprint: paymentMethodDetails.card.fingerprint,
+          isDefault,
+          isActive: true,
+        },
+      });
+
+      // Si c'est maintenant le moyen de paiement par défaut, désactiver les autres
+      if (isDefault && existingPaymentMethods.length > 0) {
+        await prisma.paymentMethod.updateMany({
+          where: {
+            userId,
+            id: { not: newPaymentMethod.id },
+          },
+          data: {
+            isDefault: false,
+          },
+        });
+      }
+
+      res.status(201).json({ 
+        success: true, 
+        message: "Moyen de paiement ajouté avec succès",
+        paymentMethod: {
+          id: newPaymentMethod.id,
+          brand: newPaymentMethod.brand,
+          last4: newPaymentMethod.last4,
+          expMonth: newPaymentMethod.expMonth,
+          expYear: newPaymentMethod.expYear,
+          isDefault: newPaymentMethod.isDefault,
+        }
+      });
+    } catch (error) {
+      console.error("❌ [PaymentMethods] Erreur ajout moyen de paiement:", error);
+      
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          error: "Paramètres invalides" 
+        });
+      }
+      
+      res.status(500).json({ 
+        error: "Erreur lors de l'ajout du moyen de paiement" 
+      });
+    }
+  },
+
   // GET /payment-methods
   async getPaymentMethods(req: Request, res: Response) {
     try {
