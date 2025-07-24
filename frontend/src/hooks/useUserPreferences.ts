@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { api } from '../utils/api';
+import { useQuery } from "@tanstack/react-query";
+import { buildApiUrl, getAuthHeaders } from "../utils/api";
 
 export interface UserPreferences {
   notifications: {
@@ -21,10 +21,17 @@ export interface UserPreferences {
 
 export const useUserPreferences = () => {
   return useQuery<UserPreferences>({
-    queryKey: ['userPreferences'],
+    queryKey: ["userPreferences"],
     queryFn: async () => {
-      const response = await api.get('/users/me/preferences');
-      return response.data;
-    }
+      const response = await fetch(buildApiUrl("/users/me/preferences"), {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok)
+        throw new Error(
+          "Erreur lors de la récupération des préférences utilisateur"
+        );
+      return await response.json();
+    },
   });
 };

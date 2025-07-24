@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
-import { MailerService } from "../utils/mailer";
 import bcrypt from "bcryptjs";
+import { MailerService } from "../utils/mailer";
 
 const prisma = new PrismaClient();
 
@@ -35,7 +35,6 @@ export interface UserExportData {
  * Service pour les opérations utilisateur RGPD
  */
 export class UserService {
-
   /**
    * Supprime le compte utilisateur (soft delete + anonymisation)
    */
@@ -43,7 +42,7 @@ export class UserService {
     try {
       // Vérifier que l'utilisateur existe
       const user = await prisma.user.findUnique({
-        where: { id: userId }
+        where: { id: userId },
       });
 
       if (!user) {
@@ -52,7 +51,7 @@ export class UserService {
 
       // Soft delete + anonymisation
       const anonymizedEmail = `deleted_${Date.now()}@anonymized.local`;
-      
+
       await prisma.user.update({
         where: { id: userId },
         data: {
@@ -61,14 +60,19 @@ export class UserService {
           prenom: "Utilisateur",
           nom: "Supprimé",
           // Conserver l'ID pour les références FK
-        }
+        },
       });
 
-      console.log(`✅ [UserService] Compte utilisateur ${userId} supprimé (soft delete)`);
-
+      console.log(
+        `✅ [UserService] Compte utilisateur ${userId} supprimé (soft delete)`
+      );
     } catch (error) {
-      console.error('❌ [UserService] Erreur suppression compte:', error);
-      throw new Error(`Échec de la suppression du compte: ${error instanceof Error ? error.message : error}`);
+      console.error("❌ [UserService] Erreur suppression compte:", error);
+      throw new Error(
+        `Échec de la suppression du compte: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
     }
   }
 
@@ -79,7 +83,7 @@ export class UserService {
     try {
       // Vérifier que l'utilisateur existe
       const user = await prisma.user.findUnique({
-        where: { id: userId }
+        where: { id: userId },
       });
 
       if (!user) {
@@ -95,43 +99,51 @@ export class UserService {
         where: { id: userId },
         data: {
           isActive: false,
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       });
 
       console.log(`✅ [UserService] Compte utilisateur ${userId} désactivé`);
-
     } catch (error) {
-      console.error('❌ [UserService] Erreur désactivation compte:', error);
-      throw new Error(`Échec de la désactivation du compte: ${error instanceof Error ? error.message : error}`);
+      console.error("❌ [UserService] Erreur désactivation compte:", error);
+      throw new Error(
+        `Échec de la désactivation du compte: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
     }
   }
 
   /**
    * Exporte toutes les données utilisateur et les envoie par email
    */
-  static async exportUserData(userId: string, userEmail: string): Promise<void> {
+  static async exportUserData(
+    userId: string,
+    userEmail: string
+  ): Promise<void> {
     try {
       // Récupération des données utilisateur
       const userData = await UserService.getUserData(userId);
-      
+
       // Génération du fichier JSON
       const exportData = {
         exportDate: new Date().toISOString(),
         user: userData,
-        dataTypes: ['profile', 'commandes', 'invoices', 'messages'],
+        dataTypes: ["profile", "commandes", "invoices", "messages"],
         totalCommandes: userData.commandes.length,
         totalInvoices: userData.factures.length,
-        totalMessages: userData.messages.length
+        totalMessages: userData.messages.length,
       };
 
       // Conversion en JSON formaté
       const jsonContent = JSON.stringify(exportData, null, 2);
-      const base64Content = Buffer.from(jsonContent, 'utf8').toString('base64');
+      const base64Content = Buffer.from(jsonContent, "utf8").toString("base64");
 
       // Préparation de l'email avec pièce jointe
       const emailSubject = "Export de vos données personnelles (RGPD)";
-      const filename = `export-donnees-${userData.id}-${new Date().toISOString().split('T')[0]}.json`;
+      const filename = `export-donnees-${userData.id}-${
+        new Date().toISOString().split("T")[0]
+      }.json`;
 
       const emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -145,12 +157,18 @@ export class UserService {
             <h3 style="margin: 0 0 10px 0; color: #1e40af;">📊 Contenu de l'export</h3>
             <ul style="margin: 10px 0; padding-left: 20px;">
               <li><strong>Profil utilisateur :</strong> informations de base</li>
-              <li><strong>Commandes :</strong> ${userData.commandes.length} commande(s)</li>
-              <li><strong>Factures :</strong> ${userData.factures.length} facture(s)</li>
-              <li><strong>Messages :</strong> ${userData.messages.length} message(s)</li>
+              <li><strong>Commandes :</strong> ${
+                userData.commandes.length
+              } commande(s)</li>
+              <li><strong>Factures :</strong> ${
+                userData.factures.length
+              } facture(s)</li>
+              <li><strong>Messages :</strong> ${
+                userData.messages.length
+              } message(s)</li>
             </ul>
             <p style="margin: 10px 0 0 0; color: #6b7280; font-size: 14px;">
-              Date d'export : ${new Date().toLocaleDateString('fr-FR')}
+              Date d'export : ${new Date().toLocaleDateString("fr-FR")}
             </p>
           </div>
           
@@ -181,7 +199,7 @@ Contenu de l'export :
 - Factures : ${userData.factures.length} facture(s)  
 - Messages : ${userData.messages.length} message(s)
 
-Date d'export : ${new Date().toLocaleDateString('fr-FR')}
+Date d'export : ${new Date().toLocaleDateString("fr-FR")}
 
 Note : Ces données sont exportées au format JSON.
 
@@ -196,19 +214,26 @@ contact@staka-livres.com
         subject: emailSubject,
         text: emailText,
         html: emailHtml,
-        attachments: [{
-          content: base64Content,
-          filename: filename,
-          type: 'application/json',
-          disposition: 'attachment'
-        }]
+        attachments: [
+          {
+            content: base64Content,
+            filename: filename,
+            type: "application/json",
+            disposition: "attachment",
+          },
+        ],
       });
 
-      console.log(`✅ [UserService] Données utilisateur ${userId} exportées et envoyées à ${userEmail}`);
-
+      console.log(
+        `✅ [UserService] Données utilisateur ${userId} exportées et envoyées à ${userEmail}`
+      );
     } catch (error) {
-      console.error('❌ [UserService] Erreur export données:', error);
-      throw new Error(`Échec de l'export des données: ${error instanceof Error ? error.message : error}`);
+      console.error("❌ [UserService] Erreur export données:", error);
+      throw new Error(
+        `Échec de l'export des données: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
     }
   }
 
@@ -224,7 +249,7 @@ contact@staka-livres.com
           id: true,
           email: true,
           createdAt: true,
-        }
+        },
       });
 
       if (!user) {
@@ -241,7 +266,7 @@ contact@staka-livres.com
           statut: true,
           createdAt: true,
           updatedAt: true,
-        }
+        },
       });
 
       // Récupération des factures via les commandes
@@ -255,20 +280,19 @@ contact@staka-livres.com
               pdfUrl: true,
               createdAt: true,
               amount: true,
-            }
-          }
-        }
+            },
+          },
+        },
       });
 
-      const factures = commandesWithInvoices.flatMap(commande => commande.invoices);
+      const factures = commandesWithInvoices.flatMap(
+        (commande) => commande.invoices
+      );
 
       // Récupération des messages (envoyés ET reçus par l'utilisateur)
       const messages = await prisma.message.findMany({
-        where: { 
-          OR: [
-            { senderId: userId },
-            { receiverId: userId }
-          ]
+        where: {
+          OR: [{ senderId: userId }, { receiverId: userId }],
         },
         select: {
           id: true,
@@ -277,15 +301,15 @@ contact@staka-livres.com
           senderId: true,
           receiverId: true,
         },
-        orderBy: { createdAt: 'asc' }
+        orderBy: { createdAt: "asc" },
       });
 
       // Transformer les messages pour inclure isFromAdmin
-      const messagesWithFlags = messages.map(msg => ({
+      const messagesWithFlags = messages.map((msg) => ({
         id: msg.id,
         content: msg.content,
         createdAt: msg.createdAt,
-        isFromAdmin: msg.senderId !== userId // Si ce n'est pas l'utilisateur qui envoie, c'est un admin
+        isFromAdmin: msg.senderId !== userId, // Si ce n'est pas l'utilisateur qui envoie, c'est un admin
       }));
 
       return {
@@ -296,10 +320,13 @@ contact@staka-livres.com
         factures,
         messages: messagesWithFlags,
       };
-
     } catch (error) {
-      console.error('❌ [UserService] Erreur récupération données:', error);
-      throw new Error(`Échec de la récupération des données: ${error instanceof Error ? error.message : error}`);
+      console.error("❌ [UserService] Erreur récupération données:", error);
+      throw new Error(
+        `Échec de la récupération des données: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
     }
   }
 
@@ -310,29 +337,23 @@ contact@staka-livres.com
     try {
       // Récupération des projets/commandes de l'utilisateur
       const projets = await prisma.commande.findMany({
-        where: { 
+        where: {
           userId: userId,
-          // Ne pas inclure les commandes supprimées
-          deletedAt: null
         },
         select: {
           id: true,
           statut: true,
-          rating: true,
-        }
+        },
       });
 
       // Calcul des statistiques
       const totalProjects = projets.length;
-      const completedProjects = projets.filter(p => 
-        p.statut === 'TERMINE' || p.statut === 'LIVREE'
+      const completedProjects = projets.filter(
+        (p) => p.statut === "TERMINE"
       ).length;
 
-      // Calcul de la note moyenne (seulement les projets notés)
-      const ratedProjects = projets.filter(p => p.rating && p.rating > 0);
-      const averageRating = ratedProjects.length > 0 
-        ? ratedProjects.reduce((sum, p) => sum + (p.rating || 0), 0) / ratedProjects.length
-        : 0;
+      // Pas de note numérique, donc 0
+      const averageRating = 0;
 
       // Vérification du statut VIP (plus de 10 projets terminés)
       const isVip = completedProjects >= 10;
@@ -340,30 +361,36 @@ contact@staka-livres.com
       return {
         totalProjects,
         completedProjects,
-        averageRating: Math.round(averageRating * 10) / 10, // Arrondir à 1 décimale
-        isVip
+        averageRating,
+        isVip,
       };
-
     } catch (error) {
-      console.error('❌ [UserService] Erreur récupération stats:', error);
-      throw new Error(`Échec de la récupération des statistiques: ${error instanceof Error ? error.message : error}`);
+      console.error("❌ [UserService] Erreur récupération stats:", error);
+      throw new Error(
+        `Échec de la récupération des statistiques: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
     }
   }
 
   /**
    * Met à jour le profil utilisateur
    */
-  static async updateUserProfile(userId: string, data: {
-    prenom?: string;
-    nom?: string;
-    telephone?: string;
-    adresse?: string;
-    bio?: string;
-  }) {
+  static async updateUserProfile(
+    userId: string,
+    data: {
+      prenom?: string;
+      nom?: string;
+      telephone?: string;
+      adresse?: string;
+      bio?: string;
+    }
+  ) {
     try {
       // Vérifier que l'utilisateur existe
       const existingUser = await prisma.user.findUnique({
-        where: { id: userId }
+        where: { id: userId },
       });
 
       if (!existingUser) {
@@ -392,23 +419,30 @@ contact@staka-livres.com
           role: true,
           isActive: true,
           createdAt: true,
-          updatedAt: true
-        }
+          updatedAt: true,
+        },
       });
 
       console.log(`✅ [UserService] Profil utilisateur ${userId} mis à jour`);
       return updatedUser;
-
     } catch (error) {
-      console.error('❌ [UserService] Erreur mise à jour profil:', error);
-      throw new Error(`Échec de la mise à jour du profil: ${error instanceof Error ? error.message : error}`);
+      console.error("❌ [UserService] Erreur mise à jour profil:", error);
+      throw new Error(
+        `Échec de la mise à jour du profil: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
     }
   }
 
   /**
    * Change le mot de passe utilisateur
    */
-  static async changeUserPassword(userId: string, currentPassword: string, newPassword: string) {
+  static async changeUserPassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string
+  ) {
     try {
       // Récupérer l'utilisateur avec son mot de passe
       const user = await prisma.user.findUnique({
@@ -416,8 +450,8 @@ contact@staka-livres.com
         select: {
           id: true,
           email: true,
-          password: true
-        }
+          password: true,
+        },
       });
 
       if (!user) {
@@ -425,9 +459,12 @@ contact@staka-livres.com
       }
 
       // Vérifier le mot de passe actuel
-      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+      const isCurrentPasswordValid = await bcrypt.compare(
+        currentPassword,
+        user.password
+      );
       if (!isCurrentPasswordValid) {
-        throw new Error('Mot de passe actuel incorrect');
+        throw new Error("Mot de passe actuel incorrect");
       }
 
       // Hasher le nouveau mot de passe
@@ -437,16 +474,15 @@ contact@staka-livres.com
       // Mettre à jour le mot de passe
       await prisma.user.update({
         where: { id: userId },
-        data: { 
+        data: {
           password: hashedNewPassword,
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       });
 
       console.log(`✅ [UserService] Mot de passe utilisateur ${userId} changé`);
-
     } catch (error) {
-      console.error('❌ [UserService] Erreur changement mot de passe:', error);
+      console.error("❌ [UserService] Erreur changement mot de passe:", error);
       throw error; // Re-throw pour préserver le message d'erreur spécifique
     }
   }
@@ -459,8 +495,8 @@ contact@staka-livres.com
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: {
-          preferences: true
-        }
+          preferences: true,
+        },
       });
 
       if (!user) {
@@ -472,33 +508,36 @@ contact@staka-livres.com
         notifications: {
           email: true,
           push: true,
-          sms: false
+          sms: false,
         },
         notificationTypes: {
           projects: true,
           messages: true,
           invoices: true,
-          promos: false
+          promos: false,
         },
         privacy: {
           publicProfile: false,
-          analytics: true
-        }
+          analytics: true,
+        },
       };
 
       // Merger les préférences existantes avec les valeurs par défaut
-      const userPreferences = user.preferences ? 
-        JSON.parse(JSON.stringify(user.preferences)) : 
-        {};
+      const userPreferences = user.preferences
+        ? JSON.parse(JSON.stringify(user.preferences))
+        : {};
 
       return {
         ...defaultPreferences,
-        ...userPreferences
+        ...userPreferences,
       };
-
     } catch (error) {
-      console.error('❌ [UserService] Erreur récupération préférences:', error);
-      throw new Error(`Échec de la récupération des préférences: ${error instanceof Error ? error.message : error}`);
+      console.error("❌ [UserService] Erreur récupération préférences:", error);
+      throw new Error(
+        `Échec de la récupération des préférences: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
     }
   }
 
@@ -512,8 +551,8 @@ contact@staka-livres.com
         where: { id: userId },
         select: {
           id: true,
-          preferences: true
-        }
+          preferences: true,
+        },
       });
 
       if (!existingUser) {
@@ -521,15 +560,15 @@ contact@staka-livres.com
       }
 
       // Récupérer les préférences actuelles
-      const currentPreferences = existingUser.preferences ? 
-        JSON.parse(JSON.stringify(existingUser.preferences)) : 
-        {};
+      const currentPreferences = existingUser.preferences
+        ? JSON.parse(JSON.stringify(existingUser.preferences))
+        : {};
 
       // Merger les nouvelles préférences avec les existantes
       const updatedPreferences = {
         ...currentPreferences,
         ...newPreferences,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
 
       // Mettre à jour en base de données
@@ -537,19 +576,24 @@ contact@staka-livres.com
         where: { id: userId },
         data: {
           preferences: updatedPreferences,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
         select: {
-          preferences: true
-        }
+          preferences: true,
+        },
       });
 
-      console.log(`✅ [UserService] Préférences utilisateur ${userId} mises à jour`);
+      console.log(
+        `✅ [UserService] Préférences utilisateur ${userId} mises à jour`
+      );
       return updatedUser.preferences;
-
     } catch (error) {
-      console.error('❌ [UserService] Erreur mise à jour préférences:', error);
-      throw new Error(`Échec de la mise à jour des préférences: ${error instanceof Error ? error.message : error}`);
+      console.error("❌ [UserService] Erreur mise à jour préférences:", error);
+      throw new Error(
+        `Échec de la mise à jour des préférences: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
     }
   }
 }
