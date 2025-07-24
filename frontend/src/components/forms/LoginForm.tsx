@@ -117,7 +117,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
                   : "border-gray-300 focus:ring-blue-500"
               }`}
               placeholder="votre@email.com"
-              defaultValue="admin@staka-editions.com" // Compte admin de test
               disabled={isLoading}
             />
           </div>
@@ -151,7 +150,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
                   : "border-gray-300 focus:ring-blue-500"
               }`}
               placeholder="••••••••"
-              defaultValue="AdminStaka2025!" // Mot de passe admin de test RGPD
               disabled={isLoading}
             />
             {/* Bouton pour afficher/cacher le mot de passe */}
@@ -239,18 +237,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onShowSignup, onLogin }) => {
         </div>
       )}
 
-      {/* Boîte d'information pour les comptes de test */}
-      <div className="mt-6 p-4 bg-blue-50 rounded-xl">
-        <h4 className="font-semibold text-blue-800 mb-2">🔑 Comptes de test</h4>
-        <div className="text-sm text-blue-700 space-y-2">
-          <div>
-            <strong>Admin:</strong> admin@staka-editions.com / AdminStaka2025!
-          </div>
-          <div>
-            <strong>User:</strong> user@example.com / UserTest2025!
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
