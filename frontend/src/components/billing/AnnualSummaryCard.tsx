@@ -7,6 +7,11 @@ interface AnnualSummaryCardProps {
 
 // Composant pour afficher le résumé annuel des stats
 export function AnnualSummaryCard({ stats }: AnnualSummaryCardProps) {
+  // Calculer la progression VIP basée sur les vrais stats
+  const VIP_THRESHOLD = 10; // Seuil pour devenir VIP (par exemple 10 projets)
+  const vipProgress = Math.min((stats.completedProjects / VIP_THRESHOLD) * 100, 100);
+  const projectsUntilVip = Math.max(VIP_THRESHOLD - stats.completedProjects, 0);
+  const isVip = stats.completedProjects >= VIP_THRESHOLD;
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 animate-fade-in">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -59,17 +64,28 @@ export function AnnualSummaryCard({ stats }: AnnualSummaryCardProps) {
       {!stats.vip && (
         <div className="mt-4">
           <div className="flex justify-between text-sm mb-2">
-            <span className="text-gray-600">Progression vers VIP</span>
-            <span className="text-gray-900 font-medium">75%</span>
+            <span className="text-gray-600">
+              {isVip ? "Statut VIP" : "Progression vers VIP"}
+            </span>
+            <span className="text-gray-900 font-medium">
+              {isVip ? "✨ VIP" : `${Math.round(vipProgress)}%`}
+            </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
-              className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-1000"
-              style={{ width: "75%" }}
+              className={`h-2 rounded-full transition-all duration-1000 ${
+                isVip 
+                  ? "bg-gradient-to-r from-yellow-400 to-yellow-600" 
+                  : "bg-gradient-to-r from-blue-500 to-purple-500"
+              }`}
+              style={{ width: `${vipProgress}%` }}
             ></div>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            Plus que 3 projets pour devenir VIP !
+            {isVip 
+              ? "Félicitations ! Vous êtes membre VIP" 
+              : `Plus que ${projectsUntilVip} projet${projectsUntilVip > 1 ? 's' : ''} pour devenir VIP !`
+            }
           </p>
         </div>
       )}

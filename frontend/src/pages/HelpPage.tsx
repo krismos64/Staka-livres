@@ -449,10 +449,10 @@ export default function HelpPage() {
                 <i className="fas fa-envelope text-blue-500"></i>
                 <span>Email</span>
                 <a
-                  href="mailto:support@staka.fr"
+                  href="mailto:contact@staka.fr"
                   className="ml-auto font-medium text-gray-900 hover:text-blue-700 hover:underline"
                 >
-                  support@staka.fr
+                  contact@staka.fr
                 </a>
               </div>
               <div className="flex items-center gap-2 text-gray-700">

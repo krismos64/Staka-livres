@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useToast } from "../components/layout/ToastProvider";
 import DeactivateAccountModal from "../components/modals/DeactivateAccountModal";
 import DeleteAccountModal from "../components/modals/DeleteAccountModal";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function SettingsPage() {
   const { showToast } = useToast();
+  const { user } = useAuth();
 
   // State pour les switches
   const [notifEmail, setNotifEmail] = useState(true);
@@ -29,12 +31,12 @@ export default function SettingsPage() {
   const handleDownloadData = () => {
     const userData = {
       profile: {
-        firstName: "Marie",
-        lastName: "Castello",
-        email: "marie.castello@example.com",
-        phone: "06 12 34 56 78",
-        address: "123 Rue de la Littérature\\n31000 Toulouse",
-        bio: "Auteure passionnée...",
+        firstName: user?.prenom || "Prénom",
+        lastName: user?.nom || "Nom",
+        email: user?.email || "email@example.com",
+        phone: user?.telephone || "Non renseigné",
+        address: user?.adresse || "Non renseignée",
+        bio: "Utilisateur de Staka Livres",
       },
       settings: {
         notifEmail,

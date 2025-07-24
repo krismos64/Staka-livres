@@ -1,96 +1,73 @@
 import React, { useEffect, useState } from "react";
 import ProjectDetailsModal from "../components/modals/ProjectDetailsModal";
 import RecentActivity from "../components/project/RecentActivity";
-import { Project } from "./ProjectsPage";
+import { useAuth } from "../contexts/AuthContext";
+import { useProjects, Project } from "../hooks/useProjects";
 
 const Dashboard: React.FC = () => {
+  const { user } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Récupérer les projets de l'utilisateur via l'API
+  const { data: projectsResponse, isLoading, error } = useProjects({
+    page: 1,
+    limit: 5, // Limiter à 5 projets pour le dashboard
+    status: 'all'
+  });
+
+  const projects = projectsResponse?.data || [];
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 100);
     return () => clearTimeout(timer);
   }, []);
 
-  // Projets en cours adaptés selon la maquette
-  const projects: Project[] = [
-    {
-      id: 1,
-      title: "L'Écho du Temps",
-      type: "Roman",
-      pages: 280,
-      started: "5 Jan 2025",
-      delivery: "15 Jan 2025",
-      corrector: "Sarah Martin",
-      pack: "Pack Intégral",
-      status: "Terminé",
-      statusBadge: "bg-green-100 text-green-800",
-      progress: 100,
-      rating: 5,
-      canDownload: true,
-      description:
-        "Roman contemporain explorant les thèmes du temps et de la mémoire.",
-    },
-    {
-      id: 2,
-      title: "Mémoires d'une Vie",
-      type: "Biographie",
-      pages: 180,
-      started: "10 Jan 2025",
-      delivery: "20 Jan 2025",
-      corrector: "Marc Dubois",
-      pack: "Pack Correction",
-      status: "En correction",
-      statusBadge: "bg-blue-100 text-blue-800",
-      progress: 65,
-      description: "Biographie personnelle retraçant 60 années d'expériences.",
-    },
-    {
-      id: 3,
-      title: "Nouvelles du Cœur",
-      type: "Recueil",
-      pages: 120,
-      started: "25 Jan 2025",
-      delivery: "5 Fév 2025",
-      corrector: "Non assigné",
-      pack: "Pack KDP",
-      status: "En attente",
-      statusBadge: "bg-yellow-100 text-yellow-800",
-      progress: 0,
-      description: "Recueil de nouvelles romantiques et émouvantes.",
-    },
-  ];
 
-  // Statistiques principales
+  // Calculer les statistiques à partir des données réelles
+  const activeProjects = projects.filter(p => 
+    p.status === "En cours" || p.status === "En correction" || p.status === "En attente"
+  ).length;
+  
+  const completedProjects = projects.filter(p => 
+    p.status === "Terminé" || p.status === "Livré"
+  ).length;
+
+  const averageRating = projects.filter(p => p.rating).length > 0 
+    ? (projects.filter(p => p.rating).reduce((sum, p) => sum + (p.rating || 0), 0) / 
+       projects.filter(p => p.rating).length).toFixed(1)
+    : "N/A";
+
+  // Statistiques principales calculées dynamiquement
   const stats = [
     {
       label: "Projets actifs",
-      value: 3,
+      value: activeProjects,
       icon: "fas fa-folder-open text-blue-600",
       iconBg: "bg-blue-100",
-      change: "+1 ce mois",
-      changeColor: "text-green-600",
+      change: isLoading ? "..." : `${activeProjects} en cours`,
+      changeColor: "text-blue-600",
     },
     {
       label: "Projets terminés",
-      value: 12,
+      value: completedProjects,
       icon: "fas fa-check-circle text-green-600",
       iconBg: "bg-green-100",
-      change: "+3 ce mois",
+      change: isLoading ? "..." : `${completedProjects} terminés`,
       changeColor: "text-green-600",
     },
     {
       label: "Messages non lus",
-      value: 2,
+      value: isLoading ? "..." : 0, // TODO: intégrer avec useMessages
       icon: "fas fa-envelope text-yellow-600",
       iconBg: "bg-yellow-100",
-      change: "Nouveau",
+      change: "À consulter",
       changeColor: "text-blue-600",
     },
     {
       label: "Satisfaction",
-      value: "4.9/5",
+      value: averageRating === "N/A" ? "N/A" : `${averageRating}/5`,
       icon: "fas fa-star text-purple-600",
       iconBg: "bg-purple-100",
       change: (
@@ -222,7 +199,7 @@ const Dashboard: React.FC = () => {
         }`}
       >
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Bonjour Marie ! 👋
+          Bonjour {user?.prenom || "Utilisateur"} ! 👋
         </h2>
         <p className="text-gray-600">Voici un aperçu de vos projets en cours</p>
       </div>
@@ -287,21 +264,37 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           <div className="p-6 space-y-4">
-            {projects.map((project, index) => (
-              <div
-                key={project.id}
-                className={`transition-all duration-500 ${
-                  isVisible
-                    ? "opacity-100 translate-x-0"
-                    : "opacity-0 translate-x-4"
-                }`}
-                style={{
-                  transitionDelay: isVisible ? `${600 + index * 150}ms` : "0ms",
-                }}
-              >
-                <ProjectCard project={project} />
+            {isLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-500">Chargement de vos projets...</p>
               </div>
-            ))}
+            ) : error ? (
+              <div className="text-center py-8">
+                <p className="text-red-500">Erreur lors du chargement des projets</p>
+              </div>
+            ) : projects.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">Aucun projet en cours</p>
+                <p className="text-sm text-gray-400 mt-2">Créez votre premier projet pour commencer</p>
+              </div>
+            ) : (
+              projects.map((project, index) => (
+                <div
+                  key={project.id}
+                  className={`transition-all duration-500 ${
+                    isVisible
+                      ? "opacity-100 translate-x-0"
+                      : "opacity-0 translate-x-4"
+                  }`}
+                  style={{
+                    transitionDelay: isVisible ? `${600 + index * 150}ms` : "0ms",
+                  }}
+                >
+                  <ProjectCard project={project} />
+                </div>
+              ))
+            )}
           </div>
         </div>
 

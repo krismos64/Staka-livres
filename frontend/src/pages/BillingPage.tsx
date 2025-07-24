@@ -387,7 +387,7 @@ export default function BillingPage() {
     showToast(
       "info",
       "Support",
-      "Vous pouvez nous contacter à support@staka-editions.com"
+      "Vous pouvez nous contacter à contact@staka.fr"
     );
   };
 

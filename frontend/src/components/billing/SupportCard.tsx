@@ -1,11 +1,13 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 interface SupportCardProps {
-  onContact: () => void;
+  onContact?: () => void; // Optionnel car nous naviguons maintenant directement
 }
 
 // Composant pour le support et l'aide
 export function SupportCard({ onContact }: SupportCardProps) {
+  const navigate = useNavigate();
   return (
     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 p-6 animate-fade-in">
       <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -20,7 +22,7 @@ export function SupportCard({ onContact }: SupportCardProps) {
       {/* Options de contact */}
       <div className="space-y-3">
         <button
-          onClick={onContact}
+          onClick={() => navigate('/app/help')}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors group"
           aria-label="Contacter le support client"
         >
@@ -31,7 +33,7 @@ export function SupportCard({ onContact }: SupportCardProps) {
         {/* Liens d'aide rapide */}
         <div className="grid grid-cols-2 gap-2">
           <button
-            onClick={() => console.log("FAQ factures")}
+            onClick={() => navigate('/app/help')}
             className="text-blue-700 hover:text-blue-800 text-sm font-medium py-2 px-3 rounded-lg hover:bg-blue-100 transition-colors"
             aria-label="Voir la FAQ sur les factures"
           >
@@ -40,7 +42,7 @@ export function SupportCard({ onContact }: SupportCardProps) {
           </button>
 
           <button
-            onClick={() => console.log("Chat en direct")}
+            onClick={() => navigate('/app/messages')}
             className="text-blue-700 hover:text-blue-800 text-sm font-medium py-2 px-3 rounded-lg hover:bg-blue-100 transition-colors"
             aria-label="Démarrer un chat en direct"
           >
@@ -60,7 +62,7 @@ export function SupportCard({ onContact }: SupportCardProps) {
 
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <i className="fas fa-envelope text-blue-600"></i>
-            <span>support@staka.fr</span>
+            <span>contact@staka.fr</span>
           </div>
 
           <div className="flex items-center gap-2 text-sm text-gray-600">

@@ -295,7 +295,7 @@ export function PaymentModal({
                               name: e.target.value,
                             }))
                           }
-                          placeholder="Marie Castello"
+                          placeholder="Nom du titulaire de la carte"
                           className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           required={useNewCard}
                         />

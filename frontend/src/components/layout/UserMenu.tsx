@@ -28,9 +28,9 @@ function UserMenu({ onSectionChange, onLogout, onGoToAdmin }: UserMenuProps) {
 
   const displayName = user
     ? `${user.prenom || "Prénom"} ${user.nom || "Nom"}`
-    : "Marie Castello";
+    : "Utilisateur";
   const displayInitials =
-    user && user.prenom && user.nom ? `${user.prenom[0]}${user.nom[0]}` : "MC";
+    user && user.prenom && user.nom ? `${user.prenom[0]}${user.nom[0]}` : "U";
 
   /**
    * Hook pour fermer le menu si l'utilisateur clique en dehors.

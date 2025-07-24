@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useToast } from "../components/layout/ToastProvider";
 import AvatarUploadModal from "../components/modals/AvatarUploadModal";
+import { useAuth } from "../contexts/AuthContext";
 
 // Mock user data (à remplacer)
 const initialUser = {
@@ -21,11 +22,37 @@ const initialUser = {
 
 export default function ProfilePage() {
   const { showToast } = useToast();
+  const { user: authUser } = useAuth();
   const [user, setUser] = useState(initialUser);
   const [notifEmail, setNotifEmail] = useState(true);
   const [notifSMS, setNotifSMS] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+
+  // Mettre à jour les données utilisateur quand authUser change
+  useEffect(() => {
+    if (authUser) {
+      setUser({
+        firstName: authUser.prenom || "",
+        lastName: authUser.nom || "",
+        email: authUser.email || "",
+        phone: initialUser.phone, // Garder les données mock pour les champs non disponibles
+        address: initialUser.address,
+        bio: initialUser.bio,
+        avatar: authUser.prenom && authUser.nom 
+          ? `https://ui-avatars.com/api/?name=${encodeURIComponent(authUser.prenom)}+${encodeURIComponent(authUser.nom)}&background=6C47FF&color=fff&size=128`
+          : initialUser.avatar,
+        joinDate: new Date(authUser.createdAt).toLocaleDateString('fr-FR', { 
+          year: 'numeric', 
+          month: 'long' 
+        }) || initialUser.joinDate,
+        projects: initialUser.projects, // À remplacer par de vraies données
+        rating: initialUser.rating, // À remplacer par de vraies données
+        vip: authUser.role === 'ADMIN' || initialUser.vip,
+        emailVerified: authUser.isActive || false,
+      });
+    }
+  }, [authUser]);
 
   // Changement de mot de passe mock
   const [pwd, setPwd] = useState({ current: "", next: "", confirm: "" });
