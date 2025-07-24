@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 interface DeactivateAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>;
 }
 
 export default function DeactivateAccountModal({
@@ -30,11 +30,14 @@ export default function DeactivateAccountModal({
 
   const handleConfirm = async () => {
     setIsDeactivating(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    onConfirm();
-    setIsDeactivating(false);
-    onClose();
+    try {
+      await onConfirm();
+      onClose();
+    } catch (error) {
+      // L'erreur est gérée dans le parent
+    } finally {
+      setIsDeactivating(false);
+    }
   };
 
   if (!isOpen) return null;

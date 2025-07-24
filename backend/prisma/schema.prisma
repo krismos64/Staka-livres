@@ -21,6 +21,7 @@ model User {
   adresse                 String?          @db.Text
   avatar                  String?          @db.VarChar(500)
   telephone               String?          @db.VarChar(20)
+  bio                     String?          @db.Text
   preferences             Json?
   commandes               Commande[]
   files                   File[]           @relation("FileOwner")

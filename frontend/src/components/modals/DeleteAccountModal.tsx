@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 interface DeleteAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>;
 }
 
 const CONFIRM_TEXT = "SUPPRIMER";
@@ -40,11 +40,14 @@ export default function DeleteAccountModal({
 
   const handleConfirm = async () => {
     setIsDeleting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    onConfirm();
-    setIsDeleting(false);
-    onClose();
+    try {
+      await onConfirm();
+      onClose();
+    } catch (error) {
+      // L'erreur est gérée dans le parent
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (!isOpen) return null;

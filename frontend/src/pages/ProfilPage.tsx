@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useToast } from "../components/layout/ToastProvider";
 import AvatarUploadModal from "../components/modals/AvatarUploadModal";
 import { useAuth } from "../contexts/AuthContext";
+import { useUserStats } from "../hooks/useUserStats";
+import { useUpdateProfile } from "../hooks/useUpdateProfile";
+import { useChangePassword } from "../hooks/useChangePassword";
 
 // Mock user data (à remplacer)
 const initialUser = {
@@ -23,22 +26,24 @@ const initialUser = {
 export default function ProfilePage() {
   const { showToast } = useToast();
   const { user: authUser } = useAuth();
+  const { data: userStats, isLoading: statsLoading } = useUserStats();
+  const updateProfileMutation = useUpdateProfile();
+  const changePasswordMutation = useChangePassword();
   const [user, setUser] = useState(initialUser);
   const [notifEmail, setNotifEmail] = useState(true);
   const [notifSMS, setNotifSMS] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
-  // Mettre à jour les données utilisateur quand authUser change
+  // Mettre à jour les données utilisateur quand authUser ou userStats changent
   useEffect(() => {
     if (authUser) {
       setUser({
         firstName: authUser.prenom || "",
         lastName: authUser.nom || "",
         email: authUser.email || "",
-        phone: initialUser.phone, // Garder les données mock pour les champs non disponibles
-        address: initialUser.address,
-        bio: initialUser.bio,
+        phone: initialUser.phone, // Temporaire - à remplacer quand ajouté à la base
+        address: initialUser.address, // Temporaire - à remplacer quand ajouté à la base
+        bio: initialUser.bio, // Temporaire - à remplacer quand ajouté à la base
         avatar: authUser.prenom && authUser.nom 
           ? `https://ui-avatars.com/api/?name=${encodeURIComponent(authUser.prenom)}+${encodeURIComponent(authUser.nom)}&background=6C47FF&color=fff&size=128`
           : initialUser.avatar,
@@ -46,13 +51,13 @@ export default function ProfilePage() {
           year: 'numeric', 
           month: 'long' 
         }) || initialUser.joinDate,
-        projects: initialUser.projects, // À remplacer par de vraies données
-        rating: initialUser.rating, // À remplacer par de vraies données
-        vip: authUser.role === 'ADMIN' || initialUser.vip,
+        projects: userStats?.totalProjects || 0, // ✅ Données réelles
+        rating: userStats?.averageRating || 0, // ✅ Données réelles
+        vip: userStats?.isVip || authUser.role === 'ADMIN', // ✅ Données réelles
         emailVerified: authUser.isActive || false,
       });
     }
-  }, [authUser]);
+  }, [authUser, userStats]);
 
   // Changement de mot de passe mock
   const [pwd, setPwd] = useState({ current: "", next: "", confirm: "" });
@@ -82,15 +87,30 @@ export default function ProfilePage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleProfileSubmit = (e: React.FormEvent) => {
+  const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
-      console.log("Saving profile...", user);
-      showToast(
-        "success",
-        "Profil sauvegardé",
-        "Vos informations ont été mises à jour."
-      );
+      try {
+        await updateProfileMutation.mutateAsync({
+          prenom: user.firstName,
+          nom: user.lastName,
+          telephone: user.phone,
+          adresse: user.address,
+          bio: user.bio
+        });
+        
+        showToast(
+          "success",
+          "Profil sauvegardé",
+          "Vos informations ont été mises à jour."
+        );
+      } catch (error: any) {
+        showToast(
+          "error",
+          "Erreur de sauvegarde",
+          error.response?.data?.error || "Une erreur est survenue lors de la sauvegarde."
+        );
+      }
     } else {
       showToast(
         "error",
@@ -100,7 +120,7 @@ export default function ProfilePage() {
     }
   };
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: any = {};
     if (!pwd.current) newErrors.currentPwd = "Mot de passe actuel requis.";
@@ -112,11 +132,28 @@ export default function ProfilePage() {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      showToast(
-        "success",
-        "Mot de passe modifié",
-        "Votre mot de passe a été changé avec succès."
-      );
+      try {
+        await changePasswordMutation.mutateAsync({
+          currentPassword: pwd.current,
+          newPassword: pwd.next
+        });
+        
+        showToast(
+          "success",
+          "Mot de passe modifié",
+          "Votre mot de passe a été changé avec succès."
+        );
+        
+        // Réinitialiser le formulaire
+        setPwd({ current: "", next: "", confirm: "" });
+        
+      } catch (error: any) {
+        showToast(
+          "error",
+          "Erreur de changement de mot de passe",
+          error.response?.data?.error || "Une erreur est survenue lors du changement de mot de passe."
+        );
+      }
       setPwd({ current: "", next: "", confirm: "" });
     } else {
       showToast("error", "Erreur", "Veuillez corriger les erreurs.");
@@ -500,28 +537,6 @@ export default function ProfilePage() {
                       <div
                         className={`bg-white w-5 h-5 rounded-full shadow transform duration-150 ${
                           notifSMS ? "translate-x-4" : "translate-x-1"
-                        }`}
-                      />
-                    </div>
-                  </label>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-700">Mode sombre</span>
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="sr-only"
-                      checked={darkMode}
-                      onChange={() => setDarkMode((v) => !v)}
-                    />
-                    <div
-                      className={`w-10 h-6 rounded-full ${
-                        darkMode ? "bg-blue-600" : "bg-gray-300"
-                      } flex items-center transition`}
-                    >
-                      <div
-                        className={`bg-white w-5 h-5 rounded-full shadow transform duration-150 ${
-                          darkMode ? "translate-x-4" : "translate-x-1"
                         }`}
                       />
                     </div>

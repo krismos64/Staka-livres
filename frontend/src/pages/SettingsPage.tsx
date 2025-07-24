@@ -1,14 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "../components/layout/ToastProvider";
 import DeactivateAccountModal from "../components/modals/DeactivateAccountModal";
 import DeleteAccountModal from "../components/modals/DeleteAccountModal";
 import { useAuth } from "../contexts/AuthContext";
+import { useUserPreferences } from "../hooks/useUserPreferences";
+import { useUpdatePreferences } from "../hooks/useUpdatePreferences";
+import { useDeleteAccount } from "../hooks/useDeleteAccount";
+import { useDeactivateAccount } from "../hooks/useDeactivateAccount";
+import { useExportUserData } from "../hooks/useExportUserData";
 
 export default function SettingsPage() {
   const { showToast } = useToast();
   const { user } = useAuth();
+  const { data: preferences, isLoading: preferencesLoading } = useUserPreferences();
+  const updatePreferencesMutation = useUpdatePreferences();
+  const deleteAccountMutation = useDeleteAccount();
+  const deactivateAccountMutation = useDeactivateAccount();
+  const exportUserDataMutation = useExportUserData();
 
-  // State pour les switches
+  // State pour les switches - initialisés avec les préférences de l'API
   const [notifEmail, setNotifEmail] = useState(true);
   const [notifPush, setNotifPush] = useState(true);
   const [notifSMS, setNotifSMS] = useState(false);
@@ -27,67 +37,109 @@ export default function SettingsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
 
+  // Synchroniser l'état local avec les préférences de l'API
+  useEffect(() => {
+    if (preferences) {
+      setNotifEmail(preferences.notifications.email);
+      setNotifPush(preferences.notifications.push);
+      setNotifSMS(preferences.notifications.sms);
+      
+      setNotifProjects(preferences.notificationTypes.projects);
+      setNotifMessages(preferences.notificationTypes.messages);
+      setNotifInvoices(preferences.notificationTypes.invoices);
+      setNotifPromos(preferences.notificationTypes.promos);
+      
+      setPublicProfile(preferences.privacy.publicProfile);
+      setAnalytics(preferences.privacy.analytics);
+    }
+  }, [preferences]);
+
   // --- Handlers ---
-  const handleDownloadData = () => {
-    const userData = {
-      profile: {
-        firstName: user?.prenom || "Prénom",
-        lastName: user?.nom || "Nom",
-        email: user?.email || "email@example.com",
-        phone: user?.telephone || "Non renseigné",
-        address: user?.adresse || "Non renseignée",
-        bio: "Utilisateur de Staka Livres",
-      },
-      settings: {
-        notifEmail,
-        notifPush,
-        notifSMS,
-        notifProjects,
-        notifMessages,
-        notifInvoices,
-        notifPromos,
-        publicProfile,
-        analytics,
-      },
-      // ... autres données
-    };
-
-    const blob = new Blob([JSON.stringify(userData, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "staka_user_data.json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    showToast(
-      "success",
-      "Exportation réussie",
-      "Vos données ont été téléchargées."
-    );
+  const handleDownloadData = async () => {
+    try {
+      await exportUserDataMutation.mutateAsync();
+      showToast(
+        "success",
+        "Export demandé",
+        "Vos données seront envoyées par email dans quelques instants."
+      );
+    } catch (error: any) {
+      showToast(
+        "error",
+        "Erreur d'export",
+        error.response?.data?.error || "Une erreur est survenue lors de l'export des données."
+      );
+    }
   };
 
-  const handleDeactivateConfirm = () => {
-    // Logique de désactivation du compte...
-    showToast(
-      "warning",
-      "Compte désactivé",
-      "Votre compte a été suspendu temporairement."
-    );
+  const handleDeactivateConfirm = async () => {
+    try {
+      await deactivateAccountMutation.mutateAsync();
+      showToast(
+        "warning",
+        "Compte désactivé",
+        "Votre compte a été suspendu temporairement. Vous allez être déconnecté."
+      );
+    } catch (error: any) {
+      showToast(
+        "error",
+        "Erreur de désactivation",
+        error.response?.data?.error || "Une erreur est survenue lors de la désactivation du compte."
+      );
+    }
   };
 
-  const handleDeleteConfirm = () => {
-    // Logique de suppression du compte...
-    showToast(
-      "error",
-      "Compte supprimé",
-      "Votre compte a été supprimé définitivement."
-    );
-    // Ici, on déconnecterait l'utilisateur
+  const handleDeleteConfirm = async () => {
+    try {
+      await deleteAccountMutation.mutateAsync();
+      showToast(
+        "error",
+        "Compte supprimé",
+        "Votre compte a été supprimé définitivement. Vous allez être déconnecté."
+      );
+    } catch (error: any) {
+      showToast(
+        "error",
+        "Erreur de suppression",
+        error.response?.data?.error || "Une erreur est survenue lors de la suppression du compte."
+      );
+    }
+  };
+
+  const handleSavePreferences = async () => {
+    try {
+      const updatedPreferences = {
+        notifications: {
+          email: notifEmail,
+          push: notifPush,
+          sms: notifSMS
+        },
+        notificationTypes: {
+          projects: notifProjects,
+          messages: notifMessages,
+          invoices: notifInvoices,
+          promos: notifPromos
+        },
+        privacy: {
+          publicProfile: publicProfile,
+          analytics: analytics
+        }
+      };
+
+      await updatePreferencesMutation.mutateAsync(updatedPreferences);
+      
+      showToast(
+        "success",
+        "Paramètres sauvegardés",
+        "Vos préférences ont été mises à jour avec succès."
+      );
+    } catch (error: any) {
+      showToast(
+        "error",
+        "Erreur de sauvegarde",
+        error.response?.data?.error || "Une erreur est survenue lors de la sauvegarde des préférences."
+      );
+    }
   };
 
   // --- UI ---
@@ -200,16 +252,25 @@ export default function SettingsPage() {
             </div>
             {/* RGPD Download */}
             <div className="py-6">
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleDownloadData();
-                }}
-                className="inline-flex items-center gap-2 text-blue-700 hover:underline font-medium"
+              <button
+                onClick={handleDownloadData}
+                disabled={exportUserDataMutation.isPending}
+                className={`inline-flex items-center gap-2 font-medium transition ${
+                  exportUserDataMutation.isPending
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-blue-700 hover:underline"
+                }`}
               >
-                <i className="fas fa-download"></i>Télécharger mes données
-              </a>
+                {exportUserDataMutation.isPending ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin"></i>Export en cours...
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-download"></i>Télécharger mes données
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -259,16 +320,22 @@ export default function SettingsPage() {
 
         <div className="flex justify-end mt-4">
           <button
-            onClick={() =>
-              showToast(
-                "success",
-                "Paramètres sauvegardés",
-                "Vos préférences ont été mises à jour."
-              )
-            }
-            className="bg-blue-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-blue-700 transition"
+            onClick={handleSavePreferences}
+            disabled={updatePreferencesMutation.isPending}
+            className={`py-2 px-6 rounded-lg font-semibold transition ${
+              updatePreferencesMutation.isPending
+                ? "bg-gray-400 text-white cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+            }`}
           >
-            Sauvegarder les changements
+            {updatePreferencesMutation.isPending ? (
+              <>
+                <i className="fas fa-spinner fa-spin mr-2"></i>
+                Sauvegarde...
+              </>
+            ) : (
+              "Sauvegarder les changements"
+            )}
           </button>
         </div>
       </section>
