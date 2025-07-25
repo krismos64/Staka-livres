@@ -1,0 +1,178 @@
+name: E2E Tests Critical
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  e2e-critical:
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: stakalivres
+          MYSQL_USER: staka
+          MYSQL_PASSWORD: staka
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u staka -pstaka"
+          --health-interval=30s
+          --health-timeout=10s
+          --health-retries=5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd frontend && npm ci
+        cd ../backend && npm ci
+
+    - name: Build backend
+      run: |
+        cd backend
+        npm run build:ci
+
+    - name: Setup database
+      run: |
+        cd backend
+        npx prisma migrate dev
+        npx prisma db seed
+      env:
+        DATABASE_URL: mysql://staka:staka@localhost:3306/stakalivres
+
+    - name: Start backend
+      run: |
+        cd backend
+        npm start &
+        sleep 10
+      env:
+        DATABASE_URL: mysql://staka:staka@localhost:3306/stakalivres
+        JWT_SECRET: test-secret-key
+        FRONTEND_URL: http://localhost:3000
+
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm run build
+
+    - name: Start frontend
+      run: |
+        cd frontend
+        npm run preview &
+        sleep 5
+
+    - name: Wait for services
+      run: |
+        npx wait-on http://localhost:3001/api/health
+        npx wait-on http://localhost:3000
+
+    - name: Run E2E Critical Tests
+      run: |
+        cd frontend
+        npm run test:e2e:critical
+      env:
+        CYPRESS_baseUrl: http://localhost:3000
+
+    - name: Run E2E Smoke Tests
+      run: |
+        cd frontend
+        npm run test:e2e:smoke
+      env:
+        CYPRESS_baseUrl: http://localhost:3000
+
+    - name: Upload screenshots
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: cypress-screenshots
+        path: frontend/cypress/screenshots
+
+    - name: Upload videos
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: cypress-videos
+        path: frontend/cypress/videos
+
+  e2e-integration:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: stakalivres
+          MYSQL_USER: staka
+          MYSQL_PASSWORD: staka
+        ports:
+          - 3306:3306
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd frontend && npm ci
+        cd ../backend && npm ci
+
+    - name: Setup full environment
+      run: |
+        cd backend
+        npm run build:ci
+        npx prisma migrate dev
+        npx prisma db seed
+        npm start &
+        sleep 15
+      env:
+        DATABASE_URL: mysql://staka:staka@localhost:3306/stakalivres
+        JWT_SECRET: test-secret-key
+        FRONTEND_URL: http://localhost:3000
+        STRIPE_SECRET_KEY: ${{ secrets.STRIPE_TEST_KEY }}
+
+    - name: Start frontend
+      run: |
+        cd frontend
+        npm run build
+        npm run preview &
+        sleep 5
+
+    - name: Run E2E Integration Tests
+      run: |
+        cd frontend
+        npm run test:e2e:integration
+      env:
+        CYPRESS_baseUrl: http://localhost:3000
+
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: e2e-integration-results
+        path: |
+          frontend/cypress/screenshots
+          frontend/cypress/videos

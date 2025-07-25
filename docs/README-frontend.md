@@ -1,1838 +1,455 @@
-# 🎨 Architecture Frontend Complète - Staka Livres
+# 🎨 Frontend React Staka Livres - Guide Technique Complet
 
-![React](https://img.shields.io/badge/React-18+-blue)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
+![React](https://img.shields.io/badge/React-18.2.0-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue)
 ![Tailwind](https://img.shields.io/badge/Tailwind-3.4.17-cyan)
-![Vite](https://img.shields.io/badge/Vite-6.3.5-purple)
+![Vite](https://img.shields.io/badge/Vite-5.0.8-purple)
 ![React Query](https://img.shields.io/badge/React%20Query-5.81.5-red)
-![Framer Motion](https://img.shields.io/badge/Framer%20Motion-12.18-pink)
-![Tests](https://img.shields.io/badge/Tests-95%25%20(Architecture%20Séparée)-brightgreen)
+![Framer Motion](https://img.shields.io/badge/Framer%20Motion-12.23.0-pink)
+![Tests](https://img.shields.io/badge/Tests-85%25%20Coverage-brightgreen)
 ![Production](https://img.shields.io/badge/Status-Production%20Ready-green)
+![OVH](https://img.shields.io/badge/Deployed-OVH%20Cloud-blue)
 
-## 📊 Vue d'Ensemble
-
-**✨ Version Juillet 2025 - Mise à jour du 21 juillet :**
-
-Architecture frontend complète et **production-ready** avec React 18, TypeScript, Tailwind CSS et React Query. Le frontend comprend une **landing page marketing optimisée**, une **application dashboard fonctionnelle**, un **espace d'administration moderne** avec **intégration backend opérationnelle**, un **système de notifications temps réel**, un **système d'emails centralisé automatique**, un **système de réservation de consultations** et une **architecture de tests robuste** avec séparation unitaires/intégration.
-
-### 🆕 **Nouvelles Fonctionnalités Juillet 2025**
-
-- **🔑 Système de réinitialisation de mot de passe** avec interface RGPD-compliant
-- **📧 Système d'emails centralisé** avec EventBus backend et 22 templates automatiques
-- **📖 Système d'échantillons gratuits** pour acquisition clients
-- **📞 Système de réservation de consultations** avec modal responsive et workflow automatisé
-- **🔔 Système de notifications temps réel** avec polling automatique et API sécurisée
-- **📊 Statistiques admin refactorisées** avec données réelles Prisma
-- **🧪 Architecture de tests robuste** : Séparation unitaires (CI/CD) vs intégration (local)
-- **🚀 Architecture React Query avancée** : 21 hooks spécialisés (vérifiés)
-- **💫 Composants UI modernes** : 69+ composants avec animations Framer Motion
-- **🎨 Design System unifié** : Variables CSS, tokens design et accessibilité WCAG 2.1
-- **⚡ Performance optimisée** : Lazy loading, code splitting et cache intelligent
-
-### 🏗️ Structure Globale
-
-```
-frontend/src/
-├── 🏗️ Components (69+ composants modulaires)
-│   ├── admin/           # 👨‍💼 Administration (10 composants) - REFACTORISÉ 2025
-│   ├── billing/         # 💳 Facturation Stripe (7 composants)
-│   ├── common/          # 🎭 Composants génériques (8 composants)
-│   ├── forms/           # 📝 Formulaires (5 composants)
-│   ├── landing/         # 🌟 Landing page (15 composants + hooks) - CONTACT AJOUTÉ
-│   ├── layout/          # 🏛️ Structure (8 composants)
-│   ├── messages/        # 💬 Messagerie (5 composants)
-│   ├── modals/          # 🪟 Modales (13 composants) - CONSULTATION AJOUTÉE
-│   ├── notifications/   # 🔔 Notifications temps réel (6 composants) - NOUVEAU
-│   ├── project/         # 📚 Projets (3 composants)
-│   └── ui/              # 🎨 Composants UI réutilisables (15 composants)
-├── 🎣 Hooks (21 hooks personnalisés + React Query)
-│   ├── useAdminUsers.ts         # Hook admin utilisateurs (263 lignes)
-│   ├── useAdminCommandes.ts     # Hook admin commandes (359 lignes)
-│   ├── useAdminFactures.ts      # Hook admin factures (240 lignes)
-│   ├── useAdminPages.ts         # Hook admin pages (215 lignes)
-│   ├── useAdminMessages.ts      # Hook admin messagerie (321 lignes)
-│   ├── useAdminStats.ts         # Hook admin statistiques (180 lignes) - NOUVEAU
-│   ├── useNotifications.ts      # Hook notifications (245 lignes) - NOUVEAU
-│   ├── useConsultation.ts       # Hook réservation consultations (85 lignes) - NOUVEAU JUILLET 2025
-│   ├── useMessages.ts           # Hook messagerie (694 lignes)
-│   ├── useInvoices.ts           # Hook facturation client (58 lignes)
-│   ├── useTarifInvalidation.ts  # Hook synchronisation tarifs (78 lignes)
-│   ├── useInvalidateMessages.ts # Hook invalidation messages (85 lignes)
-│   ├── useDebouncedSearch.ts    # Recherche optimisée (83 lignes)
-│   ├── useIntersectionObserver.ts # Pagination infinie (44 lignes)
-│   ├── usePricing.ts            # Hook tarifs dynamiques (440 lignes)
-│   └── __tests__/              # Tests des hooks (15 suites unitaires)
-├── 📄 Pages (14 pages USER + 10 pages ADMIN + 4 publiques)
-│   ├── LandingPage.tsx          # Marketing conversion-optimisée
-│   ├── ForgotPassword.tsx       # Réinitialisation mot de passe (NOUVEAU)
-│   ├── ResetPassword.tsx        # Nouveau mot de passe (NOUVEAU)
-│   ├── [Pages Application]      # Dashboard, projets, messagerie, facturation
-│   └── admin/                  # Interface admin complète (10 pages)
-├── 🎨 Styles & Design System
-│   ├── global.css              # Variables CSS + animations (750 lignes)
-│   ├── tailwind.config.js      # Configuration Tailwind étendue
-│   ├── animations.css          # Animations custom (120 lignes)
-│   └── Design tokens           # Couleurs, ombres, typographie
-├── 🧪 Tests (Architecture Séparée)
-│   ├── src/__tests__/              # Tests unitaires (CI/CD GitHub Actions)
-│   │   ├── components/             # Tests composants isolés
-│   │   ├── hooks/                  # Tests hooks React Query
-│   │   └── utils/                  # Tests utilitaires
-│   ├── tests/
-│   │   ├── integration/            # Tests intégration (local + backend)
-│   │   ├── unit/                   # Tests unitaires complémentaires
-│   │   └── README.md               # Documentation architecture tests
-│   ├── vite.config.ts              # Configuration CI/CD (tests unitaires)
-│   └── vite.config.integration.ts  # Configuration locale (tous tests)
-└── 🔧 Utils & Types
-    ├── api.ts                      # Services API principales
-    ├── adminAPI.ts                 # Services admin avec backend intégré (1500+ lignes)
-    ├── notificationsAPI.ts         # Services notifications (280 lignes) - NOUVEAU
-    ├── mockData.ts                 # Données de test (1200+ lignes)
-    ├── auth.ts                     # Authentification (150 lignes)
-    ├── toast.ts                    # Notifications (250 lignes)
-    └── types/shared.ts             # Types TypeScript complets (800+ lignes)
-```
-
-### 📈 **Métriques Production**
-
-- **🏗️ Composants** : 69+ composants React modulaires et réutilisables
-- **📄 Pages** : 28 pages TOUTES FONCTIONNELLES (14 USER + 10 ADMIN + 4 publiques)
-- **🎣 Hooks** : 21 hooks personnalisés + React Query (vérifiés)
-- **🎨 Styles** : Tailwind + CSS custom (870 lignes) + Framer Motion
-- **⚡ Performance** : < 1.5s chargement, < 50ms interactions
-- **🔐 Sécurité** : JWT + AuthContext + RBAC complet + CSP
-- **📱 Responsive** : Mobile-first design + PWA ready
-- **🔔 Temps réel** : Notifications polling + WebSocket ready
-- **📞 Contact intégré** : Formulaire avec API backend opérationnelle
-- **💬 Aide intégrée** : Formulaire d'aide avec API messagerie opérationnelle
-- **✅ Status** : **PRODUCTION READY** - 100% fonctionnalités opérationnelles
+**📅 Mis à jour le 25 juillet 2025 par Christophe Mostefaoui**
 
 ---
 
-## 🌟 Landing Page Marketing - 15 Composants Production
+## 📋 **Vue d'ensemble**
 
-### 🎯 **Architecture Landing Complète**
+Frontend React pour **Staka Livres**, plateforme professionnelle de correction de manuscrits déployée en production sur **OVH Cloud** via SSH et Docker. Architecture moderne avec React 18, TypeScript, Tailwind CSS, React Query et système de tests séparés CI/CD vs local.
 
-La landing page Staka Éditions représente **2700+ lignes** de code React optimisé avec 15+ composants spécialisés pour la conversion, incluant le nouveau formulaire de contact intégré et le **système d'échantillons gratuits** (juillet 2025).
+### 🏆 **Métriques Frontend (25 Juillet 2025)**
 
-#### **📦 Composants Principaux**
+| Composant            | Détail                                             | Statut        |
+| -------------------- | -------------------------------------------------- | ------------- |
+| **⚛️ Composants**    | 71 composants modulaires TypeScript                | ✅ Production |
+| **🎣 Hooks**         | 31 hooks personnalisés React Query                 | ✅ Optimisés  |
+| **📄 Pages**         | 28 pages complètes responsive                      | ✅ Production |
+| **🧪 Tests**         | 9 fichiers + architecture séparée (85% couverture) | ✅ Robustes   |
+| **🔍 Tests E2E**     | 19 tests Cypress 3 niveaux                         | ✅ Enterprise |
+| **🎨 Design System** | Tailwind + Framer Motion + accessibilité           | ✅ Moderne    |
+| **🚀 Performance**   | Lazy loading + code splitting + cache              | ✅ Optimisé   |
+| **🐳 Déploiement**   | OVH Cloud + Docker + Nginx proxy                   | ✅ Production |
 
-```tsx
-// Assemblage orchestré dans LandingPage.tsx
-<Navigation onLoginClick={handleLogin} />
-<Hero />
-<TrustIndicators />
-<Testimonials />
-<Excellence />
-<Services />
-<PricingCalculator />  {/* Hook usePricing intégré */}
-<Packs />
-<Blog />
-<FreeSample />         {/* Formulaire 10 pages gratuites */}
-<About />
-<FAQ />                {/* Accordéon animé */}
-<Contact />            {/* Formulaire de contact avec API intégrée */}
-<Footer />
+---
+
+## 🏗️ **Architecture Technique**
+
+### 📁 **Structure Frontend**
+
+```
+frontend/
+├── src/
+│   ├── components/                 # 71 composants modulaires
+│   │   ├── admin/                 # 12 composants administration
+│   │   │   ├── AdminLayout.tsx    # Layout admin moderne sidebar
+│   │   │   ├── RequireAdmin.tsx   # Protection routes admin
+│   │   │   ├── DemoModeProvider.tsx # Mode démonstration pro
+│   │   │   ├── UserTable.tsx      # Table utilisateurs WCAG
+│   │   │   ├── SearchAndFilters.tsx # Recherche avancée
+│   │   │   ├── ConfirmationModals.tsx # Modales RGPD
+│   │   │   └── ... (6 autres composants)
+│   │   ├── billing/               # 8 composants facturation
+│   │   │   ├── CurrentInvoiceCard.tsx # Facture courante
+│   │   │   ├── InvoiceHistoryCard.tsx # Historique
+│   │   │   ├── PaymentMethodsCard.tsx # Moyens paiement
+│   │   │   ├── PaymentModal.tsx   # Modal paiement Stripe
+│   │   │   └── ... (4 autres composants)
+│   │   ├── common/                # 8 composants génériques
+│   │   │   ├── Notifications.tsx  # Clochette notifications
+│   │   │   ├── LoadingSpinner.tsx # Spinners loading
+│   │   │   ├── ErrorBoundary.tsx  # Gestion erreurs React
+│   │   │   └── ... (5 autres composants)
+│   │   ├── forms/                 # 6 composants formulaires
+│   │   │   ├── LoginForm.tsx      # Formulaire connexion
+│   │   │   ├── SignupForm.tsx     # Formulaire inscription
+│   │   │   ├── ContactForm.tsx    # Formulaire contact
+│   │   │   └── ... (3 autres composants)
+│   │   ├── landing/               # 14 composants landing page
+│   │   │   ├── Hero.tsx           # Section héro principale
+│   │   │   ├── Navigation.tsx     # Navigation sticky
+│   │   │   ├── PricingCalculator.tsx # Calculateur tarifs
+│   │   │   ├── FreeSample.tsx     # Échantillon gratuit
+│   │   │   ├── Contact.tsx        # Section contact
+│   │   │   └── ... (9 autres composants)
+│   │   ├── layout/                # 8 composants structure
+│   │   │   ├── Header.tsx         # En-tête application
+│   │   │   ├── Sidebar.tsx        # Barre latérale
+│   │   │   ├── Footer.tsx         # Pied de page
+│   │   │   └── ... (5 autres composants)
+│   │   ├── messages/              # 6 composants messagerie
+│   │   │   ├── ConversationList.tsx # Liste conversations
+│   │   │   ├── MessageThread.tsx  # Thread messages
+│   │   │   ├── MessageItem.tsx    # Affichage message
+│   │   │   └── ... (3 autres composants)
+│   │   ├── modals/                # 9 composants modales
+│   │   │   ├── ConsultationModal.tsx # Réservation consultation
+│   │   │   ├── PaymentModal.tsx   # Modal paiement
+│   │   │   ├── ConfirmModal.tsx   # Confirmations
+│   │   │   └── ... (6 autres composants)
+│   │   └── project/               # 4 composants projets
+│   │       ├── FileItem.tsx       # Affichage fichier
+│   │       ├── UploadButton.tsx   # Upload S3
+│   │       └── ... (2 autres composants)
+│   ├── hooks/                     # 31 hooks React Query
+│   │   ├── useAuth.ts             # Authentification JWT
+│   │   ├── useAdminUsers.ts       # Gestion utilisateurs admin
+│   │   ├── useAdminCommandes.ts   # Gestion commandes admin
+│   │   ├── useAdminStats.ts       # Statistiques temps réel
+│   │   ├── useNotifications.ts    # Notifications polling
+│   │   ├── useMessages.ts         # Messagerie client
+│   │   ├── useInvoices.ts         # Facturation
+│   │   ├── usePricing.ts          # Tarification dynamique
+│   │   └── ... (23 autres hooks)
+│   ├── pages/                     # 28 pages complètes
+│   │   ├── admin/                 # 10 pages administration
+│   │   │   ├── AdminDashboard.tsx # Dashboard KPIs
+│   │   │   ├── AdminUtilisateurs.tsx # Gestion utilisateurs
+│   │   │   ├── AdminCommandes.tsx # Gestion commandes
+│   │   │   ├── AdminFactures.tsx  # Gestion factures
+│   │   │   ├── AdminStatistiques.tsx # Analytics
+│   │   │   ├── AdminAuditLogs.tsx # Logs audit
+│   │   │   └── ... (4 autres pages admin)
+│   │   ├── LandingPage.tsx        # Page d'accueil marketing
+│   │   ├── LoginPage.tsx          # Page connexion
+│   │   ├── SignupPage.tsx         # Page inscription
+│   │   ├── DashboardPage.tsx      # Dashboard client
+│   │   ├── BillingPage.tsx        # Page facturation
+│   │   ├── MessagesPage.tsx       # Page messagerie
+│   │   ├── NotificationsPage.tsx  # Page notifications
+│   │   ├── HelpPage.tsx           # Page aide client
+│   │   └── ... (10 autres pages)
+│   ├── contexts/                  # Contextes React
+│   │   ├── AuthContext.tsx        # Contexte authentification
+│   │   └── ThemeContext.tsx       # Contexte thème
+│   ├── utils/                     # Utilitaires
+│   │   ├── api.ts                 # Client API Axios
+│   │   ├── auth.ts                # Helpers authentification
+│   │   ├── toast.ts               # Notifications toast
+│   │   └── formatting.ts          # Formatage données
+│   ├── types/                     # Types TypeScript
+│   │   ├── shared.ts              # Types partagés
+│   │   ├── api.ts                 # Types API
+│   │   └── components.ts          # Types composants
+│   └── styles/                    # Styles globaux
+│       ├── globals.css            # CSS global + Tailwind
+│       └── components.css         # Styles composants
+├── public/                        # Assets statiques
+│   ├── images/                    # Images optimisées
+│   └── icons/                     # Icônes SVG
+├── tests/                         # Tests (architecture séparée)
+│   ├── integration/               # Tests intégration (local)
+│   └── __mocks__/                 # Mocks tests
+├── cypress/                       # Tests E2E (19 tests)
+│   ├── e2e/
+│   │   ├── critical/              # Tests critiques CI/CD
+│   │   ├── smoke/                 # Health checks
+│   │   └── integration/           # Tests complets local
+│   ├── fixtures/                  # Données test
+│   └── support/                   # Commands Cypress
+├── vite.config.ts                 # Config Vite (CI/CD)
+├── vite.config.integration.ts     # Config intégration (local)
+├── tailwind.config.js             # Configuration Tailwind
+├── cypress.config.cjs             # Config Cypress standard
+├── cypress.config.critical.cjs    # Config CI/CD optimisée
+├── cypress.config.smoke.cjs       # Config health checks
+├── Dockerfile                     # Container production
+├── nginx.conf                     # Configuration Nginx
+└── package.json                   # Dépendances et scripts
 ```
 
-#### **🔧 Hook de Pricing Avancé**
+### 🛠️ **Stack Technique**
 
-```typescript
-// hooks/usePricing.ts - Logique de tarification dynamique
-export function usePricing(initialPages: number = 150) {
-  const [pages, setPages] = useState<number>(initialPages);
+#### **Framework & Runtime**
 
-  // Récupération des tarifs depuis l'API avec React Query
-  const {
-    data: tarifs = [],
-    isLoading,
-    error,
-  } = useQuery<TarifAPI[]>({
-    queryKey: ["tarifs", "public"],
-    queryFn: fetchTarifs,
-  });
+- **React 18.2.0** : Framework JavaScript avec Concurrent Features
+- **TypeScript 5.3.3** : Typage statique strict pour robustesse
+- **Vite 5.0.8** : Build tool ultra-rapide avec HMR optimisé
 
-  // Extraction des règles de tarification (ex: 10 pages gratuites, puis dégressif)
-  const pricingRules = useMemo(() => {
-    if (tarifs.length > 0) {
-      return extractPricingRules(tarifs);
-    }
-    // Règles par défaut si l'API ne répond pas
-    return [
-      { threshold: 10, price: 0, isFree: true },
-      { threshold: 300, price: 2 },
-      { threshold: Infinity, price: 1 },
-    ];
-  }, [tarifs]);
+#### **State Management & Data**
 
-  // Calcul du prix final, des économies et du délai de livraison
-  const pricing = useMemo(() => {
-    return calculatePricingFromRules(pages, pricingRules);
-  }, [pages, pricingRules]);
+- **@tanstack/react-query 5.81.5** : Cache intelligent et état serveur
+- **React Context** : État global authentification et thème
+- **Local Storage** : Persistance données utilisateur
 
-  return {
-    pages,
-    setPages,
-    pricing, // { total, savings, deliveryTime, ... }
-    isLoading,
-    error,
-    tarifs,
-  };
-}
-```
+#### **Styling & UI**
 
-#### **✨ Features Landing Spécialisées**
+- **Tailwind CSS 3.4.17** : Framework CSS utility-first
+- **Framer Motion 12.23.0** : Animations fluides et micro-interactions
+- **Lucide React 0.525.0** : Icônes vectorielles modernes
+- **React Hot Toast 2.5.2** : Notifications toast élégantes
 
-- **🎯 Conversion-optimisée** : CTA multiples et parcours guidé
-- **📱 Mobile-first** : Responsive design natif
-- **⚡ Performance** : Animations GPU-accelerated
-- **🔧 Widget WhatsApp** : Contact direct avec animation pulse
-- **📊 Calculateur interactif** : Tarification dynamique temps réel
-- **📝 Formulaires validés** : 10 pages gratuites + newsletter + contact
+#### **Routing & Navigation**
 
-#### **📞 Contact.tsx - Formulaire de Contact Intégré (310 lignes)**
+- **React Router DOM 6.30.1** : Navigation SPA avec lazy loading
+- **Protected Routes** : Authentification et rôles
 
-```typescript
-// Composant de contact avec intégration API complète
-const Contact = ({ onChatClick }: ContactProps) => {
-  const [formData, setFormData] = useState({
-    nom: "",
-    email: "",
-    sujet: "",
-    message: "",
-  });
+#### **HTTP & API**
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<{
-    type: 'success' | 'error' | null;
-    message: string;
-  }>({ type: null, message: '' });
+- **Axios 1.10.0** : Client HTTP avec intercepteurs
+- **React Query DevTools** : Debug cache et queries
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitStatus({ type: null, message: '' });
+#### **File Upload & Media**
 
-    try {
-      const response = await fetch('/api/public/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+- **React Dropzone 14.3.8** : Upload drag & drop
+- **AWS S3 Integration** : Upload direct avec URLs présignées
 
-      const result = await response.json();
+#### **Forms & Validation**
 
-      if (response.ok) {
-        setSubmitStatus({
-          type: 'success',
-          message: result.message || 'Votre message a bien été envoyé à notre équipe.'
-        });
-        // 🔄 Reset automatique du formulaire après succès
-        setFormData({ nom: "", email: "", sujet: "", message: "" });
-      } else {
-        setSubmitStatus({
-          type: 'error',
-          message: result.details || result.error || 'Une erreur est survenue lors de l\'envoi.'
-        });
-      }
-    } catch (error) {
-      setSubmitStatus({
-        type: 'error',
-        message: 'Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer.'
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+- **React Hook Form** : Gestion formulaires performante
+- **Zod Integration** : Validation côté client
 
-  return (
-    <section id="contact" className="py-16 bg-white">
-      {/* Interface à deux colonnes : infos contact + formulaire */}
-      <div className="grid md:grid-cols-2 gap-12">
-        {/* Informations de contact */}
-        <div>
-          <ContactInfo />
-        </div>
+#### **Testing & Quality**
 
-        {/* Formulaire de contact */}
-        <div className="bg-gray-50 rounded-2xl p-8">
-          <form onSubmit={handleSubmit}>
-            {/* Champs validés avec états contrôlés */}
-            <FormFields formData={formData} onChange={handleChange} />
-            
-            {/* Messages de feedback visuels */}
-            {submitStatus.type && (
-              <StatusMessage 
-                type={submitStatus.type} 
-                message={submitStatus.message} 
-              />
-            )}
+- **Vitest 3.2.4** : Framework tests unitaires ultra-rapide
+- **Cypress 14.5.1** : Tests E2E avec architecture 3 niveaux
+- **Testing Library** : Tests composants React
+- **ESLint + Prettier** : Qualité code et formatage
 
-            {/* Bouton avec état de chargement */}
-            <SubmitButton 
-              isSubmitting={isSubmitting} 
-              disabled={isSubmitting}
-            />
-          </form>
-        </div>
-      </div>
-    </section>
-  );
-};
-```
+---
 
-#### **💬 HelpPage.tsx - Page d'Aide - CORRIGÉE - ENTIÈREMENT FONCTIONNELLE**
+## 🧪 **Architecture de Tests Séparée (Innovation Juillet 2025)**
 
-```typescript
-// Page d'aide avec formulaire intégré API messagerie réelle
-const HelpPage = () => {
-  const [formData, setFormData] = useState({
-    sujet: "",
-    message: "",
-    priorite: "normale" as "basse" | "normale" | "haute",
-  });
+### 🎯 **Tests Séparés CI/CD vs Local**
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<{
-    type: 'success' | 'error' | null;
-    message: string;
-  }>({ type: null, message: '' });
+**Innovation majeure** : Séparation complète entre tests unitaires (CI/CD) et tests intégration (développement local) pour stabilité maximale.
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitStatus({ type: null, message: '' });
+#### 🚀 **Tests Unitaires (CI/CD optimisé)**
 
-    try {
-      // Intégration API messagerie avec source 'client-help'
-      const response = await fetch('/api/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getToken()}`,
-        },
-        body: JSON.stringify({
-          ...formData,
-          source: 'client-help', // Paramètre source pour identification
-          type: 'support',
-        }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        setSubmitStatus({
-          type: 'success',
-          message: 'Votre demande d\'aide a été envoyée avec succès. Notre équipe support vous répondra dans les plus brefs délais.'
-        });
-        // Reset automatique du formulaire
-        setFormData({ sujet: "", message: "", priorite: "normale" });
-      } else {
-        setSubmitStatus({
-          type: 'error',
-          message: result.error || 'Une erreur est survenue lors de l\'envoi de votre demande.'
-        });
-      }
-    } catch (error) {
-      setSubmitStatus({
-        type: 'error',
-        message: 'Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer.'
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Centre d'aide</h1>
-      
-      {/* FAQ Section */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Questions fréquentes</h2>
-        <FAQSection />
-      </div>
-
-      {/* Formulaire d'aide - API intégrée */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Besoin d'aide personnalisée ?</h2>
-        <p className="text-gray-600 mb-6">
-          Notre équipe support est là pour vous aider. Décrivez votre problème ci-dessous.
-        </p>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Sujet
-            </label>
-            <input
-              type="text"
-              value={formData.sujet}
-              onChange={(e) => setFormData(prev => ({ ...prev, sujet: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Décrivez brièvement votre problème"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Priorité
-            </label>
-            <select
-              value={formData.priorite}
-              onChange={(e) => setFormData(prev => ({ ...prev, priorite: e.target.value as any }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="basse">Basse</option>
-              <option value="normale">Normale</option>
-              <option value="haute">Haute</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description détaillée
-            </label>
-            <textarea
-              value={formData.message}
-              onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
-              rows={5}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Décrivez votre problème en détail..."
-              required
-            />
-          </div>
-
-          {/* Messages de feedback visuels */}
-          {submitStatus.type && (
-            <div className={`p-4 rounded-md ${
-              submitStatus.type === 'success' 
-                ? 'bg-green-50 text-green-800 border border-green-200' 
-                : 'bg-red-50 text-red-800 border border-red-200'
-            }`}>
-              {submitStatus.message}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
-          >
-            {isSubmitting ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Envoi en cours...
-              </>
-            ) : (
-              'Envoyer ma demande'
-            )}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-};
-```
-
-#### **🚀 Fonctionnalités du Formulaire de Contact**
-
-##### **📋 Validation Côté Client**
-- ✅ **Champs requis** : Nom, email, sujet, message avec validation HTML5
-- ✅ **Format email** : Validation automatique avec type="email"
-- ✅ **États contrôlés** : Gestion React state pour tous les champs
-- ✅ **Placeholder intelligents** : Guides utilisateur pour chaque champ
-
-##### **🔄 Gestion des États**
-- ✅ **État de chargement** : `isSubmitting` avec spinner et bouton désactivé
-- ✅ **Messages de statut** : Success/Error avec styles visuels distincts
-- ✅ **Reset automatique** : Formulaire vidé après envoi réussi
-- ✅ **Gestion d'erreurs** : Messages spécifiques selon le type d'erreur
-
-##### **🌐 Intégration API Backend avec Emails Automatiques**
-- ✅ **Endpoint POST** : `/api/public/contact` avec headers JSON
-- ✅ **🆕 Double email automatique** : Confirmation visiteur + notification admin
-- ✅ **🆕 Templates HTML professionnels** : Design cohérent et responsive
-- ✅ **Validation côté serveur** : Traitement sécurisé des données
-- ✅ **Réponses structurées** : Messages personnalisés selon le contexte
-- ✅ **Gestion des erreurs réseau** : Fallback pour problèmes de connexion
-
-##### **💫 Expérience Utilisateur**
-- ✅ **Feedback instantané** : Messages de confirmation ou d'erreur
-- ✅ **Loading state** : Spinner avec animation pendant l'envoi
-- ✅ **Design cohérent** : Intégration parfaite avec le design system
-- ✅ **Accessibilité** : Labels, IDs et focus management
-
-##### **📞 Canaux de Contact Multiples**
-- ✅ **Email direct** : contact@staka.fr avec réponse garantie 24h
-- ✅ **Téléphone** : 06 15 07 81 52 (Lun-Ven 9h-18h)
-- ✅ **WhatsApp** : Chat direct avec message pré-rempli
-- ✅ **Consultation gratuite** : Échange téléphonique de 30 min
-- ✅ **Chat live** : Expert en ligne avec statut temps réel
-
-#### **🔧 Résolution Formulaire d'Aide - CORRECTION APPLIQUÉE JUILLET 2025**
-
-##### **⚠️ Problème Initial Identifié**
-- **Code simulé** : La page d'aide utilisait `Math.random()` pour simuler des réponses
-- **Aucune intégration API** : Pas de connexion avec le système de messagerie backend
-- **Feedback factice** : Messages de succès/erreur sans traitement réel
-- **Données perdues** : Aucune persistance des demandes d'aide utilisateur
-
-##### **✅ Solution Appliquée - Intégration API Messagerie**
-
-**Workflow Complet Fonctionnel avec Système d'Emails Centralisé :**
-1. **Formulaire d'aide** → Validation côté client + serveur
-2. **API `/api/messages`** → Création message avec `source: 'client-help'`
-3. **Base de données** → Persistance dans table `Message` avec paramètres support
-4. **🆕 EventBus automatique** → Émission événement `admin.notification.created`
-5. **🆕 Email listener** → Traitement automatique avec template HTML professionnel
-6. **🆕 Queue asynchrone** → Envoi email via SendGrid sans blocage
-7. **Dashboard admin** → Accès aux demandes d'aide centralisées + notification interface
-
-**Paramètres Spécifiques :**
-```typescript
-// Configuration spéciale pour demandes d'aide
-{
-  ...formData,
-  source: 'client-help',      // Identification source
-  type: 'support',            // Type de message
-  priority: formData.priorite // Niveau de priorité
-}
-```
-
-##### **🚀 Fonctionnalités Opérationnelles**
-
-**✅ Intégration API Réelle :**
-- Endpoint `/api/messages` avec authentification JWT
-- Validation Zod côté serveur pour sécurité
-- Gestion d'erreurs robuste avec messages spécifiques
-- Traitement asynchrone avec états de chargement
-
-**✅ Workflow Support Automatisé - Architecture Événementielle :**
-- **Réception** : Demande enregistrée en base avec métadonnées
-- **🆕 Double notification automatique** : Interface admin + Email professionnel
-- **🆕 Templates centralisés** : `admin-message.hbs` + `visitor-contact-confirmation.hbs`
-- **🆕 Zero code duplication** : Plus besoin d'appeler `MailerService.sendEmail()` manuellement
-- **Tracking** : ID unique pour suivi et réponse
-- **Dashboard** : Interface admin pour gestion centralisée avec notifications temps réel
-
-**✅ Expérience Utilisateur Améliorée :**
-- **États de chargement** : Spinner + bouton désactivé pendant traitement
-- **Feedback immédiat** : Messages success/error avec design cohérent
-- **Reset automatique** : Formulaire vidé après envoi réussi
-- **Validation temps réel** : Champs requis avec feedback visuel
-
-##### **🔍 Tests Validés**
-
-**Tests API Intégration :**
 ```bash
-# Test endpoint messagerie
-curl -X POST /api/messages \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${JWT_TOKEN}" \
-  -d '{
-    "sujet": "Test formulaire aide",
-    "message": "Test intégration API",
-    "priorite": "normale",
-    "source": "client-help",
-    "type": "support"
-  }'
+# Configuration : vite.config.ts (exclusion intégration)
+npm run test:unit        # Tests unitaires uniquement
+# ✅ Durée : < 2 minutes
+# ✅ Environnement : jsdom + mocks complets
+# ✅ CI/CD : GitHub Actions stable
+# ✅ Cible : Composants, hooks, utils isolés
 ```
 
-**Tests SendGrid :**
-- ✅ Configuration SMTP validée
-- ✅ Templates email personnalisés
-- ✅ Delivery confirmé en environnement test
-- ✅ Logs de suivi des envois
-
-##### **📊 Métriques de Performance**
-
-| Métrique | Avant | Après |
-|----------|-------|-------|
-| **Traitement** | Simulation locale | API backend réelle |
-| **Persistance** | Aucune | Base données MySQL |
-| **Notifications** | Factices | SendGrid opérationnel |
-| **Suivi** | Impossible | Dashboard admin intégré |
-| **Fiabilité** | 0% | 100% opérationnelle |
-
-##### **🛠️ Configuration Technique**
-
-**Variables d'Environnement Requises :**
-```env
-# Authentification
-JWT_SECRET="production_secret_key"
-
-# SendGrid pour notifications
-SENDGRID_API_KEY="SG.xxx"
-SENDGRID_FROM_EMAIL="support@staka.fr"
-
-# Base de données
-DATABASE_URL="mysql://user:pass@localhost:3306/stakalivres"
-```
-
-**Headers HTTP Requis :**
-```typescript
-headers: {
-  'Content-Type': 'application/json',
-  'Authorization': `Bearer ${getToken()}`, // JWT utilisateur
-}
-```
-
----
-
-## 📊 Pages Application Dashboard - 12 Pages USER
-
-### 🏗️ **Architecture Application Privée**
+**Configuration Vite CI/CD :**
 
 ```typescript
-// app.tsx - Structure principale
-type SectionName =
-  | "dashboard"
-  | "projects"
-  | "messages"
-  | "files"
-  | "billing"
-  | "help"
-  | "profile"
-  | "settings";
-
-const AppContent = () => {
-  const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState<SectionName>("dashboard");
-
-  return (
-    <MainLayout
-      pageTitle={getSectionTitle(activeSection)}
-      onSectionChange={setActiveSection}
-      activeSection={activeSection}
-    >
-      {renderSectionContent(activeSection)}
-    </MainLayout>
-  );
-};
-```
-
-### 📄 **Pages Principales**
-
-#### **🏠 DashboardPage.tsx - Tableau de Bord**
-
-```typescript
-interface DashboardData {
-  projects: Project[];
-  recentActivity: Activity[];
-  stats: UserStats;
-  notifications: Notification[];
-}
-
-const DashboardPage = () => {
-  const { user } = useAuth();
-  const { data: dashboardData, isLoading } = useDashboardData(user.id);
-
-  return (
-    <div className="space-y-6">
-      <WelcomeSection user={user} />
-      <StatsCards stats={dashboardData?.stats} />
-      <ProjectsOverview projects={dashboardData?.projects} />
-      <RecentActivity activities={dashboardData?.recentActivity} />
-    </div>
-  );
-};
-```
-
-#### **💬 MessagesPage.tsx - Messagerie Complète**
-
-```typescript
-// Architecture 3 colonnes avec React Query
-const MessagesPage = () => {
-  const { conversations, messages, isLoading, sendMessage, markAsRead } =
-    useMessages();
-
-  return (
-    <div className="flex h-screen">
-      <ConversationList
-        conversations={conversations}
-        onSelect={setActiveConversation}
-      />
-      <MessageThread
-        messages={messages}
-        onSendMessage={sendMessage}
-        onMarkAsRead={markAsRead}
-      />
-      <ContactInfo user={selectedUser} />
-    </div>
-  );
-};
-```
-
-#### **💳 BillingPage.tsx - Facturation Stripe Intégrée**
-
-```typescript
-// Intégration Stripe complète et opérationnelle
-const BillingPage = () => {
-  const { data: invoices, isLoading } = useInvoices();
-  const createCheckoutSession = useCreateCheckoutSession();
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <CurrentInvoiceCard
-        invoice={currentInvoice}
-        onPayNow={createCheckoutSession}
-      />
-      <InvoiceHistoryCard invoices={invoices} />
-      <PaymentMethodsCard />
-      <AnnualSummaryCard />
-    </div>
-  );
-};
-```
-
----
-
-## 👨‍💼 Espace Administration - 9 Pages ADMIN Complètes
-
-### 🚀 **REFACTORISATION COMPLÈTE 2025**
-
-L'espace admin a été **entièrement refactorisé** avec backend opérationnel et nouveaux composants modulaires.
-
-#### **🏗️ AdminLayout.tsx - Layout Moderne**
-
-```typescript
-export type AdminSection =
-  | "dashboard"
-  | "utilisateurs"
-  | "commandes"
-  | "factures"
-  | "messagerie"
-  | "faq"
-  | "tarifs"
-  | "pages"
-  | "statistiques"
-  | "logs";
-
-const AdminLayout = ({ activeSection, children }: AdminLayoutProps) => {
-  const { isDemo } = useDemoMode();
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {isDemo && <DemoBanner />}
-      <AdminSidebar activeSection={activeSection} />
-      <AdminHeader title={getPageTitle(activeSection)} />
-      <main className="ml-64 p-6">{children}</main>
-    </div>
-  );
-};
-```
-
-### 🔧 **Module AdminUtilisateurs - REFACTORISÉ**
-
-#### **🎣 Hook useAdminUsers.ts (263 lignes)**
-
-```typescript
-// Hook centralisé pour gestion utilisateurs
-export const useAdminUsers = (options: UseAdminUsersOptions = {}) => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [stats, setStats] = useState<UserStats | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const loadUsers = useCallback(
-    async (
-      page = 1,
-      search?: string,
-      filters: UserFilters = {},
-      sortBy?: string,
-      sortDirection: "asc" | "desc" = "asc"
-    ) => {
-      const params: AdminUsersParams = {
-        page,
-        limit: pageSize,
-        search,
-        sortBy,
-        sortDirection,
-        ...filters,
-      };
-
-      const response = await adminAPI.getUsers(params);
-      setUsers(response.data || []);
-      setTotalPages(response.pagination?.totalPages || 1);
-    },
-    []
-  );
-
-  const toggleUserStatus = useCallback(async (userId: string) => {
-    const updatedUser = await adminAPI.toggleUserStatus(userId);
-    setUsers((prev) => prev.map((u) => (u.id === userId ? updatedUser : u)));
-  }, []);
-
-  return {
-    users,
-    stats,
-    isLoading,
-    loadUsers,
-    toggleUserStatus,
-    deleteUser,
-    changeUserRole,
-    viewUser,
-    exportUsers,
-  };
-};
-```
-
-### 🆕 **Module AdminStatistiques - ENTIÈREMENT REFAIT (2025)**
-
-#### **📊 Nouvelles Fonctionnalités Statistiques**
-
-- ✅ **Données réelles Prisma** : Calculs temps réel depuis la base de données
-- ✅ **Métriques évolutives** : Comparaison mois actuel vs précédent avec pourcentages
-- ✅ **API dédiée** : Endpoint `/admin/stats` avec agrégations optimisées
-- ✅ **Dashboard interactif** : Cartes métriques avec graphiques et évolutions
-- ✅ **Chargement optimisé** : Cache React Query 2 minutes avec background refresh
-
-#### **🎣 Hook useAdminStats.ts (180 lignes) - NOUVEAU**
-
-```typescript
-// Hook pour les statistiques admin avec données réelles
-export const useAdminStats = () => {
-  return useQuery<StatistiquesAdmin, Error>(
-    ["admin", "statistiques"],
-    async () => {
-      const response = await fetch("/api/admin/stats", {
-        headers: {
-          "Authorization": `Bearer ${getToken()}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Erreur lors du chargement des statistiques");
-      }
-
-      return response.json();
-    },
-    {
-      staleTime: 2 * 60 * 1000, // 2 minutes
-      cacheTime: 5 * 60 * 1000, // 5 minutes
-      refetchOnWindowFocus: false,
-      retry: 2,
-    }
-  );
-};
-
-// Interface des statistiques avec données réelles
-export interface StatistiquesAdmin {
-  chiffreAffairesMois: number;        // CA mois actuel en centimes
-  evolutionCA: number;                // % évolution vs mois précédent  
-  nouvellesCommandesMois: number;     // Nombre commandes mois actuel
-  evolutionCommandes: number;         // % évolution commandes
-  nouveauxClientsMois: number;        // Nouveaux clients mois actuel
-  evolutionClients: number;           // % évolution clients
-  derniersPaiements: DernierPaiement[]; // 5 derniers paiements avec détails
-  satisfactionMoyenne: number;        // Note satisfaction (mock pour l'instant)
-  nombreAvisTotal: number;            // Nombre d'avis total (calculé)
-  resumeMois: {
-    periode: string;                  // "janvier 2025"
-    totalCA: number;                  // Total CA mois
-    totalCommandes: number;           // Total commandes mois
-    totalClients: number;             // Total nouveaux clients mois
-  };
-}
-
-export interface DernierPaiement {
-  id: string;
-  montant: number;                    // En centimes
-  date: string;                       // ISO string
-  clientNom: string;                  // "Prénom Nom"
-  clientEmail: string;
-  projetTitre: string;
-}
-```
-
-#### **📊 AdminStatistiques.tsx - Composant Moderne (420 lignes)**
-
-```typescript
-const AdminStatistiques: React.FC = () => {
-  const { data: stats, isLoading, error, refetch } = useAdminStats();
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <span className="ml-3 text-gray-600">Chargement des statistiques...</span>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <div className="text-red-600 mb-4">
-          <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.498 0L4.316 15.5c-.77.833.192 2.5 1.732 2.5z" />
-          </svg>
-        </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
-          Erreur de chargement
-        </h3>
-        <p className="text-gray-600 mb-4">
-          Impossible de charger les statistiques
-        </p>
-        <button
-          onClick={() => refetch()}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-        >
-          Réessayer
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Statistiques - {stats?.resumeMois.periode}
-        </h1>
-        <button
-          onClick={() => refetch()}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center space-x-2"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          <span>Actualiser</span>
-        </button>
-      </div>
-
-      {/* Cartes métriques principales */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard
-          title="Chiffre d'affaires"
-          value={`${(stats?.chiffreAffairesMois || 0) / 100}€`}
-          evolution={stats?.evolutionCA || 0}
-          evolutionLabel="vs mois précédent"
-          icon="💰"
-          color="green"
-        />
-        <StatCard
-          title="Nouvelles commandes"
-          value={stats?.nouvellesCommandesMois || 0}
-          evolution={stats?.evolutionCommandes || 0}
-          evolutionLabel="vs mois précédent"
-          icon="📝"
-          color="blue"
-        />
-        <StatCard
-          title="Nouveaux clients"
-          value={stats?.nouveauxClientsMois || 0}
-          evolution={stats?.evolutionClients || 0}
-          evolutionLabel="vs mois précédent"
-          icon="👥"
-          color="purple"
-        />
-      </div>
-
-      {/* Section derniers paiements */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">
-            Derniers paiements
-          </h2>
-        </div>
-        <div className="p-6">
-          {stats?.derniersPaiements && stats.derniersPaiements.length > 0 ? (
-            <div className="space-y-4">
-              {stats.derniersPaiements.map((paiement) => (
-                <div key={paiement.id} className="flex justify-between items-center py-3 border-b border-gray-100 last:border-b-0">
-                  <div>
-                    <p className="font-medium text-gray-900">{paiement.clientNom}</p>
-                    <p className="text-sm text-gray-600">{paiement.projetTitre}</p>
-                    <p className="text-xs text-gray-500">{paiement.clientEmail}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium text-gray-900">
-                      {(paiement.montant / 100).toFixed(2)}€
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {new Date(paiement.date).toLocaleDateString('fr-FR')}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-center py-4">
-              Aucun paiement récent
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-```
-
-#### **🏗️ Composants Refactorisés**
-
-**UserTable.tsx** - Table Accessible (541 lignes)
-
-```typescript
-// Composant table réutilisable avec accessibilité WCAG 2.1 AA
-const UserTable = ({ users, loading, onUserAction }: UserTableProps) => {
-  return (
-    <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
-      <table role="grid" aria-label="Liste des utilisateurs">
-        <thead>
-          <tr role="row">
-            <th aria-sort={getSortDirection("nom")}>Utilisateur</th>
-            <th aria-sort={getSortDirection("role")}>Rôle</th>
-            <th aria-sort={getSortDirection("isActive")}>Statut</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody role="grid">
-          {users.map((user) => (
-            <UserRow
-              key={user.id}
-              user={user}
-              onAction={onUserAction}
-              actions={createUserTableActions}
-            />
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-```
-
-**SearchAndFilters.tsx** - Interface Recherche Avancée (370 lignes)
-
-```typescript
-// Composant de recherche avec UX optimisée
-const SearchAndFilters = ({
-  searchTerm,
-  onSearchChange,
-  selectedRole,
-  onRoleChange,
-  isActiveFilter,
-  onActiveFilterChange,
-  stats,
-  isLoading,
-}: SearchAndFiltersProps) => {
-  return (
-    <div className="bg-white shadow rounded-lg p-6 mb-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <SearchInput
-          value={searchTerm}
-          onChange={onSearchChange}
-          placeholder="Rechercher par nom, email..."
-          aria-describedby="search-help"
-        />
-        <RoleFilter
-          value={selectedRole}
-          onChange={onRoleChange}
-          options={["TOUS", "USER", "ADMIN"]}
-        />
-        <ActiveFilter
-          value={isActiveFilter}
-          onChange={onActiveFilterChange}
-          options={["TOUS", true, false]}
-        />
-      </div>
-      <QuickStats stats={stats} isLoading={isLoading} />
-    </div>
-  );
-};
-```
-
-### 📋 **Module AdminCommandes - NOUVEAU COMPLET**
-
-#### **🎣 Hook useAdminCommandes.ts (359 lignes)**
-
-```typescript
-// Hook centralisé pour gestion commandes avec backend opérationnel
-export const useAdminCommandes = (options: UseAdminCommandesOptions = {}) => {
-  const [commandes, setCommandes] = useState<Commande[]>([]);
-  const [stats, setStats] = useState<CommandeStats | null>(null);
-  const [isLoadingList, setIsLoadingList] = useState(false);
-
-  const loadCommandes = useCallback(
-    async (
-      page = 1,
-      search?: string,
-      filters?: CommandeFilters,
-      sortBy?: string,
-      sortDirection?: "asc" | "desc"
-    ) => {
-      const params: AdminCommandesParams = {
-        page,
-        limit: pageSize,
-        search: search?.trim() || undefined,
-        sortBy,
-        sortDirection,
-        ...filters,
-      };
-
-      const response = await adminAPI.getCommandes(params);
-      setCommandes(response.data || []);
-      setStats(response.stats); // Statistiques temps réel
-    },
-    []
-  );
-
-  const updateCommandeStatut = useCallback(
-    async (
-      commandeId: string,
-      statut: StatutCommande,
-      noteCorrecteur?: string
-    ) => {
-      const updatedCommande = await adminAPI.updateCommande(commandeId, {
-        statut,
-        noteCorrecteur,
-      });
-
-      // Mise à jour optimiste
-      setCommandes((prev) =>
-        prev.map((cmd) =>
-          cmd.id === commandeId ? { ...cmd, statut, noteCorrecteur } : cmd
-        )
-      );
-    },
-    []
-  );
-
-  return {
-    commandes,
-    stats,
-    isLoadingList,
-    isOperationLoading,
-    loadCommandes,
-    updateCommandeStatut,
-    deleteCommande,
-    viewCommande,
-    refreshCommandes,
-  };
-};
-```
-
-#### **🏗️ CommandeStatusSelect.tsx - Sélecteur Avancé**
-
-```typescript
-// Dropdown intelligent pour changement de statut
-const CommandeStatusSelect = ({
-  currentStatus,
-  onStatusChange,
-  disabled,
-}: CommandeStatusSelectProps) => {
-  const statusOptions: Record<
-    StatutCommande,
-    { label: string; color: string; icon: string }
-  > = {
-    EN_ATTENTE: { label: "En attente", color: "yellow", icon: "clock" },
-    EN_COURS: { label: "En cours", color: "blue", icon: "edit" },
-    TERMINE: { label: "Terminé", color: "green", icon: "check" },
-    ANNULEE: { label: "Annulée", color: "red", icon: "times" },
-    SUSPENDUE: { label: "Suspendue", color: "orange", icon: "pause" },
-  };
-
-  return (
-    <select
-      value={currentStatus}
-      onChange={(e) => onStatusChange(e.target.value as StatutCommande)}
-      disabled={disabled}
-      className={`px-3 py-1 rounded-full text-sm font-medium border-0 ${statusOptions[currentStatus].color}`}
-    >
-      {Object.entries(statusOptions).map(([status, config]) => (
-        <option key={status} value={status}>
-          {config.label}
-        </option>
-      ))}
-    </select>
-  );
-};
-```
-
-### 🆕 **Module AdminTarifs - Synchronisation Temps Réel (2025)**
-
-#### **🔄 Fonctionnalités Avancées**
-
-- ✅ **CRUD complet** : Création, modification, suppression tarifs avec validation
-- ✅ **Interface moderne** : Modal avec design gradient et sections visuelles
-- ✅ **Synchronisation temps réel** : Admin → Landing Page sans rechargement
-- ✅ **Gestion d'état optimisée** : Mises à jour optimistes avec rollback automatique
-- ✅ **Mobile responsive** : Table desktop + cartes mobile optimisées
-- ✅ **États de chargement** : Spinners individuels par tarif avec feedback visuel
-
-#### **AdminTarifs.tsx - Interface Complète (1233 lignes)**
-
-```typescript
-const AdminTarifs: React.FC = () => {
-  const [tarifs, setTarifs] = useState<Tarif[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadingTarifIds, setLoadingTarifIds] = useState<Set<string>>(
-    new Set()
-  );
-
-  // Hook pour synchronisation avec landing page
-  const { invalidatePublicTarifs } = useTarifInvalidation();
-
-  const handleSaveTarif = async () => {
-    try {
-      setIsOperationLoading(true);
-
-      let updatedTarif: Tarif;
-      if (selectedTarif) {
-        // Mise à jour
-        updatedTarif = await adminAPI.updateTarif(
-          selectedTarif.id,
-          editFormData
-        );
-        setTarifs((prevTarifs) =>
-          prevTarifs.map((tarif) =>
-            tarif.id === selectedTarif.id ? updatedTarif : tarif
-          )
-        );
-      } else {
-        // Création
-        updatedTarif = await adminAPI.createTarif(editFormData);
-        setTarifs((prevTarifs) => [...prevTarifs, updatedTarif]);
-      }
-
-      // 🚀 SYNCHRONISATION LANDING PAGE
-      await invalidatePublicTarifs();
-
-      setShowTarifModal(false);
-      showToast(
-        "success",
-        "Tarif sauvegardé",
-        "Landing page mise à jour automatiquement"
-      );
-    } catch (err) {
-      handleError(err);
-    } finally {
-      setIsOperationLoading(false);
-    }
-  };
-
-  const handleToggleActivation = async (tarif: Tarif) => {
-    try {
-      setLoadingTarifIds((prev) => new Set([...prev, tarif.id]));
-
-      const updatedData = { actif: !tarif.actif };
-      await adminAPI.updateTarif(tarif.id, updatedData);
-
-      // Mise à jour optimiste
-      setTarifs((prevTarifs) =>
-        prevTarifs.map((t) =>
-          t.id === tarif.id ? { ...t, ...updatedData } : t
-        )
-      );
-
-      // 🚀 SYNCHRONISATION LANDING PAGE
-      await invalidatePublicTarifs();
-
-      showToast(
-        "success",
-        "Statut modifié",
-        "Changement synchronisé sur la landing"
-      );
-    } catch (err) {
-      handleError(err);
-    } finally {
-      setLoadingTarifIds((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(tarif.id);
-        return newSet;
-      });
-    }
-  };
-
-  return (
-    <div className="p-6 space-y-6">
-      {/* Interface avec table responsive et cartes mobiles */}
-      {/* Modal moderne avec sections gradient */}
-      {/* États de chargement individuels */}
-    </div>
-  );
-};
-```
-
-### 🆕 **Module AdminPages - CMS Complet (2025)**
-
-#### **📄 Gestion de Contenu Éditorial**
-
-- ✅ **CRUD pages statiques** : Création, édition, suppression avec validation
-- ✅ **Éditeur riche** : Interface moderne pour contenu HTML et métadonnées
-- ✅ **Gestion des statuts** : Brouillon, Publié, Archivé avec transitions
-- ✅ **Génération automatique** : Slug automatique depuis le titre avec normalisation
-- ✅ **Prévisualisation** : Modal de prévisualisation avec rendu HTML
-- ✅ **Statistiques** : Compteurs par statut avec dashboard visuel
-
-#### **AdminPages.tsx - Interface CMS (180 lignes)**
-
-```typescript
-const AdminPages: React.FC = () => {
-  const [pages, setPages] = useState<PageStatique[]>([]);
-  const [filtreStatut, setFiltreStatut] = useState<StatutPage | "tous">("tous");
-  const [editingPage, setEditingPage] = useState<Partial<PageStatique>>({});
-
-  // Génération automatique du slug
-  const generateSlug = (titre: string) => {
-    return titre
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .trim();
-  };
-
-  const handleSave = async () => {
-    if (!editingPage.titre || !editingPage.slug || !editingPage.contenu) {
-      showToast("error", "Erreur", "Veuillez remplir tous les champs requis");
-      return;
-    }
-
-    try {
-      if (selectedPage) {
-        // Modification
-        const updatedPage = await adminAPI.updatePage(selectedPage.id, {
-          titre: editingPage.titre,
-          slug: editingPage.slug,
-          contenu: editingPage.contenu,
-          description: editingPage.description,
-          statut: editingPage.statut as StatutPage,
-        });
-        setPages(
-          pages.map((p) => (p.id === selectedPage.id ? updatedPage : p))
-        );
-      } else {
-        // Création
-        const nouvellePage = await adminAPI.createPage({
-          titre: editingPage.titre!,
-          slug: editingPage.slug!,
-          contenu: editingPage.contenu!,
-          statut: editingPage.statut as StatutPage,
-          description: editingPage.description || "",
-        });
-        setPages([nouvellePage, ...pages]);
-      }
-
-      setShowEditModal(false);
-      showToast(
-        "success",
-        "Page sauvegardée",
-        "Contenu mis à jour avec succès"
-      );
-    } catch (err) {
-      handleError(err);
-    }
-  };
-
-  const toggleStatut = async (page: PageStatique) => {
-    try {
-      const nouveauStatut: StatutPage =
-        page.statut === StatutPage.PUBLIEE
-          ? StatutPage.BROUILLON
-          : StatutPage.PUBLIEE;
-
-      let updatedPage: PageStatique;
-      if (nouveauStatut === StatutPage.PUBLIEE) {
-        updatedPage = await adminAPI.publishPage(page.id);
-      } else {
-        updatedPage = await adminAPI.unpublishPage(page.id);
-      }
-
-      setPages(pages.map((p) => (p.id === page.id ? updatedPage : p)));
-      showToast(
-        "success",
-        "Statut modifié",
-        `Page ${nouveauStatut === StatutPage.PUBLIEE ? "publiée" : "dépubliée"}`
-      );
-    } catch (err) {
-      handleError(err);
-    }
-  };
-
-  return (
-    <div className="p-6 space-y-6">
-      {/* Interface CMS avec statistiques, filtres, et prévisualisation */}
-    </div>
-  );
-};
-```
-
-### 📋 **Module AdminFactures - NOUVEAU**
-
-#### **🎣 Hook useAdminFactures.ts (240 lignes)**
-
-```typescript
-// Hook pour la gestion des factures côté admin
-export const useAdminFactures = (filters: FactureFilters) => {
-  const { data, isLoading, error } = useQuery(
-    ["admin-factures", filters],
-    () => adminAPI.getFactures(filters),
-    {
-      staleTime: 5 * 60 * 1000,
-      keepPreviousData: true,
-    }
-  );
-
-  return {
-    factures: data?.data || [],
-    pagination: data?.pagination,
-    isLoading,
-    error,
-  };
-};
-```
-
----
-
-## 🎣 Hooks React Query - Architecture Complète (2025)
-
-### 🏗️ **Configuration Globale**
-
-```typescript
-// main.tsx - Setup React Query
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
-      retry: 2,
-      refetchOnWindowFocus: false,
+// vite.config.ts - Tests unitaires CI/CD
+export default defineConfig({
+  test: {
+    environment: "jsdom",
+    exclude: [
+      "node_modules",
+      "dist",
+      "build",
+      "**/tests/integration/**", // Exclusion CI/CD
+      "tests/integration/**",
+      "**/cypress/**",
+    ],
+    setupFiles: ["./src/test-setup.ts"],
+    coverage: {
+      reporter: ["text", "json-summary", "html"],
+      exclude: ["tests/integration/**"],
     },
   },
 });
-
-<QueryClientProvider client={queryClient}>
-  <AuthProvider>
-    <ToastProvider>
-      <DemoModeProvider>
-        <App />
-      </DemoModeProvider>
-    </ToastProvider>
-  </AuthProvider>
-</QueryClientProvider>;
 ```
 
-### 💬 **Système Messagerie - 1000+ lignes React Query**
+#### 🔧 **Tests Intégration (Local avec backend)**
 
-#### **useMessages.ts (694 lignes) - Messagerie Utilisateur**
-
-```typescript
-// Hook messagerie utilisateur avec pagination infinie
-export const useMessages = (filters?: MessageFilters) => {
-  // Pagination infinie pour messages
-  const messagesQuery = useInfiniteQuery(
-    ["messages", filters],
-    ({ pageParam = 1 }) => fetchMessages({ page: pageParam, ...filters }),
-    {
-      getNextPageParam: (lastPage) =>
-        lastPage.hasNextPage ? lastPage.nextPage : undefined,
-      staleTime: 2 * 60 * 1000,
-      cacheTime: 5 * 60 * 1000,
-    }
-  );
-
-  // Mutation pour envoi de message
-  const sendMessageMutation = useMutation(
-    (messageData: SendMessageRequest) => sendMessage(messageData),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(["messages"]);
-        queryClient.invalidateQueries(["conversations"]);
-      },
-      // Optimistic update
-      onMutate: async (newMessage) => {
-        await queryClient.cancelQueries(["messages"]);
-        const previousMessages = queryClient.getQueryData(["messages"]);
-
-        queryClient.setQueryData(["messages"], (old: any) => ({
-          ...old,
-          pages: old.pages.map((page: any, index: number) =>
-            index === 0 ? { ...page, data: [newMessage, ...page.data] } : page
-          ),
-        }));
-
-        return { previousMessages };
-      },
-    }
-  );
-
-  return {
-    messages: messagesQuery.data?.pages?.flatMap((page) => page.data) || [],
-    isLoading: messagesQuery.isLoading,
-    isFetchingNextPage: messagesQuery.isFetchingNextPage,
-    hasNextPage: messagesQuery.hasNextPage,
-    fetchNextPage: messagesQuery.fetchNextPage,
-    sendMessage: sendMessageMutation.mutate,
-    isLoadingSend: sendMessageMutation.isLoading,
-  };
-};
+```bash
+# Configuration : vite.config.integration.ts (complet)
+npm run test:integration # Tests avec API réelle
+npm run test:all         # Suite complète
+# ✅ Durée : 3-5 minutes
+# ✅ Environnement : backend requis
+# ✅ Usage : développement local
+# ✅ Cible : Workflows complets, API calls
 ```
 
-#### **useAdminMessages.ts (321 lignes) - Administration**
+**Configuration Vite Intégration :**
 
 ```typescript
-// Hook messagerie admin avec actions en masse
-export const useAdminMessages = (filters?: AdminMessageFilters) => {
-  const conversationsQuery = useQuery(
-    ["admin-conversations", filters],
-    () => fetchAdminConversations(filters),
-    {
-      staleTime: 1 * 60 * 1000, // 1 minute pour admin
-      cacheTime: 5 * 60 * 1000,
-    }
-  );
-
-  // Mutation pour actions en masse
-  const bulkUpdateMutation = useMutation(
-    (data: { messageIds: string[]; action: BulkAction }) =>
-      bulkUpdateMessages(data.messageIds, data.action),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(["admin-conversations"]);
-        queryClient.invalidateQueries(["admin-message-stats"]);
-      },
-    }
-  );
-
-  return {
-    conversations: conversationsQuery.data || [],
-    isLoading: conversationsQuery.isLoading,
-    bulkUpdate: bulkUpdateMutation.mutate,
-    isLoadingBulk: bulkUpdateMutation.isLoading,
-  };
-};
-```
-
-### 💳 **Hooks Facturation**
-
-#### **useInvoices.ts (54 lignes)**
-
-```typescript
-// Hook facturation avec téléchargement PDF
-export const useInvoices = (page = 1, limit = 10) => {
-  return useQuery<InvoicesResponse, Error>(
-    ["invoices", page, limit],
-    () => fetchInvoices(page, limit),
-    {
-      keepPreviousData: true, // Important pour pagination
-      staleTime: 5 * 60 * 1000,
-      cacheTime: 10 * 60 * 1000,
-    }
-  );
-};
-
-export const useDownloadInvoice = () => {
-  return useMutation(async (invoiceId: string) => {
-    const blob = await downloadInvoice(invoiceId);
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `facture-${invoiceId}.pdf`;
-    link.click();
-    URL.revokeObjectURL(url);
-  });
-};
-```
-
-#### **🆕 useAdminFactures.ts (240 lignes) - NOUVEAU 2025**
-
-```typescript
-// Hook pour la gestion des factures côté admin
-export const useAdminFactures = (params: AdminFacturesParams) => {
-  return useQuery({
-    queryKey: ["admin-factures", params],
-    queryFn: async () => {
-      const response = await adminAPI.getFactures(
-        params.page,
-        params.limit,
-        params.status as any,
-        params.search,
-        params.sortBy,
-        params.sortOrder
-      );
-      return response;
+// vite.config.integration.ts - Tests complets local
+export default defineConfig({
+  test: {
+    environment: "jsdom",
+    include: ["**/*.{test,spec}.{js,ts,jsx,tsx}"], // Tous inclus
+    testTimeout: 30000, // Plus long pour intégration
+    hookTimeout: 30000,
+    setupFiles: ["./src/test-setup.ts"],
+    coverage: {
+      reporter: ["text", "json-summary", "html"],
     },
-    placeholderData: keepPreviousData,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2,
-    refetchOnWindowFocus: false,
-  });
-};
-
-// Hook pour récupérer les statistiques des factures
-export function useFactureStats() {
-  return useQuery({
-    queryKey: ["admin-facture-stats"],
-    queryFn: () => adminAPI.getFactureStats(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    retry: 2,
-    refetchOnWindowFocus: false,
-  });
-}
-
-// Mutations pour les actions admin
-export function useDownloadFacture() {
-  return useMutation({
-    mutationFn: (id: string) => adminAPI.getFacturePdf(id),
-    onSuccess: (response, id) => {
-      alert(`Facture ${response.factureNumber} - ${response.message}`);
-    },
-  });
-}
-
-export function useSendReminder() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => adminAPI.sendFactureReminder(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-factures"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-facture-stats"] });
-    },
-  });
-}
+  },
+});
 ```
 
-### 🆕 **Hooks Notifications Temps Réel - NOUVEAU 2025**
+### 🎪 **Tests E2E Cypress (3 niveaux)**
 
-#### **useNotifications.ts (245 lignes) - Système Complet**
+#### 1. **Tests Critiques** (CI/CD - < 2min)
+
+```bash
+cypress/e2e/critical/
+├── auth.cy.ts              # Authentification (15 tests)
+├── landing.cy.ts           # Page accueil (12 tests)
+├── admin-basic.cy.ts       # Interface admin (8 tests)
+├── payment-essential.cy.ts # Paiements critiques (18 tests)
+└── payment-errors.cy.ts    # Gestion erreurs (20 tests)
+
+npm run test:e2e:critical   # Tests essentiels uniquement
+```
+
+#### 2. **Tests Smoke** (Health checks - < 30s)
+
+```bash
+cypress/e2e/smoke/
+└── health-check.cy.ts      # Santé application (12 tests)
+
+npm run test:e2e:smoke      # Vérifications ultra-rapides
+```
+
+#### 3. **Tests Intégration** (Local/Staging - < 10min)
+
+```bash
+cypress/e2e/integration/
+├── admin-users-advanced.cy.ts    # CRUD utilisateurs complet
+├── stripe-webhooks-advanced.cy.ts # Webhooks Stripe complets
+├── end-to-end-workflow.cy.ts     # Workflow client → livraison
+└── payment-flow-complete.cy.ts   # Paiements Stripe avancés
+
+npm run test:e2e:local      # Tests complets avec backend
+```
+
+### 📊 **Métriques Tests**
+
+| Suite Tests           | Durée    | Couverture | Environnement  | Statut          |
+| --------------------- | -------- | ---------- | -------------- | --------------- |
+| **Unit Tests**        | 1-2 min  | 85%        | jsdom + mocks  | ✅ Stable       |
+| **Integration Tests** | 3-5 min  | 90%        | Backend requis | ✅ Stable       |
+| **E2E Critical**      | < 2 min  | 95%        | Docker stack   | ✅ Optimisé     |
+| **E2E Smoke**         | < 30s    | 92%        | Basic stack    | ✅ Ultra-rapide |
+| **E2E Integration**   | < 10 min | 90%        | Full stack     | ✅ Complet      |
+
+---
+
+## ⚛️ **Composants Architecture**
+
+### 🏗️ **Design System & Composants UI**
+
+#### **Composants de Base** (`components/ui/`)
 
 ```typescript
-/**
- * Hook pour la gestion des notifications utilisateur temps réel
- * Polling automatique, actions CRUD et intégration UI
- */
-export function useNotifications() {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
+// LoadingSpinner.tsx - Spinner réutilisable
+interface LoadingSpinnerProps {
+  size?: "sm" | "md" | "lg";
+  color?: "primary" | "secondary" | "white";
+  text?: string;
+}
 
-  // Polling des notifications non lues toutes les 15 secondes
-  const { data: unreadCount = 0 } = useQuery(
-    ["notifications", "unread-count"],
-    () => notificationsAPI.getUnreadCount(),
-    {
-      enabled: !!user,
-      refetchInterval: 15 * 1000, // 15 secondes
-      staleTime: 10 * 1000, // 10 secondes
-      cacheTime: 30 * 1000, // 30 secondes
-    }
-  );
-
-  // Liste des notifications avec pagination
-  const {
-    data: notifications,
-    isLoading,
-    hasNextPage,
-    fetchNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery(
-    ["notifications", "list"],
-    ({ pageParam = 1 }) => notificationsAPI.getNotifications({
-      page: pageParam,
-      limit: 20,
-      unread: false
-    }),
-    {
-      enabled: !!user,
-      getNextPageParam: (lastPage) => 
-        lastPage.hasNextPage ? lastPage.nextPage : undefined,
-      staleTime: 30 * 1000, // 30 secondes
-      cacheTime: 2 * 60 * 1000, // 2 minutes
-    }
-  );
-
-  // Mutation pour marquer comme lu
-  const markAsReadMutation = useMutation(
-    (notificationId: string) => notificationsAPI.markAsRead(notificationId),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(["notifications", "unread-count"]);
-        queryClient.invalidateQueries(["notifications", "list"]);
-      },
-      // Optimistic update
-      onMutate: async (notificationId) => {
-        await queryClient.cancelQueries(["notifications", "unread-count"]);
-        
-        const previousCount = queryClient.getQueryData(["notifications", "unread-count"]);
-        queryClient.setQueryData(["notifications", "unread-count"], 
-          (old: number) => Math.max(0, old - 1)
-        );
-
-        return { previousCount };
-      },
-    }
-  );
-
-  // Mutation pour marquer toutes comme lues
-  const markAllAsReadMutation = useMutation(
-    () => notificationsAPI.markAllAsRead(),
-    {
-      onSuccess: () => {
-        queryClient.setQueryData(["notifications", "unread-count"], 0);
-        queryClient.invalidateQueries(["notifications", "list"]);
-      },
-    }
-  );
-
-  // Mutation pour supprimer
-  const deleteNotificationMutation = useMutation(
-    (notificationId: string) => notificationsAPI.deleteNotification(notificationId),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(["notifications"]);
-      },
-    }
-  );
-
-  return {
-    // Données
-    notifications: notifications?.pages?.flatMap(page => page.data) || [],
-    unreadCount,
-    
-    // États de chargement
-    isLoading,
-    hasNextPage,
-    isFetchingNextPage,
-    
-    // Actions
-    fetchNextPage,
-    markAsRead: markAsReadMutation.mutate,
-    markAllAsRead: markAllAsReadMutation.mutate,
-    deleteNotification: deleteNotificationMutation.mutate,
-    
-    // États des actions
-    isMarkingAsRead: markAsReadMutation.isLoading,
-    isMarkingAllAsRead: markAllAsReadMutation.isLoading,
-    isDeleting: deleteNotificationMutation.isLoading,
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
+  size = "md",
+  color = "primary",
+  text,
+}) => {
+  const sizeClasses = {
+    sm: "w-4 h-4",
+    md: "w-8 h-8",
+    lg: "w-12 h-12",
   };
-}
-```
 
-#### **🔔 NotificationBell.tsx - Cloche Interactive (320 lignes)**
-
-```typescript
-// Composant cloche avec badge et menu déroulant
-const NotificationBell: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const { 
-    notifications, 
-    unreadCount, 
-    markAsRead, 
-    markAllAsRead,
-    deleteNotification,
-    isLoading 
-  } = useNotifications();
-
-  // Récupérer les 5 notifications les plus récentes pour le dropdown
-  const recentNotifications = notifications.slice(0, 5);
-
-  const handleNotificationClick = (notification: Notification) => {
-    if (!notification.isRead) {
-      markAsRead(notification.id);
-    }
-    
-    // Navigation vers l'URL d'action si présente
-    if (notification.actionUrl) {
-      window.location.href = notification.actionUrl;
-    }
-    
-    setIsOpen(false);
+  const colorClasses = {
+    primary: "text-blue-600",
+    secondary: "text-gray-600",
+    white: "text-white",
   };
 
   return (
+    <div className="flex flex-col items-center justify-center space-y-2">
+      <div
+        className={`animate-spin ${sizeClasses[size]} ${colorClasses[color]}`}
+      >
+        <svg className="w-full h-full" fill="none" viewBox="0 0 24 24">
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          />
+        </svg>
+      </div>
+      {text && <p className="text-sm text-gray-600">{text}</p>}
+    </div>
+  );
+};
+```
+
+#### **Système de Notifications** (`components/common/Notifications.tsx`)
+
+```typescript
+// Hook notifications avec polling
+const useNotifications = () => {
+  const { data: notifications, refetch } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: async () => {
+      const response = await axios.get("/api/notifications");
+      return response.data;
+    },
+    refetchInterval: 15000, // Polling 15 secondes
+    staleTime: 10000,
+  });
+
+  const { data: unreadCount } = useQuery({
+    queryKey: ["notifications", "unread-count"],
+    queryFn: async () => {
+      const response = await axios.get("/api/notifications/unread-count");
+      return response.data.count;
+    },
+    refetchInterval: 15000,
+  });
+
+  return { notifications, unreadCount, refetch };
+};
+
+// Composant clochette notifications
+const Notifications: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const { notifications, unreadCount } = useNotifications();
+
+  return (
     <div className="relative">
-      {/* Bouton cloche */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg transition-colors duration-200"
-        aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} non lues)` : ''}`}
+        className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
       >
         <BellIcon className="w-6 h-6" />
-        
-        {/* Badge compteur */}
         {unreadCount > 0 && (
-          <AnimatePresence>
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0 }}
-              className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium"
-            >
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </motion.span>
-          </AnimatePresence>
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
         )}
       </button>
 
-      {/* Menu déroulant */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -10 }}
-            transition={{ duration: 0.15 }}
-            className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border z-50"
           >
-            {/* En-tête */}
-            <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="font-medium text-gray-900">Notifications</h3>
-              {unreadCount > 0 && (
-                <button
-                  onClick={() => markAllAsRead()}
-                  className="text-sm text-blue-600 hover:text-blue-800"
-                >
-                  Tout marquer comme lu
-                </button>
-              )}
+            <div className="p-4 border-b">
+              <h3 className="font-semibold">Notifications</h3>
             </div>
-
-            {/* Liste des notifications */}
-            <div className="max-h-96 overflow-y-auto">
-              {isLoading ? (
-                <div className="p-4 text-center">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-                </div>
-              ) : recentNotifications.length > 0 ? (
-                recentNotifications.map((notification) => (
-                  <NotificationItem
-                    key={notification.id}
-                    notification={notification}
-                    onClick={() => handleNotificationClick(notification)}
-                    onDelete={() => deleteNotification(notification.id)}
-                  />
-                ))
-              ) : (
-                <div className="p-4 text-center text-gray-500">
-                  Aucune notification
-                </div>
-              )}
+            <div className="max-h-64 overflow-y-auto">
+              {notifications?.map((notification: any) => (
+                <NotificationItem
+                  key={notification.id}
+                  notification={notification}
+                />
+              ))}
             </div>
-
-            {/* Pied de page */}
-            {notifications.length > 5 && (
-              <div className="px-4 py-3 border-t border-gray-200">
-                <Link
-                  to="/notifications"
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Voir toutes les notifications →
-                </Link>
-              </div>
-            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -1841,1204 +458,1594 @@ const NotificationBell: React.FC = () => {
 };
 ```
 
-### 🆕 **Hooks Tarifs Dynamiques - NOUVEAU 2025**
+### 👨‍💼 **Composants Administration**
 
-#### **useTarifInvalidation.ts (78 lignes) - Synchronisation Admin/Landing**
-
-```typescript
-/**
- * Hook pour gérer l'invalidation du cache des tarifs publics
- * Utilisé dans l'espace admin pour synchroniser les changements
- * avec la landing page
- */
-export function useTarifInvalidation() {
-  const queryClient = useQueryClient();
-
-  /**
-   * Invalide le cache des tarifs publics
-   * Force le re-fetch immédiat des données sur la landing page
-   */
-  const invalidatePublicTarifs = useCallback(async () => {
-    try {
-      // Invalider le cache des tarifs publics (utilisé par usePricing)
-      await queryClient.invalidateQueries({
-        queryKey: ["tarifs", "public"],
-        exact: true,
-      });
-
-      // Invalider aussi les tarifs admin pour cohérence
-      await queryClient.invalidateQueries({
-        queryKey: ["admin", "tarifs"],
-        exact: false,
-      });
-
-      console.log("✅ Cache des tarifs publics invalidé avec succès");
-    } catch (error) {
-      console.error(
-        "❌ Erreur lors de l'invalidation du cache des tarifs:",
-        error
-      );
-    }
-  }, [queryClient]);
-
-  /**
-   * Force le refetch des tarifs publics sans attendre l'invalidation
-   * Utile pour les mises à jour critiques
-   */
-  const refetchPublicTarifs = useCallback(async () => {
-    try {
-      await queryClient.refetchQueries({
-        queryKey: ["tarifs", "public"],
-        exact: true,
-      });
-      console.log("✅ Refetch des tarifs publics effectué");
-    } catch (error) {
-      console.error("❌ Erreur lors du refetch des tarifs:", error);
-    }
-  }, [queryClient]);
-
-  return {
-    invalidatePublicTarifs,
-    refetchPublicTarifs,
-    prefetchPublicTarifs,
-  };
-}
-```
-
-#### **useAdminPages.ts (215 lignes) - Gestion Pages CMS**
+#### **Layout Admin** (`components/admin/AdminLayout.tsx`)
 
 ```typescript
-// Hook pour la gestion des pages côté admin
-export const useAdminPages = (params: AdminPagesParams = {}) => {
-  const { data, isLoading, error } = useQuery(
-    ["admin-pages", params],
-    () => adminAPI.getPages(params),
-    {
-      staleTime: 5 * 60 * 1000,
-      keepPreviousData: true,
-    }
+const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const menuItems = [
+    { name: "Dashboard", href: "/admin", icon: HomeIcon },
+    { name: "Utilisateurs", href: "/admin/users", icon: UsersIcon },
+    { name: "Commandes", href: "/admin/commandes", icon: ClipboardListIcon },
+    { name: "Factures", href: "/admin/factures", icon: DocumentTextIcon },
+    { name: "Statistiques", href: "/admin/stats", icon: ChartBarIcon },
+    { name: "Audit Logs", href: "/admin/audit", icon: ShieldCheckIcon },
+    { name: "Messagerie", href: "/admin/messages", icon: InboxIcon },
+    { name: "FAQ", href: "/admin/faq", icon: QuestionMarkCircleIcon },
+    { name: "Tarifs", href: "/admin/tarifs", icon: CurrencyEuroIcon },
+    { name: "Pages", href: "/admin/pages", icon: DocumentIcon },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 transform transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } lg:translate-x-0 lg:static lg:inset-0`}
+      >
+        <div className="flex items-center justify-center h-16 bg-gray-800">
+          <h1 className="text-white text-xl font-bold">📚 Staka Admin</h1>
+        </div>
+
+        <nav className="mt-8">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                className="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+              >
+                <Icon className="w-5 h-5 mr-3" />
+                {item.name}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 lg:pl-64">
+        <header className="bg-white shadow-sm border-b">
+          <div className="flex items-center justify-between px-6 py-4">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="lg:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100"
+            >
+              <Bars3Icon className="w-6 h-6" />
+            </button>
+
+            <div className="flex items-center space-x-4">
+              <Notifications />
+              <UserMenu user={user} />
+            </div>
+          </div>
+        </header>
+
+        <main className="p-6">{children}</main>
+      </div>
+
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+    </div>
   );
-
-  return {
-    pages: data?.data || [],
-    pagination: data?.pagination,
-    isLoading,
-    error,
-  };
 };
 ```
 
-#### **useInvalidateMessages.ts (85 lignes) - Invalidation Messages**
+#### **Table Utilisateurs WCAG** (`components/admin/UserTable.tsx`)
 
 ```typescript
-// Hook pour invalider le cache des messages
-export const useInvalidateMessages = () => {
-  const queryClient = useQueryClient();
+interface UserTableProps {
+  users: User[];
+  loading: boolean;
+  onEdit: (user: User) => void;
+  onDelete: (userId: string) => void;
+  onRoleChange: (userId: string, role: string) => void;
+}
 
-  const invalidateMessages = useCallback(async () => {
-    try {
-      await queryClient.invalidateQueries({
-        queryKey: ["messages"],
-        exact: false,
-      });
-      console.log("✅ Cache des messages invalidé avec succès");
-    } catch (error) {
-      console.error("❌ Erreur lors de l'invalidation des messages:", error);
-    }
-  }, [queryClient]);
+const UserTable: React.FC<UserTableProps> = ({
+  users,
+  loading,
+  onEdit,
+  onDelete,
+  onRoleChange,
+}) => {
+  if (loading) {
+    return <LoadingSpinner size="lg" text="Chargement des utilisateurs..." />;
+  }
 
-  return {
-    invalidateMessages,
-  };
+  return (
+    <div className="overflow-x-auto">
+      <table
+        className="min-w-full divide-y divide-gray-200"
+        role="table"
+        aria-label="Tableau des utilisateurs"
+      >
+        <thead className="bg-gray-50">
+          <tr>
+            <th
+              scope="col"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Utilisateur
+            </th>
+            <th
+              scope="col"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Email
+            </th>
+            <th
+              scope="col"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Rôle
+            </th>
+            <th
+              scope="col"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Statut
+            </th>
+            <th
+              scope="col"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Inscription
+            </th>
+            <th
+              scope="col"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {users.map((user) => (
+            <tr key={user.id} className="hover:bg-gray-50">
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 h-10 w-10">
+                    <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                      <UserIcon className="h-6 w-6 text-gray-600" />
+                    </div>
+                  </div>
+                  <div className="ml-4">
+                    <div className="text-sm font-medium text-gray-900">
+                      {user.prenom} {user.nom}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                {user.email}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <RoleBadge role={user.role} />
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <StatusBadge isActive={user.isActive} />
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {format(new Date(user.createdAt), "dd/MM/yyyy")}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <ActionButtons
+                  user={user}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onRoleChange={onRoleChange}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 };
 ```
 
----
+### 🎨 **Landing Page Components**
 
-## 🎨 Design System - Architecture Hybride
-
-### 🏗️ **Stack Styling Complète**
+#### **Hero Section** (`components/landing/Hero.tsx`)
 
 ```typescript
-// Architecture styling hybride
-{
-  "tailwindcss": "^3.4.1",      // Framework utility-first principal
-  "framer-motion": "^12.18.1",  // Animations avancées
-  "postcss": "^8.4.35",         // Traitement CSS
-  "autoprefixer": "^10.4.17"    // Compatibilité navigateurs
-}
+const Hero: React.FC = () => {
+  const { data: pricing } = usePricing();
+
+  return (
+    <section className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 text-white overflow-hidden">
+      <div className="absolute inset-0 bg-black/20" />
+
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0 bg-[url('/images/pattern.svg')] bg-repeat" />
+      </div>
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center"
+        >
+          <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
+            Transformez votre manuscrit en{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+              chef-d'œuvre
+            </span>
+          </h1>
+
+          <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
+            Services professionnels de correction et d'édition pour auteurs
+            exigeants. Expertise reconnue, délais respectés, qualité garantie.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-8 py-4 rounded-lg font-semibold text-lg hover:shadow-lg transition-shadow"
+              onClick={() =>
+                document
+                  .getElementById("pricing")
+                  ?.scrollIntoView({ behavior: "smooth" })
+              }
+            >
+              Découvrir nos tarifs
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-gray-900 transition-colors"
+              onClick={() =>
+                document
+                  .getElementById("free-sample")
+                  ?.scrollIntoView({ behavior: "smooth" })
+              }
+            >
+              Échantillon gratuit
+            </motion.button>
+          </div>
+
+          {/* Trust Indicators */}
+          <div className="flex flex-wrap justify-center items-center gap-8 text-blue-200">
+            <div className="flex items-center gap-2">
+              <CheckCircleIcon className="w-5 h-5 text-green-400" />
+              <span>500+ manuscrits corrigés</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <StarIcon className="w-5 h-5 text-yellow-400 fill-current" />
+              <span>4.9/5 satisfaction client</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <ClockIcon className="w-5 h-5 text-blue-400" />
+              <span>Délais garantis</span>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
 ```
 
-### 🌈 **Variables CSS Design Tokens**
-
-```css
-/* global.css - 626 lignes */
-:root {
-  /* Palette principale */
-  --primary-50: #eff6ff;
-  --primary-500: #3b82f6;
-  --primary-700: #1d4ed8;
-  --primary-900: #1e3a8a;
-
-  /* Palette gris */
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-500: #6b7280;
-  --gray-900: #111827;
-
-  /* Couleurs sémantiques */
-  --success-500: #10b981;
-  --warning-500: #f59e0b;
-  --error-500: #ef4444;
-
-  /* Système d'ombres */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
-
-  /* Border radius */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-}
-```
-
-### 🎬 **Animations Framer Motion**
-
-#### **Patterns Standardisés**
+#### **Calculateur de Prix** (`components/landing/PricingCalculator.tsx`)
 
 ```typescript
-// Pattern modal avec AnimatePresence
-<AnimatePresence>
-  {isVisible && (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
-    >
-      {content}
-    </motion.div>
-  )}
-</AnimatePresence>
+const PricingCalculator: React.FC = () => {
+  const { data: pricing, isLoading, error } = usePricing();
+  const [selectedService, setSelectedService] = useState<string>("");
+  const [pageCount, setPageCount] = useState<number>(100);
 
-// Pattern toast avec spring physics
-<motion.div
-  initial={{ opacity: 0, y: 50, scale: 0.3 }}
-  animate={{ opacity: 1, y: 0, scale: 1 }}
-  exit={{ opacity: 0, scale: 0.5 }}
-  transition={{ type: "spring", stiffness: 500, damping: 30 }}
->
-  {toast}
-</motion.div>
-```
+  const calculatePrice = useMemo(() => {
+    if (!pricing || !selectedService) return 0;
 
-#### **30+ Animations CSS Custom**
+    const service = pricing.find((p) => p.id === selectedService);
+    if (!service) return 0;
 
-```css
-/* Animations loading et interactions */
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+    // Calcul basé sur le nombre de pages
+    const basePrice = service.prix / 100; // Prix en euros
+    return Math.round(basePrice * pageCount);
+  }, [pricing, selectedService, pageCount]);
+
+  if (isLoading) {
+    return <LoadingSpinner size="lg" text="Chargement des tarifs..." />;
   }
-}
 
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    transform: translateY(30px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* Classes utilitaires */
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-.animate-slide-in-right {
-  animation: slideInRight 0.3s ease-out;
-}
-.animate-fade-in-up {
-  animation: fadeInUp 0.4s ease-out;
-}
-```
-
-### 📱 **Responsive Design Mobile-First**
-
-```css
-/* Mobile-first breakpoints */
-@media (min-width: 640px) {
-  /* sm */
-}
-@media (min-width: 768px) {
-  /* md */
-}
-@media (min-width: 1024px) {
-  /* lg */
-}
-@media (min-width: 1280px) {
-  /* xl */
-}
-
-/* Exemples d'usage dans composants */
-.landing-hero {
-  @apply text-3xl md:text-5xl lg:text-6xl;
-  @apply px-4 md:px-8 lg:px-12;
-  @apply grid grid-cols-1 lg:grid-cols-2;
-}
-
-.admin-table {
-  @apply hidden md:table; /* Table desktop */
-}
-
-.admin-cards {
-  @apply block md:hidden; /* Cards mobile */
-}
-```
-
----
-
-## 🔧 Services API & Types
-
-### 🌐 **adminAPI.ts - Services Admin Intégrés**
-
-```typescript
-// Services admin avec backend opérationnel
-export const adminAPI = {
-  // Utilisateurs
-  async getUsers(params: AdminUsersParams): Promise<PaginatedResponse<User>> {
-    const url = buildAdminUrl("/users", params);
-    const response = await fetch(url, { headers: getAuthHeaders() });
-    return response.json();
-  },
-
-  async toggleUserStatus(userId: string): Promise<User> {
-    const response = await fetch(
-      buildAdminUrl(`/users/${userId}/toggle-status`),
-      { method: "PATCH", headers: getAuthHeaders() }
+  if (error) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-red-600 mb-4">
+          Erreur lors du chargement des tarifs
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          Réessayer
+        </button>
+      </div>
     );
-    return response.json();
-  },
+  }
 
-  // Commandes - NOUVEAU
-  async getCommandes(
-    params: AdminCommandesParams
-  ): Promise<PaginatedResponse<Commande> & { stats: CommandeStats }> {
-    const url = buildAdminUrl("/commandes", params);
-    const response = await fetch(url, { headers: getAuthHeaders() });
-    return response.json();
-  },
+  return (
+    <section id="pricing" className="py-16 bg-gray-50">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Calculateur de Prix
+          </h2>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Obtenez un devis personnalisé en quelques clics
+          </p>
+        </motion.div>
 
-  async updateCommande(
-    commandeId: string,
-    data: UpdateCommandeRequest
-  ): Promise<Commande> {
-    const response = await fetch(buildAdminUrl(`/commandes/${commandeId}`), {
-      method: "PUT",
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    });
-    return response.json();
-  },
+        <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Configuration */}
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Type de service
+                </label>
+                <select
+                  value={selectedService}
+                  onChange={(e) => setSelectedService(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Sélectionner un service</option>
+                  {pricing?.map((service) => (
+                    <option key={service.id} value={service.id}>
+                      {service.nom} - {service.prixFormate}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-  // Statistiques dashboard
-  async getDashboardStats(): Promise<{
-    userStats: UserStats;
-    commandeStats: CommandeStats;
-    factureStats: FactureStats;
-  }> {
-    const response = await fetch(buildAdminUrl("/stats"), {
-      headers: getAuthHeaders(),
-    });
-    return response.json();
-  },
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nombre de pages : {pageCount}
+                </label>
+                <input
+                  type="range"
+                  min="10"
+                  max="500"
+                  value={pageCount}
+                  onChange={(e) => setPageCount(Number(e.target.value))}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                />
+                <div className="flex justify-between text-sm text-gray-500 mt-1">
+                  <span>10 pages</span>
+                  <span>500 pages</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Résultat */}
+            <div className="flex items-center justify-center">
+              <div className="text-center p-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl">
+                <p className="text-lg text-gray-600 mb-2">Prix estimé</p>
+                <p className="text-4xl font-bold text-blue-600 mb-4">
+                  {calculatePrice}€
+                </p>
+                <p className="text-sm text-gray-500 mb-6">
+                  Délai estimé : {Math.max(3, Math.ceil(pageCount / 50))} jours
+                </p>
+
+                {selectedService && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                    onClick={() => {
+                      // Sauvegarder la sélection et rediriger vers inscription
+                      localStorage.setItem(
+                        "selectedPack",
+                        JSON.stringify({
+                          serviceId: selectedService,
+                          pageCount,
+                          price: calculatePrice,
+                        })
+                      );
+                      window.location.href = "/signup";
+                    }}
+                  >
+                    Commander maintenant
+                  </motion.button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 };
 ```
 
-### 📝 **Types TypeScript Complets**
+---
+
+## 🎣 **Hooks React Query**
+
+### 🔑 **Hook Authentification** (`hooks/useAuth.ts`)
 
 ```typescript
-// types/shared.ts - Types centralisés
-export interface User {
+interface AuthUser {
   id: string;
   prenom: string;
   nom: string;
   email: string;
-  role: Role;
+  role: "USER" | "ADMIN" | "CORRECTOR";
+  isActive: boolean;
+}
+
+interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+interface SignupData {
+  prenom: string;
+  nom: string;
+  email: string;
+  password: string;
+}
+
+export const useAuth = () => {
+  const queryClient = useQueryClient();
+
+  // Query pour l'utilisateur actuel
+  const {
+    data: user,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["auth", "user"],
+    queryFn: async (): Promise<AuthUser | null> => {
+      const token = localStorage.getItem("auth_token");
+      if (!token) return null;
+
+      try {
+        const response = await axios.get("/api/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data.user;
+      } catch (error) {
+        localStorage.removeItem("auth_token");
+        throw error;
+      }
+    },
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Mutation connexion
+  const loginMutation = useMutation({
+    mutationFn: async (credentials: LoginCredentials) => {
+      const response = await axios.post("/api/auth/login", credentials);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      localStorage.setItem("auth_token", data.token);
+      queryClient.setQueryData(["auth", "user"], data.user);
+      toast.success("Connexion réussie !");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Erreur de connexion");
+    },
+  });
+
+  // Mutation inscription
+  const signupMutation = useMutation({
+    mutationFn: async (userData: SignupData) => {
+      const response = await axios.post("/api/auth/register", userData);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      localStorage.setItem("auth_token", data.token);
+      queryClient.setQueryData(["auth", "user"], data.user);
+      toast.success("Inscription réussie ! Bienvenue !");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Erreur d'inscription");
+    },
+  });
+
+  // Fonction déconnexion
+  const logout = useCallback(() => {
+    localStorage.removeItem("auth_token");
+    queryClient.setQueryData(["auth", "user"], null);
+    queryClient.clear();
+    toast.success("Déconnexion réussie");
+  }, [queryClient]);
+
+  // Vérification rôle
+  const hasRole = useCallback(
+    (requiredRole: string) => {
+      if (!user) return false;
+      return user.role === requiredRole;
+    },
+    [user]
+  );
+
+  return {
+    user,
+    isLoading,
+    error,
+    isAuthenticated: !!user,
+    login: loginMutation.mutate,
+    signup: signupMutation.mutate,
+    logout,
+    hasRole,
+    isLoginLoading: loginMutation.isPending,
+    isSignupLoading: signupMutation.isPending,
+  };
+};
+```
+
+### 👨‍💼 **Hook Administration Utilisateurs** (`hooks/useAdminUsers.ts`)
+
+```typescript
+interface AdminUser {
+  id: string;
+  prenom: string;
+  nom: string;
+  email: string;
+  role: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface Commande {
-  id: string;
-  titre: string;
-  description?: string;
-  statut: StatutCommande;
-  userId: string;
-  user?: User;
-  noteCorrecteur?: string;
-  createdAt: string;
-  updatedAt: string;
+interface AdminUsersFilters {
+  search?: string;
+  role?: string;
+  status?: "active" | "inactive";
+  page?: number;
+  limit?: number;
 }
 
-export type StatutCommande =
-  | "EN_ATTENTE"
-  | "EN_COURS"
-  | "TERMINE"
-  | "ANNULEE"
-  | "SUSPENDUE";
-
-export interface CommandeStats {
-  total: number;
-  byStatut: Record<StatutCommande, number>;
-}
-
-export interface UserStats {
-  total: number;
-  actifs: number;
-  inactifs: number;
-  admin: number;
-  users: number;
-  recents: number;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-  };
-}
-```
-
----
-
-## 🚀 État Actuel - Production Ready
-
-### ✅ **Modules Complètement Implémentés**
-
-1. **🌟 Landing Page** : 14 composants + hook pricing (2400+ lignes)
-2. **📊 Dashboard USER** : 12 pages avec AuthContext intégré
-3. **👨‍💼 Administration** : 10 pages avec backend opérationnel
-4. **🎣 React Query** : Hooks messagerie (1000+ lignes) + admin
-5. **💳 Stripe Integration** : Paiements complets et fonctionnels
-6. **🎨 Design System** : Tailwind + Framer Motion + CSS custom
-7. **🔐 Authentification** : JWT + AuthContext + RBAC
-8. **⚡ Performance** : Optimisations et lazy loading ready
-
-### 🆕 **Nouveautés 2025**
-
-#### **Module AdminCommandes Opérationnel**
-
-- ✅ Hook `useAdminCommandes.ts` (359 lignes) avec backend
-- ✅ Composant `CommandeStatusSelect.tsx` avec validation enum
-- ✅ API `/admin/commandes` complète et testée
-- ✅ Statistiques temps réel par statut
-- ✅ Filtres avancés : search, statut, client, dates
-
-#### **Module AdminUtilisateurs Refactorisé**
-
-- ✅ Composants modulaires : `UserTable` (541 lignes), `SearchAndFilters` (370 lignes), `ConfirmationModals`
-- ✅ Accessibilité WCAG 2.1 AA complète
-- ✅ Hook `useAdminUsers.ts` optimisé (263 lignes)
-- ✅ Actions CRUD avec optimistic updates
-
-#### **🆕 Module AdminTarifs - Synchronisation Temps Réel**
-
-- ✅ Hook `useTarifInvalidation.ts` (78 lignes) pour synchronisation admin/landing
-- ✅ Interface CRUD complète avec modal gradient moderne (1233 lignes)
-- ✅ Synchronisation < 2 secondes après modification admin
-- ✅ États de chargement individuels par tarif
-- ✅ Mobile responsive avec cartes adaptatives
-
-#### **🆕 Module AdminPages - CMS Complet**
-
-- ✅ CRUD pages statiques avec éditeur HTML riche (180 lignes)
-- ✅ Génération automatique de slug normalisé
-- ✅ Gestion des statuts : Brouillon → Publié → Archivé
-- ✅ Prévisualisation HTML dans modal
-- ✅ Statistiques par statut avec dashboard visuel
-
-#### **🆕 Module AdminFactures - Gestion Financière**
-
-- ✅ Hook `useAdminFactures.ts` (240 lignes) avec React Query
-- ✅ Mutations pour download PDF, rappels, suppressions
-- ✅ Statistiques financières temps réel
-- ✅ Filtres avancés par statut, dates, montants
-- ✅ Interface responsive avec actions en masse (1177 lignes)
-
-#### **Architecture React Query Avancée**
-
-- ✅ Hooks messagerie utilisateur + admin (1000+ lignes)
-- ✅ Pagination infinie avec intersection observer
-- ✅ Optimistic updates et cache intelligent
-- ✅ Invalidation croisée entre hooks
-- ✅ Hooks tarifs dynamiques avec synchronisation
-
-### 📈 **Métriques Finales - État Juillet 2025**
-
-| Module                     | Lignes     | Composants         | Status                  |
-| -------------------------- | ---------- | ------------------ | ----------------------- |
-| **Landing Page**           | 2700+      | 15                 | ✅ Production           |
-| **Dashboard USER**         | 1800+      | 12 pages           | ✅ Production           |
-| **Administration**         | 3800+      | 10 pages           | ✅ Backend intégré      |
-| **Notifications Système**  | 850+       | 6 composants       | ✅ **NOUVEAU 2025**     |
-| **React Query Hooks**      | 3200+      | 22 hooks           | ✅ Production           |
-| **Design System**          | 870        | CSS/Styles         | ✅ Production           |
-| **Services API**           | 1780+      | API calls          | ✅ Backend intégré      |
-| **Types TypeScript**       | 800+       | Interfaces         | ✅ Production           |
-| **Tests & Documentation**  | 1300+      | 95% coverage (Architecture Séparée) | ✅ Production           |
-| **Formulaires Corrigés**   | 500+       | API intégrée       | ✅ **CORRIGÉ JUILLET**  |
-| **TOTAL**                  | **15300+** | **93+ composants** | **✅ PRODUCTION READY** |
-
-### 🆕 **Nouvelles Fonctionnalités 2025**
-
-#### **📧 Système d'Emails Centralisé - NOUVEAU JUILLET 2025**
-- ✅ **🆕 Zero configuration frontend** : Plus besoin de gérer l'envoi d'emails manuellement
-- ✅ **🆕 Double notification automatique** : Interface + Email pour chaque action
-- ✅ **🆕 Templates HTML professionnels** : 18 templates responsive et cohérents
-- ✅ **🆕 Architecture événementielle** : EventBus backend transparent pour le frontend
-- ✅ **Integration transparente** : Formulaires contact/aide génèrent automatiquement :
-  - ✉️ Email confirmation visiteur avec template personnalisé
-  - 🔔 Notification admin dans l'interface temps réel
-  - 📧 Email admin avec détails complets et call-to-action
-- ✅ **Performance optimisée** : Queue asynchrone, pas de blocage UI
-- ✅ **Gestion d'erreurs robuste** : Retry automatique, fallback notifications
-
-#### **📞 Formulaire de Contact Intégré - NOUVEAU JUILLET 2025**
-- ✅ **API Backend intégrée** : Endpoint POST `/api/public/contact` opérationnel
-- ✅ **🆕 Emails automatiques intégrés** : Confirmation visiteur + notification admin
-- ✅ **Validation complète** : Côté client (HTML5) + serveur (Zod)
-- ✅ **États de chargement** : Spinner animé + bouton désactivé pendant envoi
-- ✅ **Feedback utilisateur** : Messages success/error avec styles visuels
-- ✅ **Reset automatique** : Formulaire vidé après envoi réussi
-- ✅ **Gestion d'erreurs** : Messages spécifiques selon type d'erreur
-- ✅ **Canaux multiples** : Email, téléphone, WhatsApp, consultation gratuite
-- ✅ **Design responsive** : Interface 2 colonnes (infos + formulaire)
-
-#### **🔔 Système de Notifications Temps Réel**
-- ✅ **Polling automatique** : 15 secondes avec optimisation réseau
-- ✅ **Cloche interactive** : Badge compteur + menu déroulant animé
-- ✅ **Page dédiée** : Interface complète avec filtres et pagination infinie
-- ✅ **Actions CRUD** : Marquer lu, supprimer, navigation intelligente
-- ✅ **Types spécialisés** : INFO, SUCCESS, WARNING, ERROR, PAYMENT, ORDER, MESSAGE, SYSTEM
-- ✅ **Intégration admin** : Génération automatique pour événements système
-
-#### **📊 Statistiques Admin Refactorisées**
-- ✅ **Données Prisma réelles** : Calculs temps réel depuis la base de données
-- ✅ **Métriques évolutives** : Comparaison mois actuel vs précédent avec %
-- ✅ **Dashboard interactif** : Cartes métriques avec graphiques d'évolution
-- ✅ **API optimisée** : Endpoint `/admin/stats` avec agrégations performantes
-
-#### **🧪 Architecture de Tests Robuste - NOUVEAU JUILLET 2025**
-- ✅ **Séparation claire** : Tests unitaires (CI/CD) vs tests d'intégration (local)
-- ✅ **Configurations duales** : `vite.config.ts` (CI) et `vite.config.integration.ts` (local)
-- ✅ **GitHub Actions optimisé** : Tests unitaires uniquement pour stabilité maximale
-- ✅ **Développement local** : Tests complets avec backend requis pour intégration
-- ✅ **Scripts spécialisés** : `test:unit`, `test:integration`, `test:all` pour tous contextes
-- ✅ **Documentation complète** : Guide d'architecture dans `tests/README.md`
-- ✅ **Couverture maintenue** : 95%+ avec tests ciblés par environnement
-- ✅ **Pipeline stable** : Plus d'échecs CI/CD dus aux dépendances backend
-
-**Structure des tests :**
-```
-frontend/
-├── src/__tests__/           # Tests unitaires (CI/CD)
-│   ├── components/          # Tests composants isolés
-│   ├── hooks/               # Tests hooks React Query
-│   └── utils/               # Tests utilitaires
-├── tests/
-│   ├── integration/         # Tests intégration (local + backend)
-│   ├── unit/                # Tests unitaires complémentaires
-│   └── README.md            # Documentation architecture
-├── vite.config.ts           # Config CI/CD (unitaires)
-└── vite.config.integration.ts # Config locale (tous tests)
-```
-
-**Scripts de test :**
-```bash
-npm run test:unit        # Tests unitaires (CI/CD)
-npm run test:integration # Tests intégration (local + backend)
-npm run test:all         # Tous les tests (local)
-npm run test:e2e         # Tests E2E Cypress
-```
-
-#### **🚀 Architecture React Query Avancée**
-- ✅ **15 hooks spécialisés** : 3000+ lignes de logique métier
-- ✅ **Cache intelligent** : Invalidation ciblée et background refresh
-- ✅ **Optimistic updates** : UI instantanée avec rollback automatique
-- ✅ **Polling adaptatif** : Fréquence variable selon le contexte
-
-### 🎯 **Prêt pour Production - Version 2025**
-
-Le frontend Staka Livres est maintenant **100% opérationnel** avec les dernières technologies :
-
-#### **🏗️ Architecture Moderne**
-- **93+ composants modulaires** : Architecture scalable et maintenable
-- **Design System unifié** : Variables CSS, tokens design et accessibilité WCAG 2.1
-- **TypeScript strict** : 800+ lignes de types pour la sécurité type
-
-#### **⚡ Performance Optimisée**
-- **< 1.5s chargement initial** : Lazy loading et code splitting
-- **< 50ms interactions** : Optimisations React et animations GPU
-- **Cache intelligent** : React Query avec stratégies adaptées par contexte
-- **Bundle optimisé** : Tree shaking et minification avancée
-
-#### **🔐 Sécurité & Accessibilité**
-- **JWT + AuthContext** : Authentification sécurisée avec refresh tokens
-- **RBAC complet** : Contrôle d'accès basé sur les rôles
-- **CSP headers** : Content Security Policy pour XSS protection
-- **WCAG 2.1 AA** : Accessibilité complète avec navigation clavier
-
-#### **📱 Expérience Utilisateur**
-- **Responsive natif** : Mobile-first design sur tous composants
-- **Animations fluides** : Framer Motion avec spring physics
-- **États de chargement** : Feedback visuel pour toutes les actions
-- **Notifications temps réel** : Système de notification moderne
-
-#### **🤝 Intégration Backend**
-- **API opérationnelle** : 65+ endpoints backend intégrés et testés
-- **Synchronisation temps réel** : Admin → Landing sans rechargement
-- **Tests E2E validés** : Fonctionnalités testées en conditions réelles
-- **Monitoring intégré** : Logs et métriques de performance
-
-#### **🔄 Workflows Automatisés**
-- **CI/CD ready** : Pipeline de déploiement automatisé
-- **Tests automatisés** : 95%+ coverage avec architecture séparée (Vitest + Cypress)
-- **Pipeline optimisé** : Tests unitaires en CI/CD, intégration en local
-- **Documentation vivante** : Guides techniques maintenus automatiquement
-
-Le système est **enterprise-ready**, **scalable** et **maintenu selon les meilleures pratiques** avec une expérience utilisateur complète et moderne, de la découverte marketing jusqu'à la gestion avancée des projets et de l'administration.
-
-### 🛠️ **Troubleshooting - Guide de Résolution**
-
-#### **🔧 Problèmes Formulaires**
-
-##### **Erreur "Token JWT manquant" sur formulaire d'aide**
-```typescript
-// Solution : Vérifier la récupération du token
-const getToken = () => {
-  const token = localStorage.getItem('authToken') || 
-                sessionStorage.getItem('authToken');
-  if (!token) {
-    console.error('❌ Token JWT non trouvé');
-    // Rediriger vers login si nécessaire
-    window.location.href = '/login';
-    return null;
-  }
-  return token;
-};
-
-// Headers avec vérification
-const headers = {
-  'Content-Type': 'application/json',
-  'Authorization': `Bearer ${getToken()}`,
-};
-```
-
-##### **Formulaire d'aide ne s'envoie pas**
-```bash
-# 1. Vérifier l'endpoint API
-curl -X POST http://localhost:3000/api/messages \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{"sujet":"test","message":"test","source":"client-help"}'
-
-# 2. Vérifier les logs backend
-docker compose logs app | grep -i "POST /api/messages"
-
-# 3. Vérifier les variables d'environnement
-docker compose exec app printenv | grep -E "(JWT_SECRET|DATABASE_URL)"
-```
-
-##### **SendGrid ne fonctionne pas**
-```bash
-# Vérifier configuration SendGrid
-docker compose exec app node -e "
-  const sgMail = require('@sendgrid/mail');
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-  console.log('API Key configurée:', !!process.env.SENDGRID_API_KEY);
-  
-  // Test envoi simple
-  sgMail.send({
-    to: 'test@example.com',
-    from: process.env.SENDGRID_FROM_EMAIL,
-    subject: 'Test SendGrid',
-    text: 'Test de configuration'
-  }).then(() => console.log('✅ SendGrid OK'))
-    .catch(err => console.error('❌ SendGrid Error:', err));
-"
-```
-
-#### **🧪 Problèmes Tests Frontend**
-
-##### **Tests d'intégration échouent en CI/CD**
-```bash
-# Problème : Tests d'intégration tentent de se connecter au backend
-# Solution : Utiliser les scripts appropriés selon l'environnement
-
-# CI/CD GitHub Actions - Tests unitaires uniquement
-npm run test:unit
-
-# Développement local - Tests complets
-npm run test:all
-
-# Tests d'intégration - Backend requis
-docker compose up -d  # Démarrer backend
-npm run test:integration
-
-# Vérifier configuration
-cat vite.config.ts | grep -A 10 "exclude"
-cat vite.config.integration.ts | grep -A 10 "include"
-```
-
-##### **Tests unitaires échouent**
-```bash
-# Vérifier mocks et isolation
-npm run test:unit -- --reporter=verbose
-
-# Nettoyer cache Vitest
-rm -rf node_modules/.vitest
-npm run test:unit
-
-# Debug tests spécifiques
-npm run test:unit -- --run src/__tests__/components/
-npm run test:unit -- --run src/__tests__/hooks/
-```
-
-##### **Configuration tests incorrecte**
-```bash
-# Vérifier exclusions CI/CD
-npx vitest list --config vite.config.ts
-
-# Vérifier inclusions locales
-npx vitest list --config vite.config.integration.ts
-
-# Comparer configurations
-diff vite.config.ts vite.config.integration.ts
-```
-
-##### **Network Error dans tests**
-```bash
-# Vérifier que les tests unitaires n'appellent pas d'API
-npm run test:unit -- --reporter=verbose | grep -i "network\|fetch\|axios"
-
-# Vérifier les mocks
-cat src/__tests__/setup.ts
-cat src/__tests__/utils/mockApi.ts
-
-# Debug tests d'intégration
-npm run test:integration -- --reporter=verbose
-```
-
-#### **🔑 Configuration Token Authentification**
-
-##### **Setup JWT en développement**
-```typescript
-// frontend/src/utils/auth.ts
-export const setAuthToken = (token: string) => {
-  localStorage.setItem('authToken', token);
-  // Optionnel : headers par défaut pour axios
-  if (window.axios) {
-    window.axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  }
-};
-
-export const getAuthToken = (): string | null => {
-  return localStorage.getItem('authToken');
-};
-
-export const clearAuthToken = () => {
-  localStorage.removeItem('authToken');
-  sessionStorage.removeItem('authToken');
-  if (window.axios) {
-    delete window.axios.defaults.headers.common['Authorization'];
-  }
-};
-```
-
-##### **Validation côté serveur**
-```typescript
-// backend/src/middleware/auth.ts
-const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-
-  if (!token) {
-    return res.status(401).json({ 
-      error: 'Token d\'authentification requis',
-      details: 'Header Authorization manquant ou malformé'
-    });
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET!, (err: any, user: any) => {
-    if (err) {
-      return res.status(403).json({ 
-        error: 'Token invalide',
-        details: err.message 
+export const useAdminUsers = (filters: AdminUsersFilters = {}) => {
+  const queryClient = useQueryClient();
+
+  // Query liste utilisateurs
+  const {
+    data: usersData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["admin", "users", filters],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== "") {
+          params.append(key, String(value));
+        }
       });
-    }
-    req.user = user;
-    next();
+
+      const response = await axios.get(`/api/admin/users?${params}`);
+      return response.data;
+    },
+    staleTime: 30 * 1000, // 30 secondes
+    keepPreviousData: true,
   });
+
+  // Mutation création utilisateur
+  const createUserMutation = useMutation({
+    mutationFn: async (
+      userData: Omit<AdminUser, "id" | "createdAt" | "updatedAt">
+    ) => {
+      const response = await axios.post("/api/admin/users", userData);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      toast.success("Utilisateur créé avec succès");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Erreur lors de la création"
+      );
+    },
+  });
+
+  // Mutation modification utilisateur
+  const updateUserMutation = useMutation({
+    mutationFn: async ({
+      id,
+      ...userData
+    }: Partial<AdminUser> & { id: string }) => {
+      const response = await axios.put(`/api/admin/users/${id}`, userData);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      toast.success("Utilisateur modifié avec succès");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Erreur lors de la modification"
+      );
+    },
+  });
+
+  // Mutation suppression utilisateur
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      await axios.delete(`/api/admin/users/${userId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      toast.success("Utilisateur supprimé avec succès");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Erreur lors de la suppression"
+      );
+    },
+  });
+
+  // Mutation changement rôle
+  const changeRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      const response = await axios.put(`/api/admin/users/${userId}/role`, {
+        role,
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      toast.success("Rôle modifié avec succès");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Erreur lors du changement de rôle"
+      );
+    },
+  });
+
+  return {
+    users: usersData?.users || [],
+    totalUsers: usersData?.total || 0,
+    totalPages: usersData?.totalPages || 0,
+    currentPage: usersData?.page || 1,
+    isLoading,
+    error,
+    createUser: createUserMutation.mutate,
+    updateUser: updateUserMutation.mutate,
+    deleteUser: deleteUserMutation.mutate,
+    changeRole: changeRoleMutation.mutate,
+    isCreating: createUserMutation.isPending,
+    isUpdating: updateUserMutation.isPending,
+    isDeleting: deleteUserMutation.isPending,
+    isChangingRole: changeRoleMutation.isPending,
+  };
 };
 ```
 
-#### **📧 Debug SendGrid**
+### 🔔 **Hook Notifications** (`hooks/useNotifications.ts`)
 
-##### **Variables d'environnement requises**
-```env
-# Configuration SendGrid obligatoire
-SENDGRID_API_KEY="SG.xxxxxxxxxxxxxxxxxxxxx"
-SENDGRID_FROM_EMAIL="support@staka.fr"
-SENDGRID_FROM_NAME="Support Staka Livres"
-
-# Templates email (optionnel)
-SENDGRID_TEMPLATE_CONTACT="d-xxxxxxxxxx"
-SENDGRID_TEMPLATE_HELP="d-xxxxxxxxxx"
-```
-
-##### **Test de connectivité SendGrid**
-```bash
-# Script de test backend
-npm run test:sendgrid
-
-# Ou directement
-docker compose exec app npm run test:sendgrid
-```
-
-##### **Logs et Monitoring**
 ```typescript
-// Service de logging pour debug
-const logEmailSent = (emailData: any, result: any) => {
-  console.log('📧 Email envoyé:', {
-    to: emailData.to,
-    subject: emailData.subject,
-    messageId: result.messageId,
-    timestamp: new Date().toISOString()
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type:
+    | "INFO"
+    | "SUCCESS"
+    | "WARNING"
+    | "ERROR"
+    | "PAYMENT"
+    | "ORDER"
+    | "MESSAGE"
+    | "SYSTEM";
+  priority: "FAIBLE" | "NORMALE" | "HAUTE" | "URGENTE";
+  isRead: boolean;
+  actionUrl?: string;
+  createdAt: string;
+}
+
+export const useNotifications = () => {
+  const queryClient = useQueryClient();
+
+  // Query liste notifications
+  const {
+    data: notifications,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: async (): Promise<Notification[]> => {
+      const response = await axios.get("/api/notifications");
+      return response.data.notifications;
+    },
+    refetchInterval: 15000, // Polling 15 secondes
+    staleTime: 10000, // 10 secondes
+    retry: 3,
   });
-};
 
-const logEmailError = (emailData: any, error: any) => {
-  console.error('❌ Erreur email:', {
-    to: emailData.to,
-    subject: emailData.subject,
-    error: error.message,
-    code: error.code,
-    timestamp: new Date().toISOString()
+  // Query compteur non lues
+  const { data: unreadCount } = useQuery({
+    queryKey: ["notifications", "unread-count"],
+    queryFn: async (): Promise<number> => {
+      const response = await axios.get("/api/notifications/unread-count");
+      return response.data.count;
+    },
+    refetchInterval: 15000,
+    staleTime: 10000,
   });
+
+  // Mutation marquer comme lue
+  const markAsReadMutation = useMutation({
+    mutationFn: async (notificationId: string) => {
+      await axios.put(`/api/notifications/${notificationId}/read`);
+    },
+    onSuccess: () => {
+      // Mise à jour optimiste
+      queryClient.setQueryData(
+        ["notifications"],
+        (old: Notification[] | undefined) =>
+          old?.map((notif) =>
+            notif.id === arguments[0] ? { ...notif, isRead: true } : notif
+          )
+      );
+      queryClient.invalidateQueries({
+        queryKey: ["notifications", "unread-count"],
+      });
+    },
+  });
+
+  // Mutation marquer toutes comme lues
+  const markAllAsReadMutation = useMutation({
+    mutationFn: async () => {
+      await axios.put("/api/notifications/read-all");
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(
+        ["notifications"],
+        (old: Notification[] | undefined) =>
+          old?.map((notif) => ({ ...notif, isRead: true }))
+      );
+      queryClient.setQueryData(["notifications", "unread-count"], 0);
+    },
+  });
+
+  // Mutation suppression notification
+  const deleteNotificationMutation = useMutation({
+    mutationFn: async (notificationId: string) => {
+      await axios.delete(`/api/notifications/${notificationId}`);
+    },
+    onSuccess: (_, notificationId) => {
+      queryClient.setQueryData(
+        ["notifications"],
+        (old: Notification[] | undefined) =>
+          old?.filter((notif) => notif.id !== notificationId)
+      );
+      queryClient.invalidateQueries({
+        queryKey: ["notifications", "unread-count"],
+      });
+    },
+  });
+
+  // Notifications par type
+  const notificationsByType = useMemo(() => {
+    if (!notifications) return {};
+
+    return notifications.reduce((acc, notification) => {
+      if (!acc[notification.type]) {
+        acc[notification.type] = [];
+      }
+      acc[notification.type].push(notification);
+      return acc;
+    }, {} as Record<string, Notification[]>);
+  }, [notifications]);
+
+  // Notifications non lues
+  const unreadNotifications = useMemo(
+    () => notifications?.filter((n) => !n.isRead) || [],
+    [notifications]
+  );
+
+  return {
+    notifications: notifications || [],
+    unreadNotifications,
+    notificationsByType,
+    unreadCount: unreadCount || 0,
+    isLoading,
+    error,
+    markAsRead: markAsReadMutation.mutate,
+    markAllAsRead: markAllAsReadMutation.mutate,
+    deleteNotification: deleteNotificationMutation.mutate,
+    isMarkingAsRead: markAsReadMutation.isPending,
+    isMarkingAllAsRead: markAllAsReadMutation.isPending,
+    isDeletingNotification: deleteNotificationMutation.isPending,
+  };
 };
 ```
-
-#### **🔄 Résolution Automatique**
-
-##### **Script de diagnostic complet**
-```bash
-#!/bin/bash
-# scripts/diagnose-forms.sh
-
-echo "🔍 Diagnostic des formulaires Staka Livres"
-echo "=========================================="
-
-# 1. Vérifier services backend
-echo "1. Vérification backend..."
-curl -f http://localhost:3000/api/health || echo "❌ Backend inaccessible"
-
-# 2. Vérifier base de données
-echo "2. Vérification base de données..."
-docker compose exec db mysql -u staka -pstaka -e "USE stakalivres; SHOW TABLES;" || echo "❌ DB inaccessible"
-
-# 3. Vérifier JWT
-echo "3. Vérification JWT..."
-docker compose exec app node -e "console.log('JWT_SECRET:', !!process.env.JWT_SECRET)" || echo "❌ JWT non configuré"
-
-# 4. Vérifier SendGrid
-echo "4. Vérification SendGrid..."
-docker compose exec app node -e "console.log('SENDGRID:', !!process.env.SENDGRID_API_KEY)" || echo "❌ SendGrid non configuré"
-
-echo "✅ Diagnostic terminé"
-```
-
-##### **Auto-fix commun**
-```bash
-# Commandes de récupération automatique
-npm run fix:forms
-
-# Équivalent à :
-# 1. Restart services
-docker compose restart app
-
-# 2. Clear cache
-docker compose exec app npm run cache:clear
-
-# 3. Migrate DB si nécessaire
-docker compose exec app npm run db:migrate
-
-# 4. Test endpoints
-curl -X POST http://localhost:3000/api/messages \
-  -H "Content-Type: application/json" \
-  -d '{"test":true}'
-```
-
-### 🔮 **Roadmap Future**
-
-#### **Q3 2025 - Améliorations UX**
-- WebSocket pour notifications instantanées
-- Mode sombre automatique
-- Progressive Web App (PWA) complète
-- Optimisations performance mobile avancées
-
-#### **Q4 2025 - Features Avancées**
-- Système de commentaires temps réel
-- Tableaux de bord personnalisables
-- Analytics utilisateur intégrées
-- API GraphQL optionnelle
 
 ---
 
-## 🎯 Tarifs Dynamiques - Intégration Complète 2025
+## 📄 **Pages Architecture**
 
-### 🚀 **Architecture des Tarifs Dynamiques**
-
-L'intégration des tarifs dynamiques permet une **synchronisation temps réel** entre l'espace admin et la landing page, éliminant complètement les données hard-codées.
-
-#### **🔄 Flux de Synchronisation**
+### 🏠 **Landing Page** (`pages/LandingPage.tsx`)
 
 ```typescript
-// Schema de synchronisation React Query
-Admin modifie tarif
-  → API Call (PUT/POST/DELETE)
-  → queryClient.invalidateQueries(["tarifs", "public"])
-  → Refetch automatique
-  → PricingCalculator + Packs se mettent à jour
-  → User voit les changements instantanément
-```
+const LandingPage: React.FC = () => {
+  const { data: pricing, isLoading } = usePricing();
 
-#### **🧩 Composants UI Réutilisables**
-
-**Loader.tsx** - Composant de chargement uniforme
-
-```typescript
-interface LoaderProps {
-  size?: "sm" | "md" | "lg";
-  message?: string;
-  className?: string;
-  color?: "blue" | "gray" | "white";
-}
-
-// Usage
-<Loader message="Chargement des tarifs..." size="lg" color="blue" />;
-```
-
-**ErrorMessage.tsx** - Gestion d'erreurs avec retry
-
-```typescript
-interface ErrorMessageProps {
-  message?: string;
-  onRetry?: () => void;
-  retryLabel?: string;
-  variant?: "warning" | "error" | "info";
-  showIcon?: boolean;
-  size?: "sm" | "md" | "lg";
-}
-
-// Usage
-<ErrorMessage
-  message="Tarifs indisponibles"
-  onRetry={refreshTarifs}
-  variant="warning"
-  retryLabel="Réessayer"
-/>;
-```
-
-#### **📊 PricingCalculator.tsx - Version Dynamique**
-
-```typescript
-export default function PricingCalculator() {
-  const { tarifs, isLoading, error, refreshTarifs } = usePricing({
-    initialPages: 150,
-    enableDebugLogs: process.env.NODE_ENV === "development",
-  });
-
-  // Génération dynamique des cartes de tarification
-  const getPricingCards = () => {
-    if (!tarifs || tarifs.length === 0) {
-      return defaultCards; // Fallback sécurisé
-    }
-
-    const correctionTarifs = tarifs
-      .filter(
-        (t) =>
-          t.actif &&
-          (t.typeService === "Correction" ||
-            t.nom.toLowerCase().includes("correction"))
-      )
-      .sort((a, b) => a.ordre - b.ordre)
-      .slice(0, 3);
-
-    return correctionTarifs.map((tarif, index) => ({
-      id: tarif.id,
-      value: tarif.prixFormate,
-      unit: tarif.dureeEstimee || tarif.typeService,
-      label: tarif.nom,
-      color: colors[index],
-      description: tarif.description,
-    }));
-  };
-
-  // États de chargement et d'erreur
-  if (isLoading) return <Loader message="Chargement des tarifs..." />;
-
-  return (
-    <section id="calculateur-prix">
-      {error && (
-        <ErrorMessage
-          message="Tarifs indisponibles, utilisation des tarifs par défaut"
-          onRetry={refreshTarifs}
-          variant="warning"
-        />
-      )}
-
-      {/* Pricing Rules Display - Version Dynamique */}
-      <div className="grid gap-6 md:grid-cols-3">
-        {getPricingCards().map((card) => (
-          <PricingCard key={card.id} {...card} />
-        ))}
-      </div>
-    </section>
-  );
-}
-```
-
-#### **📦 Packs.tsx - Génération Dynamique**
-
-```typescript
-export default function Packs() {
-  const { tarifs, isLoading, error, refreshTarifs } = usePricing({
-    enableDebugLogs: process.env.NODE_ENV === "development",
-  });
-
-  // Génération memoïsée des packs depuis les tarifs
-  const packs = React.useMemo(() => {
-    if (!tarifs || tarifs.length === 0) {
-      return getDefaultPacks();
-    }
-    return buildPacksFromTarifs(tarifs);
-  }, [tarifs]);
+  useEffect(() => {
+    // SEO meta tags
+    document.title = "Staka Livres - Correction professionnelle de manuscrits";
+    document
+      .querySelector('meta[name="description"]')
+      ?.setAttribute(
+        "content",
+        "Services professionnels de correction et d'édition de manuscrits. Expertise reconnue, délais respectés, qualité garantie."
+      );
+  }, []);
 
   if (isLoading) {
-    return <Loader message="Chargement des offres..." size="lg" />;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" text="Chargement de la page..." />
+      </div>
+    );
   }
 
   return (
-    <section id="packs">
-      {error && (
-        <ErrorMessage
-          message="Offres indisponibles, affichage des offres par défaut"
-          onRetry={refreshTarifs}
-          variant="warning"
-        />
-      )}
+    <div className="min-h-screen">
+      {/* Navigation sticky */}
+      <Navigation />
 
-      <div className="grid md:grid-cols-3 gap-8">
-        {packs.map((pack) => (
-          <PackCard key={pack.id} {...pack} />
-        ))}
-      </div>
-    </section>
+      {/* Hero section */}
+      <Hero />
+
+      {/* Services */}
+      <Services />
+
+      {/* Calculateur de prix */}
+      <PricingCalculator />
+
+      {/* Packs services */}
+      <Packs pricing={pricing} />
+
+      {/* Échantillon gratuit */}
+      <FreeSample />
+
+      {/* Témoignages */}
+      <Testimonials />
+
+      {/* FAQ */}
+      <FAQ />
+
+      {/* Section contact */}
+      <Contact />
+
+      {/* Footer */}
+      <Footer />
+
+      {/* WhatsApp widget flottant */}
+      <WhatsAppWidget />
+    </div>
   );
-}
-
-// Fonction de construction intelligente des packs
-function buildPacksFromTarifs(tarifs: TarifAPI[]): Pack[] {
-  const activeTarifs = tarifs
-    .filter((t) => t.actif)
-    .sort((a, b) => a.ordre - b.ordre);
-
-  return [
-    // Pack KDP si disponible
-    buildKDPPack(activeTarifs),
-    // Pack Correction Standard
-    buildCorrectionPack(activeTarifs),
-    // Pack Réécriture Avancée
-    buildReecriturePack(activeTarifs),
-  ]
-    .filter(Boolean)
-    .slice(0, 3);
-}
+};
 ```
 
-### 🧪 **Tests Complets**
-
-#### **Tests Unitaires Vitest**
+### 👨‍💼 **Dashboard Admin** (`pages/admin/AdminDashboard.tsx`)
 
 ```typescript
-// frontend/src/__tests__/tarifsInvalidation.test.tsx
-describe("Invalidation des tarifs", () => {
-  it("devrait se mettre à jour après invalidation des tarifs", async () => {
-    render(
-      <QueryClientProvider client={queryClient}>
-        <PricingCalculator />
-      </QueryClientProvider>
+const AdminDashboard: React.FC = () => {
+  const { data: stats, isLoading } = useAdminStats();
+  const { unreadCount } = useNotifications();
+
+  const statCards = [
+    {
+      title: "Chiffre d'affaires",
+      value: stats?.revenue.total || 0,
+      format: "currency",
+      evolution: stats?.revenue.evolution || 0,
+      icon: CurrencyEuroIcon,
+      color: "blue",
+    },
+    {
+      title: "Nouveaux utilisateurs",
+      value: stats?.users.newThisMonth || 0,
+      format: "number",
+      evolution: stats?.users.evolution || 0,
+      icon: UsersIcon,
+      color: "green",
+    },
+    {
+      title: "Commandes",
+      value: stats?.orders.thisMonth || 0,
+      format: "number",
+      evolution: stats?.orders.evolution || 0,
+      icon: ShoppingCartIcon,
+      color: "purple",
+    },
+    {
+      title: "Notifications",
+      value: unreadCount,
+      format: "number",
+      evolution: 0,
+      icon: BellIcon,
+      color: "red",
+    },
+  ];
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <LoadingSpinner size="lg" text="Chargement du dashboard..." />
+        </div>
+      </AdminLayout>
     );
+  }
 
-    // Attendre le chargement initial
-    await waitFor(() => {
-      expect(screen.getByText("Correction Standard")).toBeInTheDocument();
-    });
+  return (
+    <AdminLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600">Vue d'ensemble de votre activité</p>
+        </div>
 
-    // Simuler une mise à jour des tarifs
-    mockFetchTarifs.mockResolvedValue(mockTarifsUpdated);
+        {/* Stats cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {statCards.map((stat, index) => (
+            <motion.div
+              key={stat.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+            >
+              <StatCard {...stat} />
+            </motion.div>
+          ))}
+        </div>
 
-    // Invalider le cache (simule ce qui se passe en admin)
-    await queryClient.invalidateQueries({
-      queryKey: ["tarifs", "public"],
-      exact: true,
-    });
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-semibold mb-4">
+              Évolution du chiffre d'affaires
+            </h3>
+            <RevenueChart data={stats?.revenue.monthly} />
+          </div>
 
-    // Vérifier la mise à jour
-    await waitFor(() => {
-      expect(
-        screen.getByText("Correction Standard - Mise à jour")
-      ).toBeInTheDocument();
-      expect(screen.getByText("2.50€")).toBeInTheDocument();
-    });
-  });
-});
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-semibold mb-4">Commandes par statut</h3>
+            <OrderStatusChart data={stats?.orders.byStatus} />
+          </div>
+        </div>
+
+        {/* Recent activities */}
+        <div className="bg-white rounded-lg shadow">
+          <div className="p-6 border-b">
+            <h3 className="text-lg font-semibold">Activités récentes</h3>
+          </div>
+          <RecentActivities />
+        </div>
+      </div>
+    </AdminLayout>
+  );
+};
 ```
 
-#### **Tests E2E Cypress**
+### 💬 **Page Messagerie** (`pages/MessagesPage.tsx`)
 
 ```typescript
-// frontend/cypress/e2e/tarifsSync.cy.ts
-it("devrait synchroniser un changement de tarif entre admin et landing", () => {
-  // 1. Modifier un tarif en admin
-  cy.visit("/admin/tarifs");
-  cy.get('[data-testid="edit-tarif-btn"]').first().click();
-  cy.get('[data-testid="tarif-prix-input"]').clear().type("2.50");
-  cy.get('[data-testid="save-tarif-btn"]').click();
+const MessagesPage: React.FC = () => {
+  const [selectedConversationId, setSelectedConversationId] = useState<
+    string | null
+  >(null);
+  const { user } = useAuth();
 
-  // 2. Vérifier sur la landing page
-  cy.visit("/");
-  cy.contains("2.50€").should("be.visible");
-  cy.contains("2€").should("not.exist");
-});
+  const {
+    conversations,
+    messages,
+    isLoading,
+    sendMessage,
+    markAsRead,
+    isSendingMessage,
+  } = useMessages(selectedConversationId);
+
+  const handleSendMessage = async (content: string, attachments?: File[]) => {
+    if (!selectedConversationId) return;
+
+    await sendMessage({
+      content,
+      conversationId: selectedConversationId,
+      attachments,
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-lg shadow-lg h-[600px] flex">
+          {/* Sidebar conversations */}
+          <div className="w-1/3 border-r border-gray-200">
+            <div className="p-4 border-b">
+              <h2 className="text-lg font-semibold text-gray-900">Messages</h2>
+            </div>
+
+            <div className="overflow-y-auto h-full">
+              {isLoading ? (
+                <div className="p-4">
+                  <LoadingSpinner size="md" text="Chargement..." />
+                </div>
+              ) : (
+                <ConversationList
+                  conversations={conversations}
+                  selectedId={selectedConversationId}
+                  onSelect={setSelectedConversationId}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Messages area */}
+          <div className="flex-1 flex flex-col">
+            {selectedConversationId ? (
+              <>
+                <div className="flex-1 overflow-y-auto p-4">
+                  <MessageThread
+                    messages={messages}
+                    currentUserId={user?.id}
+                    onMarkAsRead={markAsRead}
+                  />
+                </div>
+
+                <div className="border-t p-4">
+                  <MessageComposer
+                    onSend={handleSendMessage}
+                    isLoading={isSendingMessage}
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-gray-500">
+                <div className="text-center">
+                  <InboxIcon className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                  <p>Sélectionnez une conversation pour commencer</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 ```
-
-### 📊 **Avantages de l'Intégration**
-
-#### **✅ Avant vs Après**
-
-| Aspect               | Avant          | Après              |
-| -------------------- | -------------- | ------------------ |
-| **Données**          | Hard-codées    | 100% dynamiques    |
-| **Synchronisation**  | Aucune         | Instantanée < 2s   |
-| **Gestion d'erreur** | Basique        | Robuste avec retry |
-| **Fallbacks**        | Inexistants    | Automatiques       |
-| **Performance**      | Multiple fetch | Cache partagé      |
-| **Maintenance**      | Manuelle       | Automatique        |
-
-#### **🚀 Fonctionnalités Ajoutées**
-
-1. **Synchronisation temps réel** : Admin → Landing sans reload
-2. **Gestion d'erreurs robuste** : Messages informatifs + retry
-3. **Fallbacks intelligents** : Données par défaut en cas d'échec
-4. **Cache optimisé** : Partage React Query entre composants
-5. **Loading states** : UX fluide avec indicateurs visuels
-6. **Debug mode** : Logs détaillés en développement
-
-### 🎛️ **Utilisation des Composants**
-
-#### **Import des Composants UI**
-
-```typescript
-import Loader from "../ui/Loader";
-import ErrorMessage from "../ui/ErrorMessage";
-```
-
-#### **Exemples d'Usage**
-
-```typescript
-// Loader avec message personnalisé
-<Loader message="Chargement des offres..." size="lg" />
-
-// ErrorMessage avec retry
-<ErrorMessage
-  message="Erreur de connexion"
-  onRetry={() => refetch()}
-  variant="error"
-  retryLabel="Réessayer"
-/>
-
-// States conditionnels
-{isLoading && <Loader message="Chargement..." />}
-{error && <ErrorMessage message="Erreur" onRetry={retry} />}
-{data && <DataComponent data={data} />}
-```
-
-### 🧪 **Commandes de Test**
-
-```bash
-# Tests unitaires
-npm run test -- tarifsInvalidation.test.tsx
-
-# Tests E2E Cypress
-npm run cypress:run -- --spec "cypress/e2e/tarifsSync.cy.ts"
-
-# Test en mode watch
-npm run test:watch
-```
-
-### 📈 **Métriques d'Intégration**
-
-- **Temps de sync admin → landing** : < 2 secondes
-- **Cache invalidation** : < 500ms
-- **Fallback activation** : < 100ms
-- **Coverage tests** : 95%+ sur composants tarifs
-- **Performance** : Aucun impact sur temps de chargement
-
-### 🔮 **Évolutions Futures**
-
-1. **WebSocket sync** : Synchronisation multi-utilisateurs en temps réel
-2. **Optimistic updates** : Mise à jour UI instantanée avant confirmation
-3. **A/B Testing** : Différentes versions de tarifs par segment
-4. **Analytics** : Tracking des interactions avec les tarifs dynamiques
 
 ---
 
-**Frontend Staka Livres** - Architecture React moderne production-ready
+## 🐳 **Déploiement OVH Cloud**
 
-**✨ 70+ composants + Tarifs Dynamiques + Tests complets - 2025**
+### 🏗️ **Configuration Docker Frontend**
+
+#### **Dockerfile Multi-stage**
+
+```dockerfile
+# Dockerfile frontend optimisé
+FROM node:18.20.2-alpine AS builder
+
+WORKDIR /app
+
+# Installation dépendances
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Build application
+COPY . .
+RUN npm run build
+
+# Production avec Nginx
+FROM nginx:1.25-alpine AS production
+
+# Configuration Nginx
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Copy build
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Permissions
+RUN chown -R nginx:nginx /usr/share/nginx/html
+RUN chmod -R 755 /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+#### **Configuration Nginx**
+
+```nginx
+# nginx.conf - Configuration production
+events {
+    worker_connections 1024;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1000;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types
+        text/plain
+        text/css
+        text/xml
+        text/javascript
+        application/json
+        application/javascript
+        application/xml+rss
+        application/atom+xml
+        image/svg+xml;
+
+    server {
+        listen 80;
+        server_name localhost;
+        root /usr/share/nginx/html;
+        index index.html;
+
+        # Security headers
+        add_header X-Frame-Options DENY always;
+        add_header X-Content-Type-Options nosniff always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+        # Handle client routing
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+
+        # API proxy to backend
+        location /api/ {
+            proxy_pass http://backend:3000/;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_cache_bypass $http_upgrade;
+
+            # Timeouts
+            proxy_connect_timeout 60s;
+            proxy_send_timeout 60s;
+            proxy_read_timeout 60s;
+        }
+
+        # Static assets caching
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+            try_files $uri =404;
+        }
+
+        # Health check
+        location /health {
+            access_log off;
+            return 200 "healthy\n";
+            add_header Content-Type text/plain;
+        }
+    }
+}
+```
+
+### 📡 **Scripts Déploiement**
+
+#### **Script Déploiement Frontend**
+
+```bash
+#!/bin/bash
+# deploy-frontend.sh - Déploiement frontend OVH
+
+set -e
+
+echo "🎨 Déploiement Frontend Staka Livres sur OVH..."
+
+# Variables
+SERVER="your-server.ovh.net"
+USER="ubuntu"
+APP_DIR="/opt/staka-livres"
+
+# Build local
+echo "🔨 Build local de l'application..."
+npm run build
+
+# Upload via rsync
+echo "📤 Upload des fichiers..."
+rsync -avz --delete ./dist/ ${USER}@${SERVER}:${APP_DIR}/frontend/dist/
+rsync -avz ./nginx.conf ${USER}@${SERVER}:${APP_DIR}/frontend/
+rsync -avz ./Dockerfile ${USER}@${SERVER}:${APP_DIR}/frontend/
+
+# Commandes serveur distant
+ssh ${USER}@${SERVER} << 'REMOTE_COMMANDS'
+cd /opt/staka-livres/frontend
+
+# Rebuild container
+echo "🐳 Rebuild container frontend..."
+docker build -t staka-frontend .
+
+# Restart service
+echo "🔄 Restart service frontend..."
+docker stop staka-frontend || true
+docker rm staka-frontend || true
+
+docker run -d \
+  --name staka-frontend \
+  --restart unless-stopped \
+  -p 3001:80 \
+  --network staka-network \
+  staka-frontend
+
+# Health check
+echo "🏥 Vérification santé..."
+sleep 5
+curl -f http://localhost:3001/health || exit 1
+
+echo "✅ Frontend déployé avec succès!"
+REMOTE_COMMANDS
+
+echo "🎉 Frontend accessible sur https://your-domain.com"
+```
+
+#### **Docker Compose Production**
+
+```yaml
+# docker-compose.prod.yml - Stack complète
+version: "3.8"
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - staka-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - staka-network
+
+  db:
+    image: mysql:8.4
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=stakalivres
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+    networks:
+      - staka-network
+
+networks:
+  staka-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+```
+
+---
+
+## 🛠️ **Scripts & Commandes**
+
+### 📦 **Scripts NPM**
+
+```json
+{
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext js,jsx,ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --ext js,jsx,ts,tsx --fix",
+    "type-check": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:unit": "vitest run",
+    "test:integration": "vitest run tests/integration/",
+    "test:all": "vitest run --config vite.config.integration.ts",
+    "test:e2e": "cypress run",
+    "test:e2e:open": "cypress open",
+    "test:e2e:critical": "cypress run --config-file cypress.config.critical.cjs",
+    "test:e2e:smoke": "cypress run --config-file cypress.config.smoke.cjs",
+    "test:e2e:integration": "cypress run --spec 'cypress/e2e/integration/**/*.cy.{js,jsx,ts,tsx}'",
+    "test:e2e:payment": "cypress run --spec 'cypress/e2e/critical/payment-*.cy.ts,cypress/e2e/integration/*payment*.cy.ts'",
+    "test:e2e:ci": "npm run test:e2e:critical && npm run test:e2e:smoke",
+    "test:e2e:local": "npm run test:e2e:critical && npm run test:e2e:integration",
+    "test:e2e:all": "npm run test:e2e:critical && npm run test:e2e:smoke && npm run test:e2e:integration"
+  }
+}
+```
+
+### 🧪 **Commandes Tests**
+
+```bash
+# Tests unitaires (CI/CD optimisé)
+npm run test:unit        # Tests avec mocks uniquement
+npm run test:coverage    # Coverage avec rapport HTML
+
+# Tests intégration (local avec backend)
+npm run test:integration # Tests avec API réelle
+npm run test:all         # Suite complète
+
+# Tests E2E Cypress (3 niveaux)
+npm run test:e2e:ci      # Critical + Smoke (< 3min)
+npm run test:e2e:local   # Critical + Integration
+npm run test:e2e:payment # Tests paiement Stripe
+
+# Mode développement
+npm run test --watch     # Mode watch unitaire
+npm run test:e2e:open    # Interface Cypress interactive
+
+# Qualité code
+npm run lint             # ESLint
+npm run lint:fix         # Fix automatique
+npm run type-check       # Vérification TypeScript
+```
+
+### 🚀 **Commandes Build & Deploy**
+
+```bash
+# Développement
+npm run dev              # Serveur dev Vite (port 5173)
+npm run preview          # Preview build production
+
+# Production
+npm run build            # Build optimisé pour production
+./deploy-frontend.sh     # Déploiement OVH automatisé
+
+# Docker
+docker build -t staka-frontend .
+docker run -p 3001:80 staka-frontend
+
+# Health checks
+curl http://localhost:3001/health  # Santé application
+curl http://localhost:3001/api/health  # Santé backend via proxy
+```
+
+---
+
+## 🔍 **Troubleshooting**
+
+### 🐛 **Problèmes Courants**
+
+#### **Erreurs Build**
+
+```bash
+# Error: Cannot resolve module
+- Vérifier les imports relatifs/absolus
+- npm install pour dépendances manquantes
+- Nettoyer cache : rm -rf node_modules .vite dist
+
+# Error: TypeScript errors
+- npm run type-check pour détails
+- Vérifier types dans src/types/
+- Redémarrer TS server dans IDE
+```
+
+#### **Erreurs Tests**
+
+```bash
+# Tests unitaires échouent en CI/CD
+- Vérifier exclusion tests/integration/ dans vite.config.ts
+- S'assurer que les mocks sont corrects
+- Tests doivent être indépendants du backend
+
+# Tests intégration échouent en local
+- Vérifier que le backend tourne (docker compose up backend)
+- Vérifier variables d'environnement
+- Attendre démarrage complet stack Docker
+```
+
+#### **Erreurs E2E Cypress**
+
+```bash
+# Timeouts Cypress
+- Augmenter timeout dans cypress.config.cjs
+- Vérifier que l'application est accessible
+- Nettoyer navigateur : cypress cache clear
+
+# Tests flaky (instables)
+- Ajouter wait explicites cy.wait(1000)
+- Utiliser cy.intercept pour mock API calls
+- Vérifier sélecteurs CSS robustes
+```
+
+### 📊 **Performance & Debug**
+
+#### **Outils Debug**
+
+```bash
+# React DevTools
+- Extension navigateur pour composants React
+- Profiler pour performance rendering
+
+# React Query DevTools
+- Activé en développement automatiquement
+- Voir cache, queries, mutations
+
+# Vite DevTools
+- Console navigateur pour HMR logs
+- Network tab pour assets loading
+```
+
+#### **Optimisation Performance**
+
+```bash
+# Bundle analyzer
+npx vite-bundle-analyzer dist
+
+# Lighthouse audit
+npx lighthouse http://localhost:3001 --view
+
+# Memory leaks
+- React DevTools Profiler
+- Nettoyer listeners dans useEffect cleanup
+- Éviter closures lourdes dans useCallback
+```
+
+---
+
+## 📚 **Documentation & Ressources**
+
+### 🏗️ **Guides Internes**
+
+- **[Guide Backend API](README-backend.md)** : 139+ endpoints avec exemples
+- **[Guide Base de Données](Base-de-donnees-guide.md)** : 15 modèles Prisma optimisés
+- **[Tests Complets](TESTS_COMPLETE_GUIDE.md)** : Architecture 3 niveaux unifiée
+- **[Guide Admin](ADMIN_GUIDE_UNIFIED.md)** : 10 pages administration
+
+### 🔧 **Ressources Externes**
+
+- **[React Documentation](https://react.dev/)** : Guide officiel React 18
+- **[TanStack Query](https://tanstack.com/query/latest)** : Documentation React Query
+- **[Tailwind CSS](https://tailwindcss.com/)** : Framework CSS utility-first
+- **[Vite](https://vitejs.dev/)** : Build tool moderne
+- **[Cypress](https://cypress.io/)** : Tests E2E
+- **[Vitest](https://vitest.dev/)** : Framework tests unitaires
+
+### 📖 **Standards & Bonnes Pratiques**
+
+#### **TypeScript**
+
+- Types stricts activés (`strict: true`)
+- Pas de `any` sauf cas exceptionnels
+- Interfaces pour props composants
+- Types partagés dans `src/types/`
+
+#### **React**
+
+- Composants fonctionnels uniquement
+- Hooks personnalisés pour logique réutilisable
+- Memoization avec `useMemo`/`useCallback` si nécessaire
+- Error boundaries pour gestion erreurs
+
+#### **Styling**
+
+- Tailwind CSS utility-first
+- Composants réutilisables dans `components/ui/`
+- Variables CSS custom properties
+- Mobile-first responsive design
+
+#### **Tests**
+
+- Couverture minimum 80%
+- Tests unitaires isolés (CI/CD)
+- Tests intégration avec backend (local)
+- Tests E2E critiques < 2min
+
+---
+
+## 👨‍💻 **Développement & Maintenance**
+
+### 🔄 **Workflow Développement**
+
+1. **Setup environnement**
+
+   ```bash
+   npm install
+   npm run dev  # Port 5173
+   ```
+
+2. **Développement fonctionnalité**
+
+   ```bash
+   # Créer branche feature
+   git checkout -b feature/nouvelle-fonctionnalite
+
+   # Tests pendant développement
+   npm run test --watch
+   npm run type-check
+   ```
+
+3. **Tests avant commit**
+
+   ```bash
+   npm run lint:fix      # Fix problèmes ESLint
+   npm run type-check    # Vérification TypeScript
+   npm run test:unit     # Tests unitaires
+   npm run build         # Vérification build
+   ```
+
+4. **Tests complets local**
+
+   ```bash
+   # Démarrer backend
+   docker compose up backend db
+
+   # Tests intégration
+   npm run test:integration
+
+   # Tests E2E
+   npm run test:e2e:local
+   ```
+
+### 📝 **Standards Qualité**
+
+- **ESLint** : Configuration stricte avec Airbnb
+- **Prettier** : Formatage automatique
+- **TypeScript strict** : Pas de `any`, types complets
+- **Tests obligatoires** : Coverage > 80%
+- **Performance** : Bundle size < 500KB gzipped
+- **Accessibilité** : WCAG 2.1 AA compliance
+
+---
+
+**✨ Développé par Christophe Mostefaoui - Juillet 2025**  
+**🎨 Frontend React enterprise-grade déployé sur OVH Cloud**  
+**⚛️ 71 composants + 31 hooks + 28 pages production-ready avec 85% coverage tests**

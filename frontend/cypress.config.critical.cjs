@@ -3,10 +3,10 @@ const { defineConfig } = require("cypress");
 module.exports = defineConfig({
   e2e: {
     baseUrl: "http://localhost:3000",
-    specPattern: "cypress/e2e/**/*.cy.{js,jsx,ts,tsx}",
+    specPattern: "cypress/e2e/critical/**/*.cy.{js,jsx,ts,tsx}",
     supportFile: "cypress/support/e2e.ts",
-    videosFolder: "cypress/videos",
-    screenshotsFolder: "cypress/screenshots",
+    videosFolder: "cypress/videos/critical",
+    screenshotsFolder: "cypress/screenshots/critical",
     video: false,
     screenshotOnRunFailure: true,
     viewportWidth: 1280,
@@ -22,17 +22,21 @@ module.exports = defineConfig({
 
     env: {
       API_BASE_URL: "http://localhost:3001",
+      TEST_TYPE: "critical"
     },
 
     setupNodeEvents(on, config) {
-      // implement node event listeners here
       on("task", {
         log(message) {
-          console.log(message);
+          console.log(`[CRITICAL] ${message}`);
           return null;
         },
       });
 
+      // Optimisations pour les tests critiques (CI/CD)
+      config.numTestsKeptInMemory = 0;
+      config.watchForFileChanges = false;
+      
       return config;
     },
   },
