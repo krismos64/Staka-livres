@@ -21,6 +21,7 @@ import webhookRoutes from "./routes/payments/webhook";
 import tarifsRoutes from "./routes/tarifs";
 import usersRoutes from "./routes/users";
 import publicRoutes from "./routes/public";
+import devRoutes from "./routes/dev";
 
 // Configuration de l'environnement
 dotenv.config();
@@ -114,8 +115,13 @@ app.use("/api/admin", adminRoutes);
 // Routes factures (côté client)
 app.use("/api/invoices", invoiceRoutes);
 
+// Routes de développement (uniquement en dev/test)
+if (process.env.NODE_ENV !== "production") {
+  app.use("/dev", devRoutes);
+}
+
 // Gestionnaire d'erreur 404
-app.use("*", (req, res) => {
+app.use("*", (_req, res) => {
   res.status(404).json({ error: "Route non trouvée" });
 });
 
