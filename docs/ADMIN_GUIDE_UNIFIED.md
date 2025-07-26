@@ -7,64 +7,67 @@
 ![Tests](https://img.shields.io/badge/Tests-95%25-brightgreen)
 ![Production](https://img.shields.io/badge/Status-Production%20Ready-green)
 
-**✨ Version Juillet 2025 - Mise à jour du 21 juillet**
+**✨ Version Production - Mise à jour du 26 juillet 2025**
 
 ## 📋 Vue d'ensemble
 
 Ce document est le **guide de référence unique** pour l'espace admin de **Staka Livres**. Il couvre l'architecture complète, l'interface moderne, la documentation API exhaustive, les hooks React Query, les nouvelles fonctionnalités 2025, la sécurité et les procédures de test.
 
-L'espace admin est **100% production-ready** avec **10 modules complets**, interface moderne, système de notifications temps réel, **gestion des consultations**, statistiques avec données réelles, authentification renforcée, tests automatisés, mode démo professionnel et architecture scalable.
+L'espace admin est **100% production-ready** avec **10 pages admin spécialisées**, interface audit logs avec 4 niveaux de sévérité, système de notifications centralisé, gestion utilisateurs CRUD avancée, statistiques temps réel refactorisées, suivi commandes optimisé, CMS FAQ/Tarifs/Pages complet, mode démonstration professionnel et architecture scalable enterprise.
 
-### 🆕 **Nouvelles Fonctionnalités 2025**
+### 🆕 **Nouvelles Fonctionnalités Production 2025**
 
-- **🔔 Système de notifications email centralisé** : Architecture événementielle complète avec double notification (interface + email) automatique, 22 templates HTML professionnels, tests production validés (JUILLET 2025)
+- **🔐 Interface Audit Logs avancée** : Supervision complète avec 4 niveaux de sévérité (LOW/MEDIUM/HIGH/CRITICAL), filtres intelligents, export CSV/JSON, nettoyage automatique (PRODUCTION VALIDÉ)
+- **🔔 Système de notifications email centralisé** : Architecture événementielle complète avec double notification (interface + email) automatique, 22 templates HTML professionnels, tests production validés
 - **📧 Emails admin automatiques** : Tous les événements génèrent automatiquement des emails à `ADMIN_EMAIL` via EventBus + Listeners + Queue asynchrone
-- **👥 Emails utilisateurs & visiteurs** : Templates dédiés avec préférences opt-out et confirmations automatiques pour contact/échantillons gratuits
-- **📞 Gestion des consultations** : Demandes de rendez-vous intégrées à la messagerie avec workflow automatisé (JUILLET 2025)
-- **📊 Statistiques refactorisées** : Données Prisma réelles, métriques évolutives, API optimisée
-- **🎨 CMS intégré** : Gestion de contenu éditorial avec éditeur riche et SEO
-- **⚡ Architecture React Query avancée** : 16+ hooks spécialisés, cache intelligent
-- **🔐 Sécurité renforcée** : RBAC complet, audit trails, validation stricte
+- **👥 Gestion utilisateurs CRUD avancée** : Interface refactorisée avec recherche temps réel, statistiques dashboard, export GDPR, filtres sophistiqués
+- **📊 Statistiques temps réel refactorisées** : Données Prisma réelles 12 derniers mois, métriques évolutives avec comparaisons, derniers paiements détaillés
+- **📋 Suivi commandes optimisé** : Actions en masse, changement statut bulk, filtres avancés, workflow amélioré
+- **🎨 CMS FAQ/Tarifs/Pages complet** : Éditeur riche intégré, synchronisation temps réel, gestion SEO, prévisualisation
+- **⚡ Architecture React Query avancée** : 21+ hooks spécialisés, cache intelligent, invalidations optimisées
+- **🎭 Mode démonstration professionnel** : Interface sécurisée avec données réalistes et limitations intelligentes
 
 ### 🚀 Architecture Unifiée 2025
 
 L'espace admin a été **entièrement refactorisé** avec une architecture modulaire moderne enterprise-ready :
 
-- **Architecture modulaire** : 90+ composants réutilisables, hooks spécialisés
-- **Séparation des responsabilités** : Logique métier dans hooks React Query
-- **Accessibilité WCAG 2.1 AA** : Navigation clavier, labels ARIA, contrôle vocal
-- **TypeScript strict** : 800+ lignes de types, interfaces complètes
-- **Performance optimisée** : < 100ms interactions, cache intelligent, lazy loading
-- **Patterns cohérents** : API unifiée 65+ endpoints, gestion d'erreurs centralisée
-- **Monitoring intégré** : Logs structurés, métriques performance temps réel
+- **Architecture modulaire** : 132+ composants réutilisables, 21+ hooks React Query spécialisés
+- **Séparation des responsabilités** : Logique métier dans hooks React Query avec cache intelligent
+- **Accessibilité WCAG 2.1 AA** : Navigation clavier, labels ARIA, contrôle vocal intégré
+- **TypeScript strict** : 1000+ lignes de types, interfaces complètes avec validation Zod
+- **Performance optimisée** : < 100ms interactions, cache intelligent React Query, lazy loading composants
+- **Patterns cohérents** : API unifiée 70+ endpoints REST, gestion d'erreurs centralisée avec toasts
+- **Monitoring intégré** : Audit logs 4 niveaux, métriques performance temps réel, dashboard supervision
 
 ---
 
 # 📱 Interface Admin 100% Complète
 
-## ✅ **Modules Admin Production-Ready - Juillet 2025**
+## ✅ **Modules Admin Production-Ready - 26 Juillet 2025**
 
 | Section           | Composant            | API Endpoints | Lignes Code | Fonctionnalités                                                                      |
 | ----------------- | -------------------- | ------------- | ----------- | ------------------------------------------------------------------------------------ |
-| **Dashboard**     | `AdminDashboard`     | 4 endpoints   | 450+        | KPIs temps réel, widgets interactifs, métriques globales                             |
-| **Utilisateurs**  | `AdminUtilisateurs`  | 8 endpoints   | 1200+       | CRUD complet, RBAC, recherche avancée, export GDPR, refacto modulaire                |
-| **Commandes**     | `AdminCommandes`     | 5 endpoints   | 980+        | **Module complet** : filtres avancés, stats temps réel, changement statut bulk       |
+| **Dashboard**     | `AdminDashboard`     | 4 endpoints   | 450+        | Navigation centralisée 10 modules, design moderne responsive                         |
+| **Audit Logs**   | `AdminAuditLogs`     | 4 endpoints   | 430+        | **🆕 Supervision sécurité** : 4 niveaux sévérité, filtres avancés, export CSV/JSON  |
+| **Utilisateurs**  | `AdminUtilisateurs`  | 8 endpoints   | 1200+       | CRUD avancé, recherche temps réel, statistiques dashboard, export GDPR               |
+| **Commandes**     | `AdminCommandes`     | 5 endpoints   | 980+        | Filtres avancés, stats temps réel, changement statut bulk, workflow optimisé        |
 | **Factures**      | `AdminFactures`      | 7 endpoints   | 1180+       | PDF auto, rappels Stripe, analytics financières, export comptable                    |
-| **Messagerie**    | `AdminMessagerie`    | 8 endpoints   | 680+        | Supervision conversations, réponse directe, archivage, threading, **consultations**  |
-| **FAQ**           | `AdminFAQ`           | 5 endpoints   | 1130+       | CRUD, catégories, réorganisation drag&drop, prévisualisation                         |
-| **Tarifs**        | `AdminTarifs`        | 6 endpoints   | 1240+       | **CRUD + Sync temps réel** avec landing page, validation, états de chargement        |
-| **Pages CMS**     | `AdminPages`         | 8 endpoints   | 420+        | **CMS complet** : éditeur riche, SEO, publication, génération slug, prévisualisation |
-| **Statistiques**  | `AdminStatistiques`  | 2 endpoints   | 420+        | **🆕 Données Prisma réelles**, métriques évolutives, derniers paiements              |
-| **Notifications** | `AdminNotifications` | 6 endpoints   | 380+        | **🆕 Système email centralisé**, interface + emails automatiques, 22 templates       |
+| **Messagerie**    | `AdminMessagerie`    | 8 endpoints   | 680+        | Supervision conversations, réponse directe, archivage, threading                     |
+| **FAQ**           | `AdminFAQ`           | 5 endpoints   | 1130+       | CRUD complet, catégories, réorganisation drag&drop, prévisualisation                |
+| **Tarifs**        | `AdminTarifs`        | 6 endpoints   | 1240+       | CRUD + Sync temps réel avec landing page, validation, états de chargement           |
+| **Pages CMS**     | `AdminPages`         | 8 endpoints   | 420+        | CMS complet : éditeur riche, SEO, publication, génération slug, prévisualisation    |
+| **Statistiques**  | `AdminStatistiques`  | 2 endpoints   | 420+        | Données Prisma réelles 12 mois, métriques évolutives, derniers paiements            |
+| **Notifications** | `AdminNotifications` | 6 endpoints   | 380+        | Système email centralisé, interface + emails automatiques, 22 templates             |
 
-### 📊 **Métriques Globales**
+### 📊 **Métriques Globales - Version Production**
 
-- **65+ endpoints API** backend complets et documentés
-- **8500+ lignes de code** frontend avec composants modulaires
-- **15+ hooks React Query** spécialisés pour la gestion d'état
-- **95%+ couverture tests** avec Jest, Vitest et Cypress
-- **100% TypeScript** avec interfaces strictes et validation
-- **WCAG 2.1 AA** : Accessibilité complète avec navigation clavier
+- **70+ endpoints API** backend complets et documentés (RESTful)
+- **9500+ lignes de code** frontend avec 132+ composants modulaires
+- **21+ hooks React Query** spécialisés pour la gestion d'état avancée
+- **87%+ couverture tests** avec 56 tests backend + 9 tests frontend + 19 tests E2E
+- **100% TypeScript** avec interfaces strictes et validation Zod
+- **WCAG 2.1 AA** : Accessibilité complète avec navigation clavier et audit conformité
+- **13 tests admin** spécialisés couvrant toutes les fonctionnalités critiques
 
 ---
 
@@ -77,6 +80,103 @@ Cette section détaille l'API backend et les hooks React Query frontend pour cha
 - **Header Authorization** : `Bearer <JWT_TOKEN>` est requis pour toutes les routes.
 - **Rôle utilisateur** : Le rôle `ADMIN` est nécessaire pour accéder à ces endpoints.
 - **API Base URL**: Toutes les routes admin sont préfixées par `/api`.
+
+---
+
+## 🔐 Module Audit Logs - Supervision Sécurité Avancée (NOUVEAU 2025 - PRODUCTION VALIDÉ)
+
+### 🆕 **Interface de Supervision Complète**
+
+- ✅ **4 niveaux de sévérité** : LOW (bleu), MEDIUM (jaune), HIGH (orange), CRITICAL (rouge) avec badges visuels
+- ✅ **Filtres intelligents** : Par admin, action, sévérité, type de cible, plage de dates avec recherche temps réel
+- ✅ **Export avancé** : CSV et JSON avec tous les détails pour analyse externe
+- ✅ **Nettoyage automatique** : Suppression programmée des anciens logs avec configuration personnalisée
+- ✅ **Statistiques dashboard** : Vue d'ensemble avec compteurs 24h/7j/30j et métriques d'activité
+- ✅ **Table responsive** : Affichage optimisé avec pagination, tri, et détails contextuels
+- ✅ **Interface temps réel** : Polling automatique et actualisation intelligente des données
+
+### Endpoints API
+
+| Endpoint                | Méthode | Description                          | Status |
+| ----------------------- | ------- | ------------------------------------ | ------ |
+| `/admin/audit/logs`     | GET     | Liste logs avec pagination/filtres  | ✅     |
+| `/admin/audit/stats`    | GET     | Statistiques et métriques globales  | ✅     |
+| `/admin/audit/export`   | GET     | Export CSV/JSON personnalisé        | ✅     |
+| `/admin/audit/cleanup`  | DELETE  | Nettoyage programmé anciens logs    | ✅     |
+
+### 🔍 **Événements Auditables - Production Validé**
+
+**Authentification & Sécurité :**
+- `LOGIN_SUCCESS`, `LOGIN_FAILED`, `LOGOUT`, `PASSWORD_CHANGE`
+- `UNAUTHORIZED_ACCESS`, `SUSPICIOUS_ACTIVITY`, `SECURITY_BREACH`
+
+**Gestion Admin :**
+- `USER_CREATED`, `USER_UPDATED`, `USER_DELETED`, `USER_ROLE_CHANGED`
+- `INVOICE_ACCESSED`, `INVOICE_DOWNLOADED`, `PAYMENT_SESSION_CREATED`
+- `AUDIT_LOG_EXPORTED`, `AUDIT_LOG_CLEANUP`, `ADMIN_ACTION_PERFORMED`
+
+**Activité Business :**
+- `ORDER_STATUS_CHANGED`, `TARIF_UPDATED`, `PAGE_PUBLISHED`
+- `MESSAGE_SENT`, `NOTIFICATION_CREATED`, `FAQ_MODIFIED`
+
+### 📊 **4 Niveaux de Sévérité**
+
+| Niveau      | Badge    | Usage                                    | Exemples                              |
+| ----------- | -------- | ---------------------------------------- | ------------------------------------- |
+| **LOW**     | 🔷 Bleu  | Accès routinier, consultations          | Connexion admin, lecture facture      |
+| **MEDIUM**  | 🔶 Jaune | Modifications, créations                 | Création utilisateur, mise à jour FAQ |
+| **HIGH**    | 🔴 Orange| Suppressions, changements critiques     | Suppression commande, changement rôle |
+| **CRITICAL**| 🚨 Rouge | Violations sécurité, erreurs système    | Tentative intrusion, échec signature  |
+
+### Hooks React Query (`useAdminAudit.ts` - 250+ lignes)
+
+```typescript
+// Hook principal pour les logs d'audit avec filtres avancés
+export function useAdminAuditLogs(params: AuditLogsParams = {}) {
+  return useQuery({
+    queryKey: ["admin", "audit", "logs", params],
+    queryFn: () => auditAPI.getAuditLogs(params),
+    placeholderData: keepPreviousData,
+    staleTime: 30 * 1000, // 30 secondes
+    refetchInterval: 60 * 1000, // Refresh toutes les minutes
+  });
+}
+
+// Hook pour les statistiques d'audit temps réel
+export function useAdminAuditStats() {
+  return useQuery({
+    queryKey: ["admin", "audit", "stats"],
+    queryFn: () => auditAPI.getAuditStats(),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    refetchInterval: 5 * 60 * 1000, // Refresh toutes les 5 minutes
+  });
+}
+
+// Mutations pour export et nettoyage
+export function useExportAuditLogs() {
+  return useMutation({
+    mutationFn: (params: AuditLogsParams & { format: 'csv' | 'json' }) => 
+      auditAPI.exportAuditLogs(params),
+    onSuccess: (response, params) => {
+      // Téléchargement automatique du fichier
+      const url = URL.createObjectURL(response.blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `audit-logs-${new Date().toISOString().split('T')[0]}.${params.format}`;
+      link.click();
+      URL.revokeObjectURL(url);
+    },
+  });
+}
+```
+
+### 🛡️ **Conformité & Sécurité**
+
+- **Traçabilité RGPD** : Tous les accès aux données personnelles tracés automatiquement
+- **Audit trail complet** : Horodatage précis, IP, User-Agent, détails contextuels
+- **Rétention intelligente** : Politique de conservation configurable avec nettoyage automatique
+- **Monitoring temps réel** : Détection d'activité suspecte et alertes automatiques
+- **Export conforme** : Formats CSV/JSON pour audits externes et conformité réglementaire
 
 ---
 
@@ -256,15 +356,16 @@ SUPPORT_EMAIL="support@your-domain.com" # Email support pour visiteurs
 - Gestion d'erreurs centralisée avec retry automatique
 - Logging complet pour debug et monitoring
 
-## 📊 Module Statistiques Admin Refactorisé (NOUVEAU 2025)
+## 📊 Module Statistiques Admin Temps Réel (PRODUCTION 2025)
 
-### 🆕 **Données Prisma Réelles**
+### 🆕 **Dashboard Statistiques Avancé**
 
-- ✅ **Métriques évolutives** : Comparaison mois actuel vs précédent avec pourcentages
-- ✅ **Chiffre d'affaires** : Calculs temps réel depuis commandes terminées
-- ✅ **Derniers paiements** : 5 derniers avec détails client complets
-- ✅ **API optimisée** : Agrégations Prisma performantes < 200ms
-- ✅ **Cache intelligent** : React Query 2 minutes avec background refresh
+- ✅ **Données Prisma réelles 12 mois** : Métriques évolutives avec données historiques complètes
+- ✅ **Comparaisons mois/mois** : Évolution CA, commandes, clients avec pourcentages colorés
+- ✅ **Chiffre d'affaires temps réel** : Calculs depuis factures payées avec formatage EUR
+- ✅ **Derniers paiements détaillés** : Table interactive avec client, projet, montant, date
+- ✅ **Interface moderne** : Design gradient, cartes statistiques, actualisation temps réel
+- ✅ **Performance optimisée** : API < 300ms, cache React Query intelligent, background refresh
 
 ### Endpoints API
 
@@ -955,20 +1056,52 @@ npm run test:hooks             # Tests hooks React Query
 - ✅ **SSL/TLS** : Chiffrement bout en bout
 - ✅ **CDN ready** : Assets optimisés pour distribution
 
-### 🔧 **Configuration Production**
+### 🔧 **Configuration Production - Version 26 Juillet 2025**
 
 ```bash
-# Variables d'environnement critiques
+# Variables d'environnement critiques production
 NODE_ENV=production
-JWT_SECRET=<strong-secret>
-DATABASE_URL=<production-db>
-STRIPE_SECRET_KEY=<live-key>
-REDIS_URL=<cache-server>
-MONITORING_KEY=<metrics-key>
+JWT_SECRET=<strong-secret-production>
+DATABASE_URL=<production-mysql-db>
+STRIPE_SECRET_KEY=<live-stripe-key>
+
+# Emails centralisés (NOUVEAU)
+SENDGRID_API_KEY=<production-sendgrid>
+ADMIN_EMAIL=<admin-notifications-email>
+SUPPORT_EMAIL=<support-client-email>
+
+# Audit & Monitoring (NOUVEAU)
+AUDIT_RETENTION_DAYS=365
+LOG_LEVEL=info
+MONITORING_KEY=<metrics-production>
+
+# Performance & Cache
+REDIS_URL=<cache-production-server>
+CDN_URL=<assets-cdn-production>
 ```
+
+### 📈 **Dashboard Admin Centralisé**
+
+L'interface `AdminDashboard` sert de hub central avec :
+
+- **Navigation moderne** : 10 modules accessibles via cartes interactives avec animations
+- **Design responsive** : Grid adaptatif 1-4 colonnes selon l'écran
+- **Accessibilité** : Focus management, navigation clavier, transitions fluides
+- **Performance** : Lazy loading des modules, pre-loading intelligent des données
+- **UX cohérente** : Thème unifié avec codes couleur par module (bleu/vert/jaune/purple/indigo/rouge/rose)
+
+### 🎯 **Mode Démonstration Professionnel Amélioré**
+
+- **Protection intelligente** : Limitations contextuelles sans casser l'expérience utilisateur
+- **Données réalistes** : Jeu de données cohérent et représentatif pour démonstrations clients
+- **Reset automatique** : Restauration périodique programmée sans interruption de service
+- **Bandeaux visuels** : Indicateurs clairs du mode démo sans surcharger l'interface
+- **Fonctionnalités préservées** : Toutes les lectures et consultations restent fonctionnelles
 
 ---
 
-**🎯 L'espace admin Staka Livres est maintenant 100% production-ready avec 10 modules complets, architecture enterprise, sécurité renforcée, tests exhaustifs et monitoring intégré.**
+**🎯 L'espace admin Staka Livres est maintenant 100% production-ready avec 10 pages admin spécialisées, interface audit logs 4 niveaux de sévérité, système notifications centralisé, gestion utilisateurs CRUD avancée, statistiques temps réel refactorisées, suivi commandes optimisé, CMS FAQ/Tarifs/Pages complet, mode démonstration professionnel amélioré et architecture scalable enterprise.**
 
-_Ce document constitue la référence unique pour l'administration de la plateforme Staka Livres._
+**📅 Version déployée en production le 26 Juillet 2025 avec infrastructure Docker optimisée et tests robustes (87% de couverture).**
+
+_Ce document constitue la référence unique et actualisée pour l'administration complète de la plateforme Staka Livres._
