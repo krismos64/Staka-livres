@@ -14,6 +14,9 @@ const templateMap: Record<NotificationType, string> = {
   CONSULTATION: "admin-consultation.hbs",
 };
 
+// Keep track of processed notifications to avoid duplicates
+const processedNotifications = new Set<string>();
+
 eventBus.on("admin.notification.created", async (notification) => {
   try {
     const template = templateMap[notification.type as NotificationType];
@@ -21,6 +24,21 @@ eventBus.on("admin.notification.created", async (notification) => {
       console.log(`No email template configured for notification type: ${notification.type}`);
       return;
     }
+
+    // Create a unique key based on notification content and timestamp
+    const notificationKey = `${notification.title}-${notification.message}-${new Date(notification.createdAt).getTime()}`;
+    
+    // Skip if we've already processed this notification in the last minute
+    if (processedNotifications.has(notificationKey)) {
+      console.log(`⏭️  Skipping duplicate admin notification: ${notification.title}`);
+      return;
+    }
+    
+    // Add to processed set and clean up after 2 minutes
+    processedNotifications.add(notificationKey);
+    setTimeout(() => {
+      processedNotifications.delete(notificationKey);
+    }, 2 * 60 * 1000);
 
     const adminEmail = process.env.ADMIN_EMAIL || "admin@staka-livres.fr";
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3001";

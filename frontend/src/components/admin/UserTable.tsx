@@ -199,6 +199,7 @@ export const UserTable: React.FC<UserTableProps> = ({
             aria-label={ariaLabel}
             aria-rowcount={users.length}
             aria-colcount={columns.length + (actions.length > 0 ? 1 : 0)}
+            data-cy="users-table"
           >
             <thead className="bg-gray-50">
               <tr role="row">
@@ -258,6 +259,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                   className="hover:bg-gray-50 transition-colors"
                   role="row"
                   aria-rowindex={rowIndex + 1}
+                  data-cy="user-row"
                 >
                   {columns.map((column, colIndex) => (
                     <td

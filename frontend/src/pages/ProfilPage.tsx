@@ -6,20 +6,19 @@ import { useUserStats } from "../hooks/useUserStats";
 import { useUpdateProfile } from "../hooks/useUpdateProfile";
 import { useChangePassword } from "../hooks/useChangePassword";
 
-// Mock user data (à remplacer)
-const initialUser = {
-  firstName: "Marie",
-  lastName: "Castello",
-  email: "marie.castello@example.com",
-  phone: "06 12 34 56 78",
-  address: "123 Rue de la Littérature\n31000 Toulouse",
-  bio: "Auteure passionnée depuis plus de 10 ans, je me spécialise dans les romans contemporains et les biographies. J'ai publié plusieurs ouvrages avec Staka Éditions et je suis toujours à la recherche de nouvelles histoires à raconter.",
-  avatar:
-    "https://ui-avatars.com/api/?name=Marie+Castello&background=6C47FF&color=fff&size=128",
-  joinDate: "Mars 2023",
-  projects: 12,
-  rating: 4.8,
-  vip: true,
+// Données utilisateur par défaut
+const defaultUser = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  address: "",
+  bio: "",
+  avatar: "",
+  joinDate: "",
+  projects: 0,
+  rating: 0,
+  vip: false,
   emailVerified: false,
 };
 
@@ -29,7 +28,7 @@ export default function ProfilePage() {
   const { data: userStats, isLoading: statsLoading } = useUserStats();
   const updateProfileMutation = useUpdateProfile();
   const changePasswordMutation = useChangePassword();
-  const [user, setUser] = useState(initialUser);
+  const [user, setUser] = useState(defaultUser);
   const [notifEmail, setNotifEmail] = useState(true);
   const [notifSMS, setNotifSMS] = useState(false);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
@@ -41,19 +40,19 @@ export default function ProfilePage() {
         firstName: authUser.prenom || "",
         lastName: authUser.nom || "",
         email: authUser.email || "",
-        phone: initialUser.phone, // Temporaire - à remplacer quand ajouté à la base
-        address: initialUser.address, // Temporaire - à remplacer quand ajouté à la base
-        bio: initialUser.bio, // Temporaire - à remplacer quand ajouté à la base
+        phone: authUser.telephone || "",
+        address: authUser.adresse || "",
+        bio: authUser.bio || "",
         avatar: authUser.prenom && authUser.nom 
           ? `https://ui-avatars.com/api/?name=${encodeURIComponent(authUser.prenom)}+${encodeURIComponent(authUser.nom)}&background=6C47FF&color=fff&size=128`
-          : initialUser.avatar,
+          : `https://ui-avatars.com/api/?name=User&background=6C47FF&color=fff&size=128`,
         joinDate: new Date(authUser.createdAt).toLocaleDateString('fr-FR', { 
           year: 'numeric', 
           month: 'long' 
-        }) || initialUser.joinDate,
-        projects: userStats?.totalProjects || 0, // ✅ Données réelles
-        rating: userStats?.averageRating || 0, // ✅ Données réelles
-        vip: userStats?.isVip || authUser.role === 'ADMIN', // ✅ Données réelles
+        }),
+        projects: userStats?.totalProjects || 0,
+        rating: userStats?.averageRating || 0,
+        vip: userStats?.isVip || authUser.role === 'ADMIN',
         emailVerified: authUser.isActive || false,
       });
     }
@@ -296,49 +295,25 @@ export default function ProfilePage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Adresse
                   </label>
-                  {user.address ? (
-                    <textarea
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
-                      rows={2}
-                      value={user.address}
-                      onChange={(e) => handleChange("address", e.target.value)}
-                    />
-                  ) : (
-                    <div className="p-4 text-center text-gray-500 bg-gray-50 rounded-xl">
-                      <p>Aucune adresse fournie.</p>
-                      <button
-                        type="button"
-                        onClick={() => handleChange("address", " ")}
-                        className="mt-2 text-sm text-blue-600 hover:underline"
-                      >
-                        Ajouter une adresse
-                      </button>
-                    </div>
-                  )}
+                  <textarea
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
+                    rows={2}
+                    value={user.address}
+                    onChange={(e) => handleChange("address", e.target.value)}
+                    placeholder="Votre adresse postale"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Biographie
                   </label>
-                  {user.bio ? (
-                    <textarea
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
-                      rows={3}
-                      value={user.bio}
-                      onChange={(e) => handleChange("bio", e.target.value)}
-                    />
-                  ) : (
-                    <div className="p-4 text-center text-gray-500 bg-gray-50 rounded-xl">
-                      <p>Aucune biographie rédigée.</p>
-                      <button
-                        type="button"
-                        onClick={() => handleChange("bio", " ")}
-                        className="mt-2 text-sm text-blue-600 hover:underline"
-                      >
-                        Ajouter une biographie
-                      </button>
-                    </div>
-                  )}
+                  <textarea
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none"
+                    rows={3}
+                    value={user.bio}
+                    onChange={(e) => handleChange("bio", e.target.value)}
+                    placeholder="Parlez-nous de vous, votre parcours, vos projets..."
+                  />
                 </div>
                 <button
                   type="submit"

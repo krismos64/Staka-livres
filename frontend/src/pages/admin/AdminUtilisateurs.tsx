@@ -173,7 +173,7 @@ const AdminUtilisateurs: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6" data-cy="user-management-interface">
       <QuickStats
         totalUsers={stats?.total || totalUsers}
         activeUsers={stats?.actifs || 0}

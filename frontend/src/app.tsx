@@ -117,6 +117,7 @@ const AppRoutes: React.FC = () => {
               }
             }}
             onGoToSignup={() => navigate("/signup")}
+            onBackToLanding={() => navigate("/")}
             authError={error}
             clearAuthError={clearError}
           />
@@ -125,7 +126,11 @@ const AppRoutes: React.FC = () => {
       <Route
         path="/signup"
         element={
-          <SignupPage onSignupSuccess={() => {}} onBackToLogin={() => {}} />
+          <SignupPage 
+            onSignupSuccess={() => navigate("/app")} 
+            onBackToLogin={() => navigate("/login")}
+            onBackToLanding={() => navigate("/")}
+          />
         }
       />
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -230,6 +235,7 @@ const AdminRoutes: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
         <Route index element={<AdminDashboard />} />
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="users" element={<AdminUtilisateurs />} />
+        <Route path="utilisateurs" element={<AdminUtilisateurs />} />
         <Route path="commandes" element={<AdminCommandes />} />
         <Route path="factures" element={<AdminFactures />} />
         <Route path="faq" element={<AdminFAQ />} />

@@ -1,0 +1,56 @@
+services:
+  db:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: stakalivres
+      MYSQL_USER: staka
+      MYSQL_PASSWORD: staka
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: npm run dev:watch
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/app/backend:delegated
+      - ./shared:/app/shared:delegated
+      - backend_node_modules:/app/backend/node_modules
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=mysql://staka:staka@db:3306/stakalivres
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    image: node:20.19.0-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app:delegated
+      - ./shared:/shared:delegated
+      - frontend_node_modules:/app/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:3001
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
+  backend_node_modules:
+  frontend_node_modules:

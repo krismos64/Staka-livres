@@ -34,7 +34,7 @@ const testimonials: Testimonial[] = [
     projectInfo: "Biographie - 220 pages",
     color: "from-purple-100 to-purple-200 text-purple-600",
     initials: "SL",
-    image: undefined, // pas d'image
+    image: "/images/sophie-laurent.jpg",
   },
 ];
 

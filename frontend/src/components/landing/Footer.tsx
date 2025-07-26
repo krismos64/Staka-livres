@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import CorrectorBubbles from "./CorrectorBubbles";
 
 export default function Footer() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
@@ -12,15 +13,22 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-gray-900 text-white">
+    <footer className="bg-gray-900 text-white relative overflow-hidden">
+      {/* Bulles de correcteurs dispersées */}
+      <CorrectorBubbles className="absolute inset-0 z-0" />
+      
       {/* Main Footer Content */}
-      <div className="max-w-6xl mx-auto px-6 py-16">
+      <div className="max-w-6xl mx-auto px-6 py-16 relative z-10">
         <div className="grid md:grid-cols-4 gap-8">
           {/* Brand & Description */}
           <div className="md:col-span-2">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                <i className="fas fa-book-open text-white text-xl"></i>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex-shrink-0">
+                <img 
+                  src="/images/staka-entremises-logo.svg" 
+                  alt="Staka Entremises Éditions"
+                  className="h-16 w-auto filter brightness-150 opacity-90 hover:opacity-100 transition-opacity duration-300"
+                />
               </div>
               <div>
                 <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-300 bg-clip-text text-transparent">
@@ -200,7 +208,7 @@ export default function Footer() {
 
         {/* Newsletter Subscription */}
         <div className="border-t border-gray-800 mt-12 pt-8">
-          <div className="bg-gradient-to-r from-blue-600/10 to-indigo-600/10 rounded-2xl p-8 text-center">
+          <div className="bg-gradient-to-r from-blue-600/10 to-indigo-600/10 rounded-2xl p-8 text-center backdrop-blur-sm">
             <h4 className="text-xl font-semibold mb-3">
               📚 Restez informé de nos actualités
             </h4>
@@ -233,7 +241,7 @@ export default function Footer() {
       </div>
 
       {/* Partners Section */}
-      <div className="border-t border-gray-800 py-8">
+      <div className="border-t border-gray-800 py-8 relative z-10">
         <div className="max-w-6xl mx-auto px-6">
           <h4 className="text-center text-gray-400 text-sm mb-6">
             Nos sites partenaires
@@ -274,7 +282,7 @@ export default function Footer() {
       </div>
 
       {/* Bottom Footer */}
-      <div className="border-t border-gray-800 py-6">
+      <div className="border-t border-gray-800 py-6 relative z-10">
         <div className="max-w-6xl mx-auto px-6">
           <div className="mt-8 border-t border-gray-700 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
             <p>

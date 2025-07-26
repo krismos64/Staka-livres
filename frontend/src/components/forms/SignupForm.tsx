@@ -7,7 +7,7 @@ import { useToasts } from "../../utils/toast";
  */
 interface SignupFormProps {
   /** Fonction pour ré-afficher le formulaire de connexion */
-  onShowLogin: () => void;
+  onBackToLogin: () => void;
   onSignupSuccess: () => void;
 }
 
@@ -26,7 +26,7 @@ interface FieldErrors {
  * Composant pour le formulaire d'inscription.
  */
 export default function SignupForm({
-  onShowLogin,
+  onBackToLogin,
   onSignupSuccess,
 }: SignupFormProps) {
   const [formData, setFormData] = useState({
@@ -71,8 +71,19 @@ export default function SignupForm({
 
     if (!password || password.trim() === "") {
       errors.password = "Le mot de passe est requis";
-    } else if (password.length < 6) {
-      errors.password = "Le mot de passe doit contenir au moins 6 caractères";
+    } else if (password.length < 8) {
+      errors.password = "Le mot de passe doit contenir au moins 8 caractères";
+    } else {
+      // Validation avancée : au moins 3 types de caractères
+      let typeCount = 0;
+      if (/[a-z]/.test(password)) typeCount++; // minuscules
+      if (/[A-Z]/.test(password)) typeCount++; // majuscules  
+      if (/[0-9]/.test(password)) typeCount++; // chiffres
+      if (/[^a-zA-Z0-9]/.test(password)) typeCount++; // caractères spéciaux
+      
+      if (password.length < 12 && typeCount < 3) {
+        errors.password = "Le mot de passe doit contenir au moins 3 types de caractères (majuscules, minuscules, chiffres, caractères spéciaux) ou faire au moins 12 caractères";
+      }
     }
 
     if (!terms) {
@@ -82,23 +93,15 @@ export default function SignupForm({
     return errors;
   };
 
-  // Simulation d'API avec gestion d'erreur
-  const simulateSignup = async (
-    email: string
-  ): Promise<{ success: boolean; message?: string }> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // Simulation : échec si email déjà utilisé
-        if (email === "test@example.com") {
-          resolve({
-            success: false,
-            message: "Cet email est déjà utilisé",
-          });
-        } else {
-          resolve({ success: true });
-        }
-      }, 2000); // Délai de 2s pour simuler la latence réseau
-    });
+  // Fonction pour extraire les données du formulaire
+  const extractFormData = (formData: FormData) => {
+    return {
+      prenom: formData.get("first_name") as string,
+      nom: formData.get("last_name") as string,
+      email: formData.get("email") as string,
+      password: formData.get("password") as string,
+      telephone: formData.get("phone") as string || undefined,
+    };
   };
 
   /**
@@ -124,11 +127,11 @@ export default function SignupForm({
     setLoading(true);
 
     try {
-      const email = formData.get("email") as string;
+      const userData = extractFormData(formData);
+      
+      const success = await register(userData);
 
-      const result = await simulateSignup(email);
-
-      if (result.success) {
+      if (success) {
         showToast(
           "success",
           "Inscription réussie !",
@@ -136,9 +139,11 @@ export default function SignupForm({
         );
         onSignupSuccess();
       } else {
-        setError(result.message || "Une erreur s'est produite");
+        // L'erreur est déjà gérée dans le contexte auth
+        setError("Une erreur s'est produite lors de l'inscription");
       }
     } catch (err) {
+      console.error("Erreur lors de l'inscription:", err);
       setError("Erreur lors de l'inscription. Veuillez réessayer.");
     } finally {
       setLoading(false);
@@ -261,6 +266,9 @@ export default function SignupForm({
             disabled={loading}
             onChange={handleChange}
           />
+          <p className="text-xs text-gray-500 mt-1">
+            Au moins 8 caractères avec 3 types : majuscules, minuscules, chiffres, caractères spéciaux
+          </p>
           {fieldErrors.password && (
             <p className="text-red-600 text-sm mt-1">{fieldErrors.password}</p>
           )}
@@ -345,7 +353,7 @@ export default function SignupForm({
         <p className="text-sm text-gray-600">
           Déjà un compte ?{" "}
           <button
-            onClick={onShowLogin}
+            onClick={onBackToLogin}
             className="text-blue-600 hover:text-blue-500 font-medium"
             type="button"
             disabled={loading}

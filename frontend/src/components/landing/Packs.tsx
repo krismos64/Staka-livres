@@ -117,20 +117,6 @@ export default function Packs({ onSignupClick }: PacksProps) {
                 </div>
               )}
 
-              {/* Image spécifique pour le pack de rédaction */}
-              {(pack.id === "pack-redaction-default" ||
-                pack.nom.toLowerCase().includes("rédaction")) && (
-                <div className="mb-4">
-                  <div className="relative h-32 overflow-hidden rounded-lg">
-                    <img
-                      src="/images/Pack-Redaction.webp"
-                      alt="Pack Rédaction - Femme écrivant à son bureau"
-                      className="w-full h-full object-cover opacity-80"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                  </div>
-                </div>
-              )}
 
               <div className="text-center mb-6">
                 <h3 className="text-lg font-bold mb-2">{pack.nom}</h3>

@@ -16,6 +16,7 @@ interface RegisterRequest {
   nom: string;
   email: string;
   password: string;
+  telephone?: string;
 }
 
 interface LoginRequest {
@@ -42,7 +43,7 @@ const logAuthEvent = (event: string, email: string, ip: string, userAgent: strin
 export const register = async (req: Request, res: Response): Promise<void> => {
   const ip = req.ip || req.connection.remoteAddress || 'unknown';
   const userAgent = req.get('user-agent') || 'unknown';
-  const { prenom, nom, email, password }: RegisterRequest = req.body;
+  const { prenom, nom, email, password, telephone }: RegisterRequest = req.body;
 
   try {
     // Log tentative d'inscription
@@ -97,6 +98,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         nom,
         email,
         password: hashedPassword,
+        telephone: telephone || null,
         role: Role.USER,
         isActive: true,
       },

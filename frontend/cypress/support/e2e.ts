@@ -23,9 +23,9 @@ Cypress.Commands.add("loginAsAdmin", () => {
   // Tentative d'authentification via API avec fallback
   cy.request({
     method: "POST",
-    url: `${Cypress.env("API_BASE_URL")}/auth/login`,
+    url: `${Cypress.env("API_BASE_URL")}/api/auth/login`,
     body: {
-      email: "admin@staka-editions.com",
+      email: "admin@staka-livres.fr",
       password: "admin123",
     },
     failOnStatusCode: false,
@@ -41,7 +41,7 @@ Cypress.Commands.add("loginAsAdmin", () => {
       cy.visit("/login");
       cy.wait(2000);
 
-      cy.get('input[type="email"], input[name="email"]').first().type("admin@staka-editions.com");
+      cy.get('input[type="email"], input[name="email"]').first().type("admin@staka-livres.fr");
       cy.get('input[type="password"], input[name="password"]').first().type("admin123");
       cy.get('button[type="submit"]').first().click();
       cy.wait(3000);
@@ -238,20 +238,20 @@ Cypress.Commands.add("resetDatabase", () => {
     }
   });
 
-  // Déclencher le seeding de la base (endpoint supposé côté backend)
+  // Réinitialiser la base via notre nouvelle route
   cy.request({
     method: "POST",
-    url: `${apiBaseUrl}/dev/seed`,
+    url: `${apiBaseUrl}/dev/reset-database`,
     failOnStatusCode: false,
   }).then((response) => {
     if (response.status === 200) {
-      cy.log("✅ Base de données seedée avec succès");
+      cy.log("✅ Base de données réinitialisée avec succès");
     } else {
-      cy.log("⚠️  Seeding échoué, utilisation des données existantes");
+      cy.log("⚠️  Reset échoué, utilisation des données existantes");
     }
   });
 
-  cy.wait(1000); // Petite pause pour s'assurer que tout est prêt
+  cy.wait(2000); // Petite pause pour s'assurer que tout est prêt
 });
 
 // Commande pour créer un moyen de paiement test via API

@@ -8,7 +8,10 @@ interface PricingCalculatorProps {
   onSignupClick?: () => void;
 }
 
-export default function PricingCalculator({ onChatClick, onSignupClick }: PricingCalculatorProps) {
+export default function PricingCalculator({
+  onChatClick,
+  onSignupClick,
+}: PricingCalculatorProps) {
   const {
     pages,
     setPages,
@@ -453,10 +456,10 @@ export default function PricingCalculator({ onChatClick, onSignupClick }: Pricin
                         Staka Éditions
                       </th>
                       <th className="p-4 text-center font-semibold text-gray-500">
-                        Concurrent A
+                        A compte d'auteurs
                       </th>
                       <th className="p-4 text-center font-semibold text-gray-500">
-                        Concurrent B
+                        Correcteur indépendant
                       </th>
                     </tr>
                   </thead>
