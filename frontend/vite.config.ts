@@ -25,7 +25,7 @@ export default defineConfig({
     },
     proxy: {
       "/api": {
-        target: "http://localhost:3001",
+        target: "http://staka_backend_dev:3000",
         changeOrigin: true,
         // Ne pas supprimer /api car le backend l'attend maintenant
       },

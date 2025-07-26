@@ -10,9 +10,9 @@
 
 **Staka Livres** est une plateforme web **enterprise-grade** dédiée aux **services de correction et d'édition de manuscrits**. Cette application monorepo sophistiquée offre une expérience complète aux auteurs avec authentification sécurisée, administration avancée, paiements Stripe intégrés et système de messagerie temps réel.
 
-**✨ Version Production - 25 Juillet 2025** : Application déployée en production par Christophe Mostefaoui avec architecture tests E2E optimisée, paiements Stripe stabilisés et documentation complète.
+**✨ Version Production - 26 Juillet 2025** : Application déployée en production avec infrastructure Docker optimisée, résolution complète des problèmes Rollup ARM64/x64, volumes isolés et scripts de déploiement automatisés.
 
-### 📊 **Métriques du Projet (25 Juillet 2025)**
+### 📊 **Métriques du Projet (26 Juillet 2025)**
 
 | Composant                  | Détail                               | Statut          |
 | -------------------------- | ------------------------------------ | --------------- |
@@ -26,6 +26,7 @@
 | **🗄️ Modèles BDD**         | 15 modèles interconnectés            | ✅ Complets     |
 | **📚 Documentation**       | Guide unifié + 15 guides spécialisés | ✅ Exhaustive   |
 | **🐳 Infrastructure**      | Docker multi-arch ARM64/x86          | ✅ Production   |
+| **⚙️ Scripts Automatisés**  | Reset dev, build multi-arch, deploy   | ✅ Opérationnels |
 | **🔒 Sécurité**            | RGPD + Audit logs + JWT              | ✅ Conforme     |
 
 ### 🌟 **Fonctionnalités Principales**
@@ -35,8 +36,9 @@
 - **Monorepo TypeScript** moderne avec workspace npm
 - **Backend Node.js/Express** avec Prisma ORM et MySQL 8
 - **Frontend React 18** avec Vite, React Query et Tailwind CSS
-- **Infrastructure Docker** multi-architecture (ARM64/x86)
+- **Infrastructure Docker** multi-architecture avec volumes isolés (résout erreurs Rollup)
 - **CI/CD optimisé** avec tests séparés unitaires/intégration
+- **Scripts automatisés** : build multi-arch, déploiement VPS, reset développement
 
 #### 🔐 **Sécurité & Authentification**
 
@@ -247,10 +249,31 @@ npm run install:all
 npm run docker:dev
 
 # 4. Accès services
-# Frontend : http://localhost:3001
-# Backend API : http://localhost:3000
+# Frontend : http://localhost:3000 (Vite + HMR)
+# Backend API : http://localhost:3001 (Express + nodemon)
 # Prisma Studio : http://localhost:5555
 ```
+
+### 🐳 **Infrastructure Docker Optimisée**
+
+**✅ Problème Rollup ARM64/x64 résolu** avec volumes isolés et image Debian Bookworm :
+
+```bash
+# Reset complet de l'environnement dev (recommandé si problèmes)
+./scripts/dev-reset.sh
+
+# Reset frontend uniquement (plus rapide)
+./scripts/dev-reset.sh --frontend-only
+
+# Build et déploiement automatisés
+./scripts/docker-build.sh v1.4.0 --push        # Build multi-arch + push
+./scripts/deploy-vps.sh v1.4.0                 # Déploiement VPS avec sauvegarde
+```
+
+**Architecture dev/prod séparée** :
+- `docker-compose.dev.yml` : Hot-reload, volumes nommés, proxy Vite
+- `docker-compose.prod.yml` : Images registry, SSL, monitoring
+- Scripts automatisés : build multi-arch, déploiement, reset
 
 ### 🔑 **Comptes de Test**
 
@@ -474,6 +497,7 @@ docker compose build --no-cache
 - **[Guide Admin Unifié](docs/ADMIN_GUIDE_UNIFIED.md)** : 10 pages + mode démo
 - **[Guide Facturation](docs/BILLING_AND_INVOICES.md)** : Stripe + PDF + statistiques
 - **[Guide Webhooks](docs/WEBHOOK_IMPLEMENTATION.md)** : Événements Stripe complets
+- **[Docker Workflow Consolidé](docs/docker-workflow.md)** : Guide Docker dev → prod + déploiement OVH complet
 
 ### 🔧 **Guides Techniques Spécialisés**
 
@@ -537,6 +561,13 @@ docker compose build --no-cache
 ### 📚 **Documentation Technique**
 
 Consultez le dossier `/docs/` pour les guides détaillés d'utilisation et de développement.
+
+**Infrastructure Docker Consolidée** :
+- `docs/docker-workflow.md` : **Guide Docker unifié** dev → prod avec troubleshooting complet
+- `scripts/dev-reset.sh` : Script automatisé de reset environnement développement
+- `scripts/docker-build.sh` : Build multi-architecture avec cache registry
+- `scripts/deploy-vps.sh` : Déploiement VPS automatisé avec sauvegarde
+- **Documentation consolidée** : Suppression des redondances, un seul guide Docker complet
 
 ---
 

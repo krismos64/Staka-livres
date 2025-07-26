@@ -9,6 +9,19 @@ const router = Router();
  */
 
 /**
+ * GET /public/health
+ * Health check endpoint pour Docker et monitoring
+ */
+router.get("/health", (req, res) => {
+  res.status(200).json({ 
+    status: "ok", 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    service: "staka-backend"
+  });
+});
+
+/**
  * POST /public/contact
  * Envoie un message de contact depuis le formulaire public du site
  */

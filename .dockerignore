@@ -30,6 +30,7 @@ frontend/node_modules
 frontend/dist
 frontend/build
 frontend/*.log
+frontend/.vite
 
 # Shared specific
 shared/node_modules
@@ -40,3 +41,9 @@ Dockerfile*
 docker-compose*
 .dockerignore
 docker-compose.override.yml
+
+# Dev artifacts qui ralentissent le build
+**/dist
+**/.vite
+**/.next
+**/coverage
