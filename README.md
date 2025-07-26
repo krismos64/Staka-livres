@@ -10,24 +10,24 @@
 
 **Staka Livres** est une plateforme web **enterprise-grade** dédiée aux **services de correction et d'édition de manuscrits**. Cette application monorepo sophistiquée offre une expérience complète aux auteurs avec authentification sécurisée, administration avancée, paiements Stripe intégrés et système de messagerie temps réel.
 
-**✨ Version Production - 26 Juillet 2025** : Application déployée en production avec infrastructure Docker optimisée, résolution complète des problèmes Rollup ARM64/x64, volumes isolés et scripts de déploiement automatisés.
+**✨ Version Production - 26 Juillet 2025** : Application déployée en production avec infrastructure Docker optimisée, nouveau composant FloatingBubbles interactif, et architecture tests robuste avec 87% de couverture.
 
 ### 📊 **Métriques du Projet (26 Juillet 2025)**
 
-| Composant                  | Détail                               | Statut          |
-| -------------------------- | ------------------------------------ | --------------- |
-| **📁 Contrôleurs Backend** | 23 contrôleurs spécialisés           | ✅ Production   |
-| **🌐 Endpoints API**       | 70+ endpoints REST sécurisés         | ✅ Fonctionnels |
-| **⚛️ Composants React**    | 71 composants modulaires             | ✅ Optimisés    |
-| **📄 Pages Frontend**      | 28 pages complètes                   | ✅ Responsive   |
-| **🧪 Tests Backend**       | 16 fichiers tests (87% couverture)   | ✅ Robustes     |
-| **🧪 Tests Frontend**      | 9 fichiers + architecture séparée    | ✅ Optimisés    |
-| **🔍 Tests E2E Cypress**   | 19 tests répartis 3 niveaux          | ✅ Enterprise   |
-| **🗄️ Modèles BDD**         | 15 modèles interconnectés            | ✅ Complets     |
-| **📚 Documentation**       | Guide unifié + 15 guides spécialisés | ✅ Exhaustive   |
-| **🐳 Infrastructure**      | Docker multi-arch ARM64/x86          | ✅ Production   |
-| **⚙️ Scripts Automatisés**  | Reset dev, build multi-arch, deploy   | ✅ Opérationnels |
-| **🔒 Sécurité**            | RGPD + Audit logs + JWT              | ✅ Conforme     |
+| Composant                  | Détail                                 | Statut           |
+| -------------------------- | -------------------------------------- | ---------------- |
+| **📁 Contrôleurs Backend** | 23 contrôleurs spécialisés             | ✅ Production    |
+| **🌐 Endpoints API**       | 70+ endpoints REST sécurisés           | ✅ Fonctionnels  |
+| **⚛️ Composants React**    | 132+ composants modulaires             | ✅ Optimisés     |
+| **📄 Pages Frontend**      | 28 pages complètes + landing optimisée | ✅ Responsive    |
+| **🧪 Tests Backend**       | 56 tests (87% couverture)              | ✅ Robustes      |
+| **🧪 Tests Frontend**      | 9 fichiers + architecture séparée      | ✅ Optimisés     |
+| **🔍 Tests E2E Cypress**   | 19 tests répartis 3 niveaux            | ✅ Enterprise    |
+| **🗄️ Modèles BDD**         | 15 modèles interconnectés              | ✅ Complets      |
+| **📚 Documentation**       | Guide unifié + 15 guides spécialisés   | ✅ Exhaustive    |
+| **🐳 Infrastructure**      | Docker multi-arch ARM64/x86            | ✅ Production    |
+| **⚙️ Scripts Automatisés** | Reset dev, build multi-arch, deploy    | ✅ Opérationnels |
+| **🔒 Sécurité**            | RGPD + Audit logs + JWT                | ✅ Conforme      |
 
 ### 🌟 **Fonctionnalités Principales**
 
@@ -62,7 +62,7 @@
 - **Système notifications** centralisé (interface + emails)
 - **Support client intégré** via formulaires publics
 - **Réservation consultations** depuis landing/espace client
-- **Templates emails** professionnels (18 templates HTML)
+- **Templates emails** professionnels (22 templates HTML)
 
 #### 📊 **Administration & Analytics**
 
@@ -72,9 +72,10 @@
 - **Suivi commandes** avec changement statuts
 - **Mode démonstration** professionnel pour prospects
 
-#### 🎨 **Interface Utilisateur**
+#### 🎨 **Interface Utilisateur Moderne**
 
-- **Landing page optimisée** (14 composants production-ready)
+- **Landing page optimisée** (15 composants production-ready)
+- **Composant FloatingBubbles** interactif avec équipe d'experts
 - **Tarification dynamique** avec synchronisation Stripe
 - **Design responsive** mobile-first avec animations
 - **Upload fichiers** avec progression et gestion S3
@@ -96,19 +97,21 @@ Staka-livres/
 │   │   ├── events/         # Architecture événementielle
 │   │   ├── listeners/      # Email automation listeners
 │   │   ├── queues/         # Queue emails asynchrone
-│   │   ├── emails/         # Templates HTML (18 templates)
-│   │   └── __tests__/      # 16 fichiers tests (87% couverture)
+│   │   ├── emails/         # Templates HTML (22 templates)
+│   │   └── __tests__/      # 56 tests (87% couverture)
 │   └── prisma/             # Schéma BDD + migrations
 ├── frontend/               # React 18 + Vite + React Query
 │   ├── src/
-│   │   ├── components/     # 71 composants modulaires
+│   │   ├── components/     # 132+ composants modulaires
+│   │   │   └── landing/    # 15 composants landing optimisés
+│   │   │       └── FloatingBubbles.tsx # Équipe experts interactif
 │   │   ├── pages/         # 28 pages complètes
-│   │   ├── hooks/         # Hooks React Query spécialisés
+│   │   ├── hooks/         # 21 hooks React Query spécialisés
 │   │   └── __tests__/     # Tests unitaires CI/CD
 │   ├── tests/             # Tests intégration (local)
 │   └── cypress/           # Tests E2E (19 tests 3 niveaux)
 ├── shared/                # Types TypeScript partagés
-├── docs/                  # Documentation complète (16 guides)
+├── docs/                  # Documentation complète (15 guides)
 └── docker-compose.yml     # Orchestration multi-services
 ```
 
@@ -121,13 +124,13 @@ Staka-livres/
 - **MySQL 8.4+** avec optimisations performance
 - **JWT** + **bcryptjs** (12 rounds) + **Zod validation**
 - **Stripe 18.2.1** + **AWS S3 SDK 3.837.0**
-- **SendGrid 8.1.5** + **PDFKit 0.17.1**
+- **SendGrid 8.1.5** + **PDFKit** pour facturation
 - **Vitest 3.2.4** pour tests unitaires/intégration
 
 #### Frontend (React + TypeScript)
 
 - **React 18.2.0** + **TypeScript 5.3.3**
-- **Vite 5.0.8** + **@tanstack/react-query 5.81.5**
+- **Vite 6.3.5** + **@tanstack/react-query 5.81.5**
 - **Tailwind CSS 3.4.17** + **Framer Motion 12.23.0**
 - **React Router DOM 6.30.1** + **Axios 1.10.0**
 - **Vitest 3.2.4** + **Cypress 14.5.1** pour tests
@@ -249,9 +252,9 @@ npm run install:all
 npm run docker:dev
 
 # 4. Accès services
-# Frontend : http://localhost:3000 (Vite + HMR)
-# Backend API : http://localhost:3001 (Express + nodemon)
-# Prisma Studio : http://localhost:5555
+# Frontend : http://localhost:3001 (Nginx + Vite proxy)
+# Backend API : http://localhost:3000 (Express + nodemon)
+# Base de données : MySQL sur port 3306
 ```
 
 ### 🐳 **Infrastructure Docker Optimisée**
@@ -271,6 +274,7 @@ npm run docker:dev
 ```
 
 **Architecture dev/prod séparée** :
+
 - `docker-compose.dev.yml` : Hot-reload, volumes nommés, proxy Vite
 - `docker-compose.prod.yml` : Images registry, SSL, monitoring
 - Scripts automatisés : build multi-arch, déploiement, reset
@@ -297,6 +301,7 @@ DATABASE_URL="mysql://staka:staka@db:3306/stakalivres"
 # Authentification
 JWT_SECRET="dev_secret_key_change_in_production"
 FRONTEND_URL="http://localhost:3001"
+PORT=3000
 
 # Stripe (OBLIGATOIRE pour paiements)
 STRIPE_SECRET_KEY="sk_test_VOTRE_CLE"
@@ -305,8 +310,9 @@ STRIPE_WEBHOOK_SECRET="whsec_VOTRE_SECRET"
 # Emails (OBLIGATOIRE pour notifications)
 SENDGRID_API_KEY="SG.VOTRE_CLE"
 FROM_EMAIL="votre-email-verifie@domaine.com"
-ADMIN_EMAIL="admin@votre-domaine.com"
+FROM_NAME="Staka Livres"
 SUPPORT_EMAIL="support@votre-domaine.com"
+ADMIN_EMAIL="admin@votre-domaine.com"
 
 # AWS S3 (optionnel pour uploads)
 AWS_ACCESS_KEY_ID="VOTRE_ACCESS_KEY"
@@ -342,10 +348,13 @@ npm run test:e2e:open     # Interface interactive
 
 ```bash
 # Développement local
-docker compose up -d
+npm run docker:dev
+
+# Production
+npm run docker:prod
 
 # Build multi-arch (ARM64/x86)
-./scripts/docker-build.sh
+npm run docker:build
 
 # Build avec options
 ./scripts/docker-build.sh 1.2.0 --push
@@ -411,13 +420,13 @@ docker compose build --no-cache
 - **EventBus centralisé** avec listeners spécialisés
 - **Double notification** : Interface clochette + Email automatique
 - **Queue asynchrone** pour traitement emails
-- **18 templates HTML** professionnels par type
+- **22 templates HTML** professionnels par type
 
 #### **Système Multi-Cible**
 
 - **Admin** : 9 templates avec notifications critiques
 - **Utilisateurs** : 9 templates avec préférences opt-out
-- **Visiteurs** : 2 templates confirmations automatiques
+- **Visiteurs** : 4 templates confirmations automatiques
 - **Polling 15s** pour refresh interface temps réel
 
 ### 📞 **Support Client Intégré**
@@ -456,6 +465,25 @@ docker compose build --no-cache
 - Basculement intelligent données réelles ↔ demo
 - Configuration URL : `?demo=true&duration=60&readonly=true`
 
+### 🎨 **Interface Utilisateur Moderne**
+
+#### **Landing Page Optimisée**
+
+- **15 composants** production-ready avec animations
+- **Composant FloatingBubbles** : Équipe d'experts interactif avec 9 photos
+- **Hero section** avec dégradé bleu professionnel
+- **Tarification dynamique** synchronisée avec Stripe
+- **Formulaires de contact** avec validation temps réel
+- **Design responsive** mobile-first avec Tailwind CSS
+
+#### **Expérience Utilisateur Avancée**
+
+- **Navigation intelligente** avec persistance choix
+- **Upload fichiers** avec progression et gestion S3
+- **Notifications toast** pour feedback immédiat
+- **Modals interactives** pour actions critiques
+- **Animations Framer Motion** pour fluidité
+
 ---
 
 ## 📊 **Impact Business & ROI**
@@ -483,6 +511,8 @@ docker compose build --no-cache
 - **100% conformité** (RGPD + PCI DSS ready)
 - **Scaling 10x ready** (architecture testée)
 
+---
+
 ## 📚 **Documentation Complète**
 
 ### 🏗️ **Architecture & Développement**
@@ -495,25 +525,30 @@ docker compose build --no-cache
 ### 👨‍💼 **Administration & Production**
 
 - **[Guide Admin Unifié](docs/ADMIN_GUIDE_UNIFIED.md)** : 10 pages + mode démo
-- **[Guide Facturation](docs/BILLING_AND_INVOICES.md)** : Stripe + PDF + statistiques
+- **[Guide Facturation](docs/INVOICE_SYSTEM_COMPLETE.md)** : Stripe + PDF + statistiques
 - **[Guide Webhooks](docs/WEBHOOK_IMPLEMENTATION.md)** : Événements Stripe complets
-- **[Docker Workflow Consolidé](docs/docker-workflow.md)** : Guide Docker dev → prod + déploiement OVH complet
+- **[Docker Workflow](docs/docker-workflow.md)** : Guide dev → prod + déploiement complet
 
 ### 🔧 **Guides Techniques Spécialisés**
 
-- **[Solutions Erreurs](docs/SOLUTION-ERREUR-504.md)** : Troubleshooting courant
-- **[Demo Admin](docs/Demo-espace-admin.md)** : Mode démonstration pro
-- **[Déploiement](docs/DEPLOYMENT.md)** : Pipeline CI/CD + Docker
+- **[Système Tarifs](docs/SYSTEME_TARIFS_COMPLET.md)** : Tarification dynamique
+- **[Messagerie API](docs/MESSAGES_API_GUIDE.md)** : Communication temps réel
+- **[Reset Mot de Passe](docs/PASSWORD_RESET_GUIDE.md)** : Sécurité utilisateur
+- **[Consultation Booking](docs/CONSULTATION_BOOKING_GUIDE.md)** : Réservation consultations
+- **[Échantillon Gratuit](docs/FREE_SAMPLE_SYSTEM_GUIDE.md)** : Workflow échantillons
+- **[RGPD Contact](docs/RGPD_CONTACT_GUIDE.md)** : Conformité légale
+- **[Gestion Fichiers](docs/project-files-guide.md)** : Upload et gestion S3
 
 ---
 
 ## 🎯 **Roadmap & Évolutions**
 
-### ✅ **Version Production Déployée - 25 Juillet 2025**
+### ✅ **Version Production Déployée - 26 Juillet 2025**
 
 - Architecture tests séparée CI/CD vs local
 - Tests E2E optimisés 3 niveaux
 - Suite Stripe complète enterprise
+- Composant FloatingBubbles interactif
 - Documentation technique unifiée
 - Application déployée en production
 
@@ -523,6 +558,8 @@ docker compose build --no-cache
 - [ ] Tests mobile natifs (iOS, Android via Appium)
 - [ ] Tests performance (Lighthouse CI intégré)
 - [ ] Tests accessibilité (axe-core automation)
+- [ ] Landing page A/B testing
+- [ ] Analytics avancées (Google Analytics 4)
 
 ### 🚀 **Q4 2025 : Scale Enterprise**
 
@@ -531,43 +568,84 @@ docker compose build --no-cache
 - [ ] Tests sécurité automatisés (OWASP ZAP)
 - [ ] Visual regression tests (Percy/Chromatic)
 - [ ] Parallel test execution (réduction 50% temps)
+- [ ] Multi-tenant architecture
 
 ---
 
 ## 🎉 **État du Projet**
 
-**✅ Version Production Déployée - 25 Juillet 2025**
+**✅ Version Production Déployée - 26 Juillet 2025**
 
-🏆 **Application enterprise-grade** déployée en production par Christophe Mostefaoui avec architecture tests robuste, paiements Stripe stabilisés et infrastructure Docker multi-architecture.
+🏆 **Application enterprise-grade** déployée en production avec architecture tests robuste, paiements Stripe stabilisés, infrastructure Docker multi-architecture et nouveau composant FloatingBubbles interactif.
 
 🚀 **En service commercial** avec 87% couverture tests, conformité RGPD complète, système notifications centralisé et support client intégré.
 
 🔬 **Innovation technique** : Architecture tests séparée CI/CD révolutionnaire pour stabilité maximale et développement optimisé.
 
+🎨 **UX moderne** : Landing page optimisée avec composant équipe d'experts interactif utilisant animations CSS3 et glassmorphism.
+
 **➡️ Résultat : Plateforme professionnelle opérationnelle pour services de correction de manuscrits !** 🎯
 
 ---
 
-### 🛠️ **Développement**
+## 🛠️ **Scripts Disponibles**
 
-- **Issues** : Rapporter bugs et demandes features
-- **Pull Requests** : Contributions avec tests obligatoires
-- **Documentation** : Maintenir les guides à jour
+### 📦 **Installation & Setup**
+
+```bash
+npm run install:all     # Installation toutes dépendances
+```
+
+### 🚀 **Développement**
+
+```bash
+npm run dev            # Lancement stack complète Docker
+npm run dev:watch      # Mode hot-reload avec nodemon + Vite
+npm run dev:frontend   # Frontend uniquement (port 3000)
+npm run dev:backend    # Backend uniquement (port 3000)
+```
+
+### 🏗️ **Build & Production**
+
+```bash
+npm run build          # Build complet backend + frontend
+npm run build:frontend # Build frontend uniquement
+npm run build:backend  # Build backend uniquement
+```
+
+### 🧪 **Tests**
+
+```bash
+npm run test           # Tests backend complets
+npm run test:backend   # Tests backend avec couverture
+```
+
+### 🐳 **Docker**
+
+```bash
+npm run docker:dev     # Stack développement
+npm run docker:prod    # Stack production
+npm run docker:build   # Build multi-architecture
+npm run docker:build:push # Build + push registry
+```
+
+### 🚀 **Déploiement**
+
+```bash
+npm run deploy:vps     # Déploiement VPS automatisé
+npm run deploy:vps:dry # Simulation déploiement
+```
+
+---
 
 ### 👨‍💻 **Développeur**
 
 **Christophe Mostefaoui** - Développeur principal et créateur de la plateforme
 
-### 📚 **Documentation Technique**
+### 📧 **Contact & Support**
 
-Consultez le dossier `/docs/` pour les guides détaillés d'utilisation et de développement.
-
-**Infrastructure Docker Consolidée** :
-- `docs/docker-workflow.md` : **Guide Docker unifié** dev → prod avec troubleshooting complet
-- `scripts/dev-reset.sh` : Script automatisé de reset environnement développement
-- `scripts/docker-build.sh` : Build multi-architecture avec cache registry
-- `scripts/deploy-vps.sh` : Déploiement VPS automatisé avec sauvegarde
-- **Documentation consolidée** : Suppression des redondances, un seul guide Docker complet
+- **Email** : contact@staka.fr
+- **Documentation** : Consultez le dossier `/docs/`
 
 ---
 

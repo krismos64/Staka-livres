@@ -3,14 +3,14 @@
 ![React](https://img.shields.io/badge/React-18.2.0-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue)
 ![Tailwind](https://img.shields.io/badge/Tailwind-3.4.17-cyan)
-![Vite](https://img.shields.io/badge/Vite-5.0.8-purple)
+![Vite](https://img.shields.io/badge/Vite-6.3.5-purple)
 ![React Query](https://img.shields.io/badge/React%20Query-5.81.5-red)
 ![Framer Motion](https://img.shields.io/badge/Framer%20Motion-12.23.0-pink)
 ![Tests](https://img.shields.io/badge/Tests-85%25%20Coverage-brightgreen)
 ![Production](https://img.shields.io/badge/Status-Production%20Ready-green)
 ![OVH](https://img.shields.io/badge/Deployed-OVH%20Cloud-blue)
 
-**📅 Mis à jour le 25 juillet 2025 par Christophe Mostefaoui**
+**📅 Mis à jour le 26 juillet 2025 par Christophe Mostefaoui**
 
 ---
 
@@ -18,16 +18,16 @@
 
 Frontend React pour **Staka Livres**, plateforme professionnelle de correction de manuscrits déployée en production sur **OVH Cloud** via SSH et Docker. Architecture moderne avec React 18, TypeScript, Tailwind CSS, React Query et système de tests séparés CI/CD vs local.
 
-### 🏆 **Métriques Frontend (25 Juillet 2025)**
+### 🏆 **Métriques Frontend (26 Juillet 2025)**
 
 | Composant            | Détail                                             | Statut        |
 | -------------------- | -------------------------------------------------- | ------------- |
-| **⚛️ Composants**    | 71 composants modulaires TypeScript                | ✅ Production |
-| **🎣 Hooks**         | 31 hooks personnalisés React Query                 | ✅ Optimisés  |
-| **📄 Pages**         | 28 pages complètes responsive                      | ✅ Production |
+| **⚛️ Composants**    | 132+ composants modulaires TypeScript              | ✅ Production |
+| **🎣 Hooks**         | 30 hooks personnalisés React Query                 | ✅ Optimisés  |
+| **📄 Pages**         | 25 pages complètes responsive                      | ✅ Production |
 | **🧪 Tests**         | 9 fichiers + architecture séparée (85% couverture) | ✅ Robustes   |
-| **🔍 Tests E2E**     | 19 tests Cypress 3 niveaux                         | ✅ Enterprise |
-| **🎨 Design System** | Tailwind + Framer Motion + accessibilité           | ✅ Moderne    |
+| **🔍 Tests E2E**     | 29 tests Cypress 3 niveaux                         | ✅ Enterprise |
+| **🎨 Design System** | Tailwind + Framer Motion + FloatingBubbles         | ✅ Moderne    |
 | **🚀 Performance**   | Lazy loading + code splitting + cache              | ✅ Optimisé   |
 | **🐳 Déploiement**   | OVH Cloud + Docker + Nginx proxy                   | ✅ Production |
 
@@ -40,8 +40,8 @@ Frontend React pour **Staka Livres**, plateforme professionnelle de correction d
 ```
 frontend/
 ├── src/
-│   ├── components/                 # 71 composants modulaires
-│   │   ├── admin/                 # 12 composants administration
+│   ├── components/                 # 132+ composants modulaires
+│   │   ├── admin/                 # 9 composants administration
 │   │   │   ├── AdminLayout.tsx    # Layout admin moderne sidebar
 │   │   │   ├── RequireAdmin.tsx   # Protection routes admin
 │   │   │   ├── DemoModeProvider.tsx # Mode démonstration pro
@@ -65,13 +65,14 @@ frontend/
 │   │   │   ├── SignupForm.tsx     # Formulaire inscription
 │   │   │   ├── ContactForm.tsx    # Formulaire contact
 │   │   │   └── ... (3 autres composants)
-│   │   ├── landing/               # 14 composants landing page
+│   │   ├── landing/               # 16 composants landing page
 │   │   │   ├── Hero.tsx           # Section héro principale
 │   │   │   ├── Navigation.tsx     # Navigation sticky
 │   │   │   ├── PricingCalculator.tsx # Calculateur tarifs
 │   │   │   ├── FreeSample.tsx     # Échantillon gratuit
 │   │   │   ├── Contact.tsx        # Section contact
-│   │   │   └── ... (9 autres composants)
+│   │   │   ├── FloatingBubbles.tsx # Animation bulles expertes (NOUVEAU)
+│   │   │   └── ... (10 autres composants)
 │   │   ├── layout/                # 8 composants structure
 │   │   │   ├── Header.tsx         # En-tête application
 │   │   │   ├── Sidebar.tsx        # Barre latérale
@@ -91,7 +92,7 @@ frontend/
 │   │       ├── FileItem.tsx       # Affichage fichier
 │   │       ├── UploadButton.tsx   # Upload S3
 │   │       └── ... (2 autres composants)
-│   ├── hooks/                     # 31 hooks React Query
+│   ├── hooks/                     # 30 hooks React Query
 │   │   ├── useAuth.ts             # Authentification JWT
 │   │   ├── useAdminUsers.ts       # Gestion utilisateurs admin
 │   │   ├── useAdminCommandes.ts   # Gestion commandes admin
@@ -101,7 +102,7 @@ frontend/
 │   │   ├── useInvoices.ts         # Facturation
 │   │   ├── usePricing.ts          # Tarification dynamique
 │   │   └── ... (23 autres hooks)
-│   ├── pages/                     # 28 pages complètes
+│   ├── pages/                     # 25 pages complètes
 │   │   ├── admin/                 # 10 pages administration
 │   │   │   ├── AdminDashboard.tsx # Dashboard KPIs
 │   │   │   ├── AdminUtilisateurs.tsx # Gestion utilisateurs
@@ -140,7 +141,7 @@ frontend/
 ├── tests/                         # Tests (architecture séparée)
 │   ├── integration/               # Tests intégration (local)
 │   └── __mocks__/                 # Mocks tests
-├── cypress/                       # Tests E2E (19 tests)
+├── cypress/                       # Tests E2E (29 tests)
 │   ├── e2e/
 │   │   ├── critical/              # Tests critiques CI/CD
 │   │   ├── smoke/                 # Health checks
@@ -164,7 +165,7 @@ frontend/
 
 - **React 18.2.0** : Framework JavaScript avec Concurrent Features
 - **TypeScript 5.3.3** : Typage statique strict pour robustesse
-- **Vite 5.0.8** : Build tool ultra-rapide avec HMR optimisé
+- **Vite 6.3.5** : Build tool ultra-rapide avec HMR optimisé
 
 #### **State Management & Data**
 
@@ -288,8 +289,14 @@ cypress/e2e/critical/
 ├── auth.cy.ts              # Authentification (15 tests)
 ├── landing.cy.ts           # Page accueil (12 tests)
 ├── admin-basic.cy.ts       # Interface admin (8 tests)
+├── admin-complete.cy.ts    # Admin workflows complets
+├── business-workflows.cy.ts # Workflows métier critiques
+├── files-s3-robust.cy.ts   # Upload S3 robuste
+├── messaging-complete.cy.ts # Messagerie complète
 ├── payment-essential.cy.ts # Paiements critiques (18 tests)
-└── payment-errors.cy.ts    # Gestion erreurs (20 tests)
+├── payment-errors.cy.ts    # Gestion erreurs (20 tests)
+├── payments-advanced.cy.ts # Paiements avancés
+└── security-advanced.cy.ts # Tests sécurité avancés
 
 npm run test:e2e:critical   # Tests essentiels uniquement
 ```
@@ -310,20 +317,24 @@ cypress/e2e/integration/
 ├── admin-users-advanced.cy.ts    # CRUD utilisateurs complet
 ├── stripe-webhooks-advanced.cy.ts # Webhooks Stripe complets
 ├── end-to-end-workflow.cy.ts     # Workflow client → livraison
-└── payment-flow-complete.cy.ts   # Paiements Stripe avancés
+├── payment-flow-complete.cy.ts   # Paiements Stripe avancés
+├── files-s3-enterprise.cy.ts     # Upload S3 enterprise
+├── messaging-advanced.cy.ts      # Messagerie avancée
+├── payments-enterprise.cy.ts     # Paiements enterprise
+└── workflows-advanced.cy.ts      # Workflows avancés
 
 npm run test:e2e:local      # Tests complets avec backend
 ```
 
 ### 📊 **Métriques Tests**
 
-| Suite Tests           | Durée    | Couverture | Environnement  | Statut          |
-| --------------------- | -------- | ---------- | -------------- | --------------- |
-| **Unit Tests**        | 1-2 min  | 85%        | jsdom + mocks  | ✅ Stable       |
-| **Integration Tests** | 3-5 min  | 90%        | Backend requis | ✅ Stable       |
-| **E2E Critical**      | < 2 min  | 95%        | Docker stack   | ✅ Optimisé     |
-| **E2E Smoke**         | < 30s    | 92%        | Basic stack    | ✅ Ultra-rapide |
-| **E2E Integration**   | < 10 min | 90%        | Full stack     | ✅ Complet      |
+| Suite Tests           | Durée    | Couverture | Environnement  | Statut          | Tests         |
+| --------------------- | -------- | ---------- | -------------- | --------------- | ------------- |
+| **Unit Tests**        | 1-2 min  | 85%        | jsdom + mocks  | ✅ Stable       | 9 fichiers    |
+| **Integration Tests** | 3-5 min  | 90%        | Backend requis | ✅ Stable       | Tests d'API   |
+| **E2E Critical**      | < 2 min  | 95%        | Docker stack   | ✅ Optimisé     | 11 tests      |
+| **E2E Smoke**         | < 30s    | 92%        | Basic stack    | ✅ Ultra-rapide | 1 test        |
+| **E2E Integration**   | < 10 min | 90%        | Full stack     | ✅ Complet      | 8 tests       |
 
 ---
 
@@ -658,6 +669,94 @@ const UserTable: React.FC<UserTableProps> = ({
 ```
 
 ### 🎨 **Landing Page Components**
+
+#### **🆕 Nouveau : FloatingBubbles** (`components/landing/FloatingBubbles.tsx`)
+
+```typescript
+// Composant d'animation interactive avec bulles flottantes d'experts
+interface AuthorBubble {
+  id: number;
+  name: string;
+  specialty: string;
+  image: string;
+  size: 'large' | 'medium' | 'small';
+  position: {
+    top?: string;
+    left?: string;
+    right?: string;
+    bottom?: string;
+  };
+}
+
+const FloatingBubbles: React.FC = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const particleIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  useEffect(() => {
+    // Animation d'entrée échelonnée
+    const animateEntry = () => {
+      const bubbleElements = containerRef.current?.querySelectorAll('.bubble');
+      bubbleElements?.forEach((bubble, index) => {
+        setTimeout(() => {
+          (bubble as HTMLElement).style.opacity = '1';
+          (bubble as HTMLElement).style.transform = 'scale(1)';
+        }, index * 200);
+      });
+    };
+
+    // Création de particules flottantes périodiques
+    const createParticle = () => {
+      const particle = document.createElement('div');
+      particle.className = 'floating-particle';
+      // Animation particule remontante
+      particle.style.animation = `particleFloat ${Math.random() * 10 + 15}s linear infinite`;
+      containerRef.current?.appendChild(particle);
+    };
+
+    animateEntry();
+    const interval = setInterval(createParticle, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <section className="relative overflow-hidden py-20 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 min-h-screen">
+      {/* 9 bulles expertes avec spécialités */}
+      {authors.map((author, index) => (
+        <div
+          key={author.id}
+          className={`bubble absolute rounded-full cursor-pointer transition-all duration-300 hover:scale-110 ${getSizeClasses(author.size)} ${getAnimationClass(index)}`}
+          style={{
+            ...author.position,
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '2px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1), inset 0 0 30px rgba(255, 255, 255, 0.1)'
+          }}
+          onClick={(e) => handleBubbleClick(author, e)}
+        >
+          <img src={author.image} alt={author.name} className="w-full h-full object-cover rounded-full" />
+          {/* Info-bulle au survol */}
+          <div className="bubble-info absolute opacity-0 transition-all duration-300">
+            <div className="font-semibold">{author.name}</div>
+            <div className="text-xs opacity-90">{author.specialty}</div>
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+};
+```
+
+**Fonctionnalités** :
+- **9 bulles expertes** avec spécialités (Romance, SF, Thriller, Littérature classique, etc.)
+- **Animations flottantes CSS** personnalisées (float1, float2, float3)
+- **Particules remontantes** générées dynamiquement toutes les 3 secondes
+- **Info-bulles interactives** au survol avec nom et spécialité
+- **Responsive design** avec repositionnement automatique mobile
+- **Gestion d'erreur images** avec SVG fallback généré dynamiquement
+- **Effets glassmorphism** et reflets lumineux
+- **Animation d'entrée échelonnée** (200ms entre chaque bulle)
+- **Interactions click** avec effet pulse
 
 #### **Hero Section** (`components/landing/Hero.tsx`)
 

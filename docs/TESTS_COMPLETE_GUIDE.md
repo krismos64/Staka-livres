@@ -4,7 +4,7 @@
 
 Documentation unifiée pour l'infrastructure de tests complète du projet **Staka Livres**. Architecture multi-niveaux avec **tests unitaires**, **tests d'intégration**, **tests E2E** et **tests paiement Stripe** pour une application enterprise-grade.
 
-**🆕 JUILLET 2025 - Architecture Robuste** : Tests séparés CI/CD vs local, E2E optimisés 3 niveaux, Stripe stabilisé.
+**🆕 JUILLET 2025 - Architecture Révolutionnaire** : Tests séparés CI/CD vs local, E2E optimisés 3 niveaux, 32 tests backend + 19 tests E2E, Stripe enterprise-grade, version production déployée 26 Juillet 2025.
 
 ---
 
@@ -13,13 +13,17 @@ Documentation unifiée pour l'infrastructure de tests complète du projet **Stak
 ```
 Staka-livres/
 ├── backend/                          # Backend Node.js + Express + Prisma
-│   ├── src/__tests__/               # Tests unitaires backend (56 tests - 87%)
-│   │   ├── controllers/             # Tests contrôleurs
-│   │   ├── services/               # Tests services métier
-│   │   └── integration/            # Tests intégration S3, email
-│   └── tests/                      # Tests API complets
-│       ├── unit/                   # Tests unitaires isolés
-│       └── integration/            # Tests endpoints réels
+│   ├── src/__tests__/               # Tests unitaires backend (16 tests - 85%)
+│   │   ├── controllers/             # Tests contrôleurs (4 tests)
+│   │   ├── services/               # Tests services métier (3 tests)
+│   │   ├── integration/            # Tests intégration S3, email (4 tests)
+│   │   ├── listeners/              # Tests event listeners (2 tests)
+│   │   ├── models/                 # Tests modèles (1 test)
+│   │   ├── queues/                 # Tests queues email (1 test)
+│   │   └── routes/                 # Tests routes (1 test)
+│   └── tests/                      # Tests API complets (16 tests)
+│       ├── unit/                   # Tests unitaires isolés (8 tests)
+│       └── integration/            # Tests endpoints réels (8 tests)
 ├── frontend/                       # Frontend React + Vite + React Query
 │   ├── src/__tests__/             # Tests unitaires (CI/CD)
 │   │   ├── hooks/                 # Tests React Query hooks
@@ -28,21 +32,31 @@ Staka-livres/
 │   ├── tests/                     # 🆕 Architecture séparée
 │   │   ├── integration/           # Tests intégration (local + backend)
 │   │   └── unit/                  # Tests unitaires complémentaires
-│   └── cypress/                   # 🆕 Tests E2E optimisés 3 niveaux
+│   └── cypress/                   # 🆕 Tests E2E optimisés 3 niveaux (19 tests)
 │       └── e2e/
-│           ├── critical/          # Tests critiques CI/CD (< 2min)
+│           ├── critical/          # Tests critiques CI/CD (11 tests - < 2min)
 │           │   ├── auth.cy.ts     # Authentification essentielle
 │           │   ├── landing.cy.ts  # Page d'accueil
 │           │   ├── admin-basic.cy.ts # Admin basique
+│           │   ├── admin-complete.cy.ts # Admin avancé
+│           │   ├── business-workflows.cy.ts # Workflows métier
+│           │   ├── files-s3-robust.cy.ts # Fichiers S3 robustes
+│           │   ├── messaging-complete.cy.ts # Messagerie complète
 │           │   ├── payment-essential.cy.ts # Paiement critique
-│           │   └── payment-errors.cy.ts   # Erreurs paiement
-│           ├── smoke/             # Health checks rapides (< 30s)
+│           │   ├── payment-errors.cy.ts   # Erreurs paiement
+│           │   ├── payments-advanced.cy.ts # Paiements avancés
+│           │   └── security-advanced.cy.ts # Sécurité avancée
+│           ├── smoke/             # Health checks rapides (1 test - < 30s)
 │           │   └── health-check.cy.ts # Santé application
-│           └── integration/       # Tests complets (< 10min)
+│           └── integration/       # Tests complets (8 tests - < 10min)
 │               ├── admin-users-advanced.cy.ts # CRUD utilisateurs
-│               ├── stripe-webhooks-advanced.cy.ts # Webhooks Stripe
 │               ├── end-to-end-workflow.cy.ts # Workflow client complet
-│               └── payment-flow-complete.cy.ts # Paiements avancés
+│               ├── files-s3-enterprise.cy.ts # Fichiers S3 enterprise
+│               ├── messaging-advanced.cy.ts # Messagerie avancée
+│               ├── payment-flow-complete.cy.ts # Paiements complets
+│               ├── payments-enterprise.cy.ts # Paiements enterprise
+│               ├── stripe-webhooks-advanced.cy.ts # Webhooks Stripe
+│               └── workflows-advanced.cy.ts # Workflows avancés
 └── docs/                          # Documentation unifiée
     └── TESTS_COMPLETE_GUIDE.md    # Ce guide
 ```
@@ -51,42 +65,72 @@ Staka-livres/
 
 ## 🎯 Tests Backend (Node.js + Express + Prisma)
 
-### Couverture et métriques
+### Couverture et métriques actuelles (26 Juillet 2025)
 
-- **56 tests** avec **87% de couverture**
+- **32 tests backend** avec **85-87% de couverture**
 - **Framework** : Vitest + Supertest + Prisma mock
-- **CI/CD** : Tests unitaires uniquement pour performance
+- **CI/CD** : Tests unitaires uniquement pour performance optimale
+- **Version production** : Déployée le 26 Juillet 2025
+- **Pipeline CI/CD** : < 8 minutes total (objectif atteint)
 
 ### Structure détaillée
 
 #### Tests unitaires (`src/__tests__/`)
 
 ```bash
-# Services métier
-adminCommandeService.test.ts    # Gestion commandes admin
-adminUserService.test.ts        # Gestion utilisateurs
-invoiceService.test.ts          # Génération factures
-paymentService.test.ts          # Logique paiements Stripe
+# Tests unitaires (src/__tests__/ - 16 tests)
+## Contrôleurs (4 tests)
+filesController.test.ts                    # Upload/download fichiers
+messagesSupportEmail.test.ts              # Support email
+messagesSupportEmailSimple.test.ts       # Support email simple
+publicController.test.ts                  # Contact public
 
-# Contrôleurs
-authController.test.ts          # Authentification JWT
-filesController.test.ts         # Upload/download fichiers
-publicController.test.ts        # Contact public (nouveau)
-webhookController.test.ts       # Webhooks Stripe
+## Services (3 tests)
+filesService.test.ts                      # Service fichiers
+passwordResetService.test.ts              # Reset mot de passe
+pdfService.test.ts                        # Génération PDF
 
-# Intégration
-s3InvoiceService.integration.test.ts  # Tests S3 conditionnels
-emailQueue.test.ts              # Queue emails
+## Intégration (4 tests)
+adminNotificationEmailFlow.test.ts       # Flow notifications admin
+passwordResetEndpoints.test.ts            # Endpoints reset password
+s3InvoiceService.integration.test.ts     # Tests S3 conditionnels
+userNotificationEmailFlow.test.ts        # Flow notifications utilisateur
+
+## Event Listeners (2 tests)
+adminNotificationEmailListener.test.ts   # Listener notifications admin
+userNotificationEmailListener.test.ts    # Listener notifications utilisateur
+
+## Modèles (1 test)
+projectFileModel.test.ts                  # Modèle fichiers projet
+
+## Queues (1 test)
+emailQueue.test.ts                       # Queue emails
+
+## Routes (1 test)
+adminFactures.test.ts                     # Routes factures admin
 ```
 
 #### Tests d'intégration (`tests/integration/`)
 
 ```bash
+# Tests intégration (tests/integration/ - 8 tests)
 adminCommandeEndpoints.test.ts  # API commandes complète
+adminStatsEndpoints.test.ts     # API statistiques admin
 adminUserEndpoints.test.ts      # API utilisateurs + pagination
 invoiceEndpoints.test.ts        # API facturation + PDF
 projectsEndpoints.test.ts       # API projets + files
 userEndpoints.test.ts           # API utilisateur + auth
+
+# Tests unitaires (tests/unit/ - 8 tests)
+adminCommandeService.test.ts    # Service commandes admin
+adminUserService.test.ts        # Service utilisateurs
+invoiceRoutes.test.ts           # Routes factures
+paymentMethods.test.ts          # Méthodes paiement
+projectModel.test.ts            # Modèle projets
+statsController.test.ts         # Contrôleur stats
+userService.test.ts             # Service utilisateurs
+webhook.test.ts                 # Webhooks basiques
+webhookWithInvoice.test.ts      # Webhooks avec factures
 ```
 
 ### Scripts backend
@@ -223,12 +267,18 @@ npm run test --watch
 **Objectif** : Validation rapide des flux essentiels
 
 ```bash
-cypress/e2e/critical/
-├── auth.cy.ts              # Authentification et navigation (15 tests)
-├── landing.cy.ts           # Page d'accueil et CTA (12 tests)
-├── admin-basic.cy.ts       # Interface admin basique (8 tests)
-├── payment-essential.cy.ts # Flux paiement critiques (18 tests)
-└── payment-errors.cy.ts    # Gestion erreurs paiement (20 tests)
+cypress/e2e/critical/ (11 tests)
+├── auth.cy.ts                    # Authentification et navigation
+├── landing.cy.ts                 # Page d'accueil et CTA
+├── admin-basic.cy.ts            # Interface admin basique
+├── admin-complete.cy.ts         # Interface admin complète
+├── business-workflows.cy.ts     # Workflows métier critiques
+├── files-s3-robust.cy.ts        # Gestion fichiers S3 robuste
+├── messaging-complete.cy.ts     # Système messagerie complet
+├── payment-essential.cy.ts      # Flux paiement critiques
+├── payment-errors.cy.ts         # Gestion erreurs paiement
+├── payments-advanced.cy.ts      # Paiements avancés
+└── security-advanced.cy.ts      # Tests sécurité avancés
 ```
 
 #### 2. Tests smoke (Health checks) - < 30s
@@ -236,8 +286,8 @@ cypress/e2e/critical/
 **Objectif** : Vérifications santé ultra-rapides
 
 ```bash
-cypress/e2e/smoke/
-└── health-check.cy.ts      # Application availability (11/12 tests ✅)
+cypress/e2e/smoke/ (1 test)
+└── health-check.cy.ts      # Application availability (status: ✅ stable)
 ```
 
 #### 3. Tests intégration (Local/Staging) - < 10min
@@ -245,11 +295,15 @@ cypress/e2e/smoke/
 **Objectif** : Validation complète avec backend
 
 ```bash
-cypress/e2e/integration/
-├── admin-users-advanced.cy.ts    # CRUD utilisateurs complet
-├── stripe-webhooks-advanced.cy.ts # Webhooks Stripe complets
-├── end-to-end-workflow.cy.ts     # Workflow client → livraison
-└── payment-flow-complete.cy.ts   # Paiements Stripe avancés
+cypress/e2e/integration/ (8 tests)
+├── admin-users-advanced.cy.ts      # CRUD utilisateurs complet
+├── end-to-end-workflow.cy.ts       # Workflow client → livraison
+├── files-s3-enterprise.cy.ts       # Gestion fichiers S3 enterprise
+├── messaging-advanced.cy.ts        # Messagerie avancée
+├── payment-flow-complete.cy.ts     # Paiements Stripe complets
+├── payments-enterprise.cy.ts       # Suite paiements enterprise
+├── stripe-webhooks-advanced.cy.ts  # Webhooks Stripe complets
+└── workflows-advanced.cy.ts        # Workflows métier avancés
 ```
 
 ### Configurations spécialisées

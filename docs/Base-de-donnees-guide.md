@@ -28,7 +28,7 @@ La base de données **Staka Livres** est une architecture complète MySQL 8 gér
 - **Environnement** : Docker Compose multi-architecture avec volumes persistants
 - **Ports** : 3306 (MySQL), 5555 (Prisma Studio), 3001 (Backend API)
 - **Containers** : `staka_db` (MySQL), `staka_backend` (API + Prisma), `staka_frontend` (React)
-- **Modèles** : **15 modèles** de données interconnectés (complet et stable)
+- **Modèles** : **14 modèles** de données interconnectés (complet et stable)
 - **Relations** : **35+ relations** avec contraintes d'intégrité strictes
 - **Index** : **40+ index optimisés** pour performance maximale
 
@@ -114,7 +114,6 @@ model Commande {
   @@index([statut])
   @@index([priorite])
   @@index([createdAt])
-  @@index([paymentStatus])  // 🆕 Index Stripe
   @@map("commandes")
 }
 
@@ -656,7 +655,7 @@ docker-compose logs -f backend
 docker exec -it staka_backend npx prisma studio
 
 # Interface accessible : http://localhost:5555
-# Exploration complète des 15 modèles de données
+# Exploration complète des 14 modèles de données
 ```
 
 ### **3. Commandes Maintenance Prisma**
@@ -703,14 +702,13 @@ docker exec -it staka_backend node scripts/sync-stripe-products.js
 @@index([userId])          // Commande: projets utilisateur
 @@index([statut])          // Commande: filtrage statut
 @@index([priorite])        // Commande: tri priorité
-@@index([paymentStatus])   // Commande: statuts paiement Stripe
+@@index([createdAt])        // Commande: tri chronologique
 
 // Index messagerie optimisée
 @@index([conversationId])  // Message: regroupement conversations
 @@index([senderId])        // Message: messages envoyés
 @@index([receiverId])      // Message: messages reçus
 @@index([visitorEmail])    // Message: visiteurs anonymes
-@@index([type])            // Message: filtrage par type
 
 // Index notifications temps réel
 @@index([userId])          // Notification: par utilisateur
@@ -1067,7 +1065,7 @@ docker exec -it staka_backend node scripts/recent-audit-logs.js
 
 ### **📊 Statistiques Architecture**
 
-- **15 modèles** de données interconnectés (production ready)
+- **14 modèles** de données interconnectés (production ready)
 - **35+ relations** avec contraintes d'intégrité strictes
 - **40+ index optimisés** pour performance maximale
 - **16 enums** pour validation stricte des données

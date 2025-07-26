@@ -5,6 +5,7 @@ import Blog from "../components/landing/Blog";
 import Contact from "../components/landing/Contact";
 import Excellence from "../components/landing/Excellence";
 import FAQ from "../components/landing/FAQ";
+import FloatingBubbles from "../components/landing/FloatingBubbles";
 import Footer from "../components/landing/Footer";
 import FreeSample from "../components/landing/FreeSample";
 import Hero from "../components/landing/Hero";
@@ -61,6 +62,8 @@ export default function LandingPage({ onLoginClick, onSignupClick }: LandingPage
         <About onChatClick={handleChatButtonClick} />
         {/* FAQ Section */}
         <FAQ />
+        {/* Floating Bubbles Team Section */}
+        <FloatingBubbles />
         {/* Contact Section */}
         <Contact onChatClick={handleChatButtonClick} />
         {/* Footer Section */}

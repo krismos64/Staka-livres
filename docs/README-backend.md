@@ -22,8 +22,8 @@ Backend REST API pour **Staka Livres**, plateforme professionnelle de correction
 
 | Composant | Détail | Statut |
 |-----------|--------|---------|
-| **🌐 Endpoints API** | 139+ endpoints répartis sur 28 fichiers routes | ✅ Production |
-| **📁 Contrôleurs** | 23 contrôleurs spécialisés | ✅ Optimisés |
+| **🌐 Endpoints API** | 140+ endpoints répartis sur 26 fichiers routes | ✅ Production |
+| **📁 Contrôleurs** | 24 contrôleurs spécialisés | ✅ Optimisés |
 | **🧪 Tests** | 33 fichiers tests (87% couverture) | ✅ Robustes |
 | **🗄️ Base de données** | 15 modèles Prisma avec 35+ relations | ✅ Optimisée |
 | **🔒 Sécurité** | JWT + RGPD + Audit logs + Rate limiting | ✅ Conforme |
@@ -42,7 +42,7 @@ backend/
 ├── src/
 │   ├── server.ts                   # Point d'entrée principal
 │   ├── app.ts                      # Configuration Express avec middlewares
-│   ├── controllers/                # 23 contrôleurs spécialisés
+│   ├── controllers/                # 24 contrôleurs spécialisés
 │   │   ├── authController.ts       # Authentification JWT
 │   │   ├── adminController.ts      # Administration générale
 │   │   ├── adminUserController.ts  # Gestion utilisateurs admin
@@ -50,6 +50,7 @@ backend/
 │   │   ├── adminFactureController.ts # Gestion factures admin
 │   │   ├── adminStatsController.ts # Statistiques admin temps réel
 │   │   ├── adminAuditController.ts # Logs d'audit sécurisés
+│   │   ├── adminPageController.ts  # Gestion pages CMS admin
 │   │   ├── notificationsController.ts # Notifications temps réel
 │   │   ├── messagesController.ts   # Messagerie avec threading
 │   │   ├── paymentController.ts    # Paiements Stripe
@@ -57,26 +58,60 @@ backend/
 │   │   ├── consultationController.ts # Réservations consultations
 │   │   ├── publicController.ts     # Formulaires publics
 │   │   ├── userController.ts       # Gestion utilisateur RGPD
-│   │   └── ... (9 autres contrôleurs)
-│   ├── routes/                     # 28 fichiers routes REST
+│   │   ├── projectsController.ts   # Gestion projets
+│   │   ├── filesController.ts      # Gestion fichiers et uploads
+│   │   ├── faqController.ts        # Gestion FAQ
+│   │   ├── pageController.ts       # Pages CMS publiques
+│   │   ├── statsController.ts      # Statistiques générales
+│   │   ├── commandeController.ts   # Commandes génériques
+│   │   ├── commandeClientController.ts # Commandes côté client
+│   │   ├── fileController.ts       # Contrôleur fichiers alternatif
+│   │   └── tarifController.ts      # Gestion tarifs
+│   ├── routes/                     # 26 fichiers routes REST
 │   │   ├── auth.ts                 # Routes authentification
 │   │   ├── public.ts               # Routes publiques (contact, échantillons)
 │   │   ├── users.ts                # Routes utilisateur RGPD
-│   │   ├── admin/                  # Routes administration (7 fichiers)
+│   │   ├── admin/                  # Routes administration (8 fichiers)
 │   │   │   ├── users.ts            # Gestion utilisateurs admin
 │   │   │   ├── commandes.ts        # Gestion commandes admin
 │   │   │   ├── factures.ts         # Gestion factures admin
 │   │   │   ├── stats.ts            # Statistiques admin
 │   │   │   ├── audit.ts            # Logs d'audit
-│   │   │   └── ... (2 autres)
-│   │   └── ... (20 autres routes)
-│   ├── services/                   # Logique métier
+│   │   │   ├── pages.ts            # Gestion pages CMS
+│   │   │   ├── faq.ts              # Gestion FAQ admin
+│   │   │   └── tarifs.ts           # Gestion tarifs admin
+│   │   ├── messages.ts             # Messagerie et support
+│   │   ├── notifications.ts        # Système notifications
+│   │   ├── payments.ts             # Paiements Stripe
+│   │   ├── paymentMethods.ts       # Moyens de paiement
+│   │   ├── consultations.ts        # Réservations consultations
+│   │   ├── projects.ts             # Gestion projets
+│   │   ├── files.ts                # Upload/download fichiers
+│   │   ├── invoice.ts              # Facturation
+│   │   ├── faq.ts                  # FAQ publique
+│   │   ├── pages.ts                # Pages CMS publiques
+│   │   ├── stats.ts                # Statistiques publiques
+│   │   ├── tarifs.ts               # Tarifs publics
+│   │   ├── commandes.ts            # Commandes publiques
+│   │   ├── adminStats.ts           # Statistiques admin dédiées
+│   │   ├── admin.ts                # Routes admin principales
+│   │   ├── dev.ts                  # Routes développement
+│   │   └── payments/webhook.ts     # Webhooks Stripe
+│   ├── services/                   # Logique métier (14 services)
 │   │   ├── adminUserService.ts     # Service gestion utilisateurs
 │   │   ├── adminCommandeService.ts # Service gestion commandes
+│   │   ├── adminStatsService.ts    # Service statistiques admin
 │   │   ├── auditService.ts         # Service logs d'audit
 │   │   ├── stripeService.ts        # Service Stripe
 │   │   ├── invoiceService.ts       # Service facturation PDF
-│   │   └── ... (autres services)
+│   │   ├── s3InvoiceService.ts     # Service upload S3 factures
+│   │   ├── filesService.ts         # Service gestion fichiers
+│   │   ├── projectService.ts       # Service gestion projets
+│   │   ├── userService.ts          # Service utilisateurs
+│   │   ├── pageService.ts          # Service pages CMS
+│   │   ├── passwordResetService.ts # Service réinitialisation mots de passe
+│   │   ├── tarifStripeSync.ts      # Service synchronisation tarifs Stripe
+│   │   └── pdf.ts                  # Service génération PDF
 │   ├── events/                     # Architecture événementielle
 │   │   └── eventBus.ts             # EventBus centralisé
 │   ├── listeners/                  # Listeners emails automatiques
@@ -88,10 +123,18 @@ backend/
 │   │   └── templates/              # 22 templates (admin/users/visitors)
 │   ├── middleware/                 # Middlewares Express
 │   │   ├── auth.ts                 # Middleware JWT
-│   │   └── requireRole.ts          # Middleware rôles (ADMIN/USER/CORRECTOR)
+│   │   ├── requireRole.ts          # Middleware rôles (ADMIN/USER/CORRECTOR)
+│   │   └── rateLimiter.ts          # Middleware rate limiting
 │   ├── utils/                      # Utilitaires
 │   │   ├── token.ts                # Gestion tokens JWT
 │   │   └── mailer.ts               # Service SendGrid
+│   ├── validators/                 # Validation schémas
+│   │   └── authValidators.ts       # Validateurs authentification
+│   ├── types/                      # Types TypeScript
+│   │   └── adminStats.ts           # Types statistiques admin
+│   ├── models/                     # Modèles métier
+│   │   ├── projectModel.ts         # Modèle projets
+│   │   └── projectFileModel.ts     # Modèle fichiers projets
 │   ├── config/                     # Configuration
 │   │   └── config.ts               # Variables environnement
 │   └── tests/                      # Tests (33 fichiers - 87% couverture)
@@ -131,7 +174,7 @@ backend/
 - **Stripe 18.2.1** : Plateforme paiement avec webhooks
 - **AWS S3 SDK 3.837.0** : Stockage fichiers avec URLs présignées  
 - **SendGrid 8.1.5** : Service emails transactionnels
-- **PDFKit 0.17.1** : Génération factures PDF A4
+- **PDF-lib 1.17.1** : Génération factures PDF A4
 
 #### **Tests & Monitoring**
 - **Vitest 3.2.4** : Framework tests unitaires ultra-rapide
@@ -140,7 +183,7 @@ backend/
 
 ---
 
-## 🌐 **API Endpoints (139+ endpoints)**
+## 🌐 **API Endpoints (140+ endpoints)**
 
 ### 🔐 **Authentification** (`/auth`)
 
@@ -1713,8 +1756,8 @@ SHOW INDEX FROM table_name;    # Index disponibles
 
 ### 🔢 **Métriques Finales (26 Juillet 2025)**
 
-- **API** : 139+ endpoints sur 28 fichiers routes
-- **Contrôleurs** : 23 contrôleurs spécialisés
+- **API** : 140+ endpoints sur 26 fichiers routes
+- **Contrôleurs** : 24 contrôleurs spécialisés
 - **Tests** : 33 fichiers tests (87% couverture)
 - **Services** : 14 services métier
 - **Templates** : 22 templates emails HTML

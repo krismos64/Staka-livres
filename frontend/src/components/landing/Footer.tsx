@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import CorrectorBubbles from "./CorrectorBubbles";
 
 export default function Footer() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
@@ -14,30 +13,17 @@ export default function Footer() {
 
   return (
     <footer className="bg-gray-900 text-white relative overflow-hidden">
-      {/* Bulles de correcteurs dispersées */}
-      <CorrectorBubbles className="absolute inset-0 z-0" />
-      
       {/* Main Footer Content */}
       <div className="max-w-6xl mx-auto px-6 py-16 relative z-10">
         <div className="grid md:grid-cols-4 gap-8">
           {/* Brand & Description */}
           <div className="md:col-span-2">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="flex-shrink-0">
-                <img
-                  src="/images/staka-entremises-logo.svg"
-                  alt="Staka Entremises Éditions"
-                  className="h-16 w-auto filter brightness-150 opacity-90 hover:opacity-100 transition-opacity duration-300"
-                />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-300 bg-clip-text text-transparent">
-                  Staka Éditions
-                </h3>
-                <p className="text-gray-400 text-sm">
-                  Excellence éditoriale depuis 2010
-                </p>
-              </div>
+            <div className="mb-6">
+              <img
+                src="/images/logo-staka.webp"
+                alt="Staka - Entremises Éditions"
+                className="h-20 w-auto opacity-90 hover:opacity-100 transition-opacity duration-300"
+              />
             </div>
             <p className="text-gray-300 mb-6 leading-relaxed">
               Nous transformons vos manuscrits en livres professionnels dignes
