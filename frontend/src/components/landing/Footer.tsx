@@ -24,8 +24,8 @@ export default function Footer() {
           <div className="md:col-span-2">
             <div className="flex items-center gap-4 mb-6">
               <div className="flex-shrink-0">
-                <img 
-                  src="/images/staka-entremises-logo.svg" 
+                <img
+                  src="/images/staka-entremises-logo.svg"
                   alt="Staka Entremises Éditions"
                   className="h-16 w-auto filter brightness-150 opacity-90 hover:opacity-100 transition-opacity duration-300"
                 />
