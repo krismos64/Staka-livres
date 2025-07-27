@@ -6,7 +6,7 @@
 describe('Landing Page - Tests Critiques', () => {
   beforeEach(() => {
     // Mock des tarifs pour la landing page
-    cy.intercept('GET', '**/api/public/tarifs*', {
+    cy.intercept('GET', '/api/tarifs*', {
       statusCode: 200,
       body: {
         success: true,
@@ -16,22 +16,31 @@ describe('Landing Page - Tests Critiques', () => {
             nom: 'Correction Standard',
             description: 'Correction orthographique et grammaticale',
             prix: 50,
-            unite: 'document',
-            stripeProductId: 'prod_test123'
+            prixFormate: '50,00 €',
+            typeService: 'correction',
+            actif: true,
+            ordre: 1,
+            createdAt: '2024-01-01T00:00:00Z',
+            updatedAt: '2024-01-01T00:00:00Z'
           },
           {
             id: 'tarif-2',
             nom: 'Correction Premium',
             description: 'Correction complète avec suggestions',
             prix: 100,
-            unite: 'document',
-            stripeProductId: 'prod_test456'
+            prixFormate: '100,00 €',
+            typeService: 'correction',
+            actif: true,
+            ordre: 2,
+            createdAt: '2024-01-01T00:00:00Z',
+            updatedAt: '2024-01-01T00:00:00Z'
           }
-        ]
+        ],
+        message: 'Tarifs récupérés avec succès'
       }
     }).as('getTarifs');
 
-    cy.intercept('GET', '**/api/public/pages*', {
+    cy.intercept('GET', '/api/pages*', {
       statusCode: 200,
       body: {
         success: true,
@@ -56,7 +65,7 @@ describe('Landing Page - Tests Critiques', () => {
       // Éléments de navigation essentiels
       cy.contains('Staka').should('be.visible');
       cy.contains('Connexion').should('be.visible');
-      cy.contains('Inscription').should('be.visible');
+      cy.contains('Contact').should('be.visible');
     });
 
     it('should display hero section', () => {
@@ -82,9 +91,9 @@ describe('Landing Page - Tests Critiques', () => {
     });
 
     it('should handle pricing API errors gracefully', () => {
-      cy.intercept('GET', '**/api/public/tarifs*', {
+      cy.intercept('GET', '/api/tarifs*', {
         statusCode: 500,
-        body: { success: false, message: 'Erreur serveur' }
+        body: { success: false, data: [], message: 'Erreur serveur' }
       }).as('getTarifsError');
 
       cy.visit('/');
@@ -135,7 +144,7 @@ describe('Landing Page - Tests Critiques', () => {
       
       // Boutons d'action principaux
       cy.contains('Connexion').should('be.visible');
-      cy.contains('Inscription').should('be.visible');
+      cy.contains('Contact').should('be.visible');
     });
   });
 
@@ -165,7 +174,13 @@ describe('Landing Page - Tests Critiques', () => {
       
       cy.get('body').should('be.visible');
       cy.contains('Staka').should('be.visible');
-      cy.contains('Connexion').should('be.visible');
+      
+      // Sur mobile, vérifier le menu hamburger au lieu du bouton desktop
+      cy.get('.lg\\:hidden button').first().should('be.visible');
+      
+      // Optionnel : tester l'ouverture du menu mobile
+      cy.get('.lg\\:hidden button').first().click();
+      cy.get('.fixed.inset-0').should('be.visible'); // Menu overlay mobile
     });
 
     it('should be responsive on tablet', () => {

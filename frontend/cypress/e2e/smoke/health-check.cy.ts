@@ -92,7 +92,8 @@ describe('Health Check - Tests Smoke', () => {
       cy.contains('Connexion').click();
       cy.url().should('include', '/login');
       
-      cy.contains('Inscription').click();
+      // Le bouton sur la page login est "Créer un compte" et non "Inscription"
+      cy.contains('Créer un compte').click();
       cy.url().should('include', '/signup');
       
       cy.visit('/');
