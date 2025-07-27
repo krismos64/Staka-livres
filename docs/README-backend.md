@@ -7,29 +7,29 @@
 ![Stripe](https://img.shields.io/badge/Stripe-18.2.1-purple)
 ![MySQL](https://img.shields.io/badge/MySQL-8.4-orange)
 ![Tests](https://img.shields.io/badge/Tests-87%25%20Coverage-brightgreen)
-![Production](https://img.shields.io/badge/Status-Production%20Ready-green)
-![OVH](https://img.shields.io/badge/Deployed-OVH%20Cloud-blue)
+![Production](https://img.shields.io/badge/Status-Production%20Deployed-success)
+![OVH](https://img.shields.io/badge/Deployed-VPS%20OVH-blue)
 
-**📅 Mis à jour le 26 juillet 2025 par Christophe Mostefaoui**
+**📅 Mis à jour le 27 juillet 2025 par Christophe Mostefaoui - https://livrestaka.fr/**
 
 ---
 
 ## 📋 **Vue d'ensemble**
 
-Backend REST API pour **Staka Livres**, plateforme professionnelle de correction de manuscrits déployée en production sur **OVH Cloud** via SSH et Docker. Architecture enterprise-grade avec TypeScript, Express, Prisma ORM et intégrations Stripe avancées.
+Backend REST API pour **Staka Livres**, plateforme professionnelle de correction de manuscrits déployée en production sur **VPS OVH** (https://livrestaka.fr/) via SSH et Docker. Architecture enterprise-grade avec TypeScript, Express, Prisma ORM et intégrations Stripe avancées.
 
-### 🏆 **Métriques Production (26 Juillet 2025)**
+### 🏆 **Métriques Production (27 Juillet 2025)**
 
 | Composant | Détail | Statut |
 |-----------|--------|---------|
-| **🌐 Endpoints API** | 140+ endpoints répartis sur 26 fichiers routes | ✅ Production |
-| **📁 Contrôleurs** | 24 contrôleurs spécialisés | ✅ Optimisés |
-| **🧪 Tests** | 33 fichiers tests (87% couverture) | ✅ Robustes |
-| **🗄️ Base de données** | 15 modèles Prisma avec 35+ relations | ✅ Optimisée |
+| **🌐 Endpoints API** | 118+ endpoints répartis sur 28 fichiers routes | ✅ Production |
+| **📁 Contrôleurs** | 23 contrôleurs spécialisés | ✅ Optimisés |
+| **🧪 Tests** | 16 fichiers tests source (87% couverture) | ✅ Robustes |
+| **🗄️ Base de données** | 14 modèles Prisma avec 20 relations | ✅ Optimisée |
 | **🔒 Sécurité** | JWT + RGPD + Audit logs + Rate limiting | ✅ Conforme |
 | **📧 Emails** | 22 templates HTML + queue asynchrone | ✅ Production |
 | **💳 Paiements** | Stripe webhooks + facturation PDF | ✅ Opérationnel |
-| **🐳 Déploiement** | OVH Cloud + Docker + SSH | ✅ Production |
+| **🐳 Déploiement** | VPS OVH + Docker + SSH | ✅ Production |
 
 ---
 
@@ -67,7 +67,7 @@ backend/
 │   │   ├── commandeClientController.ts # Commandes côté client
 │   │   ├── fileController.ts       # Contrôleur fichiers alternatif
 │   │   └── tarifController.ts      # Gestion tarifs
-│   ├── routes/                     # 26 fichiers routes REST
+│   ├── routes/                     # 28 fichiers routes REST
 │   │   ├── auth.ts                 # Routes authentification
 │   │   ├── public.ts               # Routes publiques (contact, échantillons)
 │   │   ├── users.ts                # Routes utilisateur RGPD
@@ -183,7 +183,7 @@ backend/
 
 ---
 
-## 🌐 **API Endpoints (140+ endpoints)**
+## 🌐 **API Endpoints (118+ endpoints)**
 
 ### 🔐 **Authentification** (`/auth`)
 
@@ -1117,8 +1117,8 @@ npm run test:coverage    # Rapport détaillé Istanbul
 npm run test:watch       # Mode développement
 npm run test:s3         # Tests S3 conditionnels
 
-# Résultats actuels (26 juillet 2025)
-Files        : 33
+# Résultats actuels (27 juillet 2025)
+Files        : 16 (tests source)
 Statements   : 87.3%
 Branches     : 84.1%  
 Functions    : 89.7%
@@ -1756,9 +1756,9 @@ SHOW INDEX FROM table_name;    # Index disponibles
 
 ### 🔢 **Métriques Finales (26 Juillet 2025)**
 
-- **API** : 140+ endpoints sur 26 fichiers routes
-- **Contrôleurs** : 24 contrôleurs spécialisés
-- **Tests** : 33 fichiers tests (87% couverture)
+- **API** : 118+ endpoints sur 28 fichiers routes
+- **Contrôleurs** : 23 contrôleurs spécialisés
+- **Tests** : 16 fichiers tests source (87% couverture)
 - **Services** : 14 services métier
 - **Templates** : 22 templates emails HTML
 - **Scripts** : 20 scripts npm optimisés
@@ -1766,9 +1766,10 @@ SHOW INDEX FROM table_name;    # Index disponibles
 
 ---
 
-**✨ Développé par Christophe Mostefaoui - Version Production 26 Juillet 2025**  
-**🏗️ Architecture enterprise-grade déployée sur OVH Cloud**  
-**🚀 API REST 139+ endpoints production-ready avec 87% coverage tests**  
+**✨ Développé par Christophe Mostefaoui - Version Production 27 Juillet 2025**  
+**🌐 Site Web :** https://livrestaka.fr/ | **👨‍💻 Développeur :** https://christophe-dev-freelance.fr/ | **📧 Contact :** contact@staka.fr  
+**🏗️ Architecture enterprise-grade déployée sur VPS OVH**  
+**🚀 API REST 118+ endpoints production-ready avec 87% coverage tests**  
 **📧 Système notifications centralisé avec 22 templates email professionnels**  
 **🎯 Architecture événementielle avec EventBus, listeners et queues asynchrones**  
 **🔍 Système d'audit enterprise avec 40+ actions standardisées et middleware automatique**

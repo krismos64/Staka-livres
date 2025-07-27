@@ -7,29 +7,32 @@
 ![React Query](https://img.shields.io/badge/React%20Query-5.81.5-red)
 ![Framer Motion](https://img.shields.io/badge/Framer%20Motion-12.23.0-pink)
 ![Tests](https://img.shields.io/badge/Tests-85%25%20Coverage-brightgreen)
-![Production](https://img.shields.io/badge/Status-Production%20Ready-green)
+![Production](https://img.shields.io/badge/Status-Production%20Deployed-brightgreen)
 ![OVH](https://img.shields.io/badge/Deployed-OVH%20Cloud-blue)
+![Live](https://img.shields.io/badge/Live-livrestaka.fr-blue)
 
-**📅 Mis à jour le 26 juillet 2025 par Christophe Mostefaoui**
+**📅 Mis à jour le 27 juillet 2025 par Christophe Mostefaoui**  
+**🌐 Production URL** : [livrestaka.fr](https://livrestaka.fr/)  
+**👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
 
 ---
 
 ## 📋 **Vue d'ensemble**
 
-Frontend React pour **Staka Livres**, plateforme professionnelle de correction de manuscrits déployée en production sur **OVH Cloud** via SSH et Docker. Architecture moderne avec React 18, TypeScript, Tailwind CSS, React Query et système de tests séparés CI/CD vs local.
+Frontend React pour **Staka Livres**, plateforme professionnelle de correction de manuscrits **déployée en production** sur [livrestaka.fr](https://livrestaka.fr/) via **VPS OVH** et Docker. Architecture moderne avec React 18, TypeScript, Tailwind CSS, React Query et système de tests séparés CI/CD vs local.
 
-### 🏆 **Métriques Frontend (26 Juillet 2025)**
+### 🏆 **Métriques Frontend (27 Juillet 2025)**
 
-| Composant            | Détail                                             | Statut        |
-| -------------------- | -------------------------------------------------- | ------------- |
-| **⚛️ Composants**    | 132+ composants modulaires TypeScript              | ✅ Production |
-| **🎣 Hooks**         | 30 hooks personnalisés React Query                 | ✅ Optimisés  |
-| **📄 Pages**         | 25 pages complètes responsive                      | ✅ Production |
-| **🧪 Tests**         | 9 fichiers + architecture séparée (85% couverture) | ✅ Robustes   |
-| **🔍 Tests E2E**     | 29 tests Cypress 3 niveaux                         | ✅ Enterprise |
-| **🎨 Design System** | Tailwind + Framer Motion + FloatingBubbles         | ✅ Moderne    |
-| **🚀 Performance**   | Lazy loading + code splitting + cache              | ✅ Optimisé   |
-| **🐳 Déploiement**   | OVH Cloud + Docker + Nginx proxy                   | ✅ Production |
+| Composant            | Détail                                             | Statut              |
+| -------------------- | -------------------------------------------------- | ------------------- |
+| **⚛️ Composants**    | 72 composants modulaires TypeScript               | ✅ Production Ready |
+| **🎣 Hooks**         | 31 hooks personnalisés React Query                | ✅ Optimisés        |
+| **📄 Pages**         | 28 pages complètes responsive                     | ✅ Production Ready |
+| **🧪 Tests**         | 9 fichiers + architecture séparée (85% couverture)| ✅ Robustes         |
+| **🔍 Tests E2E**     | 34 tests Cypress 3 niveaux                        | ✅ Enterprise       |
+| **🎨 Design System** | Tailwind + Framer Motion + FloatingBubbles        | ✅ Moderne          |
+| **🚀 Performance**   | Lazy loading + code splitting + cache             | ✅ Optimisé         |
+| **🐳 Déploiement**   | VPS OVH + Docker + Nginx proxy                    | ✅ Production Deployed |
 
 ---
 
@@ -40,7 +43,7 @@ Frontend React pour **Staka Livres**, plateforme professionnelle de correction d
 ```
 frontend/
 ├── src/
-│   ├── components/                 # 132+ composants modulaires
+│   ├── components/                 # 72 composants modulaires
 │   │   ├── admin/                 # 9 composants administration
 │   │   │   ├── AdminLayout.tsx    # Layout admin moderne sidebar
 │   │   │   ├── RequireAdmin.tsx   # Protection routes admin
@@ -92,7 +95,7 @@ frontend/
 │   │       ├── FileItem.tsx       # Affichage fichier
 │   │       ├── UploadButton.tsx   # Upload S3
 │   │       └── ... (2 autres composants)
-│   ├── hooks/                     # 30 hooks React Query
+│   ├── hooks/                     # 31 hooks React Query
 │   │   ├── useAuth.ts             # Authentification JWT
 │   │   ├── useAdminUsers.ts       # Gestion utilisateurs admin
 │   │   ├── useAdminCommandes.ts   # Gestion commandes admin
@@ -102,7 +105,7 @@ frontend/
 │   │   ├── useInvoices.ts         # Facturation
 │   │   ├── usePricing.ts          # Tarification dynamique
 │   │   └── ... (23 autres hooks)
-│   ├── pages/                     # 25 pages complètes
+│   ├── pages/                     # 28 pages complètes
 │   │   ├── admin/                 # 10 pages administration
 │   │   │   ├── AdminDashboard.tsx # Dashboard KPIs
 │   │   │   ├── AdminUtilisateurs.tsx # Gestion utilisateurs
@@ -141,7 +144,7 @@ frontend/
 ├── tests/                         # Tests (architecture séparée)
 │   ├── integration/               # Tests intégration (local)
 │   └── __mocks__/                 # Mocks tests
-├── cypress/                       # Tests E2E (29 tests)
+├── cypress/                       # Tests E2E (34 tests)
 │   ├── e2e/
 │   │   ├── critical/              # Tests critiques CI/CD
 │   │   ├── smoke/                 # Health checks
@@ -2145,6 +2148,7 @@ npx lighthouse http://localhost:3001 --view
 
 ---
 
-**✨ Développé par Christophe Mostefaoui - Juillet 2025**  
-**🎨 Frontend React enterprise-grade déployé sur OVH Cloud**  
-**⚛️ 71 composants + 31 hooks + 28 pages production-ready avec 85% coverage tests**
+**✨ Développé par [Christophe Mostefaoui](https://christophe-dev-freelance.fr/) - Juillet 2025**  
+**🎨 Frontend React enterprise-grade déployé sur [livrestaka.fr](https://livrestaka.fr/)**  
+**⚛️ 72 composants + 31 hooks + 28 pages production-ready avec 85% coverage tests**  
+**📧 Contact production** : contact@staka.fr
