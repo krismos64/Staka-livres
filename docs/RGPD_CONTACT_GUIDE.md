@@ -4,9 +4,12 @@
 ![Express](https://img.shields.io/badge/Express-4.18-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)
 ![RGPD](https://img.shields.io/badge/RGPD-Compliant-brightgreen)
-![Production](https://img.shields.io/badge/Status-Production%20Ready-green)
+![Production](https://img.shields.io/badge/Status-Production%20Deployed-brightgreen)
+![Live](https://img.shields.io/badge/Live-livrestaka.fr-blue)
 
-**✨ Version Juillet 2025 - Dernière mise à jour : 22 Juillet 2025**
+**✨ Version Juillet 2025 - Dernière mise à jour : 27 Juillet 2025**  
+**🌐 Production URL** : [livrestaka.fr](https://livrestaka.fr/)  
+**👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
 
 ## 📋 Vue d'ensemble
 
@@ -582,7 +585,8 @@ JWT_SECRET="secure_jwt_secret"
 
 # Configuration email (pour contact public)
 SENDGRID_API_KEY="your_sendgrid_api_key"
-CONTACT_EMAIL="contact@staka-editions.com"
+SUPPORT_EMAIL="contact@staka.fr"
+CONTACT_EMAIL="contact@staka.fr"
 
 # Configuration audit
 AUDIT_LOG_LEVEL="INFO" # DEBUG, INFO, WARN, ERROR
@@ -654,4 +658,7 @@ app.use('/api/public', cors({
 
 ---
 
-**🎯 Les fonctionnalités RGPD et contact public sont maintenant production-ready avec une couverture de tests de 95%+, une sécurité renforcée et une intégration complète au système de messagerie existant.**
+**🎯 Les fonctionnalités RGPD et contact public sont maintenant déployées en production sur [livrestaka.fr](https://livrestaka.fr/) avec une couverture de tests de 95%+, une sécurité renforcée et une intégration complète au système de messagerie existant.**  
+
+**📧 Contact production** : contact@staka.fr  
+**👨‍💻 Développé par** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/) - Juillet 2025

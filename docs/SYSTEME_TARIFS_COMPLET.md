@@ -1,7 +1,15 @@
-# 🎯 Système de Tarification Complet - Staka Livres 2025
+# 🎯 Système de Tarification Complet - Production 2025
 
-> **Guide technique unifié** pour le système de tarification dynamique avec intégration Stripe complète et synchronisation temps réel.
-> **Dernière mise à jour** : 21 juillet 2025
+![Production](https://img.shields.io/badge/Status-Production%20Deployed-brightgreen)
+![Live](https://img.shields.io/badge/Live-livrestaka.fr-blue)
+![Stripe](https://img.shields.io/badge/Stripe-Sync-blueviolet)
+![Pricing](https://img.shields.io/badge/Dynamic-Pricing-orange)
+
+**✨ Version Juillet 2025 - Dernière mise à jour : 27 Juillet 2025**  
+**🌐 Production URL** : [livrestaka.fr](https://livrestaka.fr/)  
+**👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
+
+> **Guide technique unifié** pour le système de tarification dynamique avec intégration Stripe complète et synchronisation temps réel **déployé en production**.
 
 ---
 
@@ -132,7 +140,7 @@ curl -X POST -H "Authorization: Bearer $TOKEN" \
     "actif": true,
     "ordre": 2
   }' \
-  http://localhost:3000/admin/tarifs
+  https://livrestaka.fr/api/admin/tarifs
 
 # Réponse avec sync Stripe
 {
@@ -380,7 +388,7 @@ docker exec backend npm run stripe:sync-verbose
 
 # Statut synchronisation
 curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:3000/admin/tarifs/stripe-status
+  https://livrestaka.fr/api/admin/tarifs/stripe-status
 ```
 
 ### Exemple Output
@@ -490,7 +498,7 @@ docker exec backend npm run stripe:sync-all
 4. **Validation**
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:3000/admin/tarifs/stripe-status
+  https://livrestaka.fr/api/admin/tarifs/stripe-status
 ```
 
 ### Health Checks
@@ -524,7 +532,7 @@ docker exec backend npm run stripe:sync-verbose
 
 # Statut via API
 curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:3000/admin/tarifs/stripe-status | jq
+  https://livrestaka.fr/api/admin/tarifs/stripe-status | jq
 ```
 
 ### Résolution Problèmes
@@ -534,7 +542,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 **Solution** :
 ```bash
 curl -X POST -H "Authorization: Bearer $TOKEN" \
-  http://localhost:3000/admin/tarifs/TARIF_ID/sync-stripe
+  https://livrestaka.fr/api/admin/tarifs/TARIF_ID/sync-stripe
 ```
 
 **Problème** : Incohérence base ↔ Stripe
@@ -588,8 +596,11 @@ docker exec backend npm run stripe:sync-all --force
 - **Performance** : < 2s sync complète ✅
 - **Sécurité** : Données sensibles protégées ✅
 
-Le système de tarification Staka Livres 2025 est **production-ready** avec une architecture moderne, une synchronisation complète et une maintenance simplifiée ! 🚀
+Le système de tarification Staka Livres 2025 est **déployé et opérationnel sur [livrestaka.fr](https://livrestaka.fr/)** avec une architecture moderne, une synchronisation complète et une maintenance simplifiée ! 🚀
 
 ---
 
-*Guide unifié consolidé le 15 juillet 2025 - Fusion TARIFS_DYNAMIQUES_INTEGRATION.md + GUIDE_TARIFS_STRIPE_SYNC.md*
+**📧 Contact production** : contact@staka.fr  
+**👨‍💻 Développé par** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/) - Juillet 2025
+
+*Guide unifié consolidé le 27 juillet 2025 - Production déployée - Fusion TARIFS_DYNAMIQUES_INTEGRATION.md + GUIDE_TARIFS_STRIPE_SYNC.md*
