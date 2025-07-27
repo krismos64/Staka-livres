@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { ReactNode, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { getUnreadConversationsCount } from "../../utils/adminAPI";
@@ -87,6 +87,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
   const { isDemo } = useDemoMode();
   const unreadConversationsCount = useUnreadConversationsCount();
   const location = useLocation();
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   const getActiveSection = () => {
     const path = location.pathname.split("/").pop() || "dashboard";
@@ -94,6 +95,44 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
     return path;
   };
   const activeSection = getActiveSection();
+
+  // Gestion de la fermeture de la sidebar sur mobile
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        sidebarOpen &&
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target as Node) &&
+        window.innerWidth < 1024 // Seulement sur mobile/tablette
+      ) {
+        setSidebarOpen(false);
+      }
+    };
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && sidebarOpen) {
+        setSidebarOpen(false);
+      }
+    };
+
+    // Ajouter les event listeners seulement si la sidebar est ouverte
+    if (sidebarOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleEscapeKey);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscapeKey);
+    };
+  }, [sidebarOpen]);
+
+  // Fermer la sidebar lors du changement de route sur mobile
+  useEffect(() => {
+    if (window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
+  }, [location.pathname]);
 
   const sidebarItems = [
     {
@@ -189,8 +228,17 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
       <DemoBanner />
 
       <div className="flex flex-1 overflow-hidden">
+        {/* Overlay pour mobile */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* --- Sidebar --- */}
         <div
+          ref={sidebarRef}
           className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-800 text-white shadow-2xl transform ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           } transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}
@@ -198,7 +246,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
         >
           <div className="flex flex-col h-full">
             {/* Logo et en-tête */}
-            <div className="flex items-center justify-center px-6 py-5 border-b border-gray-700">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-700">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-tr from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
                   <i className="fas fa-shield-alt text-white text-xl"></i>
@@ -210,6 +258,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
                   </p>
                 </div>
               </div>
+              
+              {/* Bouton fermeture mobile */}
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="lg:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+                aria-label="Fermer la navigation"
+              >
+                <i className="fas fa-times text-lg"></i>
+              </button>
             </div>
 
             {/* Navigation */}
@@ -268,6 +325,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, onLogout }) => {
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
                   className="lg:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+                  aria-label="Ouvrir la navigation"
                 >
                   <i className="fas fa-bars text-xl"></i>
                 </button>
