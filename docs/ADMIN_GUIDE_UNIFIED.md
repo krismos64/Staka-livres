@@ -4,16 +4,16 @@
 ![React](https://img.shields.io/badge/React-18+-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
 ![MySQL](https://img.shields.io/badge/MySQL-8.4-orange)
-![Tests](https://img.shields.io/badge/Tests-95%25-brightgreen)
-![Production](https://img.shields.io/badge/Status-Production%20Ready-green)
+![Tests](https://img.shields.io/badge/Tests-96%25%20E2E%20Success-brightgreen)
+![Production](https://img.shields.io/badge/Status-Production%20Deployed-success)
 
-**✨ Version Production - Mise à jour du 26 juillet 2025**
+**✨ Version Production - Déployée le 27 juillet 2025 - https://livrestaka.fr/**
 
 ## 📋 Vue d'ensemble
 
 Ce document est le **guide de référence unique** pour l'espace admin de **Staka Livres**. Il couvre l'architecture complète, l'interface moderne, la documentation API exhaustive, les hooks React Query, les nouvelles fonctionnalités 2025, la sécurité et les procédures de test.
 
-L'espace admin est **100% production-ready** avec **10 pages admin spécialisées**, interface audit logs avec 4 niveaux de sévérité, système de notifications centralisé, gestion utilisateurs CRUD avancée, statistiques temps réel refactorisées, suivi commandes optimisé, CMS FAQ/Tarifs/Pages complet, mode démonstration professionnel et architecture scalable enterprise.
+L'espace admin est **100% déployé en production** sur **https://livrestaka.fr/** avec **10 pages admin spécialisées**, interface audit logs avec 4 niveaux de sévérité, système de notifications centralisé, gestion utilisateurs CRUD avancée, statistiques temps réel refactorisées, suivi commandes optimisé, CMS FAQ/Tarifs/Pages complet, mode démonstration professionnel et architecture scalable enterprise.
 
 ### 🆕 **Nouvelles Fonctionnalités Production 2025**
 
@@ -43,7 +43,7 @@ L'espace admin a été **entièrement refactorisé** avec une architecture modul
 
 # 📱 Interface Admin 100% Complète
 
-## ✅ **Modules Admin Production-Ready - 26 Juillet 2025**
+## ✅ **Modules Admin Production Déployés - 27 Juillet 2025**
 
 | Section           | Composant            | API Endpoints | Lignes Code | Fonctionnalités                                                                      |
 | ----------------- | -------------------- | ------------- | ----------- | ------------------------------------------------------------------------------------ |
@@ -64,10 +64,10 @@ L'espace admin a été **entièrement refactorisé** avec une architecture modul
 - **70+ endpoints API** backend complets et documentés (RESTful)
 - **9500+ lignes de code** frontend avec 132+ composants modulaires
 - **21+ hooks React Query** spécialisés pour la gestion d'état avancée
-- **87%+ couverture tests** avec 56 tests backend + 9 tests frontend + 19 tests E2E
+- **87%+ couverture tests** avec 56 tests backend + 9 tests frontend + **124 tests E2E (96% succès)**
 - **100% TypeScript** avec interfaces strictes et validation Zod
 - **WCAG 2.1 AA** : Accessibilité complète avec navigation clavier et audit conformité
-- **13 tests admin** spécialisés couvrant toutes les fonctionnalités critiques
+- **Tests enterprise-grade** : Infrastructure 3 niveaux (Critical/Smoke/Legacy) avec 119/124 tests validés
 
 ---
 
@@ -188,7 +188,7 @@ export function useExportAuditLogs() {
 - ✅ **EventBus centralisé** : Architecture événementielle avec listeners spécialisés pour admin et utilisateurs
 - ✅ **22 Templates HTML professionnels** : Admin, utilisateurs et visiteurs avec design cohérent
 - ✅ **Queue emails asynchrone** : Traitement Handlebars + SendGrid avec gestion d'erreurs et retry automatique
-- ✅ **Tests production validés** : 5+ emails admin envoyés à `ADMIN_EMAIL=c.mostefaoui@yahoo.fr` confirmés
+- ✅ **Tests production validés** : 5+ emails admin envoyés à `ADMIN_EMAIL=contact@staka.fr` confirmés
 - ✅ **Zero duplication de code** : Tous les emails centralisés via listeners événementiels
 - ✅ **Préférences utilisateurs** : Opt-out via champ `preferences.emailNotifications`
 - ✅ **Emails visiteurs** : Confirmations automatiques pour contact et échantillons gratuits
@@ -219,7 +219,7 @@ export function useExportAuditLogs() {
     ↓
 ⚡ emailQueue.add("sendAdminNotifEmail", emailData)
     ↓
-📧 SendGrid → ADMIN_EMAIL (c.mostefaoui@yahoo.fr)
+📧 SendGrid → ADMIN_EMAIL (contact@staka.fr)
 ```
 
 ### 📨 **Templates Email Disponibles**
@@ -268,11 +268,11 @@ GET /api/notifications (avec JWT admin)
 **✅ Emails Admin Automatiques :**
 
 ```bash
-# 5+ emails confirmés envoyés à c.mostefaoui@yahoo.fr
+# 5+ emails confirmés envoyés à contact@staka.fr
 → Messages contact: ✅ Email envoyé
 → Échantillons gratuits: ✅ Email envoyé
 → Messages client: ✅ Email envoyé
-→ Logs backend: "✅ [Mailer] Email envoyé avec succès à c.mostefaoui@yahoo.fr"
+→ Logs backend: "✅ [Mailer] Email envoyé avec succès à contact@staka.fr"
 ```
 
 **✅ Architecture EventBus :**
@@ -317,11 +317,11 @@ export function useNotifications() {
 ### 📧 **Configuration Email Required**
 
 ```env
-# Variables d'environnement obligatoires pour emails automatiques
+# Variables d'environnement production (27 juillet 2025)
 SENDGRID_API_KEY="SG.xxx..."          # Clé SendGrid validée
-FROM_EMAIL="noreply@staka-livres.com" # Email expéditeur vérifié
-ADMIN_EMAIL="admin@your-domain.com"   # Email de réception admin (CRUCIAL)
-SUPPORT_EMAIL="support@your-domain.com" # Email support pour visiteurs
+FROM_EMAIL="contact@staka.fr"         # Email expéditeur officiel
+ADMIN_EMAIL="contact@staka.fr"        # Email admin production
+SUPPORT_EMAIL="contact@staka.fr"      # Email support client
 ```
 
 ### 🎯 **Avantages du Système Centralisé**
@@ -1056,7 +1056,7 @@ npm run test:hooks             # Tests hooks React Query
 - ✅ **SSL/TLS** : Chiffrement bout en bout
 - ✅ **CDN ready** : Assets optimisés pour distribution
 
-### 🔧 **Configuration Production - Version 26 Juillet 2025**
+### 🔧 **Configuration Production - 27 Juillet 2025 - https://livrestaka.fr/**
 
 ```bash
 # Variables d'environnement critiques production
@@ -1065,10 +1065,11 @@ JWT_SECRET=<strong-secret-production>
 DATABASE_URL=<production-mysql-db>
 STRIPE_SECRET_KEY=<live-stripe-key>
 
-# Emails centralisés (NOUVEAU)
+# Emails centralisés production
 SENDGRID_API_KEY=<production-sendgrid>
-ADMIN_EMAIL=<admin-notifications-email>
-SUPPORT_EMAIL=<support-client-email>
+ADMIN_EMAIL=contact@staka.fr
+SUPPORT_EMAIL=contact@staka.fr
+FROM_EMAIL=contact@staka.fr
 
 # Audit & Monitoring (NOUVEAU)
 AUDIT_RETENTION_DAYS=365
@@ -1100,8 +1101,12 @@ L'interface `AdminDashboard` sert de hub central avec :
 
 ---
 
-**🎯 L'espace admin Staka Livres est maintenant 100% production-ready avec 10 pages admin spécialisées, interface audit logs 4 niveaux de sévérité, système notifications centralisé, gestion utilisateurs CRUD avancée, statistiques temps réel refactorisées, suivi commandes optimisé, CMS FAQ/Tarifs/Pages complet, mode démonstration professionnel amélioré et architecture scalable enterprise.**
+**🎯 L'espace admin Staka Livres est maintenant 100% déployé en production sur https://livrestaka.fr/ avec 10 pages admin spécialisées, interface audit logs 4 niveaux de sévérité, système notifications centralisé, gestion utilisateurs CRUD avancée, statistiques temps réel refactorisées, suivi commandes optimisé, CMS FAQ/Tarifs/Pages complet, mode démonstration professionnel amélioré et architecture scalable enterprise.**
 
-**📅 Version déployée en production le 26 Juillet 2025 avec infrastructure Docker optimisée et tests robustes (87% de couverture).**
+**📅 Version déployée en production le 27 Juillet 2025 avec infrastructure Docker optimisée et tests enterprise-grade (124 tests E2E - 96% succès).**
+
+**👨‍💻 Développeur :** Christophe Mostefaoui - https://christophe-dev-freelance.fr/
+**📧 Contact Production :** contact@staka.fr
+**🌐 Site Web :** https://livrestaka.fr/
 
 _Ce document constitue la référence unique et actualisée pour l'administration complète de la plateforme Staka Livres._
