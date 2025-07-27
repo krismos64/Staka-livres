@@ -1,8 +1,13 @@
 # 📁 Guide du Système d'Upload de Fichiers Projet
 
+![Production](https://img.shields.io/badge/Status-Production%20Deployed-brightgreen)
+![Live](https://img.shields.io/badge/Live-livrestaka.fr-blue)
+![S3](https://img.shields.io/badge/AWS-S3%20Ready-orange)
+![Multer](https://img.shields.io/badge/Upload-Multer-yellow)
+
 ## 🎯 Vue d'ensemble
 
-Le système d'upload de fichiers projet de Staka Livres permet aux utilisateurs d'uploader des documents directement vers AWS S3 avec des URLs présignées sécurisées. Cette implémentation moderne offre une expérience utilisateur fluide avec suivi de progression en temps réel.
+Le système d'upload de fichiers projet de Staka Livres permet aux utilisateurs d'uploader des documents avec support dual : **stockage local multer** (mode développement) et **AWS S3 avec URLs présignées** (mode production). Cette implémentation moderne offre une expérience utilisateur fluide avec suivi de progression en temps réel, **déployée et opérationnelle sur [livrestaka.fr](https://livrestaka.fr/)**.
 
 ## 🏗️ Architecture
 
@@ -26,14 +31,17 @@ Le système d'upload de fichiers projet de Staka Livres permet aux utilisateurs 
 - deleteProjectFile(): Suppression sécurisée
 ```
 
-#### 3. Controller (`filesController`)
+#### 3. Controller (`fileController`)
 
 ```typescript
-// backend/src/controllers/filesController.ts
-- POST /files/projects/:id/files - Créer fichier + URL présignée
-- GET /files/projects/:id/files - Lister fichiers projet
-- DELETE /files/projects/:id/files/:fileId - Supprimer fichier
+// backend/src/controllers/fileController.ts
+- uploadMessageFile(): Upload multer local avec validation
+- downloadMessageFile(): Téléchargement sécurisé avec permissions
+- deleteMessageFile(): Suppression physique + base de données
+- listUserFiles(): Liste paginée des fichiers utilisateur
 ```
+
+> **Note** : Le système actuel utilise le stockage local multer. L'intégration S3 avec URLs présignées est prête mais optionnelle selon la configuration AWS.
 
 ### Composants Frontend
 
@@ -294,37 +302,33 @@ it("should upload to S3", async () => {
 
 ## 🔄 API Reference
 
-### POST /files/projects/:id/files
+### POST /api/files/upload (Multer Local)
 
-Crée un fichier et retourne une URL présignée S3.
+Upload un fichier via multer avec stockage local.
 
-**Request:**
-
-```json
-{
-  "name": "manuscript.pdf",
-  "size": 2048576,
-  "mime": "application/pdf"
-}
-```
+**Request:** Multipart form-data avec fichier
 
 **Response 201:**
 
 ```json
 {
-  "uploadUrl": "https://bucket.s3.region.amazonaws.com/",
-  "fields": {
-    "key": "project-abc-123.pdf",
-    "bucket": "staka-livres-files",
-    "Content-Type": "application/pdf"
-  },
-  "fileId": "file-uuid"
+  "message": "Fichier uploadé avec succès",
+  "file": {
+    "id": "file-uuid",
+    "filename": "manuscript.pdf",
+    "size": 2048576,
+    "mimeType": "application/pdf",
+    "url": "/uploads/messages/stored-name.pdf",
+    "type": "DOCUMENT"
+  }
 }
 ```
 
-### GET /files/projects/:id/files
+### GET /api/files/user
 
-Récupère les fichiers d'un projet triés par date de création DESC.
+Récupère les fichiers de l'utilisateur avec pagination.
+
+**Query params:** `page`, `limit`
 
 **Response 200:**
 
@@ -336,19 +340,22 @@ Récupère les fichiers d'un projet triés par date de création DESC.
       "filename": "manuscript.pdf",
       "mimeType": "application/pdf",
       "size": 2048576,
-      "url": "https://bucket.s3.region.amazonaws.com/file.pdf",
       "type": "DOCUMENT",
-      "commandeId": "project-uuid",
-      "uploadedAt": "2023-12-01T10:30:00Z"
+      "createdAt": "2025-07-27T10:30:00Z"
     }
   ],
-  "count": 1
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 1,
+    "totalPages": 1
+  }
 }
 ```
 
-### DELETE /files/projects/:id/files/:fileId
+### DELETE /api/files/:fileId
 
-Supprime un fichier avec validation ownership.
+Supprime un fichier avec validation ownership et suppression physique.
 
 **Response 200:**
 
@@ -380,4 +387,8 @@ Supprime un fichier avec validation ownership.
 
 ---
 
-_Documentation mise à jour le 12 juillet 2025 - Version 2.0.0_
+**✨ Version Juillet 2025 - Dernière mise à jour : 27 Juillet 2025**  
+**🌐 Production URL** : [livrestaka.fr](https://livrestaka.fr/)  
+**👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
+
+_Documentation mise à jour le 27 juillet 2025 - Version 2.0.0 - Production déployée_

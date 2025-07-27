@@ -4,13 +4,17 @@
 ![Express](https://img.shields.io/badge/Express-4.18-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
 ![React Query](https://img.shields.io/badge/React%20Query-5.17-red)
-![Production](https://img.shields.io/badge/Status-Production%20Ready-green)
+![Production](https://img.shields.io/badge/Status-Production%20Deployed-brightgreen)
+![Live](https://img.shields.io/badge/Live-livrestaka.fr-blue)
+![Endpoints](https://img.shields.io/badge/API-14%20Endpoints-green)
 
-**✨ Version 21 Juillet 2025 - État actuel (Optimisé avec Consultations et Notifications Centralisées)**
+**✨ Version 27 Juillet 2025 - Production déployée sur livrestaka.fr**  
+**🌐 Production URL** : [livrestaka.fr](https://livrestaka.fr/)  
+**👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
 
 ## 📋 **Vue d'ensemble**
 
-Le système de messagerie de **Staka Livres** a été entièrement refactorisé pour une architecture moderne et scalable, centrée sur les conversations temps réel. Il unifie la communication entre visiteurs, clients authentifiés et administrateurs avec des fonctionnalités avancées, incluant maintenant **les demandes de consultation**.
+Le système de messagerie de **Staka Livres** a été entièrement refactorisé pour une architecture moderne et scalable, centrée sur les conversations temps réel. Il unifie la communication entre visiteurs, clients authentifiés et administrateurs avec des fonctionnalités avancées, incluant maintenant **les demandes de consultation**. **Déployé et opérationnel sur [livrestaka.fr](https://livrestaka.fr/)**.
 
 ### 🆕 **Nouvelles Fonctionnalités 2025 + Optimisations**
 
@@ -476,12 +480,12 @@ const handleSubmit = async (data: FormData) => {
 
 ```bash
 # Test formulaire d'aide avec utilisateur connecté
-TOKEN=$(curl -s -X POST http://localhost:3000/api/auth/login \
+TOKEN=$(curl -s -X POST https://livrestaka.fr/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"user@test.com","password":"password"}' \
   | jq -r '.token')
 
-curl -X POST http://localhost:3000/api/messages/conversations \
+curl -X POST https://livrestaka.fr/api/messages/conversations \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{
@@ -507,13 +511,13 @@ Variables d'environnement nécessaires dans `backend/.env` :
 ```env
 # SendGrid Configuration
 SENDGRID_API_KEY="SG.xxx..."
-FROM_EMAIL="noreply@staka-livres.com"
+FROM_EMAIL="contact@staka.fr"
 FROM_NAME="Staka Livres"
-SUPPORT_EMAIL="support@staka-livres.com"
+SUPPORT_EMAIL="contact@staka.fr"
 
 # Admin Notifications (Système centralisé)
-ADMIN_EMAIL="admin@staka-livres.fr"
-FRONTEND_URL="http://localhost:3001"
+ADMIN_EMAIL="contact@staka.fr"
+FRONTEND_URL="https://livrestaka.fr"
 ```
 
 ---
@@ -707,50 +711,50 @@ Assurez-vous que votre serveur backend est en cours d'exécution.
 
 ```bash
 # 1. Se connecter en tant qu'admin pour obtenir un token
-TOKEN=$(curl -s -X POST http://localhost:3001/api/auth/login \
+TOKEN=$(curl -s -X POST https://livrestaka.fr/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@test.com","password":"password"}' \
   | jq -r '.token')
 
 # 2. Tester l'envoi d'un message en tant que visiteur
-curl -X POST http://localhost:3001/api/messages/visitor \
+curl -X POST https://livrestaka.fr/api/messages/visitor \
   -H "Content-Type: application/json" \
   -d '{"email":"visiteur@test.com", "name":"Jean Dupont", "content": "Test message visiteur 2025"}'
 
 # 3. Tester la récupération des conversations en tant qu'admin
-curl -X GET "http://localhost:3001/api/messages/conversations?page=1&limit=10" \
+curl -X GET "https://livrestaka.fr/api/messages/conversations?page=1&limit=10" \
   -H "Authorization: Bearer $TOKEN"
 
 # 4. Tester le compteur de conversations non lues
-curl -X GET "http://localhost:3001/api/messages/unread-count" \
+curl -X GET "https://livrestaka.fr/api/messages/unread-count" \
   -H "Authorization: Bearer $TOKEN"
 
 # 5. Répondre à une conversation
 CONVERSATION_ID="votre-conversation-id"
-curl -X POST "http://localhost:3001/api/messages/conversations/$CONVERSATION_ID/reply" \
+curl -X POST "https://livrestaka.fr/api/messages/conversations/$CONVERSATION_ID/reply" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"content": "Réponse admin automatisée"}'
 
 # 6. Archiver une conversation (NOUVEAU 2025)
-curl -X PATCH "http://localhost:3001/api/messages/conversations/$CONVERSATION_ID/archive" \
+curl -X PATCH "https://livrestaka.fr/api/messages/conversations/$CONVERSATION_ID/archive" \
   -H "Authorization: Bearer $TOKEN"
 
 # 7. Désarchiver une conversation (NOUVEAU 2025)
-curl -X PATCH "http://localhost:3001/api/messages/conversations/$CONVERSATION_ID/unarchive" \
+curl -X PATCH "https://livrestaka.fr/api/messages/conversations/$CONVERSATION_ID/unarchive" \
   -H "Authorization: Bearer $TOKEN"
 
 # 8. Supprimer une conversation admin (NOUVEAU 2025)
-curl -X DELETE "http://localhost:3001/api/messages/admin/conversations/$THREAD_ID" \
+curl -X DELETE "https://livrestaka.fr/api/messages/admin/conversations/$THREAD_ID" \
   -H "Authorization: Bearer $TOKEN"
 
 # 9. Test upload fichier avec validation (NOUVEAU 2025)
-curl -X POST "http://localhost:3001/api/files/upload/message" \
+curl -X POST "https://livrestaka.fr/api/files/upload/message" \
   -H "Authorization: Bearer $TOKEN" \
   -F "file=@/path/to/document.pdf"
 
 # 10. Test formulaire de contact public (CORRIGÉ 2025)
-curl -X POST "http://localhost:3001/api/public/contact" \
+curl -X POST "https://livrestaka.fr/api/public/contact" \
   -H "Content-Type: application/json" \
   -d '{
     "nom": "Jean Test",
@@ -950,4 +954,7 @@ Le système de messagerie est désormais parfaitement intégré au système de n
 
 ---
 
-_Documentation mise à jour le 21 juillet 2025 - API: 14 endpoints messages + 2 consultations + 2 contact public_
+**📧 Contact production** : contact@staka.fr  
+**👨‍💻 Développé par** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/) - Juillet 2025
+
+_Documentation mise à jour le 27 juillet 2025 - API: 14 endpoints messages + 2 consultations + 2 contact public - Production déployée_

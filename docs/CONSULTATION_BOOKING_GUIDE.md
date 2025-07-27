@@ -1,10 +1,17 @@
 # 📞 Guide du Système de Réservation de Consultations - Staka Livres
 
-**✅ Production Ready - July 2025**
+![Production](https://img.shields.io/badge/Status-Production%20Deployed-brightgreen)
+![Live](https://img.shields.io/badge/Live-livrestaka.fr-blue)
+![Integration](https://img.shields.io/badge/Integration-Complete-brightgreen)
+![Fixed](https://img.shields.io/badge/Critical%20Fixes-Applied-green)
+
+**✨ Version 27 Juillet 2025 - Production déployée sur livrestaka.fr**  
+**🌐 Production URL** : [livrestaka.fr](https://livrestaka.fr/)  
+**👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
 
 ## 📋 Vue d'ensemble
 
-Le système de réservation de consultations permet aux visiteurs et clients de planifier facilement des appels téléphoniques gratuits de 30 minutes avec les experts Staka Livres. Cette fonctionnalité ultra-simplifiée intègre la landing page et l'espace client pour une expérience utilisateur optimale.
+Le système de réservation de consultations permet aux visiteurs et clients de planifier facilement des appels téléphoniques gratuits de 30 minutes avec les experts Staka Livres. Cette fonctionnalité ultra-simplifiée intègre la landing page et l'espace client pour une expérience utilisateur optimale. **Déployé et opérationnel sur [livrestaka.fr](https://livrestaka.fr/)**.
 
 ## 🔧 Correctifs Critiques Implémentés (Juillet 2025)
 
@@ -407,7 +414,7 @@ npm run test -- consultationController.test.ts
 #### ✅ Test Critique: HTTP 500 Resolution
 ```bash
 # Test de non-régression pour les erreurs 500
-curl -X POST http://localhost:3000/api/consultations/book \
+curl -X POST https://livrestaka.fr/api/consultations/book \
   -H "Content-Type: application/json" \
   -d '{
     "firstName": "Test",
@@ -594,9 +601,10 @@ docs/
 
 ---
 
-*Documentation créée le 12 juillet 2025 - Mise à jour critique le 13 juillet 2025*
+**📧 Contact production** : contact@staka.fr  
+**👨‍💻 Développé par** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/) - Juillet 2025
 
-**✅ Version 1.1.0 - Production Ready avec correctifs critiques**
+*Documentation mise à jour le 27 juillet 2025 - Version 1.1.0 - Production déployée avec correctifs critiques*
 
 ---
 
@@ -609,4 +617,4 @@ docs/
 | **Database** | Échec lookup utilisateur admin | Recherche robuste avec fallback | ✅ Résolu |
 | **Workflow** | Cycle incomplet visiteur → admin | Intégration complète messagerie + notifications | ✅ Résolu |
 
-**Statut Final**: ✅ **Production Ready - July 2025** - Tous les correctifs critiques appliqués et testés.
+**Statut Final**: ✅ **Production Deployed - 27 Juillet 2025** - Tous les correctifs critiques appliqués et testés. **Déployé sur [livrestaka.fr](https://livrestaka.fr/)**.

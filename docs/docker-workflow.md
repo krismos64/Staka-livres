@@ -1,8 +1,16 @@
 # 🐳 Workflow Docker Staka-Livres
 
+![Production](https://img.shields.io/badge/Status-Production%20Deployed-brightgreen)
+![Live](https://img.shields.io/badge/Live-livrestaka.fr-blue)
+![Docker](https://img.shields.io/badge/Docker-Multi--arch-blue)
+![SSL](https://img.shields.io/badge/SSL-Let's%20Encrypt-green)
+
 Guide complet du workflow Docker dev → prod pour le monorepo Staka-Livres.
 
-> **📅 Dernière mise à jour** : 26 Juillet 2025  
+**✨ Version 27 Juillet 2025 - Production déployée sur livrestaka.fr**  
+**🌐 Production URL** : [livrestaka.fr](https://livrestaka.fr/)  
+**👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
+
 > **🎯 Status** : Production opérationnelle sur https://livrestaka.fr  
 > **🔧 Résolutions** : Rollup ARM64/x64 + Volumes isolés + Scripts automatisés  
 > **🚀 Déploiement** : VPS OVH avec SSL Let's Encrypt + Auto-update Watchtower

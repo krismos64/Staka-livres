@@ -1,6 +1,15 @@
 # 🎯 Guide Système d'Échantillon Gratuit - Staka Livres
 
-> **Guide technique complet** pour le système d'échantillon gratuit qui permet aux visiteurs de demander une correction gratuite de 10 pages depuis la landing page.
+![Production](https://img.shields.io/badge/Status-Production%20Deployed-brightgreen)
+![Live](https://img.shields.io/badge/Live-livrestaka.fr-blue)
+![API](https://img.shields.io/badge/API-Public%20Endpoint-green)
+![Integration](https://img.shields.io/badge/Integration-Complete-brightgreen)
+
+**✨ Version 27 Juillet 2025 - Production déployée sur livrestaka.fr**  
+**🌐 Production URL** : [livrestaka.fr](https://livrestaka.fr/)  
+**👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
+
+> **Guide technique complet** pour le système d'échantillon gratuit qui permet aux visiteurs de demander une correction gratuite de 10 pages depuis la landing page **déployé en production**.
 
 ## 📋 Table des Matières
 
@@ -18,7 +27,7 @@
 
 ## 🎯 Vue d'ensemble
 
-Le système d'échantillon gratuit de Staka Livres permet aux visiteurs de la landing page de demander facilement une correction gratuite de 10 pages pour tester la qualité du service.
+Le système d'échantillon gratuit de Staka Livres permet aux visiteurs de la landing page de demander facilement une correction gratuite de 10 pages pour tester la qualité du service. **Déployé et opérationnel sur [livrestaka.fr](https://livrestaka.fr/)**.
 
 ### ✅ Fonctionnalités principales
 
@@ -349,7 +358,7 @@ Staka Livres - Système d'échantillons gratuits automatique
 
 ```bash
 # Test demande d'échantillon gratuit
-curl -X POST http://localhost:3000/api/public/free-sample \
+curl -X POST https://livrestaka.fr/api/public/free-sample \
   -H "Content-Type: application/json" \
   -d '{
     "nom": "Jean Dupont", 
@@ -398,7 +407,7 @@ docker compose logs backend | grep -i "FreeSample\|échantillon"
 
 ```bash
 # Test validation email invalide
-curl -X POST http://localhost:3000/api/public/free-sample \
+curl -X POST https://livrestaka.fr/api/public/free-sample \
   -H "Content-Type: application/json" \
   -d '{"nom": "Test", "email": "invalid-email"}' -s
 
@@ -406,7 +415,7 @@ curl -X POST http://localhost:3000/api/public/free-sample \
 # {"error": "Format d'email invalide", "details": "..."}
 
 # Test champs requis manquants
-curl -X POST http://localhost:3000/api/public/free-sample \
+curl -X POST https://livrestaka.fr/api/public/free-sample \
   -H "Content-Type: application/json" \
   -d '{"email": "test@test.com"}' -s
 
@@ -427,11 +436,11 @@ SUPPORT_EMAIL="contact@staka.fr"
 
 # Configuration SendGrid pour emails automatiques
 SENDGRID_API_KEY="your-sendgrid-api-key"
-FROM_EMAIL="noreply@staka-livres.com"
+FROM_EMAIL="contact@staka.fr"
 FROM_NAME="Staka Livres"
 
 # Email admin pour notifications automatiques (système centralisé)
-ADMIN_EMAIL="admin@staka-livres.fr"
+ADMIN_EMAIL="contact@staka.fr"
 
 # JWT pour authentification (si messages admin)
 JWT_SECRET="your-jwt-secret"
@@ -440,7 +449,7 @@ JWT_SECRET="your-jwt-secret"
 DATABASE_URL="mysql://user:password@localhost:3306/staka_livres"
 
 # URL frontend pour liens dans les emails
-FRONTEND_URL="http://localhost:3001"
+FRONTEND_URL="https://livrestaka.fr"
 ```
 
 ### 📧 Configuration email
@@ -604,7 +613,7 @@ Le système d'échantillon gratuit de Staka Livres offre un **workflow automatis
 - ✅ Validation stricte côté client et serveur
 - ✅ UX optimisée avec gestion d'erreurs robuste
 
-Le système est **production-ready** avec tests validés et monitoring complet.
+Le système est **déployé en production sur [livrestaka.fr](https://livrestaka.fr/)** avec tests validés et monitoring complet.
 
 ### 📧 Mise à jour importante - Système d'email centralisé
 
@@ -619,4 +628,7 @@ Cette évolution garantit une gestion centralisée et cohérente de toutes les n
 
 ---
 
-*Guide rédigé en Juillet 2025 - Version 1.1 (Système email centralisé)*
+**📧 Contact production** : contact@staka.fr  
+**👨‍💻 Développé par** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/) - Juillet 2025
+
+*Guide mis à jour le 27 juillet 2025 - Version 1.1 (Système email centralisé) - Production déployée*

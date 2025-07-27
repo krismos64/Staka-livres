@@ -1,6 +1,15 @@
 # 🔐 Guide de Réinitialisation de Mot de Passe
 
-> **Guide technique complet** pour le système de réinitialisation de mot de passe conforme aux exigences RGPD/CNIL.
+![Production](https://img.shields.io/badge/Status-Production%20Deployed-brightgreen)
+![Live](https://img.shields.io/badge/Live-livrestaka.fr-blue)
+![Security](https://img.shields.io/badge/RGPD-Compliant-green)
+![Tests](https://img.shields.io/badge/Tests-100%25-brightgreen)
+
+**✨ Version Juillet 2025 - Dernière mise à jour : 27 Juillet 2025**  
+**🌐 Production URL** : [livrestaka.fr](https://livrestaka.fr/)  
+**👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
+
+> **Guide technique complet** pour le système de réinitialisation de mot de passe conforme aux exigences RGPD/CNIL **déployé en production**.
 
 ## 📋 Table des Matières
 
@@ -19,7 +28,7 @@
 
 ## 🎯 Vue d'ensemble
 
-Le système de réinitialisation de mot de passe de Staka Livres est conçu pour être **sécurisé, conforme RGPD/CNIL** et offrir une expérience utilisateur optimale.
+Le système de réinitialisation de mot de passe de Staka Livres est conçu pour être **sécurisé, conforme RGPD/CNIL** et offrir une expérience utilisateur optimale. **Déployé et opérationnel sur [livrestaka.fr](https://livrestaka.fr/)**.
 
 ### ✅ Fonctionnalités principales
 
@@ -403,7 +412,7 @@ FRONTEND_URL="http://localhost:3001"
 
 # Email
 SENDGRID_API_KEY="your-sendgrid-key"
-FROM_EMAIL="noreply@staka-livres.com"
+FROM_EMAIL="contact@staka.fr"
 
 # Base de données
 DATABASE_URL="mysql://user:password@localhost:3306/staka_livres"
@@ -525,8 +534,11 @@ Les fonctionnalités clés incluent :
 - ✅ Interface intuitive
 - ✅ Tests exhaustifs
 
-Le système est **production-ready** avec une couverture de tests de 100% et une architecture sécurisée.
+Le système est **déployé en production sur [livrestaka.fr](https://livrestaka.fr/)** avec une couverture de tests de 100% et une architecture sécurisée.
 
 ---
 
-*Guide rédigé en Juillet 2025 - Version 1.0*
+**📧 Contact production** : contact@staka.fr  
+**👨‍💻 Développé par** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/) - Juillet 2025
+
+*Guide mis à jour le 27 juillet 2025 - Version 1.0 - Production déployée*
