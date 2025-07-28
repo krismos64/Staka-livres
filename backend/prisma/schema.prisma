@@ -364,6 +364,34 @@ model PasswordReset {
   @@map("password_resets")
 }
 
+/// Commandes temporaires en attente d'activation (tunnel invité)
+model PendingCommande {
+  id                String   @id @default(uuid())
+  prenom            String   @db.VarChar(100)
+  nom               String   @db.VarChar(100)
+  email             String   @db.VarChar(255)
+  passwordHash      String   @db.VarChar(255)
+  telephone         String?  @db.VarChar(20)
+  adresse           String?  @db.Text
+  serviceId         String   @db.VarChar(255) // Référence au service/tarif
+  consentementRgpd  Boolean  @default(false)
+  stripeSessionId   String?  @unique @db.VarChar(255)
+  activationToken   String?  @unique @db.VarChar(255)
+  tokenExpiresAt    DateTime?
+  isProcessed       Boolean  @default(false)
+  userId            String?  // Lien vers User créé après paiement
+  commandeId        String?  // Lien vers Commande créée après paiement
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([email])
+  @@index([stripeSessionId])
+  @@index([activationToken])
+  @@index([isProcessed])
+  @@index([createdAt])
+  @@map("pending_commandes")
+}
+
 /// Énumération des rôles utilisateur
 enum Role {
   USER

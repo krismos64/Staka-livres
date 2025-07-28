@@ -41,6 +41,12 @@ export const apiConfig = {
     tarifs: {
       list: "/tarifs",
     },
+    public: {
+      order: "/public/order",
+      activate: "/public/activate",
+      contact: "/public/contact",
+      freeSample: "/public/free-sample",
+    },
   },
 };
 

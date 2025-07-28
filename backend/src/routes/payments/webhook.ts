@@ -3,6 +3,9 @@ import express from "express";
 import { notifyAdminNewPayment, notifyPaymentSuccess } from "../../controllers/notificationsController";
 import { InvoiceService } from "../../services/invoiceService";
 import { stripeService } from "../../services/stripeService";
+import { ActivationEmailService } from "../../services/activationEmailService";
+import { WelcomeConversationService } from "../../services/welcomeConversationService";
+import bcrypt from "bcryptjs";
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -57,8 +60,8 @@ router.post("/", async (req: express.Request, res: express.Response) => {
           `💰 [Stripe Webhook] Montant: ${session.amount_total} ${session.currency}`
         );
 
-        // Récupérer la commande correspondante par stripeSessionId
-        const commande = await prisma.commande.findFirst({
+        // Tenter de récupérer une commande existante d'abord
+        let commande = await prisma.commande.findFirst({
           where: {
             stripeSessionId: session.id,
           },
@@ -74,87 +77,230 @@ router.post("/", async (req: express.Request, res: express.Response) => {
           },
         });
 
-        if (!commande) {
-          console.error(
-            `❌ [Stripe Webhook] Commande non trouvée pour session: ${session.id}`
-          );
-          return res.status(404).json({
-            error: "Commande non trouvée",
-            received: false,
+        if (commande) {
+          // 🟢 FLUX CLASSIQUE : Commande existante
+          console.log(`🔄 [Stripe Webhook] Traitement commande existante: ${commande.id}`);
+          
+          // Mettre à jour le statut de paiement et de la commande
+          const updatedCommande = await prisma.commande.update({
+            where: { id: commande.id },
+            data: {
+              paymentStatus: "paid",
+              statut: "EN_COURS", // Commande passe en cours après paiement
+              updatedAt: new Date(),
+            },
+            include: {
+              user: true, // Inclure l'utilisateur pour la facture
+            },
           });
-        }
 
-        // Mettre à jour le statut de paiement et de la commande
-        const updatedCommande = await prisma.commande.update({
-          where: { id: commande.id },
-          data: {
-            paymentStatus: "paid",
-            statut: "EN_COURS", // Commande passe en cours après paiement
-            updatedAt: new Date(),
-          },
-          include: {
-            user: true, // Inclure l'utilisateur pour la facture
-          },
-        });
-
-        console.log(`✅ [Stripe Webhook] Commande ${commande.id} mise à jour:`);
-        console.log(`   - Statut paiement: ${updatedCommande.paymentStatus}`);
-        console.log(`   - Statut commande: ${updatedCommande.statut}`);
-        console.log(`   - Montant: ${session.amount_total} centimes`);
-        console.log(
-          `   - Client: ${commande.user.prenom} ${commande.user.nom} (${commande.user.email})`
-        );
-        console.log(`   - Titre: ${commande.titre}`);
-
-        // 🧾 Génération automatique de la facture
-        try {
-          console.log(`🧾 [Stripe Webhook] Génération de la facture...`);
-
-          // Créer un objet commande avec le montant pour le service de facturation
-          const commandeForInvoice = {
-            ...updatedCommande,
-            amount: session.amount_total, // Ajouter le montant depuis Stripe
-          };
-
-          await InvoiceService.processInvoiceForCommande(commandeForInvoice);
+          console.log(`✅ [Stripe Webhook] Commande ${commande.id} mise à jour:`);
+          console.log(`   - Statut paiement: ${updatedCommande.paymentStatus}`);
+          console.log(`   - Statut commande: ${updatedCommande.statut}`);
+          console.log(`   - Montant: ${session.amount_total} centimes`);
           console.log(
-            `✅ [Stripe Webhook] Facture générée et envoyée avec succès`
+            `   - Client: ${commande.user.prenom} ${commande.user.nom} (${commande.user.email})`
           );
-        } catch (invoiceError) {
-          console.error(
-            `❌ [Stripe Webhook] Erreur lors de la génération de facture:`,
-            invoiceError
-          );
-          // On continue le traitement même si la facture échoue
-          // Le webhook doit toujours retourner 200 à Stripe
+          console.log(`   - Titre: ${commande.titre}`);
+
+          // 🧾 Génération automatique de la facture
+          try {
+            console.log(`🧾 [Stripe Webhook] Génération de la facture...`);
+
+            // Créer un objet commande avec le montant pour le service de facturation
+            const commandeForInvoice = {
+              ...updatedCommande,
+              amount: session.amount_total, // Ajouter le montant depuis Stripe
+            };
+
+            await InvoiceService.processInvoiceForCommande(commandeForInvoice);
+            console.log(
+              `✅ [Stripe Webhook] Facture générée et envoyée avec succès`
+            );
+          } catch (invoiceError) {
+            console.error(
+              `❌ [Stripe Webhook] Erreur lors de la génération de facture:`,
+              invoiceError
+            );
+            // On continue le traitement même si la facture échoue
+            // Le webhook doit toujours retourner 200 à Stripe
+          }
+
+          // 🔔 Créer des notifications pour le paiement
+          try {
+            // Notification pour le client
+            await notifyPaymentSuccess(
+              commande.user.id,
+              session.amount_total,
+              commande.titre
+            );
+
+            // Notification pour les admins
+            await notifyAdminNewPayment(
+              `${commande.user.prenom} ${commande.user.nom}`,
+              session.amount_total,
+              commande.titre
+            );
+
+            console.log(
+              `✅ [Stripe Webhook] Notifications de paiement créées avec succès`
+            );
+          } catch (notificationError) {
+            console.error(
+              `❌ [Stripe Webhook] Erreur lors de la création des notifications:`,
+              notificationError
+            );
+            // On continue le traitement même si les notifications échouent
+          }
+        } else {
+          // 🟡 NOUVEAU FLUX : Commande invitée (PendingCommande)
+          console.log(`🆕 [Stripe Webhook] Recherche PendingCommande pour session: ${session.id}`);
+          
+          const pendingCommande = await prisma.pendingCommande.findFirst({
+            where: {
+              stripeSessionId: session.id,
+              isProcessed: false,
+            },
+          });
+
+          if (!pendingCommande) {
+            console.error(
+              `❌ [Stripe Webhook] Aucune commande ou PendingCommande trouvée pour session: ${session.id}`
+            );
+            return res.status(404).json({
+              error: "Commande non trouvée",
+              received: false,
+            });
+          }
+
+          console.log(`🎯 [Stripe Webhook] PendingCommande trouvée: ${pendingCommande.id} pour ${pendingCommande.email}`);
+
+          try {
+            // 👤 ÉTAPE 1: Créer l'utilisateur (inactif)
+            const newUser = await prisma.user.create({
+              data: {
+                prenom: pendingCommande.prenom,
+                nom: pendingCommande.nom,
+                email: pendingCommande.email,
+                password: pendingCommande.passwordHash, // Déjà hashé
+                telephone: pendingCommande.telephone,
+                adresse: pendingCommande.adresse,
+                isActive: false, // ⚠️ INACTIF en attendant activation
+                role: "USER",
+              },
+            });
+
+            console.log(`👤 [Stripe Webhook] Utilisateur créé (inactif): ${newUser.id} - ${newUser.email}`);
+
+            // 📋 ÉTAPE 2: Récupérer les détails du service
+            const service = await prisma.tarif.findFirst({
+              where: { id: pendingCommande.serviceId },
+              select: { nom: true, description: true }
+            });
+
+            const serviceTitle = service?.nom || "Service de correction";
+            const serviceDescription = service?.description || "Correction professionnelle de manuscrit";
+
+            // 📝 ÉTAPE 3: Créer la commande
+            const newCommande = await prisma.commande.create({
+              data: {
+                userId: newUser.id,
+                titre: serviceTitle,
+                description: serviceDescription,
+                statut: "PAYEE", // Directement payée
+                paymentStatus: "paid",
+                stripeSessionId: session.id,
+                amount: session.amount_total,
+                packType: pendingCommande.serviceId, // Référence au service
+              },
+            });
+
+            console.log(`📝 [Stripe Webhook] Commande créée: ${newCommande.id} - ${newCommande.titre}`);
+
+            // 🔗 ÉTAPE 4: Lier PendingCommande aux entités créées
+            await prisma.pendingCommande.update({
+              where: { id: pendingCommande.id },
+              data: {
+                userId: newUser.id,
+                commandeId: newCommande.id,
+              },
+            });
+
+            // 🔑 ÉTAPE 5: Générer token d'activation et envoyer email
+            try {
+              await ActivationEmailService.sendActivationEmail(
+                {
+                  id: pendingCommande.id,
+                  prenom: pendingCommande.prenom,
+                  nom: pendingCommande.nom,
+                  email: pendingCommande.email,
+                  activationToken: pendingCommande.activationToken,
+                },
+                newCommande.titre
+              );
+
+              console.log(`📧 [Stripe Webhook] Email d'activation envoyé à ${pendingCommande.email}`);
+            } catch (emailError) {
+              console.error(`❌ [Stripe Webhook] Erreur email d'activation:`, emailError);
+              // Ne pas faire échouer le webhook pour un problème d'email
+            }
+
+            // 🧾 ÉTAPE 6: Génération de la facture
+            try {
+              const commandeForInvoice = {
+                ...newCommande,
+                user: newUser,
+                amount: session.amount_total,
+              };
+
+              await InvoiceService.processInvoiceForCommande(commandeForInvoice);
+              console.log(`✅ [Stripe Webhook] Facture générée pour la commande invitée`);
+            } catch (invoiceError) {
+              console.error(`❌ [Stripe Webhook] Erreur génération facture:`, invoiceError);
+            }
+
+            // 🔔 ÉTAPE 7: Notifications admin
+            try {
+              await notifyAdminNewPayment(
+                `${pendingCommande.prenom} ${pendingCommande.nom}`,
+                session.amount_total,
+                newCommande.titre
+              );
+
+              console.log(`✅ [Stripe Webhook] Notification admin envoyée pour commande invitée`);
+            } catch (notificationError) {
+              console.error(`❌ [Stripe Webhook] Erreur notification admin:`, notificationError);
+            }
+
+            // 💬 ÉTAPE 8: Créer conversation initiale de bienvenue
+            try {
+              await WelcomeConversationService.createWelcomeConversation(
+                {
+                  id: newUser.id,
+                  prenom: newUser.prenom,
+                  nom: newUser.nom,
+                  email: newUser.email
+                },
+                {
+                  id: newCommande.id,
+                  titre: newCommande.titre
+                }
+              );
+              console.log(`💬 [Stripe Webhook] Conversation de bienvenue créée pour ${pendingCommande.email}`);
+            } catch (conversationError) {
+              console.error(`❌ [Stripe Webhook] Erreur création conversation:`, conversationError);
+              // Ne pas faire échouer le flux pour un problème de conversation
+            }
+
+            console.log(`🎉 [Stripe Webhook] Flux commande invitée complété avec succès pour ${pendingCommande.email}`);
+
+          } catch (processingError) {
+            console.error(`❌ [Stripe Webhook] Erreur lors du traitement PendingCommande:`, processingError);
+            // En cas d'erreur, marquer comme non traitée pour retry manuel
+            throw processingError;
+          }
         }
-
-        // 🔔 Créer des notifications pour le paiement
-        try {
-          // Notification pour le client
-          await notifyPaymentSuccess(
-            commande.user.id,
-            session.amount_total,
-            commande.titre
-          );
-
-          // Notification pour les admins
-          await notifyAdminNewPayment(
-            `${commande.user.prenom} ${commande.user.nom}`,
-            session.amount_total,
-            commande.titre
-          );
-
-          console.log(
-            `✅ [Stripe Webhook] Notifications de paiement créées avec succès`
-          );
-        } catch (notificationError) {
-          console.error(
-            `❌ [Stripe Webhook] Erreur lors de la création des notifications:`,
-            notificationError
-          );
-          // On continue le traitement même si les notifications échouent
-        }
+        
         break;
       }
 
