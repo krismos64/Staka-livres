@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useToast } from "../components/layout/ToastProvider";
-import AvatarUploadModal from "../components/modals/AvatarUploadModal";
 import { useAuth } from "../contexts/AuthContext";
 import { useUserStats } from "../hooks/useUserStats";
 import { useUpdateProfile } from "../hooks/useUpdateProfile";
@@ -31,7 +30,6 @@ export default function ProfilePage() {
   const [user, setUser] = useState(defaultUser);
   const [notifEmail, setNotifEmail] = useState(true);
   const [notifSMS, setNotifSMS] = useState(false);
-  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
   // Mettre à jour les données utilisateur quand authUser ou userStats changent
   useEffect(() => {
@@ -159,10 +157,6 @@ export default function ProfilePage() {
     }
   };
 
-  const handleAvatarChange = (file: File) => {
-    const newAvatarUrl = URL.createObjectURL(file);
-    setUser((u) => ({ ...u, avatar: newAvatarUrl }));
-  };
 
   const handleResendVerification = () => {
     showToast(
@@ -425,15 +419,12 @@ export default function ProfilePage() {
                   {user.firstName} {user.lastName}
                 </div>
                 <div className="text-blue-700 font-medium text-sm mt-1">
-                  {user.vip ? "Auteure • Cliente VIP" : "Auteure"}
+                  {user.vip ? "Cliente VIP" : "Cliente"}
                 </div>
               </div>
-              <button
-                className="bg-blue-50 text-blue-700 py-2 px-4 rounded-lg font-medium flex items-center gap-2 hover:bg-blue-100 transition"
-                onClick={() => setIsAvatarModalOpen(true)}
-              >
-                <i className="fas fa-camera"></i>Changer la photo
-              </button>
+              <div className="text-xs text-gray-500 text-center">
+                Membre depuis {user.joinDate}
+              </div>
             </div>
             {/* Statistiques compte */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
@@ -522,12 +513,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </section>
-      <AvatarUploadModal
-        isOpen={isAvatarModalOpen}
-        onClose={() => setIsAvatarModalOpen(false)}
-        onAvatarChange={handleAvatarChange}
-        currentAvatar={user.avatar}
-      />
     </>
   );
 }

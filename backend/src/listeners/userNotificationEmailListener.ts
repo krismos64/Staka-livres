@@ -86,7 +86,9 @@ eventBus.on("user.notification.created", async (notification) => {
       template,
       variables: {
         userName: user.prenom,
+        firstName: user.prenom, // ✅ Ajout pour personnalisation des templates
         userFullName: `${user.prenom} ${user.nom}`,
+        customerName: `${user.prenom} ${user.nom}`, // ✅ Fallback pour compatibilité
         title: notification.title,
         message: notification.message,
         type: notification.type,
@@ -95,6 +97,7 @@ eventBus.on("user.notification.created", async (notification) => {
         actionUrl: notification.actionUrl,
         dashboardUrl: `${appUrl}/dashboard`,
         supportUrl: `${appUrl}/support`,
+        supportEmail: process.env.SUPPORT_EMAIL || "contact@staka.fr",
         subject: `[Staka Livres] ${notification.title}`,
         ...data, // Spread notification data
       },

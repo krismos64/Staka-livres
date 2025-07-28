@@ -1,19 +1,79 @@
-import React from "react";
-
 export default function Hero() {
   return (
     <section className="pt-20 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 text-white overflow-hidden relative">
-      {/* Floating elements for visual appeal */}
+      {/* Floating expert avatars - positioned in empty spaces */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-20 left-10 w-20 h-20 bg-white/10 rounded-full animate-bounce"></div>
+        {/* Top left corner - above text area */}
         <div
-          className="absolute top-40 right-20 w-16 h-16 bg-yellow-300/20 rounded-full animate-bounce"
-          style={{ animationDelay: "1s" }}
-        ></div>
+          className="absolute top-10 left-5 w-16 h-16 rounded-full bg-white/20 backdrop-blur border-2 border-white/30 overflow-hidden"
+          style={{ animation: "bounce 3s ease-in-out infinite" }}
+        >
+          <img
+            src="/images/footer/Correcteur2-min.webp"
+            alt="Expert correcteur"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        
+        {/* Top right - empty space above right column */}
         <div
-          className="absolute bottom-20 left-1/4 w-12 h-12 bg-white/10 rounded-full animate-bounce"
-          style={{ animationDelay: "2s" }}
-        ></div>
+          className="absolute top-16 right-10 w-14 h-14 rounded-full bg-white/20 backdrop-blur border-2 border-white/30 overflow-hidden"
+          style={{
+            animation: "bounce 3s ease-in-out infinite",
+            animationDelay: "1s",
+          }}
+        >
+          <img
+            src="/images/footer/Correcteur4-min.webp"
+            alt="Expert correcteur"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        
+        {/* Bottom left - below text content */}
+        <div
+          className="absolute bottom-10 left-8 w-12 h-12 rounded-full bg-white/20 backdrop-blur border-2 border-white/30 overflow-hidden"
+          style={{
+            animation: "bounce 3s ease-in-out infinite",
+            animationDelay: "2s",
+          }}
+        >
+          <img
+            src="/images/footer/Correcteur8-min.webp"
+            alt="Expert correcteur"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        
+        {/* Center area - between columns on larger screens */}
+        <div
+          className="absolute top-1/3 left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full bg-white/20 backdrop-blur border-2 border-white/30 overflow-hidden hidden md:block"
+          style={{
+            animation: "bounce 3s ease-in-out infinite",
+            animationDelay: "0.5s",
+          }}
+        >
+          <img
+            src="/images/footer/Correcteur5-min.webp"
+            alt="Expert correcteur"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        
+        {/* Bottom right - empty space below right column */}
+        <div
+          className="absolute bottom-16 right-12 w-14 h-14 rounded-full bg-white/20 backdrop-blur border-2 border-white/30 overflow-hidden"
+          style={{
+            animation: "bounce 3s ease-in-out infinite",
+            animationDelay: "1.5s",
+          }}
+        >
+          <img
+            src="/images/footer/Correcteur3-min.webp"
+            alt="Expert correcteur"
+            className="w-full h-full object-cover"
+          />
+        </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-16 md:py-24 relative z-10">

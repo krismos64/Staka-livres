@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 interface UploadFileParams {
   projectId: string;
   file: File;
+  isAdminFile?: boolean;
 }
 
 interface UploadUrlResponse {
@@ -48,7 +49,7 @@ export const useUploadFile = (
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async ({ projectId, file }: UploadFileParams): Promise<string> => {
+    mutationFn: async ({ projectId, file, isAdminFile }: UploadFileParams): Promise<string> => {
       setError(null);
       setProgress(0);
 
@@ -58,12 +59,13 @@ export const useUploadFile = (
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
           },
           body: JSON.stringify({
             name: file.name,
             size: file.size,
             mime: file.type,
+            isAdminFile: isAdminFile || false,
           }),
         });
 

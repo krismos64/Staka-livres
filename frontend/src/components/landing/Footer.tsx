@@ -18,12 +18,18 @@ export default function Footer() {
         <div className="grid md:grid-cols-4 gap-8">
           {/* Brand & Description */}
           <div className="md:col-span-2">
-            <div className="mb-6">
-              <img
-                src="/images/logo-staka.webp"
-                alt="Staka - Entremises Éditions"
-                className="h-20 w-auto opacity-90 hover:opacity-100 transition-opacity duration-300"
-              />
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                <i className="fas fa-book-open text-white text-xl"></i>
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-300 bg-clip-text text-transparent">
+                  Staka Éditions
+                </h3>
+                <p className="text-gray-400 text-sm">
+                  Excellence éditoriale depuis 2010
+                </p>
+              </div>
             </div>
             <p className="text-gray-300 mb-6 leading-relaxed">
               Nous transformons vos manuscrits en livres professionnels dignes
@@ -232,36 +238,42 @@ export default function Footer() {
           <h4 className="text-center text-gray-400 text-sm mb-6">
             Nos sites partenaires
           </h4>
-          <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
+          <div className="flex flex-wrap justify-center items-center gap-8">
             <a
               href="https://staka.fr"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:opacity-100 transition"
+              className="opacity-60 hover:opacity-100 transition"
             >
-              <div className="bg-gray-700 px-4 py-2 rounded text-white text-sm font-semibold">
-                Staka.fr
-              </div>
+              <img
+                src="/images/logo-staka.png"
+                alt="Staka.fr"
+                className="h-12 w-auto bg-white rounded-lg p-2 transition-all duration-300"
+              />
             </a>
             <a
               href="https://entremises.fr"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:opacity-100 transition"
+              className="opacity-60 hover:opacity-100 transition"
             >
-              <div className="bg-gray-700 px-4 py-2 rounded text-white text-sm font-semibold">
-                Entremises.fr
-              </div>
+              <img
+                src="/images/logo-entremises.png"
+                alt="Entremises.fr"
+                className="h-12 w-auto bg-white rounded-lg p-2 transition-all duration-300"
+              />
             </a>
             <a
               href="https://uppreditions.fr"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:opacity-100 transition"
+              className="opacity-60 hover:opacity-100 transition"
             >
-              <div className="bg-gray-700 px-4 py-2 rounded text-white text-sm font-semibold">
-                Uppreditions.fr
-              </div>
+              <img
+                src="/images/logo-uppr-transparent.png"
+                alt="Uppreditions.fr"
+                className="h-12 w-auto bg-white rounded-lg p-2 transition-all duration-300"
+              />
             </a>
           </div>
         </div>

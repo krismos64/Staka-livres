@@ -42,8 +42,8 @@ export class ProjectModel {
   private static statusMap = {
     all: undefined,
     active: StatutCommande.EN_COURS,
-    pending: StatutCommande.EN_ATTENTE,
-    completed: StatutCommande.TERMINE,
+    pending: [StatutCommande.EN_ATTENTE, StatutCommande.EN_ATTENTE_VERIFICATION, StatutCommande.EN_ATTENTE_CONSULTATION, StatutCommande.ESTIMATION_ENVOYEE],
+    completed: [StatutCommande.TERMINE, StatutCommande.PAYEE],
   };
 
   /**
@@ -53,6 +53,14 @@ export class ProjectModel {
     switch (status) {
       case StatutCommande.EN_ATTENTE:
         return 0;
+      case StatutCommande.EN_ATTENTE_VERIFICATION:
+        return 10;
+      case StatutCommande.EN_ATTENTE_CONSULTATION:
+        return 20;
+      case StatutCommande.ESTIMATION_ENVOYEE:
+        return 25;
+      case StatutCommande.PAYEE:
+        return 30;
       case StatutCommande.EN_COURS:
         return 50;
       case StatutCommande.TERMINE:
@@ -107,7 +115,11 @@ export class ProjectModel {
     if (filters.status && filters.status !== 'all') {
       const prismaStatus = this.statusMap[filters.status];
       if (prismaStatus) {
-        whereClause.statut = prismaStatus;
+        if (Array.isArray(prismaStatus)) {
+          whereClause.statut = { in: prismaStatus };
+        } else {
+          whereClause.statut = prismaStatus;
+        }
       }
     }
 
@@ -138,6 +150,12 @@ export class ProjectModel {
           updatedAt: true,
           noteCorrecteur: true,
           amount: true,
+          // Champs Pack Intégral
+          packType: true,
+          pagesDeclarees: true,
+          pagesVerifiees: true,
+          prixEstime: true,
+          prixFinal: true,
           user: {
             select: {
               prenom: true,
@@ -169,22 +187,21 @@ export class ProjectModel {
       const hasFiles = commande.files.length > 0;
       const canDownload = commande.statut === StatutCommande.TERMINE && hasFiles;
       
-      // Estimation du nombre de pages basée sur la description ou un défaut
-      const estimatedPages = commande.description?.match(/(\d+)\s*pages?/i)?.[1] 
-        ? parseInt(commande.description.match(/(\d+)\s*pages?/i)![1]) 
-        : Math.floor(Math.random() * 200) + 50;
+      // Utiliser les vraies pages déclarées/vérifiées au lieu d'estimations
+      const realPages = commande.pagesVerifiees || commande.pagesDeclarees || 
+        (commande.description?.match(/(\d+)\s*pages?/i)?.[1] 
+          ? parseInt(commande.description.match(/(\d+)\s*pages?/i)![1]) 
+          : undefined);
 
-      // Simulation d'un correcteur basé sur les notes
+      // Utiliser le vrai correcteur basé sur les notes du correcteur
       const corrector = commande.noteCorrecteur 
-        ? ["Sarah Martin", "Pierre Dubois", "Marie Leclerc", "Jean Moreau"][Math.floor(Math.random() * 4)]
+        ? `${commande.user.prenom || ""} ${commande.user.nom || ""}`.trim() || "Correcteur assigné"
         : undefined;
 
-      // Simulation d'un pack basé sur le montant
-      const pack = commande.amount 
-        ? commande.amount > 500 ? "Pack Intégral" : commande.amount > 200 ? "Pack Standard" : "Pack Essentiel"
-        : "Pack Standard";
+      // Utiliser le vrai pack type au lieu de simulation
+      const pack = this.getPackDisplayName(commande.packType, commande.amount);
 
-      // Simulation d'une note basée sur le statut
+      // Les notes ne sont simulées que pour les projets terminés 
       const rating = commande.statut === StatutCommande.TERMINE 
         ? Math.round((Math.random() * 1.5 + 3.5) * 10) / 10  // Note entre 3.5 et 5.0
         : undefined;
@@ -193,7 +210,7 @@ export class ProjectModel {
         id: commande.id,
         title: commande.titre,
         type: this.getProjectType(commande.description || undefined),
-        pages: estimatedPages,
+        pages: realPages,
         startedAt: commande.createdAt.toISOString().split('T')[0],
         deliveryAt: deliveryDate?.toISOString().split('T')[0],
         corrector,
@@ -240,7 +257,11 @@ export class ProjectModel {
   private static mapStatusToString(status: StatutCommande): string {
     switch (status) {
       case StatutCommande.EN_ATTENTE:
+      case StatutCommande.EN_ATTENTE_VERIFICATION:
+      case StatutCommande.EN_ATTENTE_CONSULTATION:
+      case StatutCommande.ESTIMATION_ENVOYEE:
         return "pending";
+      case StatutCommande.PAYEE:
       case StatutCommande.EN_COURS:
         return "active";
       case StatutCommande.TERMINE:
@@ -250,8 +271,30 @@ export class ProjectModel {
       case StatutCommande.SUSPENDUE:
         return "suspended";
       default:
-        return "unknown";
+        return "pending"; // Au lieu d'unknown, on met pending par défaut
     }
+  }
+
+  /**
+   * Détermine le nom d'affichage du pack basé sur le type et le montant
+   */
+  private static getPackDisplayName(packType?: string | null, amount?: number | null): string {
+    // Si on a un packType explicite, l'utiliser
+    if (packType) {
+      if (packType.includes("pack-integral")) return "Pack Intégral";
+      if (packType.includes("pack-standard")) return "Pack Standard";
+      if (packType.includes("pack-essentiel")) return "Pack Essentiel";
+      if (packType.includes("pack-premium")) return "Pack Premium";
+    }
+
+    // Sinon, se baser sur le montant (en centimes)
+    if (amount) {
+      if (amount >= 50000) return "Pack Intégral"; // ≥ 500€
+      if (amount >= 20000) return "Pack Standard";  // ≥ 200€
+      if (amount >= 10000) return "Pack Essentiel"; // ≥ 100€
+    }
+
+    return "Pack Standard"; // Défaut
   }
 
   /**
@@ -283,7 +326,7 @@ export class ProjectModel {
     counts.forEach((count) => {
       const apiStatus = this.mapStatusToString(count.statut);
       if (apiStatus in result) {
-        result[apiStatus as keyof typeof result] = count._count.statut;
+        result[apiStatus as keyof typeof result] += count._count.statut;
       }
       result.all += count._count.statut;
     });

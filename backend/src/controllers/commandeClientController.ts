@@ -1,5 +1,6 @@
 import { PrismaClient, StatutCommande } from "@prisma/client";
 import { Request, Response } from "express";
+import { notifyAdminNewCommande, notifyClientCommandeCreated } from "./notificationsController";
 
 const prisma = new PrismaClient();
 
@@ -64,6 +65,13 @@ export const createCommande = async (
       } crée une nouvelle commande: ${titre.trim()}`
     );
 
+    // Extraire les nouvelles données spécifiques
+    const { pack, packType, pages, pagesDeclarees, prixEstime } = req.body;
+    
+    // Déterminer le statut selon le type de pack
+    const isPackIntegral = (pack === "pack-integral-default" || packType === "pack-integral-default");
+    const initialStatus = isPackIntegral ? StatutCommande.EN_ATTENTE_VERIFICATION : StatutCommande.EN_ATTENTE;
+    
     // Essayer d'abord Prisma, sinon utiliser les données mockées
     let commande: any;
     try {
@@ -73,7 +81,11 @@ export const createCommande = async (
           titre: titre.trim(),
           description: description?.trim() || null,
           fichierUrl: fichierUrl?.trim() || null,
-          statut: StatutCommande.EN_ATTENTE,
+          statut: initialStatus,
+          // Champs spécifiques Pack Intégral
+          packType: packType || pack || null,
+          pagesDeclarees: pagesDeclarees || (pages ? parseInt(pages) : null),
+          prixEstime: prixEstime || null,
         },
         select: {
           id: true,
@@ -83,12 +95,45 @@ export const createCommande = async (
           statut: true,
           paymentStatus: true,
           stripeSessionId: true,
+          packType: true,
+          pagesDeclarees: true,
+          prixEstime: true,
           createdAt: true,
           updatedAt: true,
         },
       });
 
       console.log(`✅ [CLIENT] Commande ${commande.id} créée en base`);
+
+      // Les données ont déjà été extraites plus haut
+      
+      // Notifier les admins de la nouvelle commande
+      try {
+        await notifyAdminNewCommande(
+          `${req.user?.prenom || ''} ${req.user?.nom || ''}`.trim() || 'Client',
+          req.user?.email || 'Email non disponible',
+          commande.titre,
+          commande.id
+        );
+        console.log(`🔔 [CLIENT] Notification admin envoyée pour la commande ${commande.id}`);
+      } catch (notifError) {
+        console.error(`⚠️ [CLIENT] Erreur lors de l'envoi de la notification admin:`, notifError);
+        // Ne pas faire échouer la création de commande si la notification échoue
+      }
+      
+      // Notifier le client de la création de sa commande avec email automatique
+      try {
+        await notifyClientCommandeCreated(
+          userId,
+          commande.titre,
+          commande.id,
+          pack || packType
+        );
+        console.log(`📧 [CLIENT] Notification client + email envoyés pour la commande ${commande.id}`);
+      } catch (clientNotifError) {
+        console.error(`⚠️ [CLIENT] Erreur lors de l'envoi de la notification client:`, clientNotifError);
+        // Ne pas faire échouer la création si la notification client échoue
+      }
     } catch (dbError) {
       console.log(`⚠️ [CLIENT] DB non accessible, simulation de création`);
 

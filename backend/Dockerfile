@@ -16,8 +16,10 @@ RUN npm install --legacy-peer-deps --omit=optional
 # Copier le code source
 COPY . ./
 
-# Générer Prisma Client
+# Changer vers le backend directory et générer Prisma Client
+WORKDIR /app/backend
 RUN npx prisma generate
 
 EXPOSE 3001
+WORKDIR /app/backend
 CMD ["npm", "run", "dev"]

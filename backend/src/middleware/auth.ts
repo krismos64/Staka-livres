@@ -55,6 +55,11 @@ export const authenticateToken = async (
         isActive: true,
         createdAt: true,
         updatedAt: true,
+        telephone: true,
+        adresse: true,
+        bio: true,
+        avatar: true,
+        preferences: true,
       },
     });
 

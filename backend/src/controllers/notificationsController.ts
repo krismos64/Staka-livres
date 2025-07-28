@@ -202,7 +202,8 @@ export const createNotification = async (
   priority: NotificationPriority = NotificationPriority.NORMALE,
   actionUrl?: string,
   data?: any,
-  expiresAt?: Date
+  expiresAt?: Date,
+  sendEmail: boolean = false
 ): Promise<void> => {
   try {
     const notification = await prisma.notification.create({
@@ -218,8 +219,13 @@ export const createNotification = async (
       },
     });
 
-    // Emit event for user notifications - no auto email for user notifications
+    // Emit event for user notifications
     eventBus.emit("user.notification.created", notification);
+    
+    // Optionally emit event for client email notifications
+    if (sendEmail) {
+      eventBus.emit("client.notification.created", notification);
+    }
   } catch (error) {
     console.error("Erreur lors de la création de notification:", error);
   }
@@ -399,5 +405,50 @@ export const notifyAdminNewRegistration = async (
     NotificationType.INFO,
     NotificationPriority.NORMALE,
     "/admin/users"
+  );
+};
+
+/**
+ * Notifie les admins d'une nouvelle commande
+ */
+export const notifyAdminNewCommande = async (
+  customerName: string,
+  customerEmail: string,
+  commandeTitle: string,
+  commandeId: string
+): Promise<void> => {
+  await createAdminNotification(
+    "Nouvelle commande reçue",
+    `${customerName} (${customerEmail}) a créé une nouvelle commande : "${commandeTitle}".`,
+    NotificationType.ORDER,
+    NotificationPriority.HAUTE,
+    `/admin/commandes?id=${commandeId}`,
+    { customerName, customerEmail, commandeTitle, commandeId }
+  );
+};
+
+/**
+ * Notifie un client de la création de sa commande avec email automatique
+ */
+export const notifyClientCommandeCreated = async (
+  userId: string,
+  commandeTitle: string,
+  commandeId: string,
+  packType?: string
+): Promise<void> => {
+  const isPackIntegral = packType === "pack-integral-default";
+  
+  await createNotification(
+    userId,
+    "Projet créé avec succès",
+    isPackIntegral 
+      ? `Votre projet "${commandeTitle}" a été créé et est en attente de vérification. Notre équipe vous contactera sous 24h pour valider le nombre de pages.`
+      : `Votre projet "${commandeTitle}" a été créé avec succès et est en cours de traitement.`,
+    NotificationType.SUCCESS,
+    NotificationPriority.HAUTE,
+    `/app/projects/${commandeId}`,
+    { commandeTitle, commandeId, packType, needsVerification: isPackIntegral },
+    undefined, // expiresAt par défaut
+    true // sendEmail = true pour déclencher l'envoi d'email
   );
 };

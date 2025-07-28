@@ -1,4 +1,9 @@
 import React, { useState } from "react";
+import { useCreateCommande } from "../../hooks/useCreateCommande";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "../layout/ToastProvider";
+import PackIntegralEstimationModal from "./PackIntegralEstimationModal";
+import { calculatePackIntegralPrice } from "../../utils/pricing";
 
 interface ModalNouveauProjetProps {
   open: boolean;
@@ -7,28 +12,24 @@ interface ModalNouveauProjetProps {
 
 const packOptions = [
   {
-    key: "correction",
-    title: "Correction seule",
-    subtitle: "Correction orthographique et grammaticale",
-    price: "2€/page",
-    details: "Dès 10 pages gratuites",
+    key: "pack-kdp-default",
+    title: "Pack KDP Autoédition",
+    subtitle: "Idéal pour débuter",
+    price: "350€",
+    details: "Délai: 5-7 jours",
     badge: null,
     selectedColor: "border-blue-600 ring-2 ring-blue-200",
     highlight: false,
   },
   {
-    key: "integral",
+    key: "pack-integral-default",
     title: (
       <>
         Pack Intégral <span className="ml-1 text-yellow-500">⭐</span>
       </>
     ),
-    subtitle: "Correction + mise en page + couverture",
-    price: (
-      <>
-        2€/page <span className="text-blue-700">+ design</span>
-      </>
-    ),
+    subtitle: "Solution complète",
+    price: "2€/page",
     details: (
       <span className="text-xs text-blue-700 font-bold">Le plus populaire</span>
     ),
@@ -37,13 +38,13 @@ const packOptions = [
     highlight: true,
   },
   {
-    key: "kdp",
-    title: "Pack KDP",
-    subtitle: "Prêt pour Amazon KDP",
-    price: "350€",
-    details: <span className="text-xs text-gray-500">Prix fixe</span>,
+    key: "pack-redaction-default",
+    title: "Pack Rédaction Complète",
+    subtitle: "Coaching complet",
+    price: "1450€",
+    details: "Délai: 3-6 semaines",
     badge: null,
-    selectedColor: "border-blue-400 ring-2 ring-blue-50",
+    selectedColor: "border-gray-600 ring-2 ring-gray-100",
     highlight: false,
   },
 ];
@@ -65,9 +66,15 @@ export default function ModalNouveauProjet({
   const [title, setTitle] = useState("");
   const [manuscriptType, setManuscriptType] = useState("");
   const [pages, setPages] = useState("");
-  const [selectedPack, setSelectedPack] = useState("integral");
+  const [selectedPack, setSelectedPack] = useState("pack-integral-default");
   const [desc, setDesc] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [showEstimationModal, setShowEstimationModal] = useState(false);
+
+  const navigate = useNavigate();
+  const createCommande = useCreateCommande();
+  const { showToast } = useToast();
 
   if (!open) return null;
 
@@ -99,10 +106,61 @@ export default function ModalNouveauProjet({
         {/* Form */}
         <form
           className="space-y-5"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            // Envoi à ton backend ici
-            onClose();
+            
+            // Vérifier si c'est le Pack Intégral pour afficher la modale d'estimation
+            if (selectedPack === "pack-integral-default") {
+              setShowEstimationModal(true);
+              return;
+            }
+            
+            try {
+              // Préparer les données pour la commande (autres packs)
+              const commandeData = {
+                titre: title,
+                description: `Type: ${manuscriptType} | Pages: ${pages} | Pack: ${selectedPack}${desc ? ` | Description: ${desc}` : ''}`,
+                fichierUrl: fileUrl || undefined,
+                pack: selectedPack,
+                type: manuscriptType,
+                pages: parseInt(pages) || undefined,
+              };
+
+              console.log("📝 Création de la commande:", commandeData);
+
+              // Créer la commande via l'API
+              const result = await createCommande.mutateAsync(commandeData);
+              
+              console.log("✅ Commande créée:", result);
+
+              // Notification de succès
+              showToast(
+                "success",
+                "Projet créé avec succès !",
+                `Votre projet "${title}" a été créé et est en attente de traitement.`,
+                { duration: 5000 }
+              );
+
+              // Fermer la modale
+              onClose();
+
+              // Attendre un peu pour que la toast s'affiche avant la redirection
+              setTimeout(() => {
+                navigate("/app/projects");
+              }, 500);
+
+            } catch (error) {
+              console.error("❌ Erreur lors de la création:", error);
+              
+              const errorMessage = error instanceof Error ? error.message : "Une erreur inattendue s'est produite";
+              
+              showToast(
+                "error",
+                "Erreur lors de la création",
+                `Impossible de créer le projet: ${errorMessage}`,
+                { duration: 7000 }
+              );
+            }
           }}
         >
           {/* Top grid */}
@@ -225,9 +283,18 @@ export default function ModalNouveauProjet({
                 <input
                   type="file"
                   className="hidden"
+                  accept=".pdf,.doc,.docx,.txt"
                   onChange={(e) => {
                     if (e.target.files && e.target.files[0]) {
-                      setFileName(e.target.files[0].name);
+                      const file = e.target.files[0];
+                      setFileName(file.name);
+                      
+                      // TODO: Implémenter l'upload du fichier vers S3/backend
+                      // Pour l'instant, on simule juste l'URL
+                      const simulatedUrl = `files/${Date.now()}-${file.name}`;
+                      setFileUrl(simulatedUrl);
+                      
+                      console.log("📎 Fichier sélectionné:", file.name);
                     }
                   }}
                 />
@@ -247,13 +314,93 @@ export default function ModalNouveauProjet({
           {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white font-semibold rounded-xl text-base py-3 hover:bg-blue-700 transition flex items-center justify-center gap-2"
+            disabled={createCommande.isPending || !title.trim() || !manuscriptType || !pages}
+            className={`w-full font-semibold rounded-xl text-base py-3 transition flex items-center justify-center gap-2 ${
+              createCommande.isPending || !title.trim() || !manuscriptType || !pages
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
+            }`}
           >
-            <i className="fas fa-paper-plane"></i>
-            Créer le projet
+            {createCommande.isPending ? (
+              <>
+                <i className="fas fa-spinner animate-spin"></i>
+                Création en cours...
+              </>
+            ) : (
+              <>
+                <i className="fas fa-paper-plane"></i>
+                Créer le projet
+              </>
+            )}
           </button>
+
+          {/* Error message */}
+          {createCommande.error && (
+            <div className="text-red-600 text-sm text-center bg-red-50 border border-red-200 rounded-lg p-3">
+              <i className="fas fa-exclamation-triangle mr-2"></i>
+              {createCommande.error.message || "Erreur lors de la création du projet"}
+            </div>
+          )}
         </form>
       </div>
+      
+      {/* Modale d'estimation Pack Intégral */}
+      <PackIntegralEstimationModal
+        open={showEstimationModal}
+        onClose={() => setShowEstimationModal(false)}
+        initialPages={parseInt(pages) || 0}
+        projectTitle={title}
+        onConfirm={async (estimatedPrice: number, pagesCount: number) => {
+          try {
+            // Créer la commande avec estimation Pack Intégral
+            const commandeData = {
+              titre: title,
+              description: `Type: ${manuscriptType} | Pages: ${pagesCount} | Pack: ${selectedPack}${desc ? ` | Description: ${desc}` : ''}`,
+              fichierUrl: fileUrl || undefined,
+              pack: selectedPack,
+              type: manuscriptType,
+              pages: pagesCount,
+              packType: selectedPack,
+              pagesDeclarees: pagesCount,
+              prixEstime: estimatedPrice * 100, // Convertir en centimes
+            };
+
+            console.log("📝 Création commande Pack Intégral:", commandeData);
+
+            const result = await createCommande.mutateAsync(commandeData);
+            
+            console.log("✅ Commande Pack Intégral créée:", result);
+
+            showToast(
+              "success",
+              "Estimation soumise avec succès !",
+              `Votre projet "${title}" est en attente de vérification par notre équipe. Vous serez contacté sous 24h.`,
+              { duration: 7000 }
+            );
+
+            // Fermer les modales
+            setShowEstimationModal(false);
+            onClose();
+
+            // Redirection après un délai
+            setTimeout(() => {
+              navigate("/app/projects");
+            }, 500);
+
+          } catch (error) {
+            console.error("❌ Erreur Pack Intégral:", error);
+            
+            const errorMessage = error instanceof Error ? error.message : "Une erreur inattendue s'est produite";
+            
+            showToast(
+              "error",
+              "Erreur lors de la soumission",
+              `Impossible de soumettre l'estimation: ${errorMessage}`,
+              { duration: 7000 }
+            );
+          }
+        }}
+      />
     </div>
   );
 }

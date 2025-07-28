@@ -20,6 +20,10 @@ export const apiConfig = {
       create: "/commandes",
       get: "/commandes",
     },
+    projects: {
+      list: "/projects",
+      counts: "/projects/counts",
+    },
     invoices: {
       list: "/invoices",
       detail: "/invoices",

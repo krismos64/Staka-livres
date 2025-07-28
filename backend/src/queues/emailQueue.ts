@@ -1,6 +1,23 @@
 import { MailerService } from "../utils/mailer";
 import fs from "fs";
 import path from "path";
+import * as Handlebars from "handlebars";
+
+// Register Handlebars helpers
+Handlebars.registerHelper('eq', function(a: any, b: any) {
+  return a === b;
+});
+
+Handlebars.registerHelper('formatDate', function(date: any) {
+  if (!date) return '';
+  return new Date(date).toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+});
 
 export interface EmailJob {
   to: string;
@@ -49,15 +66,28 @@ class EmailQueue {
 
       const templateContent = fs.readFileSync(templatePath, "utf-8");
       
-      // Simple template replacement (can be upgraded to handlebars later)
-      let html = templateContent;
-      Object.entries(job.variables).forEach(([key, value]) => {
-        const regex = new RegExp(`{{${key}}}`, 'g');
-        html = html.replace(regex, String(value));
-      });
+      // Use Handlebars for proper template rendering
+      const template = Handlebars.compile(templateContent);
+      
+      // Format createdAt for better display
+      const templateVars = {
+        ...job.variables,
+        createdAt: job.variables.createdAt ? 
+          new Date(job.variables.createdAt).toLocaleDateString('fr-FR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          }) : ''
+      };
+      
+      const html = template(templateVars);
 
       // Extract subject from template variables or use default
       const subject = job.variables.subject || "Notification Staka Livres";
+
+      console.log(`📧 [Email Queue] Sending email to ${job.to} with template ${job.template}`);
 
       await MailerService.sendEmail({
         to: job.to,

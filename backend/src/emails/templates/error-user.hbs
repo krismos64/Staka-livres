@@ -13,7 +13,7 @@
             <p style="color: #6b7280; margin: 5px 0 0 0; font-size: 14px;">Votre plateforme de correction littéraire</p>
         </div>
 
-        <p style="margin-bottom: 20px; font-size: 16px;">Bonjour {{userName}},</p>
+        <p style="margin-bottom: 20px; font-size: 16px;">Bonjour {{#if firstName}}{{firstName}}{{else}}{{customerName}}{{/if}},</p>
 
         <h2 style="color: #dc2626; margin-bottom: 20px;">❌ {{title}}</h2>
         
@@ -36,7 +36,7 @@
         {{/if}}
 
         <div style="text-align: center; margin: 25px 0;">
-            <a href="{{supportUrl}}" style="display: inline-block; padding: 10px 20px; background: #6b7280; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-right: 10px;">
+            <a href="mailto:{{supportEmail}}" style="display: inline-block; padding: 10px 20px; background: #6b7280; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-right: 10px;">
                 Contacter le support
             </a>
             <a href="{{dashboardUrl}}" style="display: inline-block; padding: 10px 20px; background: #059669; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
@@ -55,7 +55,7 @@
             <p style="color: #6b7280; font-size: 11px; margin: 15px 0;">
                 Vous recevez cet e-mail car vous êtes inscrit(e) sur Staka Livres.<br>
                 <a href="{{dashboardUrl}}/settings" style="color: #2563eb;">Gérer mes préférences</a> | 
-                <a href="{{supportUrl}}" style="color: #2563eb;">Support</a>
+                <a href="mailto:{{supportEmail}}" style="color: #2563eb;">Support</a>
             </p>
         </div>
     </div>

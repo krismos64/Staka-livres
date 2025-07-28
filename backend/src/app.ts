@@ -29,6 +29,7 @@ dotenv.config();
 // Initialize event listeners (side-effect import)
 import "./listeners/adminNotificationEmailListener";
 import "./listeners/userNotificationEmailListener";
+import "./listeners/clientNotificationEmailListener";
 
 const app = express();
 

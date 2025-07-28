@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{{subject}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px;">
+    <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #2563eb; padding-bottom: 20px;">
+            <h1 style="color: #2563eb; margin: 0; font-size: 28px;">📚 Bienvenue chez Staka Livres</h1>
+            <p style="color: #6b7280; margin: 5px 0 0 0; font-size: 14px;">Votre plateforme de correction littéraire</p>
+        </div>
+
+        <p style="margin-bottom: 20px; font-size: 16px;">Bonjour {{#if firstName}}{{firstName}}{{else}}{{customerName}}{{/if}},</p>
+
+        <h2 style="color: #16a34a; margin-bottom: 20px;">🎉 Félicitations pour votre inscription !</h2>
+        
+        <div style="background-color: #f0fdf4; padding: 20px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #16a34a;">
+            <p style="margin: 0; font-size: 16px;">
+                Votre compte a été créé avec succès sur <strong>Staka Livres</strong>. 
+                Nous sommes ravis de vous accueillir dans notre communauté d'auteurs et de correcteurs passionnés !
+            </p>
+        </div>
+
+        <!-- Avantages de l'inscription -->
+        <div style="background-color: #f8fafc; padding: 20px; border-radius: 6px; margin: 20px 0;">
+            <h3 style="color: #2563eb; margin-top: 0; font-size: 18px;">🚀 Ce que vous pouvez faire maintenant :</h3>
+            <ul style="color: #374151; line-height: 1.6; padding-left: 20px;">
+                <li><strong>Créer votre premier projet</strong> de correction littéraire</li>
+                <li><strong>Découvrir nos packs</strong> : Essentiel, Standard et Intégral</li>
+                <li><strong>Uploader vos manuscrits</strong> en toute sécurité</li>
+                <li><strong>Suivre l'avancement</strong> de vos corrections en temps réel</li>
+                <li><strong>Échanger avec nos correcteurs</strong> professionnels</li>
+                <li><strong>Télécharger vos documents corrigés</strong> dès qu'ils sont prêts</li>
+            </ul>
+        </div>
+
+        <!-- Informations de connexion -->
+        <div style="background-color: #fffbeb; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+            <p style="margin: 0; color: #374151;"><strong>📧 Email de connexion :</strong> {{email}}</p>
+            <p style="margin: 10px 0 0 0; color: #6b7280; font-size: 14px;">
+                Gardez ces informations précieusement pour vous connecter à votre espace personnel.
+            </p>
+        </div>
+
+        <!-- Boutons d'action -->
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{dashboardUrl}}" style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-right: 10px;">
+                🏠 Accéder à mon espace
+            </a>
+            <a href="{{frontendUrl}}/packs" style="display: inline-block; padding: 12px 24px; background: #16a34a; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                📦 Découvrir nos packs
+            </a>
+        </div>
+
+        <!-- Aide et support -->
+        <div style="background-color: #f1f5f9; padding: 20px; border-radius: 6px; margin: 20px 0;">
+            <h3 style="color: #374151; margin-top: 0; font-size: 16px;">💡 Besoin d'aide pour commencer ?</h3>
+            <p style="color: #6b7280; margin: 0; line-height: 1.6;">
+                Notre équipe est là pour vous accompagner ! N'hésitez pas à nous contacter si vous avez des questions sur nos services ou si vous souhaitez des conseils pour votre premier projet.
+            </p>
+        </div>
+
+        <div style="text-align: center; margin: 25px 0;">
+            <a href="mailto:{{supportEmail}}" style="display: inline-block; padding: 10px 20px; background: #6b7280; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-right: 10px;">
+                📞 Contacter le support
+            </a>
+            <a href="{{frontendUrl}}/faq" style="display: inline-block; padding: 10px 20px; background: #8b5cf6; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                ❓ Consulter la FAQ
+            </a>
+        </div>
+
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+        
+        <div style="text-align: center;">
+            <p style="color: #6b7280; font-size: 12px; margin: 10px 0;">
+                <strong>Staka Livres</strong><br>
+                Email de bienvenue automatique - {{createdAt}}
+            </p>
+            
+            <p style="color: #6b7280; font-size: 11px; margin: 15px 0;">
+                Vous recevez cet email car vous venez de créer un compte sur Staka Livres.<br>
+                <a href="{{dashboardUrl}}/settings" style="color: #2563eb;">Gérer mes préférences</a> | 
+                <a href="mailto:{{supportEmail}}" style="color: #2563eb;">Support</a>
+            </p>
+
+            <p style="color: #9ca3af; font-size: 10px; margin: 20px 0 0 0;">
+                Merci de faire confiance à Staka Livres pour l'amélioration de vos écrits ! ✨
+            </p>
+        </div>
+    </div>
+</body>
+</html>

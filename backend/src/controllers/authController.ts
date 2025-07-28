@@ -7,6 +7,7 @@ import { AuthValidators } from "../validators/authValidators";
 import { PasswordResetService } from "../services/passwordResetService";
 import { AuditService } from "../services/auditService";
 import { MailerService } from "../utils/mailer";
+import { WelcomeEmailService } from "../services/welcomeEmailService";
 
 const prisma = new PrismaClient();
 
@@ -135,6 +136,15 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     } catch (notificationError) {
       console.error("Erreur lors de la création de la notification:", notificationError);
     }
+
+    // Email de bienvenue désactivé - les clients reçoivent un email personnalisé lors de la création de leur premier projet
+    // try {
+    //   const userName = WelcomeEmailService.formatUserName(user.prenom, user.nom);
+    //   await WelcomeEmailService.sendWelcomeEmail(user.email, userName, user.prenom);
+    // } catch (welcomeEmailError) {
+    //   console.error("Erreur lors de l'envoi de l'email de bienvenue:", welcomeEmailError);
+    //   // Ne pas faire échouer l'inscription si l'email ne part pas
+    // }
 
     res.status(201).json({
       message: "Utilisateur créé avec succès",

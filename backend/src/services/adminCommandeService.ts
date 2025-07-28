@@ -147,6 +147,10 @@ export class AdminCommandeService {
     // Construction de l'objet byStatut avec toutes les valeurs possibles
     const byStatut: Record<StatutCommande, number> = {
       EN_ATTENTE: 0,
+      EN_ATTENTE_VERIFICATION: 0,
+      EN_ATTENTE_CONSULTATION: 0,
+      ESTIMATION_ENVOYEE: 0,
+      PAYEE: 0,
       EN_COURS: 0,
       TERMINE: 0,
       ANNULEE: 0,

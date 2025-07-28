@@ -13,12 +13,14 @@ export interface ProjectFile {
   commandeId: string;
   uploadedAt: string;
   deletedAt?: string;
+  isAdminFile?: boolean;
 }
 
 export interface ProjectFileInput {
   name: string;
   size: number;
   mime: string;
+  isAdminFile?: boolean;
 }
 
 export interface UploadUrlResponse {
@@ -42,7 +44,8 @@ export class ProjectFileModel {
     commandeId: string,
     userId: string,
     fileInput: ProjectFileInput,
-    prisma: PrismaClient = defaultPrisma
+    prisma: PrismaClient = defaultPrisma,
+    userRole?: string
   ): Promise<UploadUrlResponse> {
     // Validation des paramètres
     if (!commandeId) {
@@ -80,11 +83,12 @@ export class ProjectFileModel {
       throw new Error(`Type de fichier non autorisé: ${fileInput.mime}`);
     }
 
-    // Vérifier que l'utilisateur est propriétaire du projet
+    // Vérifier que l'utilisateur est propriétaire du projet ou est admin
+    const isAdmin = userRole === "ADMIN";
     const commande = await prisma.commande.findFirst({
       where: {
         id: commandeId,
-        userId: userId
+        ...(isAdmin ? {} : { userId: userId }) // Les admins peuvent accéder à tous les projets
       }
     });
 
@@ -112,7 +116,7 @@ export class ProjectFileModel {
         type: fileType,
         uploadedById: userId,
         commandeId: commandeId,
-        description: "Fichier de projet",
+        description: fileInput.isAdminFile ? "ADMIN_FILE:Document corrigé" : "Fichier de projet",
         isPublic: false
       }
     });
@@ -144,7 +148,8 @@ export class ProjectFileModel {
   static async getProjectFiles(
     commandeId: string,
     userId: string,
-    prisma: PrismaClient = defaultPrisma
+    prisma: PrismaClient = defaultPrisma,
+    userRole?: string
   ): Promise<ProjectFile[]> {
     if (!commandeId) {
       throw new Error("commandeId est requis");
@@ -154,11 +159,12 @@ export class ProjectFileModel {
       throw new Error("userId est requis");
     }
 
-    // Vérifier que l'utilisateur est propriétaire du projet
+    // Vérifier que l'utilisateur est propriétaire du projet ou est admin
+    const isAdmin = userRole === "ADMIN";
     const commande = await prisma.commande.findFirst({
       where: {
         id: commandeId,
-        userId: userId
+        ...(isAdmin ? {} : { userId: userId }) // Les admins peuvent accéder à tous les projets
       }
     });
 
@@ -182,7 +188,8 @@ export class ProjectFileModel {
         type: true,
         commandeId: true,
         createdAt: true,
-        updatedAt: true
+        updatedAt: true,
+        description: true
       },
       orderBy: {
         createdAt: "desc"
@@ -197,7 +204,8 @@ export class ProjectFileModel {
       url: file.url,
       type: file.type,
       commandeId: file.commandeId!,
-      uploadedAt: file.createdAt.toISOString()
+      uploadedAt: file.createdAt.toISOString(),
+      isAdminFile: file.description?.startsWith("ADMIN_FILE:") || false
     }));
   }
 

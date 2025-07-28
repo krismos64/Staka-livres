@@ -10,6 +10,7 @@ interface ProjectFile {
   commandeId: string;
   uploadedAt: string;
   deletedAt?: string;
+  isAdminFile?: boolean;
 }
 
 interface ProjectFilesResponse {
@@ -49,7 +50,7 @@ export const useProjectFiles = (
   } = useQuery<ProjectFilesResponse, Error>({
     queryKey: ["projectFiles", projectId],
     queryFn: async (): Promise<ProjectFilesResponse> => {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("auth_token");
       
       if (!token) {
         throw new Error("Token d'authentification manquant");
@@ -107,7 +108,7 @@ export const useDeleteFile = (
 
   const mutation = useMutation({
     mutationFn: async (fileId: string): Promise<void> => {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("auth_token");
       
       if (!token) {
         throw new Error("Token d'authentification manquant");
@@ -173,7 +174,7 @@ export const useDownloadFile = (projectId: string) => {
       }
 
       // Pour les autres fichiers, passer par l'API
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("auth_token");
       
       if (!token) {
         throw new Error("Token d'authentification manquant");

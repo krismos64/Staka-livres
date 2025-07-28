@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { Role, User, UserDetailed, UserStats } from "../types/shared";
 import {
   AdminUsersParams,
+  deleteUser as deleteUserAPI,
   getUserById,
   getUsers,
   getUserStats,
@@ -150,7 +151,7 @@ export const useAdminUsers = (options: UseAdminUsersOptions = {}) => {
       setIsOperationLoading(true);
       let success = false;
       try {
-        await deleteUser(userId);
+        await deleteUserAPI(userId);
         setUsers((prev) => prev.filter((u) => u.id !== userId));
         setTotalUsers((prev) => prev - 1);
         handleSuccess("Utilisateur supprimé avec succès.");

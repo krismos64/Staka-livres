@@ -11,7 +11,8 @@ import "../middleware/auth"; // Import pour les types globaux Express
 const uploadFileSchema = z.object({
   name: z.string().min(1, "Le nom du fichier est requis").max(255, "Le nom du fichier ne peut pas dépasser 255 caractères"),
   size: z.number().int().min(1, "La taille doit être positive").max(20 * 1024 * 1024, "La taille ne peut pas dépasser 20 Mo"),
-  mime: z.string().min(1, "Le type MIME est requis")
+  mime: z.string().min(1, "Le type MIME est requis"),
+  isAdminFile: z.boolean().optional().default(false)
 });
 
 // Schéma de validation pour les paramètres de route
@@ -45,17 +46,18 @@ export const createProjectFile = async (
     const { id: commandeId } = projectIdSchema.parse(req.params);
 
     // Validation du corps de la requête
-    const fileInput = uploadFileSchema.parse(req.body) as { name: string; size: number; mime: string };
+    const fileInput = uploadFileSchema.parse(req.body) as { name: string; size: number; mime: string; isAdminFile: boolean };
 
     console.log(
-      `📁 [FILES] ${req.user.email} crée un fichier pour le projet ${commandeId} - ${fileInput.name} (${fileInput.size} bytes, ${fileInput.mime})`
+      `📁 [FILES] ${req.user.email} crée un fichier pour le projet ${commandeId} - ${fileInput.name} (${fileInput.size} bytes, ${fileInput.mime}) - Admin: ${fileInput.isAdminFile}`
     );
 
     // Vérification de la propriété du projet
     const result = await FilesService.createProjectFile(
       commandeId,
       req.user.id,
-      fileInput
+      fileInput,
+      req.user.role
     );
 
     console.log(
@@ -141,7 +143,7 @@ export const getProjectFiles = async (
     );
 
     // Récupération des fichiers via le service
-    const files = await FilesService.getProjectFiles(commandeId, req.user.id);
+    const files = await FilesService.getProjectFiles(commandeId, req.user.id, req.user.role);
 
     console.log(
       `✅ [FILES] ${files.length} fichiers récupérés pour le projet ${commandeId} (${req.user.email})`

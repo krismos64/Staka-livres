@@ -4,6 +4,7 @@ import { authenticateToken } from "../middleware/auth";
 import { requireRole } from "../middleware/requireRole";
 import auditRoutes from "./admin/audit";
 import commandeRoutes from "./admin/commandes";
+import demoRoutes from "./admin/demo";
 import factureRoutes from "./admin/factures";
 import faqRoutes from "./admin/faq";
 import pagesRoutes from "./admin/pages";
@@ -58,5 +59,8 @@ router.use("/messages", messageRoutes);
 
 // 🔐 GESTION DES LOGS D'AUDIT
 router.use("/audit", auditRoutes);
+
+// 🎭 GESTION DU MODE DÉMONSTRATION
+router.use("/demo", demoRoutes);
 
 export default router;

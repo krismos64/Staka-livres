@@ -57,6 +57,12 @@ model Commande {
   dateEcheance    DateTime?
   dateFinition    DateTime?
   priorite        Priorite       @default(NORMALE)
+  // Champs spécifiques Pack Intégral
+  packType        String?        @db.VarChar(100)     // Type de pack (pack-integral-default, etc.)
+  pagesDeclarees  Int?                                // Nombre de pages déclaré par le client
+  pagesVerifiees  Int?                                // Nombre de pages vérifié par l'admin
+  prixEstime      Int?                                // Prix estimé en centimes
+  prixFinal       Int?                                // Prix final après vérification
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   files           File[]         @relation("CommandeFiles")
   invoices        Invoice[]
@@ -368,6 +374,10 @@ enum Role {
 /// Statuts des commandes
 enum StatutCommande {
   EN_ATTENTE
+  EN_ATTENTE_VERIFICATION  // Pack Intégral - Admin vérifie nb pages
+  EN_ATTENTE_CONSULTATION  // Pack Rédaction - Consultation requise
+  ESTIMATION_ENVOYEE       // Devis personnalisé envoyé
+  PAYEE                    // Paiement effectué
   EN_COURS
   TERMINE
   ANNULEE

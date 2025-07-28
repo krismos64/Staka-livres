@@ -19,8 +19,8 @@ const projectsQuerySchema = z.object({
   limit: z.string().optional().transform((val) => {
     if (!val) return 10;
     const parsed = parseInt(val);
-    if (isNaN(parsed) || parsed < 1 || parsed > 50) {
-      throw new Error("limit doit être entre 1 et 50");
+    if (isNaN(parsed) || parsed < 1 || parsed > 100) {
+      throw new Error("limit doit être entre 1 et 100");
     }
     return parsed;
   }),
@@ -96,7 +96,7 @@ export const getProjects = async (
 
     // Gestion des erreurs spécifiques du service
     if (error instanceof Error) {
-      if (error.message.includes("≥ 1") || error.message.includes("entre 1 et 50") || error.message.includes("≤ 100")) {
+      if (error.message.includes("≥ 1") || error.message.includes("entre 1 et 100") || error.message.includes("≤ 100")) {
         res.status(400).json({
           error: "Paramètres invalides",
           message: error.message,

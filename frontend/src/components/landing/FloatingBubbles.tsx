@@ -168,13 +168,13 @@ export default function FloatingBubbles() {
   const getSizeClasses = (size: string) => {
     switch (size) {
       case 'large':
-        return 'w-40 h-40 md:w-48 md:h-48 lg:w-50 lg:h-50';
+        return 'w-28 h-28 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48';
       case 'medium':
-        return 'w-32 h-32 md:w-36 md:h-36 lg:w-38 lg:h-38';
+        return 'w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-36 lg:h-36';
       case 'small':
-        return 'w-24 h-24 md:w-28 md:h-28 lg:w-30 lg:h-30';
+        return 'w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-30 lg:h-30';
       default:
-        return 'w-32 h-32';
+        return 'w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32';
     }
   };
 
@@ -369,20 +369,44 @@ export default function FloatingBubbles() {
           background: rgba(255, 255, 255, 0.15) !important;
         }
 
-        /* Responsive adjustments */
+        /* Responsive adjustments for tablets */
         @media (max-width: 768px) {
-          .bubble:nth-child(2) { top: 15% !important; left: 5% !important; right: auto !important; }
-          .bubble:nth-child(3) { top: 20% !important; right: 5% !important; left: auto !important; }
-          .bubble:nth-child(4) { top: 35% !important; left: 20% !important; }
-          .bubble:nth-child(5) { top: 45% !important; right: 10% !important; left: auto !important; }
-          .bubble:nth-child(6) { top: 60% !important; left: 15% !important; }
-          .bubble:nth-child(7) { top: 25% !important; left: 40% !important; right: auto !important; }
-          .bubble:nth-child(8) { top: 65% !important; right: 15% !important; left: auto !important; }
-          .bubble:nth-child(9) { top: 40% !important; right: 25% !important; left: auto !important; }
-          .bubble:nth-child(10) { bottom: 5% !important; left: 35% !important; top: auto !important; }
+          .bubble:nth-child(2) { top: 18% !important; left: 8% !important; right: auto !important; }
+          .bubble:nth-child(3) { top: 25% !important; right: 8% !important; left: auto !important; }
+          .bubble:nth-child(4) { top: 40% !important; left: 25% !important; right: auto !important; }
+          .bubble:nth-child(5) { top: 50% !important; right: 15% !important; left: auto !important; }
+          .bubble:nth-child(6) { top: 65% !important; left: 20% !important; right: auto !important; }
+          .bubble:nth-child(7) { top: 32% !important; left: 45% !important; right: auto !important; }
+          .bubble:nth-child(8) { top: 75% !important; right: 20% !important; left: auto !important; }
+          .bubble:nth-child(9) { top: 48% !important; right: 35% !important; left: auto !important; }
+          .bubble:nth-child(10) { bottom: 8% !important; left: 40% !important; top: auto !important; }
         }
 
+        /* Mobile responsive - Better spacing */
+        @media (max-width: 640px) {
+          .bubble:nth-child(2) { top: 20% !important; left: 10% !important; right: auto !important; }
+          .bubble:nth-child(3) { top: 30% !important; right: 10% !important; left: auto !important; }
+          .bubble:nth-child(4) { top: 45% !important; left: 30% !important; right: auto !important; }
+          .bubble:nth-child(5) { top: 55% !important; right: 20% !important; left: auto !important; }
+          .bubble:nth-child(6) { top: 70% !important; left: 25% !important; right: auto !important; }
+          .bubble:nth-child(7) { top: 35% !important; left: 50% !important; right: auto !important; }
+          .bubble:nth-child(8) { top: 80% !important; right: 25% !important; left: auto !important; }
+          .bubble:nth-child(9) { top: 50% !important; right: 40% !important; left: auto !important; }
+          .bubble:nth-child(10) { bottom: 5% !important; left: 45% !important; top: auto !important; }
+        }
+
+        /* Small mobile adjustments */
         @media (max-width: 480px) {
+          .bubble:nth-child(2) { top: 22% !important; left: 15% !important; }
+          .bubble:nth-child(3) { top: 35% !important; right: 15% !important; }
+          .bubble:nth-child(4) { top: 50% !important; left: 35% !important; }
+          .bubble:nth-child(5) { top: 62% !important; right: 25% !important; }
+          .bubble:nth-child(6) { top: 75% !important; left: 30% !important; }
+          .bubble:nth-child(7) { top: 40% !important; left: 55% !important; }
+          .bubble:nth-child(8) { top: 85% !important; right: 30% !important; }
+          .bubble:nth-child(9) { top: 55% !important; right: 45% !important; }
+          .bubble:nth-child(10) { bottom: 3% !important; left: 50% !important; }
+
           .bubble-info {
             font-size: 11px;
             padding: 4px 8px;

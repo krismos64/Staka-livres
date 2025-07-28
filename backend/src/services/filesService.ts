@@ -42,7 +42,8 @@ export class FilesService {
   static async createProjectFile(
     commandeId: string,
     userId: string,
-    fileInput: ProjectFileInput
+    fileInput: ProjectFileInput,
+    userRole?: string
   ): Promise<UploadUrlResponse> {
     // Validation des paramètres
     if (!commandeId) {
@@ -65,7 +66,7 @@ export class FilesService {
 
     try {
       // Créer l'enregistrement via le model
-      const result = await ProjectFileModel.createFile(commandeId, userId, fileInput);
+      const result = await ProjectFileModel.createFile(commandeId, userId, fileInput, undefined, userRole);
 
       // Obtenir le client S3
       const s3Client = this.getS3Client();
@@ -118,7 +119,8 @@ export class FilesService {
    */
   static async getProjectFiles(
     commandeId: string,
-    userId: string
+    userId: string,
+    userRole?: string
   ): Promise<ProjectFile[]> {
     if (!commandeId) {
       throw new Error("commandeId est requis");
@@ -129,7 +131,7 @@ export class FilesService {
     }
 
     try {
-      return await ProjectFileModel.getProjectFiles(commandeId, userId);
+      return await ProjectFileModel.getProjectFiles(commandeId, userId, undefined, userRole);
     } catch (error) {
       console.error("Erreur lors de la récupération des fichiers:", error);
       throw error;

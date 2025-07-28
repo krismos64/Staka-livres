@@ -3,6 +3,7 @@ import CommandeStatusSelect from "../../components/admin/CommandeStatusSelect";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Modal from "../../components/common/Modal";
+import AdminCommandeFilesModal from "../../components/admin/AdminCommandeFilesModal";
 import {
   CommandeFilters,
   useAdminCommandes,
@@ -58,6 +59,10 @@ const AdminCommandes: React.FC = () => {
   const [showCommandeModal, setShowCommandeModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [commandeToDelete, setCommandeToDelete] = useState<Commande | null>(
+    null
+  );
+  const [showFilesModal, setShowFilesModal] = useState(false);
+  const [commandeForFiles, setCommandeForFiles] = useState<Commande | null>(
     null
   );
 
@@ -135,6 +140,11 @@ const AdminCommandes: React.FC = () => {
   const handleDeleteCommande = (commande: Commande) => {
     setCommandeToDelete(commande);
     setShowDeleteModal(true);
+  };
+
+  const handleManageFiles = (commande: Commande) => {
+    setCommandeForFiles(commande);
+    setShowFilesModal(true);
   };
 
   const confirmDeleteCommande = async () => {
@@ -439,7 +449,7 @@ const AdminCommandes: React.FC = () => {
                           {formatDate(commande.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex justify-end space-x-2">
+                          <div className="flex justify-end space-x-1">
                             <button
                               onClick={() => handleViewCommande(commande.id)}
                               disabled={isOperationLoading}
@@ -447,6 +457,14 @@ const AdminCommandes: React.FC = () => {
                               title="Voir les détails"
                             >
                               <i className="fas fa-eye"></i>
+                            </button>
+                            <button
+                              onClick={() => handleManageFiles(commande)}
+                              disabled={isOperationLoading}
+                              className="text-green-600 hover:text-green-900 disabled:opacity-50 p-2 rounded-md hover:bg-green-50"
+                              title="Gérer les fichiers"
+                            >
+                              <i className="fas fa-folder-open"></i>
                             </button>
                             <button
                               onClick={() => handleDeleteCommande(commande)}
@@ -546,7 +564,15 @@ const AdminCommandes: React.FC = () => {
                         className="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <i className="fas fa-eye mr-2"></i>
-                        Voir détails
+                        Détails
+                      </button>
+                      <button
+                        onClick={() => handleManageFiles(commande)}
+                        disabled={isOperationLoading}
+                        className="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-green-600 bg-green-50 rounded-md hover:bg-green-100 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      >
+                        <i className="fas fa-folder-open mr-2"></i>
+                        Fichiers
                       </button>
                       <button
                         onClick={() => handleDeleteCommande(commande)}
@@ -954,6 +980,20 @@ const AdminCommandes: React.FC = () => {
           cancelText="Annuler"
           type="danger"
           isLoading={isOperationLoading}
+        />
+      )}
+
+      {/* Modal gestion des fichiers */}
+      {showFilesModal && commandeForFiles && (
+        <AdminCommandeFilesModal
+          isOpen={showFilesModal}
+          onClose={() => {
+            setShowFilesModal(false);
+            setCommandeForFiles(null);
+          }}
+          commandeId={commandeForFiles.id}
+          commandeTitle={commandeForFiles.titre}
+          clientName={`${commandeForFiles.user?.prenom || ''} ${commandeForFiles.user?.nom || ''}`.trim() || 'Client'}
         />
       )}
     </div>
