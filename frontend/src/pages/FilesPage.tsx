@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useProjectFiles, useDeleteFile, useDownloadFile, fileUtils } from "../hooks/useProjectFiles";
-import { useUploadFile } from "../hooks/useUploadFile";
+import { useLocalUpload } from "../hooks/useLocalUpload";
 
 // Types
 interface ProjectFile {
@@ -13,6 +13,7 @@ interface ProjectFile {
   type: "DOCUMENT" | "IMAGE" | "AUDIO" | "VIDEO" | "ARCHIVE" | "OTHER";
   commandeId: string;
   uploadedAt: string;
+  isAdminFile?: boolean; // Nouveau champ pour distinguer les fichiers admin des fichiers client
 }
 
 type ToastType = "success" | "error" | "warning" | "info";
@@ -39,12 +40,29 @@ function FileItem({ file, onDownload, onDelete, isDeleting = false }: FileItemPr
   const formattedSize = fileUtils.formatFileSize(file.size);
   const formattedDate = fileUtils.formatDate(file.uploadedAt);
 
+  // Définir les couleurs et styles selon le type de fichier
+  const isAdminFile = file.isAdminFile;
+  const fileTypeLabel = isAdminFile ? "Document corrigé" : "Mon document";
+  const badgeColors = isAdminFile 
+    ? "bg-green-100 text-green-800 border-green-200" 
+    : "bg-blue-100 text-blue-800 border-blue-200";
+  const borderClass = isAdminFile 
+    ? "border-green-200 bg-gradient-to-r from-green-50 to-white" 
+    : "border-gray-100 bg-white";
+
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-300 group">
+    <div className={`rounded-2xl shadow-sm border p-6 hover:shadow-md transition-all duration-300 group ${borderClass}`}>
       {/* Header avec icône et menu */}
       <div className="flex items-center justify-between mb-4">
-        <div className={`w-12 h-12 ${fileColors.bg} rounded-xl flex items-center justify-center`}>
-          <i className={`fas ${fileIcon} ${fileColors.text} text-xl`}></i>
+        <div className="flex items-center gap-3">
+          <div className={`w-12 h-12 ${fileColors.bg} rounded-xl flex items-center justify-center`}>
+            <i className={`fas ${fileIcon} ${fileColors.text} text-xl`}></i>
+          </div>
+          {/* Badge pour identifier le type de fichier */}
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${badgeColors}`}>
+            {isAdminFile && <i className="fas fa-check-circle mr-1"></i>}
+            {fileTypeLabel}
+          </span>
         </div>
         <div className="relative">
           <button
@@ -72,17 +90,24 @@ function FileItem({ file, onDownload, onDelete, isDeleting = false }: FileItemPr
                   Télécharger
                 </button>
                 <hr className="my-2" />
-                <button
-                  onClick={() => {
-                    onDelete(file);
-                    setShowActions(false);
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition flex items-center"
-                  disabled={isDeleting}
-                >
-                  <i className={`fas ${isDeleting ? 'fa-spinner fa-spin' : 'fa-trash'} mr-3 w-4`}></i>
-                  {isDeleting ? 'Suppression...' : 'Supprimer'}
-                </button>
+                {!isAdminFile ? (
+                  <button
+                    onClick={() => {
+                      onDelete(file);
+                      setShowActions(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition flex items-center"
+                    disabled={isDeleting}
+                  >
+                    <i className={`fas ${isDeleting ? 'fa-spinner fa-spin' : 'fa-trash'} mr-3 w-4`}></i>
+                    {isDeleting ? 'Suppression...' : 'Supprimer'}
+                  </button>
+                ) : (
+                  <div className="px-4 py-2 text-sm text-gray-500 flex items-center">
+                    <i className="fas fa-shield-alt mr-3 w-4 text-green-600"></i>
+                    Document protégé
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -103,8 +128,14 @@ function FileItem({ file, onDownload, onDelete, isDeleting = false }: FileItemPr
           <span className="text-gray-900">{formattedSize}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Uploadé le</span>
+          <span className="text-gray-600">{isAdminFile ? 'Corrigé le' : 'Uploadé le'}</span>
           <span className="text-gray-900">{formattedDate}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-600">Origine</span>
+          <span className={`text-sm font-medium ${isAdminFile ? 'text-green-700' : 'text-blue-700'}`}>
+            {isAdminFile ? 'Équipe Staka' : 'Vous'}
+          </span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Type</span>
@@ -333,8 +364,8 @@ export default function FilesPage() {
     (error) => showToast("error", "Erreur", error)
   );
 
-  // Hook pour l'upload avec suivi de progression
-  const { uploadFile, progress, isUploading, reset } = useUploadFile(
+  // Hook pour l'upload avec suivi de progression (stockage local)
+  const { uploadFile, progress, isUploading, reset } = useLocalUpload(
     undefined, // onProgress
     () => showToast("success", "Fichier uploadé", "Le fichier a été uploadé avec succès"),
     (error) => showToast("error", "Erreur d'upload", error)
@@ -374,7 +405,7 @@ export default function FilesPage() {
           await uploadFile({ projectId, file });
         } catch (error) {
           console.error("Erreur lors de l'upload:", error);
-          // L'erreur est déjà gérée par le hook useUploadFile
+          // L'erreur est déjà gérée par le hook useLocalUpload
         }
       }
 
@@ -466,22 +497,62 @@ export default function FilesPage() {
         </div>
       </div>
 
-      {/* Files Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {files.map((file) => (
-          <FileItem
-            key={file.id}
-            file={file}
-            onDownload={handleDownload}
-            onDelete={handleDelete}
-            isDeleting={isDeleting}
-          />
-        ))}
-        <UploadButton
-          onFileSelect={handleFileUpload}
-          isUploading={isUploading}
-          progress={progress}
-        />
+      {/* Files Grid organisé par sections */}
+      <div className="space-y-8">
+        {/* Section Documents corrigés */}
+        {files.some(file => file.isAdminFile) && (
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                <i className="fas fa-check-circle text-green-600"></i>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Documents corrigés</h3>
+              <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                {files.filter(file => file.isAdminFile).length}
+              </span>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {files.filter(file => file.isAdminFile).map((file) => (
+                <FileItem
+                  key={file.id}
+                  file={file}
+                  onDownload={handleDownload}
+                  onDelete={handleDelete}
+                  isDeleting={isDeleting}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Section Mes documents */}
+        <div>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+              <i className="fas fa-file text-blue-600"></i>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900">Mes documents</h3>
+            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+              {files.filter(file => !file.isAdminFile).length}
+            </span>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {files.filter(file => !file.isAdminFile).map((file) => (
+              <FileItem
+                key={file.id}
+                file={file}
+                onDownload={handleDownload}
+                onDelete={handleDelete}
+                isDeleting={isDeleting}
+              />
+            ))}
+            <UploadButton
+              onFileSelect={handleFileUpload}
+              isUploading={isUploading}
+              progress={progress}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Empty state */}

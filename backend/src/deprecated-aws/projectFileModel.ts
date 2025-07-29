@@ -66,17 +66,36 @@ export class ProjectFileModel {
       throw new Error("La taille du fichier ne peut pas dépasser 20 Mo");
     }
 
-    // Validation du type MIME
+    // Validation du type MIME - Plus permissif pour les admins
     const allowedMimeTypes = [
+      // Documents
       "application/pdf",
       "application/msword",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.oasis.opendocument.text", // ODT
       "text/plain",
+      "text/rtf", // RTF
+      // Tableurs
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      // Présentation
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      // Images
       "image/jpeg",
       "image/jpg",
       "image/png",
+      "image/gif",
+      "image/bmp",
+      "image/tiff",
+      // Archives
       "application/zip",
-      "application/x-rar-compressed"
+      "application/x-rar-compressed",
+      "application/x-7z-compressed",
+      // Autres formats utiles pour les corrections
+      "application/x-pdf", // Variante PDF
+      "text/markdown", // Markdown
+      "text/html" // HTML
     ];
 
     if (!allowedMimeTypes.includes(fileInput.mime)) {
@@ -120,6 +139,25 @@ export class ProjectFileModel {
         isPublic: false
       }
     });
+
+    // Si c'est un fichier admin (document corrigé), notifier le client
+    if (fileInput.isAdminFile && isAdmin && commande.userId) {
+      try {
+        const { createNotification } = await import("../services/notificationsService");
+        await createNotification({
+          userId: commande.userId,
+          title: "Document corrigé disponible",
+          message: `Un document corrigé "${fileInput.name}" a été ajouté à votre commande "${commande.titre}"`,
+          type: "SUCCESS",
+          priority: "HAUTE",
+          actionUrl: `/dashboard/commandes/${commandeId}`
+        });
+        console.log(`📧 [FILES] Notification envoyée au client ${commande.userId} pour le document corrigé`);
+      } catch (notificationError) {
+        console.error("Erreur lors de l'envoi de la notification:", notificationError);
+        // Ne pas faire échouer l'upload si la notification échoue
+      }
+    }
 
     // Générer l'URL présignée S3 et les champs (simulation pour maintenant)
     const uploadUrl = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/`;
@@ -269,6 +307,75 @@ export class ProjectFileModel {
   }
 
   /**
+   * Télécharge un fichier avec vérification des permissions
+   * @param fileId - ID du fichier
+   * @param userId - ID de l'utilisateur
+   * @param userRole - Rôle de l'utilisateur
+   * @param prisma - Instance Prisma optionnelle
+   */
+  static async downloadFile(
+    fileId: string,
+    userId: string,
+    userRole?: string,
+    prisma: PrismaClient = defaultPrisma
+  ): Promise<any> {
+    if (!fileId) {
+      throw new Error("fileId est requis");
+    }
+
+    if (!userId) {
+      throw new Error("userId est requis");
+    }
+
+    // Récupérer le fichier avec les informations de la commande
+    const file = await prisma.file.findUnique({
+      where: { id: fileId },
+      include: {
+        commande: {
+          select: {
+            id: true,
+            userId: true,
+            titre: true
+          }
+        },
+        uploadedBy: {
+          select: {
+            id: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    if (!file) {
+      throw new Error("Fichier non trouvé");
+    }
+
+    // Vérifier les permissions d'accès
+    const isAdmin = userRole === "ADMIN";
+    const isOwner = file.commande?.userId === userId;
+    const isUploader = file.uploadedById === userId;
+
+    if (!isAdmin && !isOwner && !isUploader) {
+      throw new Error("Accès non autorisé à ce fichier");
+    }
+
+    // Pour les admins, permettre le téléchargement de tous les fichiers de commandes
+    // même si ce ne sont pas des "fichiers de projet" classiques
+    console.log(`📁 [FILES] Téléchargement autorisé pour ${userRole} - Fichier: ${file.filename} (${file.mimeType})`);
+
+    // Retourner les informations du fichier pour le téléchargement
+    return {
+      id: file.id,
+      filename: file.filename,
+      mimeType: file.mimeType,
+      size: file.size,
+      url: file.url,
+      storedName: file.storedName
+    };
+  }
+
+  /**
    * Détermine le type de fichier basé sur le MIME type
    */
   private static getFileTypeFromMime(mimeType: string): FileType {
@@ -282,15 +389,34 @@ export class ProjectFileModel {
    */
   private static getExtensionFromMime(mimeType: string): string {
     const mimeMap: Record<string, string> = {
+      // Documents
       "application/pdf": ".pdf",
+      "application/x-pdf": ".pdf",
       "application/msword": ".doc",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+      "application/vnd.oasis.opendocument.text": ".odt",
       "text/plain": ".txt",
+      "text/rtf": ".rtf",
+      // Tableurs
+      "application/vnd.ms-excel": ".xls",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+      // Présentation
+      "application/vnd.ms-powerpoint": ".ppt",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation": ".pptx",
+      // Images
       "image/jpeg": ".jpg",
       "image/jpg": ".jpg",
       "image/png": ".png",
+      "image/gif": ".gif",
+      "image/bmp": ".bmp",
+      "image/tiff": ".tiff",
+      // Archives
       "application/zip": ".zip",
-      "application/x-rar-compressed": ".rar"
+      "application/x-rar-compressed": ".rar",
+      "application/x-7z-compressed": ".7z",
+      // Autres
+      "text/markdown": ".md",
+      "text/html": ".html"
     };
 
     return mimeMap[mimeType] || "";

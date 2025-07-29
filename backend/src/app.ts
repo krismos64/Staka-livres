@@ -8,7 +8,8 @@ import authRoutes from "./routes/auth";
 import commandesRoutes from "./routes/commandes";
 import consultationRoutes from "./routes/consultations";
 import faqRoutes from "./routes/faq";
-import filesRoutes from "./routes/files";
+// import filesRoutes from "./routes/files"; // Moved to deprecated-aws
+import unifiedFilesRoutes from "./routes/unifiedFiles";
 import invoiceRoutes from "./routes/invoice";
 import messagesRoutes from "./routes/messages";
 import notificationsRoutes from "./routes/notifications";
@@ -51,7 +52,7 @@ app.use(
 );
 
 // Route de simulation webhook pour développement local
-app.use("/payments/dev-webhook-simulate", devWebhookSimulateRoutes);
+app.use("/api/payments/dev-webhook-simulate", devWebhookSimulateRoutes);
 
 // Body parser standard pour les autres routes (avec limite augmentée pour les uploads)
 app.use(express.json({ limit: "50mb" }));
@@ -93,8 +94,11 @@ app.use("/api/commandes", commandesRoutes);
 // Routes messages (authentifiées)
 app.use("/api/messages", messagesRoutes);
 
-// Routes fichiers (authentifiées)
-app.use("/api/files", filesRoutes);
+// Routes fichiers (authentifiées) - Ancien système S3
+// app.use("/api/files", filesRoutes);
+
+// Routes fichiers unifiées (stockage local)
+app.use("/api/files", unifiedFilesRoutes);
 
 // Routes notifications (authentifiées)
 app.use("/api/notifications", notificationsRoutes);

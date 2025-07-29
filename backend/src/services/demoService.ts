@@ -246,8 +246,8 @@ export class DemoService {
           }
         }
       }),
-      prisma.facture.count({
-        where: { numero: { startsWith: "DEMO-" } }
+      prisma.invoice.count({
+        where: { number: { startsWith: "DEMO-" } }
       }),
       prisma.message.count({
         where: { conversationId: { startsWith: "demo-conv-" } }
@@ -255,7 +255,7 @@ export class DemoService {
       prisma.notification.count({
         where: {
           OR: [
-            { title: { contains: "démo", mode: "insensitive" } },
+            { title: { contains: "démo" } },
             { type: "SYSTEM" }
           ]
         }
@@ -277,8 +277,8 @@ export class DemoService {
       prisma.notification.deleteMany({
         where: {
           OR: [
-            { title: { contains: "démo", mode: "insensitive" } },
-            { message: { contains: "démo", mode: "insensitive" } },
+            { title: { contains: "démo" } },
+            { message: { contains: "démo" } },
             { type: "SYSTEM" }
           ]
         }
@@ -290,8 +290,8 @@ export class DemoService {
     ]);
 
     // Factures (dépendent des commandes)
-    await prisma.facture.deleteMany({
-      where: { numero: { startsWith: "DEMO-" } }
+    await prisma.invoice.deleteMany({
+      where: { number: { startsWith: "DEMO-" } }
     });
 
     // Commandes (dépendent des utilisateurs)
@@ -392,18 +392,15 @@ export class DemoService {
       const montant = DemoUtils.generateRandomPrice();
       const numero = DemoUtils.generateInvoiceNumber(i);
 
-      const facture = await prisma.facture.create({
+      const facture = await prisma.invoice.create({
         data: {
-          commandeId: commande.id,
-          userId: commande.userId,
-          numero,
-          montant,
-          statut,
-          dateEcheance: DemoUtils.generateRandomDate(-5, 30),
-          datePaiement: statut === StatutFacture.PAYEE ? DemoUtils.generateRandomDate(25) : undefined,
-          stripePaymentId: statut === StatutFacture.PAYEE ? DemoUtils.generateStripePaymentId() : undefined,
+          number: numero,
+          amount: montant,
+          pdfUrl: `/uploads/invoices/demo-${numero}.pdf`,
+          commande: {
+            connect: { id: commande.id }
+          },
           createdAt: DemoUtils.generateRandomDate(40),
-          updatedAt: statut === StatutFacture.PAYEE ? DemoUtils.generateRandomDate(15) : DemoUtils.generateRandomDate(5),
         }
       });
 

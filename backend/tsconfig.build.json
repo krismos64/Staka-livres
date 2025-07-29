@@ -14,6 +14,7 @@
     "src/**/*.test.ts",
     "src/**/__tests__/**/*",
     "tests/**/*",
-    "**/*.spec.ts"
+    "**/*.spec.ts",
+    "src/deprecated-aws/**/*"
   ]
 }

@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { PdfService, InvoiceData } from "./pdf";
-import { S3InvoiceService } from "./s3InvoiceService";
+// Note: S3InvoiceService supprimé - utilisation du stockage local uniquement
 import { MailerService } from "../utils/mailer";
 
 const prisma = new PrismaClient();
@@ -50,14 +50,31 @@ export class InvoiceService {
   }
 
   /**
-   * Upload un PDF sur S3 et retourne l'URL publique
+   * Sauvegarde le PDF de facture en local et retourne l'URL
    */
   static async uploadInvoicePdf(
     pdfBuffer: Buffer,
     commandeId: string
   ): Promise<string> {
+    const fs = await import("fs");
+    const path = await import("path");
+    
     const invoiceNumber = `INV-${commandeId.slice(-8).toUpperCase()}`;
-    return await S3InvoiceService.uploadInvoicePdf(pdfBuffer, commandeId, invoiceNumber);
+    const uploadsDir = path.join(__dirname, "../../uploads/invoices");
+    
+    // Créer le dossier si nécessaire
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    
+    const filename = `${invoiceNumber}-${Date.now()}.pdf`;
+    const filePath = path.join(uploadsDir, filename);
+    
+    // Écrire le fichier
+    fs.writeFileSync(filePath, pdfBuffer);
+    
+    // Retourner l'URL locale
+    return `/uploads/invoices/${filename}`;
   }
 
   /**

@@ -170,6 +170,34 @@ export class FilesService {
   }
 
   /**
+   * Télécharge un fichier de projet avec vérification des permissions
+   * @param fileId - ID du fichier
+   * @param userId - ID de l'utilisateur
+   * @param userRole - Rôle de l'utilisateur
+   */
+  static async downloadProjectFile(
+    fileId: string,
+    userId: string,
+    userRole?: string
+  ): Promise<any> {
+    if (!fileId) {
+      throw new Error("fileId est requis");
+    }
+
+    if (!userId) {
+      throw new Error("userId est requis");
+    }
+
+    try {
+      // Utiliser le model pour récupérer le fichier avec vérification des permissions
+      return await ProjectFileModel.downloadFile(fileId, userId, userRole);
+    } catch (error) {
+      console.error("Erreur lors du téléchargement du fichier:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Valide les paramètres d'upload communs
    */
   private static validateUploadParams(commandeId: string, userId: string, fileInput: ProjectFileInput): void {

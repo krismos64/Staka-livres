@@ -19,7 +19,7 @@ export default function PaymentSuccessPage({
     if (sessionId && !processingComplete) {
       setIsProcessing(true);
       
-      fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/payments/dev-webhook-simulate`, {
+      fetch('/api/payments/dev-webhook-simulate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -49,7 +49,7 @@ export default function PaymentSuccessPage({
     setError(null);
     setIsProcessing(true);
     
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/payments/dev-webhook-simulate`, {
+    fetch('/api/payments/dev-webhook-simulate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

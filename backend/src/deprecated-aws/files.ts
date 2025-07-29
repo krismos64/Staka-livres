@@ -10,6 +10,7 @@ import {
   createProjectFile,
   getProjectFiles,
   deleteProjectFile,
+  downloadProjectFile,
 } from "../controllers/filesController";
 import { authenticateToken } from "../middleware/auth";
 
@@ -32,8 +33,8 @@ router.delete("/projects/:id/files/:fileId", deleteProjectFile);
 // Upload d'un fichier pour les messages
 router.post("/upload/message", uploadMiddleware.single("file"), uploadMessageFile);
 
-// Télécharger un fichier de message
-router.get("/download/:fileId", downloadMessageFile);
+// Télécharger un fichier (projets ou messages) - Nouveau système unifié
+router.get("/download/:fileId", downloadProjectFile);
 
 // Supprimer un fichier de message
 router.delete("/:fileId", deleteMessageFile);

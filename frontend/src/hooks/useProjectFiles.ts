@@ -185,13 +185,35 @@ export const useDownloadFile = (projectId: string) => {
         headers: {
           "Authorization": `Bearer ${token}`,
         },
+        redirect: 'manual' // Empêcher la redirection automatique
       });
 
       if (!response.ok) {
         throw new Error(`Erreur lors du téléchargement: ${response.status}`);
       }
 
-      // Créer un blob et télécharger
+      // Gérer les redirections (fichiers S3)
+      if (response.status === 302 || response.status === 301) {
+        const location = response.headers.get('Location');
+        if (location) {
+          // Ouvrir directement l'URL S3 dans un nouvel onglet
+          window.open(location, '_blank');
+          return;
+        }
+      }
+
+      // Vérifier si la réponse est du JSON (URL de téléchargement)
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        if (data.downloadUrl) {
+          // Ouvrir l'URL de téléchargement
+          window.open(data.downloadUrl, '_blank');
+          return;
+        }
+      }
+
+      // Sinon, traiter comme un blob (fichiers locaux)
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");

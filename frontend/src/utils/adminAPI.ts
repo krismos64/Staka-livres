@@ -547,7 +547,7 @@ class AdaptiveAdminAPI {
       };
     }
 
-    return this.realApiCall(`/admin/users/${id}/toggle-status`, "PUT");
+    return this.realApiCall(`/admin/users/${id}/toggle-status`, "PATCH");
   }
 
   async activateUser(id: string): Promise<User> {

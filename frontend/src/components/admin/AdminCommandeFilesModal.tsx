@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef } from "react";
 import Modal from "../common/Modal";
 import LoadingSpinner from "../common/LoadingSpinner";
 import { useProjectFiles, useDownloadFile, fileUtils } from "../../hooks/useProjectFiles";
-import { useUploadFile } from "../../hooks/useUploadFile";
+import { useLocalUpload } from "../../hooks/useLocalUpload";
 
 // Types
 interface ProjectFile {
@@ -310,8 +310,8 @@ export default function AdminCommandeFilesModal({
   const { files, count, isLoading, error, refetch } = useProjectFiles(commandeId, isOpen);
   const { downloadFile } = useDownloadFile(commandeId);
 
-  // Hook pour l'upload avec suivi de progression
-  const { uploadFile, progress, isUploading, reset } = useUploadFile(
+  // Hook pour l'upload avec suivi de progression (stockage local)
+  const { uploadFile, progress, isUploading, reset } = useLocalUpload(
     undefined, // onProgress
     () => showToast("success", "Fichier uploadé", "Le document corrigé a été uploadé avec succès"),
     (error) => showToast("error", "Erreur d'upload", error)

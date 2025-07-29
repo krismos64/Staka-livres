@@ -20,5 +20,5 @@
     }
   },
   "include": ["src/**/*", "tests/**/*"],
-  "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/**/__tests__/**/*"]
+  "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/**/__tests__/**/*", "src/deprecated-aws/**/*", "tests/**/*"]
 }

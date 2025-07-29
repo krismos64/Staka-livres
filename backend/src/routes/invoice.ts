@@ -1,19 +1,11 @@
-import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { PrismaClient } from "@prisma/client";
 import express from "express";
+import path from "path";
+import fs from "fs";
 import { authenticateToken } from "../middleware/auth";
 
 const router = express.Router();
 const prisma = new PrismaClient();
-
-// Configuration S3
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || "eu-west-3",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
-  },
-});
 
 /**
  * GET /invoices
@@ -116,7 +108,7 @@ router.get(
 
 /**
  * GET /invoices/:id/download
- * Téléchargement sécurisé du PDF de facture
+ * Téléchargement sécurisé du PDF de facture (stockage local)
  */
 router.get(
   "/:id/download",
@@ -164,35 +156,21 @@ router.get(
         `✅ [Invoices] Facture ${invoiceId} validée pour téléchargement`
       );
 
-      // Si pas de configuration S3, redirection simple
-      if (!process.env.AWS_ACCESS_KEY_ID || !process.env.S3_BUCKET_NAME) {
-        console.log(
-          `🔄 [Invoices] Redirection vers URL publique: ${invoice.pdfUrl}`
-        );
-        return res.redirect(invoice.pdfUrl);
-      }
-
-      try {
-        // Extraire la clé S3 depuis l'URL
-        const urlParts = new URL(invoice.pdfUrl);
-        const key = urlParts.pathname.substring(1); // Enlever le "/" initial
-
-        console.log(`📤 [Invoices] Streaming depuis S3: ${key}`);
-
-        // Récupérer l'objet depuis S3
-        const command = new GetObjectCommand({
-          Bucket: process.env.S3_BUCKET_NAME,
-          Key: key,
-        });
-
-        const data = await s3Client.send(command);
-
-        if (!data.Body) {
-          throw new Error("Aucune données reçues de S3");
+      // Construire le chemin du fichier local
+      if (invoice.pdfUrl.startsWith('/uploads/invoices/')) {
+        const filename = path.basename(invoice.pdfUrl);
+        const filePath = path.join(__dirname, '../../uploads/invoices', filename);
+        
+        // Vérifier que le fichier existe
+        if (!fs.existsSync(filePath)) {
+          console.log(`❌ [Invoices] Fichier non trouvé: ${filePath}`);
+          return res.status(404).json({
+            error: "Fichier de facture non trouvé",
+          });
         }
 
         // Configurer les headers pour le téléchargement
-        const filename = `facture-${invoice.commande.titre.replace(
+        const downloadFilename = `facture-${invoice.commande.titre.replace(
           /[^a-zA-Z0-9]/g,
           "-"
         )}-${invoiceId.slice(-8)}.pdf`;
@@ -200,23 +178,16 @@ router.get(
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader(
           "Content-Disposition",
-          `attachment; filename="${filename}"`
+          `attachment; filename="${downloadFilename}"`
         );
         res.setHeader("Cache-Control", "private, no-cache");
 
-        // Streamer le fichier depuis S3 (compatibilité Node.js streams)
-        if (data.Body) {
-          const stream = data.Body as NodeJS.ReadableStream;
-          stream.pipe(res);
-          console.log(`✅ [Invoices] Fichier envoyé avec succès: ${filename}`);
-        } else {
-          throw new Error("Impossible de streamer le fichier depuis S3");
-        }
-      } catch (s3Error) {
-        console.error(`❌ [Invoices] Erreur S3:`, s3Error);
-
-        // Fallback vers redirection si S3 échoue
-        console.log(`🔄 [Invoices] Fallback - redirection vers URL publique`);
+        // Envoyer le fichier
+        res.sendFile(filePath);
+        console.log(`✅ [Invoices] Fichier envoyé avec succès: ${downloadFilename}`);
+      } else {
+        // Fallback vers redirection pour les anciennes URLs
+        console.log(`🔄 [Invoices] Redirection vers URL: ${invoice.pdfUrl}`);
         return res.redirect(invoice.pdfUrl);
       }
     } catch (error) {
