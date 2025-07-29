@@ -3,6 +3,7 @@ import {
   createCommande,
   getUserCommandeById,
   getUserCommandes,
+  createPaidProject,
 } from "../controllers/commandeClientController";
 import { authenticateToken } from "../middleware/auth";
 
@@ -13,6 +14,9 @@ router.use(authenticateToken);
 
 // 📝 Créer une nouvelle commande
 router.post("/", createCommande);
+
+// 💳 Créer un nouveau projet payant (utilisateur connecté)
+router.post("/create-paid-project", createPaidProject);
 
 // 📋 Récupérer toutes les commandes de l'utilisateur connecté
 router.get("/", getUserCommandes);

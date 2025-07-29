@@ -31,7 +31,7 @@ function Sidebar({
   // Récupérer les projets pour calculer le nombre de projets actifs
   const { data: projectsResponse } = useProjects({
     page: 1,
-    limit: 100, // Récupérer tous les projets pour le comptage
+    limit: 50, // Maximum autorisé par l'API
     status: 'all'
   });
 

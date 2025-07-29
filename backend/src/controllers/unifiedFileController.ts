@@ -573,4 +573,136 @@ function getFileTypeFromMime(mimeType: string): string {
 }
 
 // Export du middleware
+/**
+ * GET /api/files/user/all
+ * Récupère tous les fichiers de tous les projets de l'utilisateur
+ */
+export const getUserAllFiles = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    // Vérification de l'authentification
+    if (!req.user?.id) {
+      res.status(401).json({
+        error: "Authentification requise",
+        message: "Utilisateur non authentifié"
+      });
+      return;
+    }
+
+    console.log(
+      `📂 [FILES] ${req.user.email} récupère tous ses fichiers`
+    );
+
+    const isAdmin = req.user.role === "ADMIN";
+
+    // Récupérer tous les fichiers de l'utilisateur
+    let files;
+    
+    if (isAdmin) {
+      // Admin voit tous les fichiers
+      files = await prisma.file.findMany({
+        where: {
+          commandeId: { not: null } // Seulement les fichiers de projets
+        },
+        select: {
+          id: true,
+          filename: true,
+          mimeType: true,
+          size: true,
+          url: true,
+          type: true,
+          commandeId: true,
+          createdAt: true,
+          description: true,
+          commande: {
+            select: {
+              id: true,
+              titre: true,
+              user: {
+                select: {
+                  prenom: true,
+                  nom: true,
+                  email: true
+                }
+              }
+            }
+          }
+        },
+        orderBy: {
+          createdAt: "desc"
+        }
+      });
+    } else {
+      // Utilisateur normal voit seulement ses fichiers
+      files = await prisma.file.findMany({
+        where: {
+          commande: {
+            userId: req.user.id
+          },
+          commandeId: { not: null }
+        },
+        select: {
+          id: true,
+          filename: true,
+          mimeType: true,
+          size: true,
+          url: true,
+          type: true,
+          commandeId: true,
+          createdAt: true,
+          description: true,
+          commande: {
+            select: {
+              id: true,
+              titre: true
+            }
+          }
+        },
+        orderBy: {
+          createdAt: "desc"
+        }
+      });
+    }
+
+    const formattedFiles = files.map(file => ({
+      id: file.id,
+      filename: file.filename,
+      mimeType: file.mimeType,
+      size: file.size,
+      url: file.url,
+      type: file.type,
+      commandeId: file.commandeId!,
+      uploadedAt: file.createdAt.toISOString(),
+      isAdminFile: file.description?.startsWith("ADMIN_FILE:") || false,
+      projectTitle: file.commande?.titre,
+      // Pour admin: informations du propriétaire
+      ...(isAdmin && file.commande?.user && {
+        owner: {
+          name: `${file.commande.user.prenom} ${file.commande.user.nom}`,
+          email: file.commande.user.email
+        }
+      })
+    }));
+
+    console.log(
+      `✅ [FILES] ${formattedFiles.length} fichiers récupérés pour ${req.user.email}`
+    );
+
+    res.status(200).json({
+      files: formattedFiles,
+      count: formattedFiles.length
+    });
+
+  } catch (error) {
+    console.error(`❌ [FILES] Erreur lors de la récupération:`, error);
+
+    res.status(500).json({
+      error: "Erreur interne du serveur",
+      message: "Impossible de récupérer les fichiers"
+    });
+  }
+};
+
 export { projectUploadMiddleware };

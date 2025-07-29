@@ -1,7 +1,9 @@
 import React, { useState, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useProjectFiles, useDeleteFile, useDownloadFile, fileUtils } from "../hooks/useProjectFiles";
+import { useUserFiles } from "../hooks/useUserFiles";
 import { useLocalUpload } from "../hooks/useLocalUpload";
+import PackSelectionModal from "../components/modals/PackSelectionModal";
 
 // Types
 interface ProjectFile {
@@ -14,6 +16,7 @@ interface ProjectFile {
   commandeId: string;
   uploadedAt: string;
   isAdminFile?: boolean; // Nouveau champ pour distinguer les fichiers admin des fichiers client
+  projectTitle?: string; // Titre du projet (pour la vue "tous les fichiers")
 }
 
 type ToastType = "success" | "error" | "warning" | "info";
@@ -31,9 +34,10 @@ interface FileItemProps {
   onDownload: (file: ProjectFile) => void;
   onDelete: (file: ProjectFile) => void;
   isDeleting?: boolean;
+  canDelete?: boolean; // Nouveau prop pour contrôler si on peut supprimer
 }
 
-function FileItem({ file, onDownload, onDelete, isDeleting = false }: FileItemProps) {
+function FileItem({ file, onDownload, onDelete, isDeleting = false, canDelete = true }: FileItemProps) {
   const [showActions, setShowActions] = useState(false);
   const fileIcon = fileUtils.getFileIcon(file.mimeType);
   const fileColors = fileUtils.getFileColor(file.mimeType);
@@ -90,7 +94,7 @@ function FileItem({ file, onDownload, onDelete, isDeleting = false }: FileItemPr
                   Télécharger
                 </button>
                 <hr className="my-2" />
-                {!isAdminFile ? (
+                {!isAdminFile && canDelete ? (
                   <button
                     onClick={() => {
                       onDelete(file);
@@ -102,6 +106,11 @@ function FileItem({ file, onDownload, onDelete, isDeleting = false }: FileItemPr
                     <i className={`fas ${isDeleting ? 'fa-spinner fa-spin' : 'fa-trash'} mr-3 w-4`}></i>
                     {isDeleting ? 'Suppression...' : 'Supprimer'}
                   </button>
+                ) : !isAdminFile && !canDelete ? (
+                  <div className="px-4 py-2 text-sm text-gray-500 flex items-center">
+                    <i className="fas fa-info-circle mr-3 w-4 text-blue-600"></i>
+                    Supprimer depuis le projet
+                  </div>
                 ) : (
                   <div className="px-4 py-2 text-sm text-gray-500 flex items-center">
                     <i className="fas fa-shield-alt mr-3 w-4 text-green-600"></i>
@@ -141,6 +150,14 @@ function FileItem({ file, onDownload, onDelete, isDeleting = false }: FileItemPr
           <span className="text-gray-600">Type</span>
           <span className="text-gray-900">{file.type}</span>
         </div>
+        {file.projectTitle && (
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Projet</span>
+            <span className="text-gray-900 font-medium truncate max-w-32" title={file.projectTitle}>
+              {file.projectTitle}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Action principale */}
@@ -325,38 +342,18 @@ function ToastComponent({ toast, onClose }: ToastComponentProps) {
 export default function FilesPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [isPackModalOpen, setIsPackModalOpen] = useState(false);
 
-  // Si pas de projectId (route /app/files), afficher une page générale
-  if (!projectId) {
-    return (
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Mes fichiers</h1>
-          <p className="text-gray-600">Gérez tous vos fichiers de projets en un seul endroit.</p>
-        </div>
-        
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i className="fas fa-folder-open text-blue-600 text-2xl"></i>
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Aucun projet sélectionné</h3>
-          <p className="text-gray-600 mb-6">
-            Pour voir et gérer vos fichiers, veuillez sélectionner un projet spécifique.
-          </p>
-          <button 
-            onClick={() => window.location.href = '/app/projects'}
-            className="bg-blue-600 text-white py-2 px-6 rounded-lg font-medium hover:bg-blue-700 transition"
-          >
-            <i className="fas fa-folder mr-2"></i>
-            Voir mes projets
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Si pas de projectId (route /app/files), utiliser le hook useUserFiles pour afficher tous les fichiers
 
-  // Hooks pour la gestion des fichiers (seulement si projectId existe)
-  const { files, count, isLoading, error, refetch } = useProjectFiles(projectId);
+  // Hooks pour la gestion des fichiers
+  // Si projectId existe, on récupère les fichiers du projet spécifique
+  // Sinon, on récupère tous les fichiers de l'utilisateur
+  const projectFilesQuery = useProjectFiles(projectId, !!projectId);
+  const userFilesQuery = useUserFiles();
+  
+  const useRelevantQuery = projectId ? projectFilesQuery : userFilesQuery;
+  const { files, count, isLoading, error, refetch } = useRelevantQuery;
   const { downloadFile } = useDownloadFile(projectId || "");
   const { deleteFile, isDeleting } = useDeleteFile(
     projectId || "",
@@ -430,6 +427,12 @@ export default function FilesPage() {
   // Gestion de la suppression
   const handleDelete = useCallback(
     async (file: ProjectFile) => {
+      // Pas de suppression sur la page "Mes fichiers" (sans projectId)
+      if (!projectId) {
+        showToast("warning", "Action non autorisée", "Vous ne pouvez supprimer des fichiers que depuis la page du projet spécifique");
+        return;
+      }
+      
       if (window.confirm(`Êtes-vous sûr de vouloir supprimer "${file.filename}" ?`)) {
         try {
           await deleteFile(file.id);
@@ -439,7 +442,7 @@ export default function FilesPage() {
         }
       }
     },
-    [deleteFile]
+    [deleteFile, projectId, showToast]
   );
 
   // Affichage du loading
@@ -488,12 +491,26 @@ export default function FilesPage() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Fichiers du projet
+              {projectId ? "Fichiers du projet" : "Mes fichiers"}
             </h2>
             <p className="text-gray-600">
-              Gérez tous vos documents et manuscrits ({count} fichier{count !== 1 ? 's' : ''})
+              {projectId 
+                ? `Gérez tous vos documents et manuscrits (${count} fichier${count !== 1 ? 's' : ''})`
+                : `Tous vos fichiers de projets en un seul endroit (${count} fichier${count !== 1 ? 's' : ''})`
+              }
             </p>
           </div>
+          
+          {/* Bouton Nouveau projet (seulement sur la page globale) */}
+          {!projectId && (
+            <button
+              onClick={() => setIsPackModalOpen(true)}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition flex items-center gap-2 font-medium"
+            >
+              <i className="fas fa-plus"></i>
+              Nouveau projet
+            </button>
+          )}
         </div>
       </div>
 
@@ -519,6 +536,7 @@ export default function FilesPage() {
                   onDownload={handleDownload}
                   onDelete={handleDelete}
                   isDeleting={isDeleting}
+                  canDelete={!!projectId}
                 />
               ))}
             </div>
@@ -544,13 +562,17 @@ export default function FilesPage() {
                 onDownload={handleDownload}
                 onDelete={handleDelete}
                 isDeleting={isDeleting}
+                canDelete={!!projectId}
               />
             ))}
-            <UploadButton
-              onFileSelect={handleFileUpload}
-              isUploading={isUploading}
-              progress={progress}
-            />
+            {/* Bouton d'upload seulement pour un projet spécifique */}
+            {projectId && (
+              <UploadButton
+                onFileSelect={handleFileUpload}
+                isUploading={isUploading}
+                progress={progress}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -569,6 +591,16 @@ export default function FilesPage() {
           </p>
         </div>
       )}
+
+      {/* Modal de sélection de pack */}
+      <PackSelectionModal
+        isOpen={isPackModalOpen}
+        onClose={() => setIsPackModalOpen(false)}
+        onOrderCreated={(data) => {
+          // Redirection vers le checkout Stripe
+          window.location.href = data.checkoutUrl;
+        }}
+      />
     </div>
   );
 }

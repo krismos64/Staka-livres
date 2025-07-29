@@ -23,7 +23,12 @@
     "docker:build": "./scripts/docker-build.sh",
     "docker:build:push": "./scripts/docker-build.sh latest --push",
     "deploy:vps": "./scripts/deploy-vps.sh",
-    "deploy:vps:dry": "./scripts/deploy-vps.sh --dry-run"
+    "deploy:vps:dry": "./scripts/deploy-vps.sh --dry-run",
+    "migrate:db": "./scripts/migrate-db.sh",
+    "migrate:db:schema": "./scripts/migrate-db.sh --schema-only",
+    "migrate:db:dry": "./scripts/migrate-db.sh --dry-run",
+    "migrate:db:reverse": "./scripts/migrate-db-reverse.sh",
+    "migrate:db:reverse:dry": "./scripts/migrate-db-reverse.sh --dry-run"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

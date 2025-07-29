@@ -4,6 +4,7 @@ import {
   getProjectFiles,
   downloadProjectFile,
   deleteProjectFile,
+  getUserAllFiles,
   projectUploadMiddleware,
 } from "../controllers/unifiedFileController";
 import { authenticateToken } from "../middleware/auth";
@@ -14,6 +15,10 @@ const router = Router();
 router.use(authenticateToken);
 
 // Routes unifiées pour les fichiers de projets (stockage local)
+
+// GET /api/files/user/all - Tous les fichiers de l'utilisateur (pour page "Mes fichiers")
+router.get("/user/all", getUserAllFiles);
+
 // POST /api/files/projects/:id/upload - Upload direct avec multer
 router.post("/projects/:id/upload", projectUploadMiddleware.single("file"), uploadProjectFile);
 

@@ -111,6 +111,19 @@ load_env_vars() {
     DOCKER_REGISTRY="${DOCKER_REGISTRY:-krismos64}"
     SSH_KEY_PATH="${SSH_KEY_PATH:-$HOME/.ssh/id_rsa}"
     
+    # Configuration de la commande SSH selon la méthode d'authentification
+    if [[ -n "$SSH_KEY_PATH" && -f "$SSH_KEY_PATH" ]]; then
+        SSH_CMD="ssh -i $SSH_KEY_PATH -o ConnectTimeout=10 -o BatchMode=yes"
+        log_info "Authentification SSH: clé privée ($SSH_KEY_PATH)"
+    elif [[ -n "$VPS_PASSWORD" ]]; then
+        SSH_CMD="sshpass -p $VPS_PASSWORD ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no"
+        log_info "Authentification SSH: mot de passe"
+    else
+        log_error "Aucune méthode d'authentification SSH configurée"
+        log_error "Définissez SSH_KEY_PATH ou VPS_PASSWORD dans .env.deploy"
+        exit 1
+    fi
+    
     log_success "Variables d'environnement validées"
 }
 
@@ -118,20 +131,28 @@ load_env_vars() {
 test_ssh_connection() {
     log_info "Test de la connexion SSH vers $VPS_USER@$VPS_HOST"
     
-    if ! ssh -i "$SSH_KEY_PATH" -o ConnectTimeout=10 -o BatchMode=yes "$VPS_USER@$VPS_HOST" 'echo "SSH OK"' &>/dev/null; then
-        log_error "Impossible de se connecter au VPS"
-        log_error "Vérifiez: $VPS_HOST, $VPS_USER, $SSH_KEY_PATH"
-        exit 1
+    if $SSH_CMD "$VPS_USER@$VPS_HOST" 'echo "SSH OK"' &>/dev/null; then
+        log_success "Connexion SSH établie"
+        return 0
     fi
     
-    log_success "Connexion SSH établie"
+    log_error "Impossible de se connecter au VPS"
+    log_error "Vérifiez: $VPS_HOST, $VPS_USER, authentification"
+    exit 1
 }
+
+# Fonction helper pour exécuter des commandes SSH
+run_ssh_command() {
+    local command="$1"
+    $SSH_CMD "$VPS_USER@$VPS_HOST" "$command"
+}
+
 
 # Vérification de l'état du serveur distant
 check_remote_status() {
     log_info "Vérification de l'état du serveur distant..."
     
-    local remote_check=$(ssh -i "$SSH_KEY_PATH" "$VPS_USER@$VPS_HOST" << 'EOF'
+    local remote_check=$($SSH_CMD "$VPS_USER@$VPS_HOST" << 'EOF'
 # Vérification Docker
 if ! command -v docker &> /dev/null; then
     echo "ERROR: Docker non installé"
@@ -182,7 +203,7 @@ create_backup() {
         return 0
     fi
     
-    ssh -i "$SSH_KEY_PATH" "$VPS_USER@$VPS_HOST" << EOF
+    $SSH_CMD "$VPS_USER@$VPS_HOST" << EOF
 # Création du répertoire de backup
 mkdir -p /opt/backups
 
@@ -218,8 +239,8 @@ deploy_to_vps() {
         return 0
     fi
     
-    # Script de déploiement distant
-    ssh -i "$SSH_KEY_PATH" "$VPS_USER@$VPS_HOST" << EOF
+    # Script de déploiement distant  
+    $SSH_CMD "$VPS_USER@$VPS_HOST" << EOF
 set -eo pipefail
 
 echo "🚀 Début du déploiement..."
@@ -298,7 +319,7 @@ post_deploy_check() {
     
     # État des services
     log_info "État final des services:"
-    ssh -i "$SSH_KEY_PATH" "$VPS_USER@$VPS_HOST" \
+    $SSH_CMD "$VPS_USER@$VPS_HOST" \
         "cd $DEPLOY_DIR && docker compose -f docker-compose.prod.yml ps --format 'table {{.Name}}\t{{.Status}}\t{{.Ports}}'"
 }
 

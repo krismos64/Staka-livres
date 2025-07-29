@@ -1,6 +1,8 @@
 import { PrismaClient, StatutCommande } from "@prisma/client";
 import { Request, Response } from "express";
 import { notifyAdminNewCommande, notifyClientCommandeCreated } from "./notificationsController";
+import { stripeService } from "../services/stripeService";
+import { z } from "zod";
 
 const prisma = new PrismaClient();
 
@@ -407,6 +409,205 @@ export const getUserCommandeById = async (
     res.status(500).json({
       error: "Erreur interne du serveur",
       message: "Impossible de récupérer la commande",
+    });
+  }
+};
+
+// Schéma de validation pour projet payant utilisateur connecté
+const paidProjectSchema = z.object({
+  serviceId: z.string().min(1, "L'ID du service est requis"),
+  titre: z.string().min(3, "Le titre doit contenir au moins 3 caractères").max(200),
+  description: z.string().optional(),
+  nombrePages: z.number().min(1).max(1000).optional(),
+  prixCalcule: z.number().min(0).optional(),
+});
+
+/**
+ * Créer un nouveau projet payant pour un utilisateur connecté
+ * Route: POST /api/commandes/create-paid-project
+ */
+export const createPaidProject = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const ip = req.ip || req.connection.remoteAddress || 'unknown';
+  const userAgent = req.get('user-agent') || 'unknown';
+
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({
+        error: "Utilisateur non authentifié",
+        message: "Vous devez être connecté pour créer un projet",
+      });
+      return;
+    }
+
+    // Validation des données avec Zod
+    const validationResult = paidProjectSchema.safeParse(req.body);
+    
+    if (!validationResult.success) {
+      console.log(`❌ [PAID PROJECT] Validation échouée:`, validationResult.error.errors);
+      res.status(400).json({
+        error: "Données invalides",
+        message: "Veuillez vérifier les informations saisies",
+        details: validationResult.error.errors
+      });
+      return;
+    }
+
+    const { serviceId, titre, description, nombrePages, prixCalcule } = validationResult.data;
+
+    console.log(`📝 [PAID PROJECT] Nouveau projet payant: ${req.user?.email} - Service: ${serviceId} - Titre: ${titre}`);
+
+    // Récupérer les informations utilisateur et service
+    const [user, service] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          nom: true,
+          prenom: true,
+          telephone: true,
+          adresse: true,
+        }
+      }),
+      prisma.tarif.findFirst({
+        where: { 
+          id: serviceId,
+          actif: true
+        },
+        select: {
+          id: true,
+          nom: true,
+          prix: true,
+          typeService: true,
+          description: true,
+        }
+      })
+    ]);
+
+    if (!user) {
+      res.status(404).json({
+        error: "Utilisateur introuvable",
+        message: "Impossible de trouver les informations utilisateur"
+      });
+      return;
+    }
+
+    if (!service) {
+      res.status(404).json({
+        error: "Service introuvable",
+        message: "Le service sélectionné n'existe pas ou n'est plus disponible"
+      });
+      return;
+    }
+
+    // Calculer le prix final (prix calculé ou prix du service)
+    const prixFinal = prixCalcule || service.prix;
+
+    // Créer la commande en base
+    const nouvelleCommande = await prisma.commande.create({
+      data: {
+        titre,
+        description: description || `Projet ${service.nom}`,
+        userId,
+        packType: serviceId, // Utiliser packType au lieu de tarifId
+        statut: StatutCommande.EN_ATTENTE,
+        paymentStatus: 'PENDING',
+        amount: Math.round(prixFinal * 100), // Prix en centimes
+        prixEstime: Math.round(prixFinal * 100), // Prix estimé en centimes
+        prixFinal: Math.round(prixFinal * 100),  // Prix final en centimes
+        pagesDeclarees: nombrePages || null,
+      },
+      select: {
+        id: true,
+        titre: true,
+        amount: true,
+        statut: true,
+        paymentStatus: true,
+      }
+    });
+
+    console.log(`✅ [PAID PROJECT] Commande créée avec l'ID: ${nouvelleCommande.id}`);
+
+    // Créer la session Stripe Checkout
+    try {
+      const checkoutSession = await stripeService.createCheckoutSession({
+        priceId: "default", // Prix dynamique
+        userId: user.id,
+        commandeId: nouvelleCommande.id,
+        successUrl: `${process.env.FRONTEND_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${process.env.FRONTEND_URL}/app/projects`,
+        amount: Math.round(prixFinal * 100), // Prix en centimes
+      });
+
+      // Extraire l'URL de checkout
+      const checkoutUrl = typeof checkoutSession === 'string' ? checkoutSession : checkoutSession.url;
+
+      // Mettre à jour la commande avec l'ID de session Stripe
+      if (typeof checkoutSession === 'object' && checkoutSession.id) {
+        await prisma.commande.update({
+          where: { id: nouvelleCommande.id },
+          data: {
+            stripeSessionId: checkoutSession.id,
+          }
+        });
+      }
+
+      console.log(`💳 [PAID PROJECT] Session Stripe créée pour la commande ${nouvelleCommande.id}`);
+
+      // Envoyer les notifications avec les bonnes signatures
+      await Promise.all([
+        notifyClientCommandeCreated(
+          user.id,
+          nouvelleCommande.titre,
+          nouvelleCommande.id,
+          service.typeService
+        ),
+        notifyAdminNewCommande(
+          `${user.prenom} ${user.nom}`,
+          user.email,
+          nouvelleCommande.titre,
+          nouvelleCommande.id
+        )
+      ]);
+
+      res.status(201).json({
+        success: true,
+        message: "Projet créé avec succès",
+        checkoutUrl,
+        pendingCommandeId: nouvelleCommande.id,
+        commande: {
+          id: nouvelleCommande.id,
+          titre: nouvelleCommande.titre,
+          prix: prixFinal,
+          statut: nouvelleCommande.statut,
+        }
+      });
+
+    } catch (stripeError) {
+      console.error(`❌ [PAID PROJECT] Erreur Stripe:`, stripeError);
+      
+      // Supprimer la commande créée en cas d'erreur Stripe
+      await prisma.commande.delete({
+        where: { id: nouvelleCommande.id }
+      });
+
+      res.status(500).json({
+        error: "Erreur de paiement",
+        message: "Impossible de créer la session de paiement. Veuillez réessayer."
+      });
+      return;
+    }
+
+  } catch (error) {
+    console.error("❌ [PAID PROJECT] Erreur lors de la création du projet:", error);
+    res.status(500).json({
+      error: "Erreur interne du serveur",
+      message: "Impossible de créer le projet payant",
     });
   }
 };

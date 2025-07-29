@@ -12,7 +12,7 @@ import { DemoModeProvider } from "./components/admin/DemoModeProvider";
 import GuestOrderForm from "./components/forms/GuestOrderForm";
 import MainLayout from "./components/layout/MainLayout";
 import { ToastProvider } from "./components/layout/ToastProvider";
-import ModalNouveauProjet from "./components/modals/ModalNouveauProjet";
+import PackSelectionModal from "./components/modals/PackSelectionModal";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import ActivateAccountPage from "./pages/ActivateAccountPage";
 import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
@@ -228,9 +228,13 @@ const AppContent: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
         <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<PageIntrouvable />} />
       </Routes>
-      <ModalNouveauProjet
-        open={isNewProjectModalOpen}
+      <PackSelectionModal
+        isOpen={isNewProjectModalOpen}
         onClose={() => setNewProjectModalOpen(false)}
+        onOrderCreated={(data) => {
+          // Redirection vers le checkout Stripe
+          window.location.href = data.checkoutUrl;
+        }}
       />
     </MainLayout>
   );
