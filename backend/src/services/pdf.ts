@@ -1,6 +1,6 @@
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import * as fs from "fs";
 import * as path from "path";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
 export interface InvoiceData {
   id: string;
@@ -36,30 +36,30 @@ export class PdfService {
       if (!invoiceData) {
         throw new Error("Les données de facture sont requises");
       }
-      
+
       if (!invoiceData.number) {
         throw new Error("Le numéro de facture est requis");
       }
-      
+
       if (!invoiceData.commande) {
         throw new Error("Les données de commande sont requises");
       }
-      
+
       console.log(`🎯 [PDF] Génération PDF pour facture ${invoiceData.number}`);
 
       // Créer un nouveau document PDF
       const pdfDoc = await PDFDocument.create();
-      
+
       // Définir les métadonnées
       pdfDoc.setTitle(`Facture ${invoiceData.number}`);
-      pdfDoc.setAuthor('Staka Livres');
-      pdfDoc.setSubject('Facture de correction de manuscrit');
-      pdfDoc.setCreator('Staka Livres Platform');
-      pdfDoc.setProducer('pdf-lib');
+      pdfDoc.setAuthor("Staka Livres");
+      pdfDoc.setSubject("Facture de correction de manuscrit");
+      pdfDoc.setCreator("Staka Livres Platform");
+      pdfDoc.setProducer("pdf-lib");
 
       // Ajouter une page A4
       const page = pdfDoc.addPage([595.28, 841.89]); // A4 en points
-      
+
       // Charger les polices
       const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
       const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -67,14 +67,14 @@ export class PdfService {
       // Couleurs
       const blueColor = rgb(0.15, 0.39, 0.92); // #2563eb
       const darkGrayColor = rgb(0.12, 0.16, 0.22); // #1f2937
-      const mediumGrayColor = rgb(0.42, 0.45, 0.50); // #6b7280
-      const lightGrayColor = rgb(0.90, 0.91, 0.93); // #e5e7eb
+      const mediumGrayColor = rgb(0.42, 0.45, 0.5); // #6b7280
+      const lightGrayColor = rgb(0.9, 0.91, 0.93); // #e5e7eb
 
       let currentY = 750; // Position Y de départ
 
       // Logo et en-tête
       try {
-        const logoPath = path.join(__dirname, '../../assets/logo.png');
+        const logoPath = path.join(__dirname, "../../assets/logo.png");
         if (fs.existsSync(logoPath)) {
           const logoBytes = fs.readFileSync(logoPath);
           const logoImage = await pdfDoc.embedPng(logoBytes);
@@ -91,7 +91,7 @@ export class PdfService {
       }
 
       // Titre FACTURE
-      page.drawText('FACTURE', {
+      page.drawText("FACTURE", {
         x: 50,
         y: currentY,
         size: 24,
@@ -108,25 +108,18 @@ export class PdfService {
         color: darkGrayColor,
       });
 
-      page.drawText(`Date d'émission: ${this.formatDate(invoiceData.issuedAt)}`, {
-        x: 350,
-        y: currentY - 20,
-        size: 10,
-        font: helvetica,
-        color: darkGrayColor,
-      });
-
-      if (invoiceData.dueAt) {
-        page.drawText(`Date d'échéance: ${this.formatDate(invoiceData.dueAt)}`, {
+      page.drawText(
+        `Date d'émission: ${this.formatDate(invoiceData.issuedAt)}`,
+        {
           x: 350,
-          y: currentY - 40,
+          y: currentY - 20,
           size: 10,
           font: helvetica,
           color: darkGrayColor,
-        });
-      }
+        }
+      );
 
-      currentY -= 80;
+      currentY -= 60;
 
       // Ligne de séparation
       page.drawLine({
@@ -139,7 +132,7 @@ export class PdfService {
       currentY -= 30;
 
       // Informations entreprise
-      page.drawText('STAKA LIVRES', {
+      page.drawText("STAKA LIVRES", {
         x: 50,
         y: currentY,
         size: 14,
@@ -149,15 +142,15 @@ export class PdfService {
 
       currentY -= 20;
       const companyInfo = [
-        'Correction et édition de manuscrits',
-        '123 Rue des Livres',
-        '75000 Paris, France',
-        'Tél: +33 1 23 45 67 89',
-        'Email: contact@staka-livres.com',
-        'SIRET: 123 456 789 00010'
+        "Correction et édition de manuscrits",
+        "123 Rue des Livres",
+        "75000 Paris, France",
+        "Tél: +33 6 15 07 81 52",
+        "Email: contact@staka.fr",
+        "SIRET: 919 234 567",
       ];
 
-      companyInfo.forEach(info => {
+      companyInfo.forEach((info) => {
         page.drawText(info, {
           x: 50,
           y: currentY,
@@ -169,8 +162,8 @@ export class PdfService {
       });
 
       // Informations client (droite)
-      let clientY = currentY + (companyInfo.length * 15) + 20;
-      page.drawText('FACTURÉ À:', {
+      let clientY = currentY + companyInfo.length * 15 + 20;
+      page.drawText("FACTURÉ À:", {
         x: 350,
         y: clientY,
         size: 12,
@@ -198,8 +191,8 @@ export class PdfService {
       });
 
       if (user.adresse) {
-        const adresseLines = user.adresse.split('\n');
-        adresseLines.forEach(ligne => {
+        const adresseLines = user.adresse.split("\n");
+        adresseLines.forEach((ligne) => {
           clientY -= 15;
           page.drawText(ligne, {
             x: 350,
@@ -214,7 +207,7 @@ export class PdfService {
       currentY -= 60;
 
       // Détails du projet
-      page.drawText('PROJET:', {
+      page.drawText("PROJET:", {
         x: 50,
         y: currentY,
         size: 12,
@@ -233,24 +226,24 @@ export class PdfService {
 
       if (invoiceData.commande.description) {
         currentY -= 20;
-        page.drawText('Description:', {
+        page.drawText("Description:", {
           x: 50,
           y: currentY,
           size: 10,
           font: helvetica,
           color: darkGrayColor,
         });
-        
+
         currentY -= 15;
         // Découper la description en lignes si nécessaire
         const maxWidth = 450;
-        const words = invoiceData.commande.description.split(' ');
-        let currentLine = '';
-        
+        const words = invoiceData.commande.description.split(" ");
+        let currentLine = "";
+
         for (const word of words) {
-          const testLine = currentLine + (currentLine ? ' ' : '') + word;
+          const testLine = currentLine + (currentLine ? " " : "") + word;
           const textWidth = helvetica.widthOfTextAtSize(testLine, 10);
-          
+
           if (textWidth > maxWidth && currentLine) {
             page.drawText(currentLine, {
               x: 50,
@@ -265,7 +258,7 @@ export class PdfService {
             currentLine = testLine;
           }
         }
-        
+
         if (currentLine) {
           page.drawText(currentLine, {
             x: 50,
@@ -281,7 +274,7 @@ export class PdfService {
 
       // Tableau des éléments
       const tableTop = currentY;
-      
+
       // En-tête du tableau (rectangle de fond)
       page.drawRectangle({
         x: 50,
@@ -302,7 +295,7 @@ export class PdfService {
       });
 
       // Textes en-tête
-      page.drawText('DESCRIPTION', {
+      page.drawText("DESCRIPTION", {
         x: 60,
         y: tableTop - 18,
         size: 10,
@@ -310,7 +303,7 @@ export class PdfService {
         color: darkGrayColor,
       });
 
-      page.drawText('QTÉ', {
+      page.drawText("QTÉ", {
         x: 300,
         y: tableTop - 18,
         size: 10,
@@ -318,7 +311,7 @@ export class PdfService {
         color: darkGrayColor,
       });
 
-      page.drawText('PRIX UNITAIRE HT', {
+      page.drawText("PRIX UNITAIRE HT", {
         x: 350,
         y: tableTop - 18,
         size: 10,
@@ -326,7 +319,7 @@ export class PdfService {
         color: darkGrayColor,
       });
 
-      page.drawText('MONTANT TTC', {
+      page.drawText("MONTANT TTC", {
         x: 450,
         y: tableTop - 18,
         size: 10,
@@ -336,7 +329,7 @@ export class PdfService {
 
       // Ligne de l'élément
       const itemY = tableTop - 25;
-      
+
       page.drawRectangle({
         x: 50,
         y: itemY - 30,
@@ -347,7 +340,7 @@ export class PdfService {
       });
 
       const unitPrice = invoiceData.amount / 100;
-      
+
       page.drawText(invoiceData.commande.titre, {
         x: 60,
         y: itemY - 18,
@@ -356,7 +349,7 @@ export class PdfService {
         color: darkGrayColor,
       });
 
-      page.drawText('1', {
+      page.drawText("1", {
         x: 300,
         y: itemY - 18,
         size: 10,
@@ -399,7 +392,7 @@ export class PdfService {
         borderWidth: 1,
       });
 
-      page.drawText('Total HT:', {
+      page.drawText("Total HT:", {
         x: 360,
         y: totalsY - 20,
         size: 10,
@@ -415,7 +408,7 @@ export class PdfService {
         color: darkGrayColor,
       });
 
-      page.drawText('TVA (20%):', {
+      page.drawText("TVA (20%):", {
         x: 360,
         y: totalsY - 40,
         size: 10,
@@ -432,7 +425,7 @@ export class PdfService {
       });
 
       // Total TTC
-      page.drawText('TOTAL TTC:', {
+      page.drawText("TOTAL TTC:", {
         x: 360,
         y: totalsY - 65,
         size: 12,
@@ -462,7 +455,7 @@ export class PdfService {
       currentY -= 30;
 
       // Conditions de paiement
-      page.drawText('CONDITIONS DE PAIEMENT', {
+      page.drawText("CONDITIONS DE PAIEMENT", {
         x: 50,
         y: currentY,
         size: 10,
@@ -472,11 +465,11 @@ export class PdfService {
 
       currentY -= 20;
       const paymentConditions = [
-        'Paiement par carte bancaire via Stripe',
-        'Règlement à réception de facture'
+        "Paiement par carte bancaire via Stripe",
+        "Règlement à réception de facture",
       ];
 
-      paymentConditions.forEach(condition => {
+      paymentConditions.forEach((condition) => {
         page.drawText(condition, {
           x: 50,
           y: currentY,
@@ -491,12 +484,12 @@ export class PdfService {
 
       // Mentions légales
       const legalMentions = [
-        'TVA non applicable - Article 293 B du CGI',
-        'En cas de retard de paiement, des pénalités de 3 fois le taux légal seront appliquées.',
-        'Merci pour votre confiance !'
+        "TVA non applicable - Article 293 B du CGI",
+        "En cas de retard de paiement, des pénalités de 3 fois le taux légal seront appliquées.",
+        "Merci pour votre confiance !",
       ];
 
-      legalMentions.forEach(mention => {
+      legalMentions.forEach((mention) => {
         page.drawText(mention, {
           x: 50,
           y: currentY,
@@ -508,21 +501,25 @@ export class PdfService {
       });
 
       // Informations techniques (en bas à droite)
-      page.drawText(`Facture générée le ${this.formatDate(new Date())} - Staka Livres Platform`, {
-        x: 300,
-        y: 30,
-        size: 7,
-        font: helvetica,
-        color: rgb(0.82, 0.84, 0.86), // #d1d5db
-      });
+      page.drawText(
+        `Facture générée le ${this.formatDate(
+          new Date()
+        )} - Staka Livres Platform`,
+        {
+          x: 300,
+          y: 30,
+          size: 7,
+          font: helvetica,
+          color: rgb(0.82, 0.84, 0.86), // #d1d5db
+        }
+      );
 
       // Générer le PDF en tant que buffer
       const pdfBytes = await pdfDoc.save();
       const pdfBuffer = Buffer.from(pdfBytes);
-      
+
       console.log(`✅ [PDF] PDF généré: ${pdfBuffer.length} bytes`);
       return pdfBuffer;
-
     } catch (error) {
       console.error("❌ [PDF] Erreur génération PDF:", error);
       throw error;
@@ -533,10 +530,10 @@ export class PdfService {
    * Formate une date au format français
    */
   private static formatDate(date: Date): string {
-    return date.toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
+    return date.toLocaleDateString("fr-FR", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
     });
   }
 }

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { PrismaClient, Role, NotificationType, NotificationPriority, StatutCommande, Priorite } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { InvoiceService } from "../services/invoiceService";
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -300,6 +301,51 @@ router.post("/reset-database", async (_req, res) => {
     console.error("Erreur lors de la réinitialisation de la base:", error);
     res.status(500).json({
       error: "Erreur lors de la réinitialisation de la base de données",
+      details: error instanceof Error ? error.message : "Erreur inconnue"
+    });
+  }
+});
+
+/**
+ * Route pour télécharger un exemple de facture PDF
+ * GET /dev/sample-invoice
+ */
+router.get("/sample-invoice", async (_req, res) => {
+  try {
+    // Créer des données d'exemple pour la facture
+    const sampleCommande = {
+      id: "sample-invoice-001",
+      titre: "Correction Standard - Exemple",
+      description: "Correction professionnelle d'un manuscrit de 150 pages",
+      amount: 48000, // 480€ en centimes
+      updatedAt: new Date(),
+      user: {
+        id: "sample-user-001",
+        prenom: "Jean",
+        nom: "Dupont",
+        email: "jean.dupont@example.com",
+        adresse: "123 Rue de la Paix\n75001 Paris\nFrance"
+      }
+    };
+
+    console.log(`📄 [DEV] Génération facture d'exemple pour ${sampleCommande.user.email}`);
+
+    // Générer le PDF avec le service existant
+    const pdfBuffer = await InvoiceService.generateInvoicePDF(sampleCommande);
+
+    console.log(`✅ [DEV] Facture d'exemple générée: ${pdfBuffer.length} bytes`);
+
+    // Envoyer le PDF en réponse
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="facture-exemple-staka-livres.pdf"');
+    res.setHeader('Content-Length', pdfBuffer.length);
+    
+    res.send(pdfBuffer);
+
+  } catch (error) {
+    console.error("Erreur lors de la génération de la facture d'exemple:", error);
+    res.status(500).json({
+      error: "Erreur lors de la génération de la facture d'exemple",
       details: error instanceof Error ? error.message : "Erreur inconnue"
     });
   }
