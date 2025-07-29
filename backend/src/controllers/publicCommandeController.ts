@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { Request, Response } from "express";
 import { stripeService } from "../services/stripeService";
 import { z } from "zod";
+import { extractFileMetadata, enrichFileData, EnrichedFileData } from "../middleware/fileUpload";
 
 const prisma = new PrismaClient();
 
@@ -15,6 +16,8 @@ const publicOrderSchema = z.object({
   telephone: z.string().optional(),
   adresse: z.string().optional(),
   serviceId: z.string().min(1, "L'ID du service est requis"),
+  nombrePages: z.number().min(1).max(1000).optional(),
+  prixCalcule: z.number().min(0).optional(),
   consentementRgpd: z.boolean().refine(val => val === true, "Le consentement RGPD est obligatoire")
 });
 
@@ -26,6 +29,8 @@ interface PublicOrderRequest {
   telephone?: string;
   adresse?: string;
   serviceId: string;
+  nombrePages?: number;
+  prixCalcule?: number;
   consentementRgpd: boolean;
 }
 
@@ -38,8 +43,16 @@ export const createPublicOrder = async (req: Request, res: Response): Promise<vo
   const userAgent = req.get('user-agent') || 'unknown';
 
   try {
+    // Convertir les booléens depuis FormData (qui arrive comme string)
+    const processedBody = {
+      ...req.body,
+      consentementRgpd: req.body.consentementRgpd === 'true' || req.body.consentementRgpd === true,
+      nombrePages: req.body.nombrePages ? parseInt(req.body.nombrePages) : undefined,
+      prixCalcule: req.body.prixCalcule ? parseFloat(req.body.prixCalcule) : undefined
+    };
+
     // Validation des données avec Zod
-    const validationResult = publicOrderSchema.safeParse(req.body);
+    const validationResult = publicOrderSchema.safeParse(processedBody);
     
     if (!validationResult.success) {
       console.log(`❌ [PUBLIC ORDER] Validation échouée:`, validationResult.error.errors);
@@ -51,9 +64,14 @@ export const createPublicOrder = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    const { prenom, nom, email, password, telephone, adresse, serviceId, consentementRgpd } = validationResult.data;
+    const { prenom, nom, email, password, telephone, adresse, serviceId, nombrePages, prixCalcule, consentementRgpd } = validationResult.data;
 
-    console.log(`📝 [PUBLIC ORDER] Nouvelle commande publique: ${email} - Service: ${serviceId}`);
+    // Récupérer les fichiers uploadés et leurs métadonnées
+    const uploadedFiles = req.files as Express.Multer.File[] || [];
+    const fileMetadata = extractFileMetadata(req.body);
+    const enrichedFiles = enrichFileData(uploadedFiles, fileMetadata);
+
+    console.log(`📝 [PUBLIC ORDER] Nouvelle commande publique: ${email} - Service: ${serviceId} - Fichiers: ${enrichedFiles.length}`);
 
     // Vérifier que l'email n'existe pas déjà
     const existingUser = await prisma.user.findUnique({
@@ -116,12 +134,23 @@ export const createPublicOrder = async (req: Request, res: Response): Promise<vo
 
     // Créer une session Stripe Checkout
     try {
+      let priceId = service.stripePriceId || "default";
+      let amount: number | undefined;
+      
+      // Si un prix calculé est fourni, utiliser le prix dynamique
+      if (prixCalcule !== undefined && nombrePages !== undefined) {
+        console.log(`💰 [PUBLIC ORDER] Prix calculé dynamique: ${prixCalcule}€ pour ${nombrePages} pages`);
+        amount = Math.round(prixCalcule * 100); // Convertir en centimes
+        priceId = "default"; // Forcer l'utilisation du prix dynamique
+      }
+      
       const checkoutSession = await stripeService.createCheckoutSession({
-        priceId: service.stripePriceId || "default", // Utiliser le prix du service
+        priceId,
         userId: pendingCommande.id, // Utiliser l'ID de la commande pending
         commandeId: pendingCommande.id,
-        successUrl: `${process.env.FRONTEND_URL || 'http://localhost:3001'}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: `${process.env.FRONTEND_URL || 'http://localhost:3001'}/order-cancelled`
+        amount,
+        successUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/order-cancelled`
       });
 
       // Mettre à jour la PendingCommande avec l'ID de session Stripe
@@ -132,11 +161,71 @@ export const createPublicOrder = async (req: Request, res: Response): Promise<vo
 
       console.log(`💳 [PUBLIC ORDER] Session Stripe créée: ${checkoutSession.id} pour ${email}`);
 
+      // Sauvegarder les fichiers temporairement avec pendingCommandeId
+      if (enrichedFiles.length > 0) {
+        try {
+          console.log(`📎 [PUBLIC ORDER] Sauvegarde de ${enrichedFiles.length} fichier(s) temporaire(s)`);
+          
+          // Créer un utilisateur temporaire pour les fichiers si nécessaire
+          let tempUser = await prisma.user.findFirst({
+            where: { email: '__temp_upload_user__@staka.internal' }
+          });
+          
+          if (!tempUser) {
+            tempUser = await prisma.user.create({
+              data: {
+                prenom: 'TEMP',
+                nom: 'UPLOAD_USER',
+                email: '__temp_upload_user__@staka.internal',
+                password: await bcrypt.hash('temp_password_not_used', 12),
+                isActive: false,
+                role: 'USER'
+              }
+            });
+            console.log(`👤 [PUBLIC ORDER] Utilisateur temporaire créé: ${tempUser.id}`);
+          }
+          
+          // Sauvegarder les métadonnées des fichiers pour la migration
+          const fileMetadataMap = new Map();
+          
+          for (const fileData of enrichedFiles) {
+            const fileRecord = await prisma.file.create({
+              data: {
+                filename: fileData.title,
+                storedName: fileData.fileName,
+                mimeType: fileData.mimeType,
+                size: fileData.fileSize,
+                url: `/uploads/orders/${fileData.fileName}`,
+                type: 'DOCUMENT',
+                description: fileData.description || null,
+                uploadedById: tempUser.id, // Utiliser l'utilisateur temporaire
+                commandeId: null, // Sera mis à jour lors du webhook
+                isPublic: false,
+              }
+            });
+            
+            // Marquer le fichier comme temporaire dans la description
+            await prisma.file.update({
+              where: { id: fileRecord.id },
+              data: {
+                description: `TEMP_PENDING:${pendingCommande.id}|${fileData.description || ''}`
+              }
+            });
+          }
+          
+          console.log(`✅ [PUBLIC ORDER] ${enrichedFiles.length} fichier(s) sauvegardé(s) temporairement`);
+        } catch (fileError) {
+          console.error(`❌ [PUBLIC ORDER] Erreur lors de la sauvegarde des fichiers:`, fileError);
+          // Ne pas faire échouer la commande pour un problème de fichier
+        }
+      }
+
       res.status(201).json({
         message: "Commande créée avec succès",
         checkoutUrl: checkoutSession.url,
         sessionId: checkoutSession.id,
-        pendingCommandeId: pendingCommande.id
+        pendingCommandeId: pendingCommande.id,
+        uploadedFiles: enrichedFiles.length
       });
 
     } catch (stripeError) {

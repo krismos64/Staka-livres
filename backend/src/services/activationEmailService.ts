@@ -49,7 +49,9 @@ export class ActivationEmailService {
     commandeTitle: string
   ): Promise<void> {
     try {
-      console.log(`📧 [ACTIVATION] Envoi d'email d'activation à ${pendingCommande.email}`);
+      console.log(`📧 [ACTIVATION] ===== DÉBUT ENVOI EMAIL ACTIVATION =====`);
+      console.log(`📧 [ACTIVATION] Email: ${pendingCommande.email}`);
+      console.log(`📧 [ACTIVATION] Token existant: ${pendingCommande.activationToken}`);
 
       // Générer le token s'il n'existe pas
       let token = pendingCommande.activationToken;
@@ -137,7 +139,7 @@ export class ActivationEmailService {
           tokenExpiresAt: {
             gt: new Date() // Token non expiré
           },
-          isProcessed: false // Pas encore traité
+          // isProcessed peut être true ou false - le token reste valide même après traitement du paiement
         }
       });
 

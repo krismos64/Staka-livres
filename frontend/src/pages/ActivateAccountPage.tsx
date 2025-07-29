@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { useToasts } from "../utils/toast";
+import { useToast } from "../components/layout/ToastProvider";
 import { buildApiUrl } from "../utils/api";
 
 interface ActivationData {
@@ -31,7 +31,7 @@ export default function ActivateAccountPage() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const { login } = useAuth();
-  const { showToast } = useToasts();
+  const { showToast } = useToast();
 
   const [loading, setLoading] = useState(true);
   const [activating, setActivating] = useState(false);
@@ -76,7 +76,9 @@ export default function ActivateAccountPage() {
     setError(null);
 
     try {
-      const response = await fetch(buildApiUrl(`/public/activate/${token}`));
+      const response = await fetch(buildApiUrl(`/public/activate/${token}`), {
+        method: 'GET'
+      });
       const data = await response.json();
 
       if (!response.ok) {
@@ -91,11 +93,12 @@ export default function ActivateAccountPage() {
         localStorage.setItem("token", data.token);
         login(data.user);
         
-        showToast({
-          type: 'success',
-          message: `Bienvenue ${data.user.prenom} ! Votre compte a été activé avec succès.`,
-          duration: 5000
-        });
+        showToast(
+          'success',
+          'Compte activé !',
+          `Bienvenue ${data.user.prenom} ! Votre compte a été activé avec succès.`,
+          { duration: 5000 }
+        );
 
         // Redirection vers le dashboard après un court délai
         setTimeout(() => {

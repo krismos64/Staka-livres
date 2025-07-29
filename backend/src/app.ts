@@ -18,6 +18,7 @@ import paymentsRoutes from "./routes/payments";
 import projectsRoutes from "./routes/projects";
 import statsRoutes from "./routes/stats";
 import webhookRoutes from "./routes/payments/webhook";
+import devWebhookSimulateRoutes from "./routes/payments/dev-webhook-simulate";
 import tarifsRoutes from "./routes/tarifs";
 import usersRoutes from "./routes/users";
 import publicRoutes from "./routes/public";
@@ -48,6 +49,9 @@ app.use(
   bodyParser.raw({ type: "application/json" }),
   webhookRoutes
 );
+
+// Route de simulation webhook pour développement local
+app.use("/payments/dev-webhook-simulate", devWebhookSimulateRoutes);
 
 // Body parser standard pour les autres routes (avec limite augmentée pour les uploads)
 app.use(express.json({ limit: "50mb" }));

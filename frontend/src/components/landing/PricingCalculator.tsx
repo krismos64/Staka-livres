@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ErrorMessage from "../ui/ErrorMessage";
 import Loader from "../ui/Loader";
 import { usePricing } from "./hooks/usePricing";
@@ -27,6 +28,7 @@ export default function PricingCalculator({
     enableDebugLogs: process.env.NODE_ENV === "development",
   });
   const [selectedPreset, setSelectedPreset] = useState(150);
+  const navigate = useNavigate();
 
   const comparisonPrices = getComparisonPrices();
 
@@ -45,11 +47,23 @@ export default function PricingCalculator({
     handlePageChange(newPages);
   };
 
+  // Utilitaire pour générer un slug à partir du nom
+  const getSlug = (nom: string) =>
+    nom
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9\-]/g, "");
+
+  // Remplacer handleOrderClick par navigation directe
   const handleOrderClick = () => {
-    console.log(`Commande pour ${pricing.total}€, ${pages} pages`);
-    if (onSignupClick) {
-      onSignupClick();
-    }
+    const selectedTarif = tarifs?.find(
+      (t) =>
+        t.actif &&
+        (t.typeService === "Correction" ||
+          t.nom.toLowerCase().includes("correction"))
+    );
+    const slug = selectedTarif ? getSlug(selectedTarif.nom) : "premium";
+    navigate(`/commande-invitee?pack=${slug}`);
   };
 
   const handleFreeTestClick = () => {

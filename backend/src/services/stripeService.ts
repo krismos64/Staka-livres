@@ -14,6 +14,43 @@ if (!isDevelopmentMock) {
 }
 
 export const stripeService = {
+  // Créer un prix dynamique pour un montant spécifique (non utilisé - prix dynamique via price_data)
+  async createDynamicPrice(params: {
+    amount: number;
+    currency: string;
+    productId: string;
+    description: string;
+  }) {
+    if (isDevelopmentMock) {
+      // Mode mock pour le développement
+      const mockPrice = {
+        id: `price_mock_${Date.now()}`,
+        unit_amount: params.amount,
+        currency: params.currency,
+        product: params.productId,
+        description: params.description
+      };
+
+      console.log("🚧 [STRIPE MOCK] Prix dynamique créé:", mockPrice.id, `${params.amount/100}€`);
+      return mockPrice;
+    }
+
+    if (!stripe) {
+      throw new Error("Stripe non configuré");
+    }
+
+    // Créer d'abord un produit, puis un prix
+    const product = await stripe.products.create({
+      name: params.description,
+    });
+
+    return await stripe.prices.create({
+      unit_amount: params.amount,
+      currency: params.currency,
+      product: product.id,
+    });
+  },
+
   // Créer une session de paiement
   async createCheckoutSession(params: {
     priceId: string;
@@ -21,6 +58,7 @@ export const stripeService = {
     commandeId: string;
     successUrl: string;
     cancelUrl: string;
+    amount?: number;
   }) {
     if (isDevelopmentMock) {
       // Mode mock pour le développement - redirection vers page de succès locale
@@ -33,7 +71,8 @@ export const stripeService = {
         metadata: params,
       };
 
-      console.log("🚧 [STRIPE MOCK] Session créée:", mockSession.id);
+      const displayAmount = params.amount ? `${params.amount/100}€` : "montant dynamique";
+      console.log("🚧 [STRIPE MOCK] Session créée:", mockSession.id, displayAmount);
       console.log("🚧 [STRIPE MOCK] Redirection mock vers:", mockSession.url);
       return mockSession;
     }
@@ -42,10 +81,29 @@ export const stripeService = {
       throw new Error("Stripe non configuré");
     }
 
-    // Créer un prix à la volée pour 468€ (montant fixe pour test)
-    const session = await stripe.checkout.sessions.create({
+    // Créer une session avec le priceId fourni ou un prix dynamique
+    const sessionConfig: any = {
       mode: "payment",
-      line_items: [
+      metadata: {
+        userId: params.userId,
+        commandeId: params.commandeId,
+      },
+      success_url: params.successUrl,
+      cancel_url: params.cancelUrl,
+    };
+
+    // Si un prix fixe est fourni, l'utiliser
+    if (params.priceId && params.priceId !== "default") {
+      sessionConfig.line_items = [
+        {
+          price: params.priceId,
+          quantity: 1,
+        },
+      ];
+    } else {
+      // Sinon, utiliser un prix dynamique (avec montant fourni ou 468€ par défaut)
+      const amount = params.amount || 46800; // 468€ par défaut
+      sessionConfig.line_items = [
         {
           price_data: {
             currency: "eur",
@@ -53,18 +111,14 @@ export const stripeService = {
               name: "Correction de manuscrit",
               description: "Service de correction et relecture professionnelle",
             },
-            unit_amount: 46800, // 468€ en centimes
+            unit_amount: amount,
           },
           quantity: 1,
         },
-      ],
-      metadata: {
-        userId: params.userId,
-        commandeId: params.commandeId,
-      },
-      success_url: params.successUrl,
-      cancel_url: params.cancelUrl,
-    });
+      ];
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     return session;
   },

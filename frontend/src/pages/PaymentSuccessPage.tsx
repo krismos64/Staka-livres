@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+
 interface PaymentSuccessPageProps {
   onBackToApp: () => void;
 }
@@ -5,6 +8,122 @@ interface PaymentSuccessPageProps {
 export default function PaymentSuccessPage({
   onBackToApp,
 }: PaymentSuccessPageProps) {
+  const [searchParams] = useSearchParams();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingComplete, setProcessingComplete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const sessionId = searchParams.get("session_id");
+
+  useEffect(() => {
+    // Si on a un session_id, on simule le webhook pour s'assurer que tout est traité
+    if (sessionId && !processingComplete) {
+      setIsProcessing(true);
+      
+      fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/payments/dev-webhook-simulate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sessionId }),
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Webhook simulation result:', data);
+        if (data.success) {
+          setProcessingComplete(true);
+        } else {
+          setError('Erreur lors du traitement de la commande');
+        }
+      })
+      .catch(error => {
+        console.error('Webhook simulation error:', error);
+        setError('Erreur de connexion lors du traitement');
+      })
+      .finally(() => {
+        setIsProcessing(false);
+      });
+    }
+  }, [sessionId, processingComplete]);
+
+  const handleRetryProcessing = () => {
+    setError(null);
+    setIsProcessing(true);
+    
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/payments/dev-webhook-simulate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ sessionId }),
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Webhook simulation result:', data);
+      if (data.success) {
+        setProcessingComplete(true);
+      } else {
+        setError('Erreur lors du traitement de la commande');
+      }
+    })
+    .catch(error => {
+      console.error('Webhook simulation error:', error);
+      setError('Erreur de connexion lors du traitement');
+    })
+    .finally(() => {
+      setIsProcessing(false);
+    });
+  };
+
+  if (isProcessing) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i className="fas fa-spinner fa-spin text-blue-600 text-3xl"></i>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            Traitement en cours...
+          </h1>
+          <p className="text-gray-600">
+            Nous finalisons votre commande et créons votre compte.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i className="fas fa-exclamation-triangle text-red-600 text-3xl"></i>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            Erreur de traitement
+          </h1>
+          <p className="text-gray-600 mb-6">
+            {error}. Votre paiement a été accepté mais il y a eu un problème lors de la finalisation de votre commande.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={handleRetryProcessing}
+              className="w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-700 transition-colors duration-200"
+            >
+              Réessayer le traitement
+            </button>
+            <button
+              onClick={onBackToApp}
+              className="w-full bg-gray-100 text-gray-700 font-semibold py-3 px-6 rounded-xl hover:bg-gray-200 transition-colors duration-200"
+            >
+              Retourner à l'application
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
@@ -17,8 +136,8 @@ export default function PaymentSuccessPage({
         </h1>
 
         <p className="text-gray-600 mb-8">
-          Votre paiement a été traité avec succès. Vous allez recevoir un email
-          de confirmation sous peu.
+          Votre paiement a été traité avec succès ! Votre compte a été créé et un email d'activation vous a été envoyé. 
+          Consultez votre boîte mail pour activer votre compte et accéder à vos commandes.
         </p>
 
         <button

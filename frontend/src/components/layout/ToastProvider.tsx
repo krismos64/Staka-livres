@@ -25,6 +25,11 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const { toasts, showToast, removeToast } = useToastsCore();
 
+  // Log pour debug
+  React.useEffect(() => {
+    console.log('🍞 ToastProvider - Toasts actuels:', toasts.length, toasts.map(t => t.title));
+  }, [toasts]);
+
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
@@ -77,6 +82,8 @@ function ToastComponent({
   onDismiss: () => void;
 }) {
   const config = toastConfig[toast.type];
+
+  console.log('🍞 Rendu toast:', toast.title, toast.type);
 
   return (
     <motion.div

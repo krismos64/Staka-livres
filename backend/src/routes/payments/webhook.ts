@@ -292,6 +292,42 @@ router.post("/", async (req: express.Request, res: express.Response) => {
               // Ne pas faire échouer le flux pour un problème de conversation
             }
 
+            // 📎 ÉTAPE FINALE: Migrer les fichiers temporaires vers la vraie commande
+            try {
+              // Chercher les fichiers temporaires associés à cette pendingCommande
+              const tempFiles = await prisma.file.findMany({
+                where: {
+                  description: {
+                    startsWith: `TEMP_PENDING:${pendingCommande.id}|`
+                  },
+                  commandeId: null
+                }
+              });
+
+              if (tempFiles.length > 0) {
+                console.log(`📎 [Stripe Webhook] Migration de ${tempFiles.length} fichier(s) temporaire(s) vers la commande ${newCommande.id}`);
+                
+                // Mettre à jour chaque fichier individuellement pour restaurer la description originale
+                for (const tempFile of tempFiles) {
+                  const originalDescription = tempFile.description?.replace(`TEMP_PENDING:${pendingCommande.id}|`, '') || null;
+                  
+                  await prisma.file.update({
+                    where: { id: tempFile.id },
+                    data: {
+                      uploadedById: newUser.id,
+                      commandeId: newCommande.id,
+                      description: originalDescription
+                    }
+                  });
+                }
+
+                console.log(`✅ [Stripe Webhook] ${tempFiles.length} fichier(s) migré(s) avec succès`);
+              }
+            } catch (fileError) {
+              console.error(`❌ [Stripe Webhook] Erreur migration fichiers:`, fileError);
+              // Ne pas faire échouer le flux pour un problème de fichier
+            }
+
             console.log(`🎉 [Stripe Webhook] Flux commande invitée complété avec succès pour ${pendingCommande.email}`);
 
           } catch (processingError) {

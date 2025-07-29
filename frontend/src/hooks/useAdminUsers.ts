@@ -6,6 +6,7 @@ import {
   getUserById,
   getUsers,
   getUserStats,
+  toggleUserStatus as toggleUserStatusAPI,
   updateUser,
 } from "../utils/adminAPI";
 import { useToasts } from "../utils/toast";
@@ -129,7 +130,7 @@ export const useAdminUsers = (options: UseAdminUsersOptions = {}) => {
     async (userId: string) => {
       setIsOperationLoading(true);
       try {
-        const updatedUser: User = await toggleUserStatus(userId);
+        const updatedUser: User = await toggleUserStatusAPI(userId);
         setUsers((prev) =>
           prev.map((u) => (u.id === userId ? updatedUser : u))
         );

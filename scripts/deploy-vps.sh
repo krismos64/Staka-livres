@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -eo pipefail
 
 # Script de déploiement VPS pour Staka-Livres
 # Usage: ./scripts/deploy-vps.sh [version] [--dry-run] [--force] [--no-backup]
@@ -220,7 +220,7 @@ deploy_to_vps() {
     
     # Script de déploiement distant
     ssh -i "$SSH_KEY_PATH" "$VPS_USER@$VPS_HOST" << EOF
-set -euo pipefail
+set -eo pipefail
 
 echo "🚀 Début du déploiement..."
 

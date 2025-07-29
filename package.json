@@ -43,6 +43,7 @@
     "bcryptjs": "^3.0.2",
     "lucide-react": "^0.525.0",
     "node-fetch": "^3.3.2",
+    "react-hook-form": "^7.61.1",
     "react-query": "^3.39.3"
   }
 }

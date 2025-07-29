@@ -9,10 +9,12 @@ import {
 } from "react-router-dom";
 import AdminLayout from "./components/admin/AdminLayout";
 import { DemoModeProvider } from "./components/admin/DemoModeProvider";
+import GuestOrderForm from "./components/forms/GuestOrderForm";
 import MainLayout from "./components/layout/MainLayout";
 import { ToastProvider } from "./components/layout/ToastProvider";
 import ModalNouveauProjet from "./components/modals/ModalNouveauProjet";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import ActivateAccountPage from "./pages/ActivateAccountPage";
 import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import AdminCommandes from "./pages/admin/AdminCommandes";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -26,6 +28,7 @@ import AdminUtilisateurs from "./pages/admin/AdminUtilisateurs";
 import BillingPage from "./pages/BillingPage";
 import DashboardPage from "./pages/DashboardPage";
 import FilesPage from "./pages/FilesPage";
+import ForgotPassword from "./pages/ForgotPassword";
 import HelpPage from "./pages/HelpPage";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
@@ -36,10 +39,9 @@ import PaymentCancelPage from "./pages/PaymentCancelPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import ProfilPage from "./pages/ProfilPage";
 import ProjectsPage from "./pages/ProjectsPage";
+import ResetPassword from "./pages/ResetPassword";
 import SettingsPage from "./pages/SettingsPage";
 import SignupPage from "./pages/SignupPage";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
 import "./styles/global.css";
 
 type SectionName =
@@ -92,8 +94,8 @@ const AppRoutes: React.FC = () => {
       <Route
         path="/"
         element={
-          <LandingPage 
-            onLoginClick={() => navigate("/login")} 
+          <LandingPage
+            onLoginClick={() => navigate("/login")}
             onSignupClick={() => navigate("/signup")}
           />
         }
@@ -126,8 +128,8 @@ const AppRoutes: React.FC = () => {
       <Route
         path="/signup"
         element={
-          <SignupPage 
-            onSignupSuccess={() => navigate("/app")} 
+          <SignupPage
+            onSignupSuccess={() => navigate("/app")}
             onBackToLogin={() => navigate("/login")}
             onBackToLanding={() => navigate("/")}
           />
@@ -138,12 +140,18 @@ const AppRoutes: React.FC = () => {
       <Route path="/pages/:slug" element={<StaticPageBySlug />} />
       <Route
         path="/payment/success"
-        element={<PaymentSuccessPage onBackToApp={() => {}} />}
+        element={<PaymentSuccessPage onBackToApp={() => navigate("/")} />}
+      />
+      <Route
+        path="/payment-success"
+        element={<PaymentSuccessPage onBackToApp={() => navigate("/")} />}
       />
       <Route
         path="/payment/cancel"
         element={<PaymentCancelPage onBackToApp={() => {}} />}
       />
+      <Route path="/commande-invitee" element={<GuestOrderForm />} />
+      <Route path="/activation/:token" element={<ActivateAccountPage />} />
 
       {/* Routes protégées */}
       {user ? (

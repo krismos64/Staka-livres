@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { TarifAPI } from "../../utils/api";
 import ErrorMessage from "../ui/ErrorMessage";
@@ -27,19 +28,19 @@ export default function Packs({ onSignupClick }: PacksProps) {
   });
 
   const { user } = useAuth();
+  const navigate = useNavigate();
+  // Utilitaire pour générer un slug à partir du nom
+  const getSlug = (nom: string) =>
+    nom
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9\-]/g, "");
 
   const handlePackClick = (packId: string) => {
-    console.log(`Pack sélectionné: ${packId}`);
-
-    if (!user) {
-      // Utilisateur non connecté - stocker le pack et rediriger vers signup
-      localStorage.setItem("selected_pack", packId);
-      if (onSignupClick) {
-        onSignupClick();
-      }
-    } else {
-      // Utilisateur connecté - rediriger vers checkout (TODO: implémenter plus tard)
-      console.log("TODO: Rediriger vers checkout avec packId:", packId);
+    const pack = packs.find((p) => p.id === packId);
+    if (pack) {
+      const slug = getSlug(pack.nom);
+      navigate(`/commande-invitee?pack=${slug}`);
     }
   };
 
@@ -116,7 +117,6 @@ export default function Packs({ onSignupClick }: PacksProps) {
                   </span>
                 </div>
               )}
-
 
               <div className="text-center mb-6">
                 <h3 className="text-lg font-bold mb-2">{pack.nom}</h3>

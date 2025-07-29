@@ -3,6 +3,7 @@ import { sendContactMessage, sendFreeSampleRequest } from "../controllers/public
 import { uploadMiddleware } from "../controllers/fileController";
 import { createPublicOrder, getPublicOrderById } from "../controllers/publicCommandeController";
 import { activateAccount, verifyActivationToken } from "../controllers/activationController";
+import { handleOrderFileUploads } from "../middleware/fileUpload";
 
 const router = Router();
 
@@ -40,7 +41,7 @@ router.post("/free-sample", uploadMiddleware.single("fichier"), sendFreeSampleRe
  * Créer une commande publique (tunnel invité)
  * Body: { prenom, nom, email, password, telephone?, adresse?, serviceId, consentementRgpd }
  */
-router.post("/order", createPublicOrder);
+router.post("/order", handleOrderFileUploads, createPublicOrder);
 
 /**
  * GET /public/order/:id
