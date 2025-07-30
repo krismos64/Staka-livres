@@ -37,8 +37,15 @@ Staka-livres/
 │   ├── dev-reset.sh           # 🔄 Reset complet environnement dev
 │   ├── docker-build.sh        # 🔨 Build multi-arch (ARM64/x64) + push
 │   ├── deploy-vps.sh          # 🚁 Déploiement VPS automatisé
-│   └── deployment/
-│       └── deploy-ovh-production.sh  # 📋 Setup complet VPS OVH
+│   ├── migrate-db.sh          # 🗄️ Migration base de données sécurisée (NOUVEAU)
+│   ├── migrate-db-reverse.sh  # 🔄 Migration inverse prod → dev (NOUVEAU)
+│   ├── build/
+│   │   └── docker-build.sh    # 🔧 Script build alternatif
+│   ├── deployment/
+│   │   ├── deploy-ovh-production.sh  # 📋 Setup complet VPS OVH
+│   │   └── deploy.sh          # 🚀 Script déploiement alternatif
+│   └── testing/
+│       └── run-e2e-tests.sh   # 🧪 Tests E2E automatisés (NOUVEAU)
 └── package.json               # 📝 Scripts npm unifiés + raccourcis
 ```
 
@@ -164,6 +171,35 @@ npm run docker:build:push
 ./scripts/dev-reset.sh
 ./scripts/dev-reset.sh --frontend-only  # Reset seulement frontend
 ./scripts/dev-reset.sh --keep-volumes   # Reset sans supprimer volumes
+```
+
+### Migration base de données sécurisée (NOUVEAU 2025)
+
+```bash
+# Migration dev → prod avec sauvegarde automatique
+npm run migrate:db
+./scripts/migrate-db.sh --force
+
+# Migration inverse prod → dev (synchronisation locale)
+npm run migrate:db:reverse
+./scripts/migrate-db-reverse.sh --dry-run
+
+# Options avancées migration
+./scripts/migrate-db.sh --schema-only     # Schéma uniquement
+./scripts/migrate-db.sh --dry-run         # Simulation
+./scripts/migrate-db.sh --source-env dev  # Source spécifique
+```
+
+### Tests E2E automatisés (NOUVEAU 2025)
+
+```bash
+# Exécution complète des tests E2E avec préparation DB
+./scripts/testing/run-e2e-tests.sh
+
+# Tests par niveau de criticité
+npm run test:e2e:critical    # Tests critiques uniquement
+npm run test:e2e:smoke      # Tests de fumée rapides
+npm run test:e2e:integration # Tests d'intégration complets
 ```
 
 ### Déploiement VPS automatisé
@@ -1202,6 +1238,86 @@ ssh root@51.254.102.133 'cd /opt/staka-livres && docker compose -f docker-compos
 scp nginx/sites/staka-livres.conf root@51.254.102.133:/opt/staka-livres/nginx/sites/
 scp docker-compose.prod.yml root@51.254.102.133:/opt/staka-livres/
 ```
+
+### 🗄️ **Nouveaux Scripts de Migration Database (Juillet 2025)**
+
+#### **Migration Sécurisée Dev → Prod**
+
+```bash
+# Script: ./scripts/migrate-db.sh
+# Fonctionnalités : Sauvegarde automatique + Migration sécurisée + Rollback
+
+# Migration standard avec sauvegarde
+./scripts/migrate-db.sh --force
+
+# Options avancées
+./scripts/migrate-db.sh --schema-only     # Structure uniquement
+./scripts/migrate-db.sh --dry-run         # Simulation sans modifications
+./scripts/migrate-db.sh --source-env dev  # Source spécifique
+
+# Variables requises dans .env.deploy
+VPS_HOST=51.254.102.133
+VPS_USER=root
+BACKUP_RETENTION_DAYS=7
+```
+
+#### **Migration Inverse Prod → Dev** 
+
+```bash
+# Script: ./scripts/migrate-db-reverse.sh  
+# Fonctionnalités : Synchronisation données production vers développement
+
+# Synchronisation complète prod → dev
+./scripts/migrate-db-reverse.sh --force
+
+# Simulation sans modifications  
+./scripts/migrate-db-reverse.sh --dry-run
+
+# Sauvegarde locale automatique avant sync
+# Rétention configurée : 7 jours par défaut
+```
+
+#### **Tests E2E Automatisés**
+
+```bash
+# Script: ./scripts/testing/run-e2e-tests.sh
+# Fonctionnalités : Préparation DB + Tests Cypress complets
+
+# Exécution complète avec logs colorés
+./scripts/testing/run-e2e-tests.sh
+
+# Le script exécute automatiquement :
+# 1. Vérification environnement
+# 2. Préparation base de données  
+# 3. Tests critique/smoke/integration
+# 4. Rapport de résultats
+# 5. Nettoyage post-tests
+```
+
+#### **Scripts Package.json Mis à Jour**
+
+```json
+{
+  "scripts": {
+    // Scripts existants...
+    "migrate:db": "./scripts/migrate-db.sh",
+    "migrate:db:schema": "./scripts/migrate-db.sh --schema-only", 
+    "migrate:db:dry": "./scripts/migrate-db.sh --dry-run",
+    "migrate:db:reverse": "./scripts/migrate-db-reverse.sh",
+    "migrate:db:reverse:dry": "./scripts/migrate-db-reverse.sh --dry-run",
+    "test:e2e": "./scripts/testing/run-e2e-tests.sh"
+  }
+}
+```
+
+#### **Sécurité et Bonnes Pratiques**
+
+✅ **Sauvegardes automatiques** : Avant chaque migration  
+✅ **Mode simulation** : `--dry-run` pour tous les scripts  
+✅ **Logs détaillés** : Couleurs + timestamps + progression  
+✅ **Rollback automatique** : En cas d'échec critique  
+✅ **Validation environnement** : Vérification prérequis  
+✅ **Rétention configurée** : 7 jours par défaut  
 
 ---
 
