@@ -352,4 +352,4 @@ CLAUDE.md
 .#*
 #*#
 .*.swp
-.*.swo 
+.*.swo .env.deploy
