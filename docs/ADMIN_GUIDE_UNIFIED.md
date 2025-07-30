@@ -972,7 +972,7 @@ const ADMIN_PERMISSIONS = {
 - ✅ **Audit des actions admin** : Toutes les opérations sensibles tracées avec détails
 - ✅ **Audit financier** : Accès aux factures, téléchargements PDF, rappels, annulations
 - ✅ **Audit des paiements** : Sessions créées, statuts consultés, webhooks traités
-- ✅ **Audit des fichiers** : Accès, téléchargements, modifications avec traçabilité
+- ✅ **Audit des fichiers** : Accès, téléchargements, modifications avec traçabilité (stockage local uniquement)
 - ✅ **Logs de sécurité** : Tentatives d'accès non autorisées, signatures invalides
 - ✅ **Middleware d'audit** : Intégration automatique sur toutes les routes sensibles
 
@@ -1052,7 +1052,7 @@ npm run test:hooks             # Tests hooks React Query
 - ✅ **Docker optimisé** : Multi-stage builds et images légères
 - ✅ **CI/CD pipeline** : Tests automatisés et déploiement continu
 - ✅ **Monitoring intégré** : Logs, métriques et alertes
-- ✅ **Backup automatique** : Sauvegarde base de données et fichiers
+- ✅ **Backup automatique** : Sauvegarde base de données et fichiers locaux
 - ✅ **SSL/TLS** : Chiffrement bout en bout
 - ✅ **CDN ready** : Assets optimisés pour distribution
 

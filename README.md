@@ -11,15 +11,15 @@
 
 **Staka Livres** est une plateforme web **enterprise-grade** dédiée aux **services de correction et d'édition de manuscrits**. Cette application monorepo sophistiquée offre une expérience complète aux auteurs avec authentification sécurisée, administration avancée, paiements Stripe intégrés et système de messagerie temps réel.
 
-**✨ Version Production - 27 Juillet 2025** : Application déployée en production sur [livrestaka.fr](https://livrestaka.fr/) avec infrastructure de tests enterprise-grade (34 tests E2E Cypress), architecture Docker optimisée, et nouveau composant FloatingBubbles interactif.
+**✨ Version Production - 30 Juillet 2025** : Application déployée en production sur [livrestaka.fr](https://livrestaka.fr/) avec infrastructure de tests enterprise-grade (34 tests E2E Cypress), architecture Docker optimisée, **système de fichiers local unifié** (AWS S3 supprimé), et nouveau composant FloatingBubbles interactif.
 
-### 📊 **Métriques du Projet (27 Juillet 2025)**
+### 📊 **Métriques du Projet (30 Juillet 2025)**
 
 | Composant                  | Détail                                 | Statut           |
 | -------------------------- | -------------------------------------- | ---------------- |
-| **📁 Contrôleurs Backend** | 23 contrôleurs spécialisés             | ✅ Production    |
+| **📁 Contrôleurs Backend** | 26 contrôleurs spécialisés             | ✅ Production    |
 | **🌐 Endpoints API**       | 70+ endpoints REST sécurisés           | ✅ Fonctionnels  |
-| **⚛️ Composants React**    | 72 composants modulaires              | ✅ Optimisés     |
+| **⚛️ Composants React**    | 77 composants modulaires              | ✅ Optimisés     |
 | **📄 Pages Frontend**      | 28 pages complètes + landing optimisée | ✅ Responsive    |
 | **🧪 Tests Backend**       | 56 tests (87% couverture)              | ✅ Robustes      |
 | **🧪 Tests Frontend**      | 9 fichiers + architecture séparée      | ✅ Optimisés     |
@@ -79,7 +79,7 @@
 - **Composant FloatingBubbles** interactif avec équipe d'experts
 - **Tarification dynamique** avec synchronisation Stripe
 - **Design responsive** mobile-first avec animations
-- **Upload fichiers** avec progression et gestion S3
+- **Upload fichiers** avec progression et **stockage local unifié**
 - **Navigation intelligente** avec persistance choix
 
 ---
@@ -124,7 +124,7 @@ Staka-livres/
 - **Express 4.18.2** + **Prisma ORM 6.10.1**
 - **MySQL 8.4+** avec optimisations performance
 - **JWT** + **bcryptjs** (12 rounds) + **Zod validation**
-- **Stripe 18.2.1** + **AWS S3 SDK 3.837.0**
+- **Stripe 18.2.1** + **Stockage local multer** (AWS S3 supprimé)
 - **SendGrid 8.1.5** + **PDFKit** pour facturation
 - **Vitest 3.2.4** pour tests unitaires/intégration
 
@@ -259,11 +259,10 @@ FROM_NAME="Staka Livres"
 SUPPORT_EMAIL="support@votre-domaine.com"
 ADMIN_EMAIL="admin@votre-domaine.com"
 
-# AWS S3 (optionnel pour uploads)
-AWS_ACCESS_KEY_ID="VOTRE_ACCESS_KEY"
-AWS_SECRET_ACCESS_KEY="VOTRE_SECRET_KEY"
-AWS_REGION="eu-west-3"
-AWS_S3_BUCKET="staka-livres-files"
+# Stockage des fichiers (local uniquement - AWS S3 supprimé)
+# Plus de configuration AWS nécessaire
+# Les fichiers sont stockés dans /backend/uploads/
+# Configuration automatique via multer
 ```
 
 ### 🧪 **Tests et Validation**
@@ -422,7 +421,7 @@ docker compose build --no-cache
 #### **Expérience Utilisateur Avancée**
 
 - **Navigation intelligente** avec persistance choix
-- **Upload fichiers** avec progression et gestion S3
+- **Upload fichiers** avec progression et **stockage local unifié**
 - **Notifications toast** pour feedback immédiat
 - **Modals interactives** pour actions critiques
 - **Animations Framer Motion** pour fluidité
@@ -480,13 +479,14 @@ docker compose build --no-cache
 - **[Consultation Booking](docs/CONSULTATION_BOOKING_GUIDE.md)** : Réservation consultations
 - **[Échantillon Gratuit](docs/FREE_SAMPLE_SYSTEM_GUIDE.md)** : Workflow échantillons
 - **[RGPD Contact](docs/RGPD_CONTACT_GUIDE.md)** : Conformité légale
-- **[Gestion Fichiers](docs/project-files-guide.md)** : Upload et gestion S3
+- **[Gestion Fichiers](docs/project-files-guide.md)** : Upload et stockage local
+- **[Migration Fichiers](docs/FILE_MANAGEMENT_MIGRATION.md)** : AWS S3 → Stockage local
 
 ---
 
 ## 🎯 **Roadmap & Évolutions**
 
-### ✅ **Version Production Déployée - 27 Juillet 2025**
+### ✅ **Version Production Déployée - 30 Juillet 2025**
 
 - **Application en production** : Déployée sur [livrestaka.fr](https://livrestaka.fr/)
 - **Infrastructure tests robuste** : 34 tests E2E Cypress + 39 tests backend
@@ -517,7 +517,7 @@ docker compose build --no-cache
 
 ## 🎉 **État du Projet**
 
-**✅ Application Production Déployée - 27 Juillet 2025**
+**✅ Application Production Déployée - 30 Juillet 2025**
 
 🏆 **Plateforme en production** sur [livrestaka.fr](https://livrestaka.fr/) avec infrastructure robuste et tests complets validés.
 
@@ -577,6 +577,13 @@ npm run docker:build:push # Build + push registry
 ```bash
 npm run deploy:vps     # Déploiement VPS automatisé
 npm run deploy:vps:dry # Simulation déploiement
+
+# Migration base de données
+npm run migrate:db             # Migration complète
+npm run migrate:db:schema      # Migration schéma uniquement  
+npm run migrate:db:dry         # Simulation migration
+npm run migrate:db:reverse     # Rollback migration
+npm run migrate:db:reverse:dry # Simulation rollback
 ```
 
 ---

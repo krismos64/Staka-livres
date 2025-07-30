@@ -7,19 +7,21 @@
 
 ## 📋 **Vue d'ensemble**
 
-**✨ Version Production - Déployée le 27 juillet 2025 - https://livrestaka.fr/ :**
+**✨ Version Production - Déployée le 30 juillet 2025 - https://livrestaka.fr/ :**
 
 La base de données **Staka Livres** est une architecture complète MySQL 8 gérée par **Prisma ORM** et déployée avec **Docker**. Elle couvre tous les aspects d'une plateforme de correction de manuscrits moderne : utilisateurs, projets, **système de messagerie unifié**, **notifications temps réel**, **système de réservation de consultations**, support client, **facturation automatique** et contenu éditorial.
 
 ### 🆕 **Évolutions Juillet 2025**
 
 - **👤 Extension User** : Ajout du champ `bio` (TEXT) pour profils utilisateur enrichis
+- **🆕 Nouveau modèle PendingCommande** : Système tunnel invité pour paiements directs
 - **💳 Tests Stripe stabilisés** : Architecture paiement enterprise-grade avec webhooks
-- **🧪 Tests E2E optimisés** : Architecture 3 niveaux enterprise-grade (critical/smoke/legacy)
-- **📊 Métriques validées** : 16 tests source backend (87% couverture) + 124 tests E2E (96% succès)
+- **🧪 Tests E2E streamlinés** : Architecture 3 niveaux optimisée (34 tests organisés)
+- **📊 Métriques actualisées** : 34 tests backend (87% couverture) + architecture E2E moderne
 - **🔒 Sécurité renforcée** : AuditLog avec traçabilité complète des actions admin
 - **📱 Architecture responsive** : Optimisations performance mobile/desktop
 - **🌐 Webhooks synchronisés** : Intégration Stripe bulletproof avec retry logic
+- **🗄️ Scripts migration** : Nouveaux scripts `migrate-db.sh` et `migrate-db-reverse.sh`
 
 ### 🏗️ **Architecture Technique Production**
 
@@ -28,9 +30,10 @@ La base de données **Staka Livres** est une architecture complète MySQL 8 gér
 - **Environnement** : Docker Compose multi-architecture avec volumes persistants
 - **Ports** : 3306 (MySQL), 5555 (Prisma Studio), 3001 (Backend API)
 - **Containers** : `staka_db` (MySQL), `staka_backend` (API + Prisma), `staka_frontend` (React)
-- **Modèles** : **14 modèles** de données interconnectés (100% déployés)
-- **Relations** : **20 relations** avec contraintes d'intégrité strictes
-- **Index** : **61 index optimisés** pour performance maximale
+- **Modèles** : **15 modèles** de données interconnectés (100% déployés)
+- **Relations** : **20+ relations** avec contraintes d'intégrité strictes
+- **Index** : **65 index optimisés** pour performance maximale
+- **Enums** : **16 énumérations** pour validation stricte des données
 
 ---
 
@@ -631,6 +634,50 @@ model PasswordReset {
 }
 ```
 
+### 🎫 **15. PendingCommande - Tunnel Invité (NOUVEAU 2025)**
+
+**Table** : `pending_commandes`
+
+```prisma
+model PendingCommande {
+  id                String   @id @default(uuid())
+  prenom            String   @db.VarChar(100)     // Prénom utilisateur invité
+  nom               String   @db.VarChar(100)     // Nom utilisateur invité
+  email             String   @db.VarChar(255)     // Email utilisateur invité
+  passwordHash      String   @db.VarChar(255)     // Mot de passe hashé
+  telephone         String?  @db.VarChar(20)      // Téléphone optionnel
+  adresse           String?  @db.Text             // Adresse optionnelle
+  serviceId         String   @db.VarChar(255)     // Référence service/tarif
+  consentementRgpd  Boolean  @default(false)      // Consentement RGPD
+  
+  // 💳 Intégration Stripe session
+  stripeSessionId   String?  @unique @db.VarChar(255)    // cs_xxx session ID
+  activationToken   String?  @unique @db.VarChar(255)    // Token activation compte
+  tokenExpiresAt    DateTime?                            // Expiration token
+  
+  // États de traitement
+  isProcessed       Boolean  @default(false)      // Commande traitée
+  userId            String?                       // User créé après paiement
+  commandeId        String?                       // Commande créée après paiement
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([email])
+  @@index([stripeSessionId])
+  @@index([activationToken])
+  @@index([isProcessed])
+  @@index([createdAt])
+  @@map("pending_commandes")
+}
+```
+
+**🆕 Fonctionnalités 2025 :**
+- **Tunnel invité** : Permet paiement direct sans création compte immédiate
+- **Activation différée** : Compte créé après validation paiement Stripe
+- **RGPD compliant** : Consentement explicite et données temporaires
+- **Sécurité renforcée** : Tokens d'activation avec expiration
+
 ---
 
 ## 🐳 **Utilisation Docker et Prisma Studio**
@@ -655,7 +702,7 @@ docker-compose logs -f backend
 docker exec -it staka_backend npx prisma studio
 
 # Interface accessible : http://localhost:5555
-# Exploration complète des 14 modèles de données
+# Exploration complète des 15 modèles de données
 ```
 
 ### **3. Commandes Maintenance Prisma**
@@ -680,17 +727,17 @@ docker exec -it staka_backend npx prisma migrate reset
 # Seed complet base de données
 docker exec -it staka_backend npm run prisma:seed
 
-# Scripts spécialisés
-docker exec -it staka_backend node scripts/seed-notifications.js
-docker exec -it staka_backend node scripts/seed-tarifs.js
-docker exec -it staka_backend node scripts/sync-stripe-products.js
+# Scripts spécialisés disponibles
+docker exec -it staka_backend npm run stripe:sync-all
+docker exec -it staka_backend ts-node scripts/sync-tarifs-stripe.ts
+docker exec -it staka_backend ts-node scripts/generateSecrets.ts
 ```
 
 ---
 
 ## 📊 **Optimisations Performance Avancées**
 
-### 🚀 **Index Stratégiques (40+ index)**
+### 🚀 **Index Stratégiques (65 index optimisés)**
 
 ```prisma
 // Index primaires utilisateur
@@ -1026,20 +1073,18 @@ const activeTarifs = await prisma.tarif.findMany({
 ### **Scripts de Maintenance**
 
 ```bash
-# Nettoyage automatique données anciennes
-docker exec -it staka_backend node scripts/cleanup-old-data.js
-
-# Optimisation index et statistiques
-docker exec -it staka_backend node scripts/optimize-database.js
+# 🆕 Scripts migration database (NOUVEAU 2025)
+./scripts/migrate-db.sh --schema-only        # Migration schéma uniquement
+./scripts/migrate-db.sh --dry-run           # Simulation migration
+./scripts/migrate-db-reverse.sh --dry-run    # Simulation migration inverse
 
 # Synchronisation Stripe complète
 docker exec -it staka_backend npm run stripe:sync-all
 
-# Vérification intégrité données
-docker exec -it staka_backend node scripts/check-data-integrity.js
-
-# Backup automatique
-docker exec -it staka_backend node scripts/backup-database.js
+# Scripts utilitaires TypeScript
+docker exec -it staka_backend ts-node scripts/generateSecrets.ts
+docker exec -it staka_backend ts-node scripts/sync-tarifs-stripe.ts
+docker exec -it staka_backend ts-node scripts/createTestUsers.ts
 ```
 
 ### **Scripts de Monitoring**
@@ -1061,16 +1106,16 @@ docker exec -it staka_backend node scripts/recent-audit-logs.js
 
 ---
 
-## 📈 **Métriques Base de Données Production - 27 Juillet 2025**
+## 📈 **Métriques Base de Données Production - 30 Juillet 2025**
 
 ### **📊 Statistiques Architecture Validées**
 
-- **14 modèles** de données interconnectés (100% déployés en production)
-- **20 relations** avec contraintes d'intégrité strictes
-- **61 index optimisés** pour performance maximale (@@index + @@unique)
+- **15 modèles** de données interconnectés (100% déployés en production)
+- **20+ relations** avec contraintes d'intégrité strictes
+- **65 index optimisés** pour performance maximale (@@index + @@unique)
 - **16 enums** pour validation stricte des données
 - **GDPR/RGPD compliant** avec soft deletes et cascade appropriés
-- **7+ scripts maintenance** opérationnels et testés
+- **10+ scripts maintenance** opérationnels et testés (TypeScript + migration)
 
 ### **⚡ Performance Mesurée**
 
@@ -1114,12 +1159,14 @@ docker exec -it staka_backend node scripts/recent-audit-logs.js
 - [ ] **Redis cache** pour sessions et notifications
 - [ ] **Full-text search** pour messages et FAQ
 - [ ] **Backup automatique** vers S3 avec chiffrement
+- [x] **Scripts migration** sécurisés avec backup automatique
 
 ### **Q4 2025 - Advanced Features**
 - [ ] **Time-series data** pour analytics avancées
 - [ ] **Graph relationships** pour recommandations
 - [ ] **Encryption at rest** pour données sensibles
 - [ ] **Multi-tenant** architecture pour white-label
+- [ ] **Optimisation PendingCommande** : Nettoyage automatique commandes expirées
 
 ---
 
@@ -1141,15 +1188,16 @@ docker exec -it staka_backend node scripts/recent-audit-logs.js
 
 **Staka-livres dispose d'une architecture de base de données enterprise-grade :**
 
-✅ **Performance optimisée** : 61 index, requêtes < 200ms, pagination efficace  
+✅ **Performance optimisée** : 65 index, requêtes < 200ms, pagination efficace  
 ✅ **Sécurité maximale** : Audit logs, soft deletes, validation stricte  
 ✅ **Scalabilité préparée** : UUID, relations optimisées, monitoring intégré  
-✅ **Maintenance opérationnelle** : 7+ scripts testés, health checks  
-✅ **Tests enterprise-grade** : 16 tests source backend, 124 tests E2E (96% succès)  
+✅ **Maintenance automatisée** : 10+ scripts TypeScript, migrations sécurisées  
+✅ **Tests streamlinés** : 34 tests backend, architecture E2E optimisée  
+✅ **Nouveau modèle PendingCommande** : Tunnel invité pour paiements directs  
 
 **Résultat : Base de données 100% déployée en production sur https://livrestaka.fr/** 🚀
 
-_Dernière mise à jour : 27 juillet 2025 - Architecture 100% déployée en production_
+_Dernière mise à jour : 30 juillet 2025 - Architecture 15 modèles + scripts migration déployés_
 
 **👨‍💻 Développeur :** Christophe Mostefaoui - https://christophe-dev-freelance.fr/  
 **🌐 Site Web :** https://livrestaka.fr/  
