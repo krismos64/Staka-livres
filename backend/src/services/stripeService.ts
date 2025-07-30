@@ -1,9 +1,9 @@
 import Stripe from "stripe";
 
-// Mode développement : si la clé Stripe n'est pas une vraie clé de test
+// Mode développement : si la clé Stripe n'est pas configurée
 const isDevelopmentMock =
   !process.env.STRIPE_SECRET_KEY ||
-  !process.env.STRIPE_SECRET_KEY.startsWith("sk_test_");
+  process.env.STRIPE_SECRET_KEY === "your_stripe_secret_key_here";
 
 let stripe: Stripe | null = null;
 

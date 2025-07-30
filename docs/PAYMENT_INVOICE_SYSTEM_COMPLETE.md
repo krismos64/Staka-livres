@@ -11,19 +11,32 @@
 
 > **Guide unifié consolidé** : Système complet de paiement Stripe + génération automatique de factures PDF + stockage local sécurisé - **déployé et opérationnel en production**. Migration S3→Local terminée juillet 2025.
 
+## 🎯 **CORRECTIF CRITIQUE STRIPE - 30 JUILLET 2025**
+
+**✅ PROBLÈME RÉSOLU** : Les paiements Stripe fonctionnent maintenant **100% en production**
+
+**Corrections techniques appliquées** :
+- **Mode Stripe production activé** : Clés `sk_live_*` opérationnelles (fin du mode mock)
+- **Webhook configuré** : `https://livrestaka.fr/payments/webhook` fonctionnel
+- **Configuration nginx** : Route `/payments/webhook` ajoutée pour proxy backend
+- **Variables production** : `.env.prod` mis à jour avec secrets Stripe valides
+- **Tests validation** : Flux Stripe → Backend → Webhook → Facturation confirmé
+
+**Impact** : Les clients peuvent maintenant effectuer de **vrais paiements** sur livrestaka.fr
+
 ---
 
 ## 📋 Vue d'ensemble
 
 Le système de paiement et facturation de Staka Livres est une solution complète et moderne qui intègre :
 
-### 🎯 **Fonctionnalités Core Production**
-- **🔌 Webhooks Stripe sécurisés** : Validation cryptographique, double flux (utilisateurs + invités)
-- **🧾 Facturation automatique** : Génération PDF instantanée post-paiement avec pdf-lib
-- **💾 Stockage local sécurisé** : Upload `/uploads/invoices/` avec noms UUID (migration S3→Local terminée)
-- **⚡ Interface Admin** : 8 endpoints dédiés + Dashboard complet
-- **🎨 Frontend React** : PaymentSuccessPage modernisé + Hooks React Query optimisés
-- **📧 Notifications centralisées** : EventBus + Templates + Queue emails + Activation auto
+### 🎯 **Fonctionnalités Core Production** ✅ **OPÉRATIONNELLES 30 JUILLET 2025**
+- **🔌 Webhooks Stripe sécurisés** : Validation cryptographique, double flux (utilisateurs + invités) ✅ **PRODUCTION**
+- **🧾 Facturation automatique** : Génération PDF instantanée post-paiement avec pdf-lib ✅ **FONCTIONNEL**
+- **💾 Stockage local sécurisé** : Upload `/uploads/invoices/` avec noms UUID (migration S3→Local terminée) ✅ **OPÉRATIONNEL**
+- **⚡ Interface Admin** : 8 endpoints dédiés + Dashboard complet ✅ **DISPONIBLE**
+- **🎨 Frontend React** : PaymentSuccessPage modernisé + Hooks React Query optimisés ✅ **OPTIMISÉ**
+- **📧 Notifications centralisées** : EventBus + Templates + Queue emails + Activation auto ✅ **ACTIF**
 
 ### 🏗️ **Architecture Global Workflow**
 ```
@@ -34,25 +47,30 @@ Client Paiement → Stripe Checkout → Webhook Sécurisé → PDF Génération 
   + Simulation    Double Flux      User Creation    Professional  UUID Files   + Activation
 ```
 
-### 🚀 **Métriques Production 2025**
+### 🚀 **Métriques Production 2025** ✅ **VALIDÉES 30 JUILLET 2025**
 - ✅ **1756+ lignes de tests** validés (Coverage 90%+)
 - ✅ **Migration S3→Local terminée** : 3 factures PDF en production
 - ✅ **Double flux paiement** : Utilisateurs connectés + Commandes invités
 - ✅ **Performance optimisée** : Traitement complet < 1 seconde
 - ✅ **Sécurité renforcée** : Validation cryptographique + stockage local sécurisé
 - ✅ **Mode mock intelligent** : Développement + simulation webhook
+- ✅ **CORRECTIF STRIPE** : Mode production activé + webhook `https://livrestaka.fr/payments/webhook`
+- ✅ **TESTS VALIDATION** : Paiements réels confirmés opérationnels
 
 ---
 
 ## 🔌 1. Webhooks Stripe Production
 
-### ✅ **Architecture Webhook Validée**
+### ✅ **Architecture Webhook Validée** ✅ **CORRECTIF APPLIQUÉ 30 JUILLET 2025**
 
-**Status production vérifié (30 Juillet 2025) :**
+**Status production vérifié et corrigé (30 Juillet 2025) :**
 - ✅ **Implémentation moderne** : `src/routes/payments/webhook.ts` (déployée en production)
 - ✅ **Duplication résolue** : `paymentController.handleWebhook` SUPPRIMÉ
 - ✅ **Route conflictuelle** : `/webhook` dans `payments.ts` SUPPRIMÉE  
 - ✅ **Configuration serveur** : `app.ts` avec routeur séparé prioritaire
+- ✅ **CORRECTIF CRITIQUE** : Mode Stripe production activé (fin du mode mock)
+- ✅ **NGINX CONFIGURÉ** : Route `/payments/webhook` ajoutée pour proxy backend
+- ✅ **URL VALIDÉE** : `https://livrestaka.fr/payments/webhook` opérationnelle
 
 ### 🔐 **Sécurité Cryptographique**
 
@@ -795,10 +813,10 @@ npm run test:e2e:payment        # Cypress paiement → facture → download
 ### 🔧 **Variables d'Environnement Unifiées**
 
 ```bash
-# === STRIPE PRODUCTION ===
-STRIPE_SECRET_KEY=sk_live_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_PUBLISHABLE_KEY=pk_live_...
+# === STRIPE PRODUCTION ✅ OPÉRATIONNEL 30 JUILLET 2025 ===
+STRIPE_SECRET_KEY=sk_live_...              # ✅ Mode production activé
+STRIPE_WEBHOOK_SECRET=whsec_...            # ✅ Webhook /payments/webhook configuré
+STRIPE_PUBLISHABLE_KEY=pk_live_...         # ✅ Frontend opérationnel
 
 # === STOCKAGE LOCAL PDF (Migration S3→Local terminée) ===
 # DEPRECATED: AWS_ACCESS_KEY_ID (Migration terminée juillet 2025)
@@ -1145,7 +1163,7 @@ const alerts = {
 
 Le **Système Paiement & Facturation Staka Livres 2025** est un système complet, moderne et production-ready qui intègre parfaitement :
 
-### ✅ **Réalisations Majeures**
+### ✅ **Réalisations Majeures** ✅ **MISES À JOUR 30 JUILLET 2025**
 - **Migration S3→Local réussie** : Stockage filesystem sécurisé, 3 factures produites
 - **Double flux paiement** : Utilisateurs connectés + workflow invités complet
 - **Architecture unifiée** : Vision système complète avec création user automatique
@@ -1153,6 +1171,9 @@ Le **Système Paiement & Facturation Staka Livres 2025** est un système complet
 - **Tests exhaustifs** : 1756+ lignes validant filesystem + workflows
 - **Performance optimisée** : Traitement invité complet < 6 secondes
 - **Sécurité enterprise** : Validation cryptographique + accès filesystem contrôlé + JWT
+- **✅ CORRECTIF STRIPE APPLIQUÉ** : Paiements réels 100% opérationnels en production
+- **✅ WEBHOOK CONFIGURÉ** : URL `https://livrestaka.fr/payments/webhook` fonctionnelle
+- **✅ NGINX OPTIMISÉ** : Proxy `/payments/webhook` vers backend ajouté
 
 ### 🚀 **Système Évolutif**
 - **Monitoring complet** : Logs structurés + métriques filesystem + alertes spécialisées
