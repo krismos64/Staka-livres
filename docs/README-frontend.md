@@ -11,7 +11,7 @@
 ![OVH](https://img.shields.io/badge/Deployed-OVH%20Cloud-blue)
 ![Live](https://img.shields.io/badge/Live-livrestaka.fr-blue)
 
-**📅 Mis à jour le 27 juillet 2025 par Christophe Mostefaoui**  
+**📅 Mis à jour le 30 juillet 2025 par Christophe Mostefaoui**  
 **🌐 Production URL** : [livrestaka.fr](https://livrestaka.fr/)  
 **👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
 
@@ -21,13 +21,13 @@
 
 Frontend React pour **Staka Livres**, plateforme professionnelle de correction de manuscrits **déployée en production** sur [livrestaka.fr](https://livrestaka.fr/) via **VPS OVH** et Docker. Architecture moderne avec React 18, TypeScript, Tailwind CSS, React Query et système de tests séparés CI/CD vs local.
 
-### 🏆 **Métriques Frontend (27 Juillet 2025)**
+### 🏆 **Métriques Frontend (30 Juillet 2025)**
 
 | Composant            | Détail                                             | Statut              |
 | -------------------- | -------------------------------------------------- | ------------------- |
-| **⚛️ Composants**    | 72 composants modulaires TypeScript               | ✅ Production Ready |
-| **🎣 Hooks**         | 31 hooks personnalisés React Query                | ✅ Optimisés        |
-| **📄 Pages**         | 28 pages complètes responsive                     | ✅ Production Ready |
+| **⚛️ Composants**    | 76 composants modulaires TypeScript               | ✅ Production Ready |
+| **🎣 Hooks**         | 32 hooks personnalisés React Query                | ✅ Optimisés        |
+| **📄 Pages**         | 29 pages complètes responsive                     | ✅ Production Ready |
 | **🧪 Tests**         | 9 fichiers + architecture séparée (85% couverture)| ✅ Robustes         |
 | **🔍 Tests E2E**     | 34 tests Cypress 3 niveaux                        | ✅ Enterprise       |
 | **🎨 Design System** | Tailwind + Framer Motion + FloatingBubbles        | ✅ Moderne          |
@@ -43,59 +43,95 @@ Frontend React pour **Staka Livres**, plateforme professionnelle de correction d
 ```
 frontend/
 ├── src/
-│   ├── components/                 # 72 composants modulaires
-│   │   ├── admin/                 # 9 composants administration
+│   ├── components/                 # 76 composants modulaires
+│   │   ├── admin/                 # 10 composants administration
 │   │   │   ├── AdminLayout.tsx    # Layout admin moderne sidebar
 │   │   │   ├── RequireAdmin.tsx   # Protection routes admin
 │   │   │   ├── DemoModeProvider.tsx # Mode démonstration pro
 │   │   │   ├── UserTable.tsx      # Table utilisateurs WCAG
 │   │   │   ├── SearchAndFilters.tsx # Recherche avancée
 │   │   │   ├── ConfirmationModals.tsx # Modales RGPD
-│   │   │   └── ... (6 autres composants)
-│   │   ├── billing/               # 8 composants facturation
+│   │   │   ├── StatCard.tsx       # Cartes statistiques
+│   │   │   ├── CommandeTable.tsx  # Table commandes admin
+│   │   │   ├── CommandeStatusSelect.tsx # Sélecteur statut
+│   │   │   └── AdminCommandeFilesModal.tsx # Modal fichiers
+│   │   ├── billing/               # 7 composants facturation
 │   │   │   ├── CurrentInvoiceCard.tsx # Facture courante
 │   │   │   ├── InvoiceHistoryCard.tsx # Historique
 │   │   │   ├── PaymentMethodsCard.tsx # Moyens paiement
 │   │   │   ├── PaymentModal.tsx   # Modal paiement Stripe
-│   │   │   └── ... (4 autres composants)
-│   │   ├── common/                # 8 composants génériques
+│   │   │   ├── InvoiceDetailsModal.tsx # Détails facture
+│   │   │   ├── AnnualSummaryCard.tsx # Résumé annuel
+│   │   │   └── SupportCard.tsx    # Carte support
+│   │   ├── common/                # 10 composants génériques
 │   │   │   ├── Notifications.tsx  # Clochette notifications
 │   │   │   ├── LoadingSpinner.tsx # Spinners loading
-│   │   │   ├── ErrorBoundary.tsx  # Gestion erreurs React
-│   │   │   └── ... (5 autres composants)
-│   │   ├── forms/                 # 6 composants formulaires
+│   │   │   ├── Modal.tsx          # Modal de base
+│   │   │   ├── ConfirmationModal.tsx # Confirmations
+│   │   │   ├── Loader.tsx         # Chargeur simple
+│   │   │   ├── ErrorMessage.tsx   # Messages d'erreur
+│   │   │   ├── EmptyState.tsx     # États vides
+│   │   │   ├── SkeletonLoader.tsx # Skeleton loading
+│   │   │   ├── ScrollToTopButton.tsx # Bouton scroll
+│   │   │   └── ChatWidget.tsx     # Widget chat
+│   │   ├── forms/                 # 5 composants formulaires
 │   │   │   ├── LoginForm.tsx      # Formulaire connexion
 │   │   │   ├── SignupForm.tsx     # Formulaire inscription
-│   │   │   ├── ContactForm.tsx    # Formulaire contact
-│   │   │   └── ... (3 autres composants)
-│   │   ├── landing/               # 16 composants landing page
+│   │   │   ├── MessageInput.tsx   # Input messages
+│   │   │   ├── FileUploadSection.tsx # Section upload
+│   │   │   └── GuestOrderForm.tsx # Formulaire invité
+│   │   ├── landing/               # 15 composants landing page
 │   │   │   ├── Hero.tsx           # Section héro principale
 │   │   │   ├── Navigation.tsx     # Navigation sticky
 │   │   │   ├── PricingCalculator.tsx # Calculateur tarifs
 │   │   │   ├── FreeSample.tsx     # Échantillon gratuit
 │   │   │   ├── Contact.tsx        # Section contact
 │   │   │   ├── FloatingBubbles.tsx # Animation bulles expertes (NOUVEAU)
-│   │   │   └── ... (10 autres composants)
-│   │   ├── layout/                # 8 composants structure
+│   │   │   ├── Services.tsx       # Services offerts
+│   │   │   ├── Testimonials.tsx   # Témoignages clients
+│   │   │   ├── FAQ.tsx            # Questions fréquentes
+│   │   │   ├── Footer.tsx         # Pied de page
+│   │   │   ├── Packs.tsx          # Packs de services
+│   │   │   ├── About.tsx          # À propos
+│   │   │   ├── Blog.tsx           # Section blog
+│   │   │   ├── Excellence.tsx     # Excellence section
+│   │   │   └── TrustIndicators.tsx # Indicateurs confiance
+│   │   ├── layout/                # 6 composants structure
 │   │   │   ├── Header.tsx         # En-tête application
 │   │   │   ├── Sidebar.tsx        # Barre latérale
-│   │   │   ├── Footer.tsx         # Pied de page
-│   │   │   └── ... (5 autres composants)
-│   │   ├── messages/              # 6 composants messagerie
+│   │   │   ├── MainLayout.tsx     # Layout principal
+│   │   │   ├── LayoutLanding.tsx  # Layout landing
+│   │   │   ├── UserMenu.tsx       # Menu utilisateur
+│   │   │   └── ToastProvider.tsx  # Provider toast
+│   │   ├── messages/              # 3 composants messagerie
 │   │   │   ├── ConversationList.tsx # Liste conversations
 │   │   │   ├── MessageThread.tsx  # Thread messages
-│   │   │   ├── MessageItem.tsx    # Affichage message
-│   │   │   └── ... (3 autres composants)
-│   │   ├── modals/                # 9 composants modales
-│   │   │   ├── ConsultationModal.tsx # Réservation consultation
+│   │   │   └── MessageItem.tsx    # Affichage message
+│   │   ├── modals/                # 13 composants modales
+│   │   │   ├── PackSelectionModal.tsx # Sélection pack (NOUVEAU)
 │   │   │   ├── PaymentModal.tsx   # Modal paiement
-│   │   │   ├── ConfirmModal.tsx   # Confirmations
-│   │   │   └── ... (6 autres composants)
-│   │   └── project/               # 4 composants projets
-│   │       ├── FileItem.tsx       # Affichage fichier
-│   │       ├── UploadButton.tsx   # Upload S3
-│   │       └── ... (2 autres composants)
-│   ├── hooks/                     # 31 hooks React Query
+│   │   │   ├── NewMessageModal.tsx # Nouveau message
+│   │   │   ├── ModalConsultationBooking.tsx # Réservation
+│   │   │   ├── DeleteProjectModal.tsx # Suppression projet
+│   │   │   ├── EditProjectModal.tsx # Édition projet
+│   │   │   ├── ProjectDetailsModal.tsx # Détails projet
+│   │   │   ├── RateProjectModal.tsx # Notation projet
+│   │   │   ├── AvatarUploadModal.tsx # Upload avatar
+│   │   │   ├── PackIntegralEstimationModal.tsx # Devis pack
+│   │   │   ├── ModalNouveauProjet.tsx # Nouveau projet
+│   │   │   ├── DeleteAccountModal.tsx # Suppression compte
+│   │   │   └── DeactivateAccountModal.tsx # Désactivation
+│   │   ├── project/               # 2 composants projets
+│   │   │   ├── ProjectCard.tsx    # Carte projet
+│   │   │   └── RecentActivity.tsx # Activité récente
+│   │   ├── ui/                    # 2 composants UI base
+│   │   │   ├── ErrorMessage.tsx   # Message erreur
+│   │   │   └── Loader.tsx         # Chargeur UI
+│   │   └── autres/                # 4 composants divers
+│   │       ├── MessageAttachments.tsx # Pièces jointes
+│   │       ├── FileUpload.tsx     # Upload fichier
+│   │       └── AdminIdentitySelector.tsx # Sélecteur admin
+│   ├── hooks/                     # 32 hooks React Query
 │   │   ├── useAuth.ts             # Authentification JWT
 │   │   ├── useAdminUsers.ts       # Gestion utilisateurs admin
 │   │   ├── useAdminCommandes.ts   # Gestion commandes admin
@@ -104,8 +140,9 @@ frontend/
 │   │   ├── useMessages.ts         # Messagerie client
 │   │   ├── useInvoices.ts         # Facturation
 │   │   ├── usePricing.ts          # Tarification dynamique
+│   │   ├── useUserPreferences.ts  # Préférences utilisateur (NOUVEAU)
 │   │   └── ... (23 autres hooks)
-│   ├── pages/                     # 28 pages complètes
+│   ├── pages/                     # 29 pages complètes
 │   │   ├── admin/                 # 10 pages administration
 │   │   │   ├── AdminDashboard.tsx # Dashboard KPIs
 │   │   │   ├── AdminUtilisateurs.tsx # Gestion utilisateurs
@@ -113,7 +150,10 @@ frontend/
 │   │   │   ├── AdminFactures.tsx  # Gestion factures
 │   │   │   ├── AdminStatistiques.tsx # Analytics
 │   │   │   ├── AdminAuditLogs.tsx # Logs audit
-│   │   │   └── ... (4 autres pages admin)
+│   │   │   ├── AdminMessages.tsx  # Messagerie admin
+│   │   │   ├── AdminFAQ.tsx       # Gestion FAQ
+│   │   │   ├── AdminTarifs.tsx    # Gestion tarifs
+│   │   │   └── AdminPages.tsx     # Gestion pages
 │   │   ├── LandingPage.tsx        # Page d'accueil marketing
 │   │   ├── LoginPage.tsx          # Page connexion
 │   │   ├── SignupPage.tsx         # Page inscription
@@ -122,6 +162,7 @@ frontend/
 │   │   ├── MessagesPage.tsx       # Page messagerie
 │   │   ├── NotificationsPage.tsx  # Page notifications
 │   │   ├── HelpPage.tsx           # Page aide client
+│   │   ├── PaymentSuccessPage.tsx # Succès paiement (NOUVEAU)
 │   │   └── ... (10 autres pages)
 │   ├── contexts/                  # Contextes React
 │   │   ├── AuthContext.tsx        # Contexte authentification
@@ -1888,7 +1929,7 @@ volumes:
 ```json
 {
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
+    "dev": "vite --host 0.0.0.0 --port 3000",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext js,jsx,ts,tsx --report-unused-disable-directives --max-warnings 0",
@@ -1907,9 +1948,11 @@ volumes:
     "test:e2e:smoke": "cypress run --config-file cypress.config.smoke.cjs",
     "test:e2e:integration": "cypress run --spec 'cypress/e2e/integration/**/*.cy.{js,jsx,ts,tsx}'",
     "test:e2e:payment": "cypress run --spec 'cypress/e2e/critical/payment-*.cy.ts,cypress/e2e/integration/*payment*.cy.ts'",
+    "test:e2e:docker": "docker-compose up -d && cypress run && docker-compose down",
     "test:e2e:ci": "npm run test:e2e:critical && npm run test:e2e:smoke",
     "test:e2e:local": "npm run test:e2e:critical && npm run test:e2e:integration",
-    "test:e2e:all": "npm run test:e2e:critical && npm run test:e2e:smoke && npm run test:e2e:integration"
+    "test:e2e:all": "npm run test:e2e:critical && npm run test:e2e:smoke && npm run test:e2e:integration",
+    "test:e2e:payment-only": "cypress run --spec 'cypress/e2e/critical/payment-essential.cy.ts'"
   }
 }
 ```
@@ -1944,7 +1987,7 @@ npm run type-check       # Vérification TypeScript
 
 ```bash
 # Développement
-npm run dev              # Serveur dev Vite (port 5173)
+npm run dev              # Serveur dev Vite (port 3000)
 npm run preview          # Preview build production
 
 # Production
@@ -2150,5 +2193,6 @@ npx lighthouse http://localhost:3001 --view
 
 **✨ Développé par [Christophe Mostefaoui](https://christophe-dev-freelance.fr/) - Juillet 2025**  
 **🎨 Frontend React enterprise-grade déployé sur [livrestaka.fr](https://livrestaka.fr/)**  
-**⚛️ 72 composants + 31 hooks + 28 pages production-ready avec 85% coverage tests**  
+**⚛️ 76 composants + 32 hooks + 29 pages production-ready avec 85% coverage tests**  
+**🆕 Nouvelles fonctionnalités** : FloatingBubbles animation + PackSelectionModal + PaymentSuccessPage optimisée  
 **📧 Contact production** : contact@staka.fr

@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useAuth } from "../../contexts/AuthContext";
-import { buildApiUrl } from "../../utils/api";
+import { buildApiUrl, getAuthHeaders } from "../../utils/api";
 import { useToast } from "../layout/ToastProvider";
 import { usePricing } from "../landing/hooks/usePricing";
+import FileUploadSection, { FileAttachment } from "../forms/FileUploadSection";
 
 // Schéma de validation pour utilisateur connecté (moins de champs requis)
 const userProjectSchema = z.object({
@@ -43,6 +44,7 @@ export default function PackSelectionModal({
 }: PackSelectionModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPageInput, setShowPageInput] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
   const { showToast } = useToast();
   const { user } = useAuth();
   
@@ -111,6 +113,7 @@ export default function PackSelectionModal({
   useEffect(() => {
     if (isOpen) {
       reset();
+      setAttachedFiles([]);
     }
   }, [isOpen, reset]);
 
@@ -132,23 +135,51 @@ export default function PackSelectionModal({
         prenom: user.prenom,
         nom: user.nom,
         email: user.email,
-        telephone: user.telephone || "",
-        adresse: user.adresse || "",
       };
+
+      // Debug: afficher les données avant envoi
+      console.log('📝 [PACK MODAL] Données à envoyer:', orderData);
+      console.log('📎 [PACK MODAL] Fichiers attachés:', attachedFiles.length);
+
+      // Créer FormData pour supporter les fichiers
+      const formData = new FormData();
+      
+      // Ajouter les données du formulaire
+      Object.entries(orderData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          console.log(`📝 [PACK MODAL] Ajout ${key}:`, value);
+          formData.append(key, value.toString());
+        }
+      });
+
+      // Ajouter les fichiers
+      attachedFiles.forEach((fileAttachment, index) => {
+        formData.append(`files`, fileAttachment.file);
+        formData.append(`fileMetadata_${index}`, JSON.stringify({
+          title: fileAttachment.title,
+          description: fileAttachment.description,
+          originalName: fileAttachment.file.name,
+        }));
+      });
 
       const response = await fetch(buildApiUrl("/commandes/create-paid-project"), {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+          // Ne pas mettre Content-Type pour FormData - le navigateur le définit automatiquement
+          "Authorization": `Bearer ${localStorage.getItem("auth_token")}`,
         },
-        body: JSON.stringify(orderData),
+        body: formData,
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        console.error('Erreur lors de la commande:', { status: response.status, result });
+        console.error('❌ [PACK MODAL] Erreur lors de la commande:', { 
+          status: response.status, 
+          result,
+          sentData: orderData,
+          filesCount: attachedFiles.length
+        });
         
         if (result.details && Array.isArray(result.details)) {
           // Erreurs de validation Zod
@@ -247,12 +278,6 @@ export default function PackSelectionModal({
                 <span className="text-gray-600">Email :</span>
                 <span className="ml-2 font-medium">{user?.email}</span>
               </div>
-              {user?.telephone && (
-                <div>
-                  <span className="text-gray-600">Téléphone :</span>
-                  <span className="ml-2 font-medium">{user.telephone}</span>
-                </div>
-              )}
             </div>
             <p className="text-xs text-blue-600 mt-2">
               Ces informations seront utilisées pour la facturation
@@ -379,6 +404,24 @@ export default function PackSelectionModal({
               )}
             </div>
           )}
+
+          {/* Section upload de fichiers */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Vos documents (optionnel)
+            </label>
+            <FileUploadSection
+              files={attachedFiles}
+              onFilesChange={setAttachedFiles}
+              maxFileSize={20 * 1024 * 1024} // 20MB
+              acceptedFormats={['.pdf', '.doc', '.docx', '.txt', '.jpg', '.jpeg', '.png', '.zip', '.rar']}
+              maxFiles={5}
+              className="mb-4"
+            />
+            <p className="text-xs text-gray-500">
+              Vous pourrez également ajouter des fichiers après la création du projet
+            </p>
+          </div>
 
           {/* Actions */}
           <div className="flex gap-4 pt-4 border-t">

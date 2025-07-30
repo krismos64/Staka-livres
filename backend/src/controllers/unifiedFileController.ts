@@ -407,6 +407,7 @@ export const downloadProjectFile = async (
     let filePath: string;
     
     // Déterminer le répertoire selon l'URL stockée
+    // Note: __dirname pointe vers /app/backend/dist/controllers/, uploads est dans /app/backend/uploads/
     if (file.url.includes('/uploads/projects/')) {
       filePath = path.join(__dirname, "../../uploads/projects", file.storedName);
     } else if (file.url.includes('/uploads/messages/')) {
@@ -678,10 +679,10 @@ export const getUserAllFiles = async (
       isAdminFile: file.description?.startsWith("ADMIN_FILE:") || false,
       projectTitle: file.commande?.titre,
       // Pour admin: informations du propriétaire
-      ...(isAdmin && file.commande?.user && {
+      ...(isAdmin && (file.commande as any)?.user && {
         owner: {
-          name: `${file.commande.user.prenom} ${file.commande.user.nom}`,
-          email: file.commande.user.email
+          name: `${(file.commande as any).user.prenom} ${(file.commande as any).user.nom}`,
+          email: (file.commande as any).user.email
         }
       })
     }));

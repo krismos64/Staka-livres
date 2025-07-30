@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { notifyAdminNewCommande, notifyClientCommandeCreated } from "./notificationsController";
 import { stripeService } from "../services/stripeService";
 import { z } from "zod";
+import { extractFileMetadata, enrichFileData } from "../middleware/fileUpload";
 
 const prisma = new PrismaClient();
 
@@ -435,6 +436,10 @@ export const createPaidProject = async (
 
   try {
     const userId = req.user?.id;
+    
+    // Debug: afficher les données reçues
+    console.log('📝 [PAID PROJECT] Body reçu:', req.body);
+    console.log('📎 [PAID PROJECT] Fichiers reçus:', req.files ? (req.files as Express.Multer.File[]).length : 0);
 
     if (!userId) {
       res.status(401).json({
@@ -444,8 +449,17 @@ export const createPaidProject = async (
       return;
     }
 
+    // Convertir les champs numériques depuis FormData (qui arrive comme string)
+    const processedBody = {
+      ...req.body,
+      nombrePages: req.body.nombrePages && req.body.nombrePages !== 'undefined' && req.body.nombrePages !== 'null' ? parseInt(req.body.nombrePages) : undefined,
+      prixCalcule: req.body.prixCalcule && req.body.prixCalcule !== 'undefined' && req.body.prixCalcule !== 'null' ? parseFloat(req.body.prixCalcule) : undefined
+    };
+
+    console.log('📝 [PAID PROJECT] Body traité:', processedBody);
+
     // Validation des données avec Zod
-    const validationResult = paidProjectSchema.safeParse(req.body);
+    const validationResult = paidProjectSchema.safeParse(processedBody);
     
     if (!validationResult.success) {
       console.log(`❌ [PAID PROJECT] Validation échouée:`, validationResult.error.errors);
@@ -459,7 +473,12 @@ export const createPaidProject = async (
 
     const { serviceId, titre, description, nombrePages, prixCalcule } = validationResult.data;
 
-    console.log(`📝 [PAID PROJECT] Nouveau projet payant: ${req.user?.email} - Service: ${serviceId} - Titre: ${titre}`);
+    // Récupérer les fichiers uploadés et leurs métadonnées
+    const uploadedFiles = req.files as Express.Multer.File[] || [];
+    const fileMetadata = extractFileMetadata(req.body);
+    const enrichedFiles = enrichFileData(uploadedFiles, fileMetadata);
+
+    console.log(`📝 [PAID PROJECT] Nouveau projet payant: ${req.user?.email} - Service: ${serviceId} - Titre: ${titre} - Fichiers: ${enrichedFiles.length}`);
 
     // Récupérer les informations utilisateur et service
     const [user, service] = await Promise.all([
@@ -532,6 +551,35 @@ export const createPaidProject = async (
     });
 
     console.log(`✅ [PAID PROJECT] Commande créée avec l'ID: ${nouvelleCommande.id}`);
+
+    // Sauvegarder les fichiers uploadés et les lier à la commande
+    if (enrichedFiles.length > 0) {
+      try {
+        console.log(`📎 [PAID PROJECT] Sauvegarde de ${enrichedFiles.length} fichier(s) pour la commande ${nouvelleCommande.id}`);
+        
+        for (const fileData of enrichedFiles) {
+          await prisma.file.create({
+            data: {
+              filename: fileData.title,
+              storedName: fileData.fileName,
+              mimeType: fileData.mimeType,
+              size: fileData.fileSize,
+              url: `/uploads/orders/${fileData.fileName}`,
+              type: 'DOCUMENT',
+              uploadedById: user.id,
+              commandeId: nouvelleCommande.id,
+              description: fileData.description || `Fichier uploadé pour ${titre}`,
+              isPublic: false,
+            }
+          });
+        }
+        
+        console.log(`✅ [PAID PROJECT] ${enrichedFiles.length} fichier(s) sauvegardé(s) avec succès`);
+      } catch (fileError) {
+        console.error(`❌ [PAID PROJECT] Erreur lors de la sauvegarde des fichiers:`, fileError);
+        // Ne pas faire échouer la commande pour des erreurs de fichiers
+      }
+    }
 
     // Créer la session Stripe Checkout
     try {

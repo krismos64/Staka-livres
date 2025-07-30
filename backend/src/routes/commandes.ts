@@ -6,6 +6,7 @@ import {
   createPaidProject,
 } from "../controllers/commandeClientController";
 import { authenticateToken } from "../middleware/auth";
+import { handleOrderFileUploads } from "../middleware/fileUpload";
 
 const router = Router();
 
@@ -16,7 +17,7 @@ router.use(authenticateToken);
 router.post("/", createCommande);
 
 // 💳 Créer un nouveau projet payant (utilisateur connecté)
-router.post("/create-paid-project", createPaidProject);
+router.post("/create-paid-project", handleOrderFileUploads, createPaidProject);
 
 // 📋 Récupérer toutes les commandes de l'utilisateur connecté
 router.get("/", getUserCommandes);

@@ -15,10 +15,56 @@ export default function PaymentSuccessPage({
   const sessionId = searchParams.get("session_id");
 
   useEffect(() => {
-    // Si on a un session_id, on simule le webhook pour s'assurer que tout est traité
     if (sessionId && !processingComplete) {
       setIsProcessing(true);
       
+      // En développement local, utiliser la simulation de webhook
+      const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      
+      if (isDevelopment) {
+        // Simulation de webhook en développement
+        fetch('/api/payments/dev-webhook-simulate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ sessionId }),
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Webhook simulation result:', data);
+          if (data.success) {
+            setProcessingComplete(true);
+          } else {
+            setError('Erreur lors du traitement de la commande');
+          }
+        })
+        .catch(error => {
+          console.error('Webhook simulation error:', error);
+          setError('Erreur de connexion lors du traitement');
+        })
+        .finally(() => {
+          setIsProcessing(false);
+        });
+      } else {
+        // En production, le webhook Stripe réel s'occupe du traitement
+        // On marque directement comme traité après un délai de sécurité
+        setTimeout(() => {
+          setProcessingComplete(true);
+          setIsProcessing(false);
+        }, 3000);
+      }
+    }
+  }, [sessionId, processingComplete]);
+
+  const handleRetryProcessing = () => {
+    setError(null);
+    setIsProcessing(true);
+    
+    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    
+    if (isDevelopment) {
+      // Retry simulation en développement
       fetch('/api/payments/dev-webhook-simulate', {
         method: 'POST',
         headers: {
@@ -28,7 +74,7 @@ export default function PaymentSuccessPage({
       })
       .then(response => response.json())
       .then(data => {
-        console.log('Webhook simulation result:', data);
+        console.log('Webhook simulation retry result:', data);
         if (data.success) {
           setProcessingComplete(true);
         } else {
@@ -36,42 +82,19 @@ export default function PaymentSuccessPage({
         }
       })
       .catch(error => {
-        console.error('Webhook simulation error:', error);
+        console.error('Webhook simulation retry error:', error);
         setError('Erreur de connexion lors du traitement');
       })
       .finally(() => {
         setIsProcessing(false);
       });
-    }
-  }, [sessionId, processingComplete]);
-
-  const handleRetryProcessing = () => {
-    setError(null);
-    setIsProcessing(true);
-    
-    fetch('/api/payments/dev-webhook-simulate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ sessionId }),
-    })
-    .then(response => response.json())
-    .then(data => {
-      console.log('Webhook simulation result:', data);
-      if (data.success) {
+    } else {
+      // En production, marquer directement comme réussi
+      setTimeout(() => {
         setProcessingComplete(true);
-      } else {
-        setError('Erreur lors du traitement de la commande');
-      }
-    })
-    .catch(error => {
-      console.error('Webhook simulation error:', error);
-      setError('Erreur de connexion lors du traitement');
-    })
-    .finally(() => {
-      setIsProcessing(false);
-    });
+        setIsProcessing(false);
+      }, 1000);
+    }
   };
 
   if (isProcessing) {

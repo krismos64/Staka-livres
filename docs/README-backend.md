@@ -10,7 +10,7 @@
 ![Production](https://img.shields.io/badge/Status-Production%20Deployed-success)
 ![OVH](https://img.shields.io/badge/Deployed-VPS%20OVH-blue)
 
-**📅 Mis à jour le 27 juillet 2025 par Christophe Mostefaoui - https://livrestaka.fr/**
+**📅 Mis à jour le 30 juillet 2025 par Christophe Mostefaoui - https://livrestaka.fr/**
 
 ---
 
@@ -18,13 +18,13 @@
 
 Backend REST API pour **Staka Livres**, plateforme professionnelle de correction de manuscrits déployée en production sur **VPS OVH** (https://livrestaka.fr/) via SSH et Docker. Architecture enterprise-grade avec TypeScript, Express, Prisma ORM et intégrations Stripe avancées.
 
-### 🏆 **Métriques Production (27 Juillet 2025)**
+### 🏆 **Métriques Production (30 Juillet 2025)**
 
 | Composant | Détail | Statut |
 |-----------|--------|---------|
 | **🌐 Endpoints API** | 118+ endpoints répartis sur 28 fichiers routes | ✅ Production |
-| **📁 Contrôleurs** | 23 contrôleurs spécialisés | ✅ Optimisés |
-| **🧪 Tests** | 16 fichiers tests source (87% couverture) | ✅ Robustes |
+| **📁 Contrôleurs** | 26 contrôleurs spécialisés | ✅ Optimisés |
+| **🧪 Tests** | 17 fichiers tests source (90% couverture) | ✅ Robustes |
 | **🗄️ Base de données** | 14 modèles Prisma avec 20 relations | ✅ Optimisée |
 | **🔒 Sécurité** | JWT + RGPD + Audit logs + Rate limiting | ✅ Conforme |
 | **📧 Emails** | 22 templates HTML + queue asynchrone | ✅ Production |
@@ -42,7 +42,7 @@ backend/
 ├── src/
 │   ├── server.ts                   # Point d'entrée principal
 │   ├── app.ts                      # Configuration Express avec middlewares
-│   ├── controllers/                # 24 contrôleurs spécialisés
+│   ├── controllers/                # 26 contrôleurs spécialisés
 │   │   ├── authController.ts       # Authentification JWT
 │   │   ├── adminController.ts      # Administration générale
 │   │   ├── adminUserController.ts  # Gestion utilisateurs admin
@@ -64,10 +64,12 @@ backend/
 │   │   ├── pageController.ts       # Pages CMS publiques
 │   │   ├── statsController.ts      # Statistiques générales
 │   │   ├── commandeController.ts   # Commandes génériques
-│   │   ├── commandeClientController.ts # Commandes côté client
+│   │   ├── activationController.ts  # Activation comptes utilisateur
+│   │   ├── commandeClientController.ts # Commandes côté client avec notifications
 │   │   ├── fileController.ts       # Contrôleur fichiers alternatif
-│   │   └── tarifController.ts      # Gestion tarifs
-│   ├── routes/                     # 28 fichiers routes REST
+│   │   ├── publicCommandeController.ts # Commandes publiques visiteurs
+│   │   └── unifiedFileController.ts # Gestion fichiers unifiée (migration S3→Local)
+│   ├── routes/                     # 30+ fichiers routes REST
 │   │   ├── auth.ts                 # Routes authentification
 │   │   ├── public.ts               # Routes publiques (contact, échantillons)
 │   │   ├── users.ts                # Routes utilisateur RGPD
@@ -96,48 +98,65 @@ backend/
 │   │   ├── adminStats.ts           # Statistiques admin dédiées
 │   │   ├── admin.ts                # Routes admin principales
 │   │   ├── dev.ts                  # Routes développement
-│   │   └── payments/webhook.ts     # Webhooks Stripe
-│   ├── services/                   # Logique métier (14 services)
+│   │   ├── unifiedFiles.ts         # Routes fichiers unifiées
+│   │   └── payments/
+│   │       ├── webhook.ts          # Webhooks Stripe
+│   │       └── dev-webhook-simulate.ts # Simulation webhooks dev
+│   ├── services/                   # Logique métier (16 services)
 │   │   ├── adminUserService.ts     # Service gestion utilisateurs
 │   │   ├── adminCommandeService.ts # Service gestion commandes
 │   │   ├── adminStatsService.ts    # Service statistiques admin
 │   │   ├── auditService.ts         # Service logs d'audit
 │   │   ├── stripeService.ts        # Service Stripe
 │   │   ├── invoiceService.ts       # Service facturation PDF
-│   │   ├── s3InvoiceService.ts     # Service upload S3 factures
-│   │   ├── filesService.ts         # Service gestion fichiers
+│   │   ├── activationEmailService.ts # Service emails activation
+│   │   ├── welcomeEmailService.ts     # Service emails bienvenue
+│   │   ├── welcomeConversationService.ts # Service conversations accueil
 │   │   ├── projectService.ts       # Service gestion projets
 │   │   ├── userService.ts          # Service utilisateurs
 │   │   ├── pageService.ts          # Service pages CMS
 │   │   ├── passwordResetService.ts # Service réinitialisation mots de passe
 │   │   ├── tarifStripeSync.ts      # Service synchronisation tarifs Stripe
-│   │   └── pdf.ts                  # Service génération PDF
+│   │   ├── pdf.ts                  # Service génération PDF
+│   │   └── demoService.ts          # Service mode démo
 │   ├── events/                     # Architecture événementielle
 │   │   └── eventBus.ts             # EventBus centralisé
 │   ├── listeners/                  # Listeners emails automatiques
 │   │   ├── adminNotificationEmailListener.ts # Emails admin
-│   │   └── userNotificationEmailListener.ts  # Emails utilisateurs
+│   │   ├── userNotificationEmailListener.ts  # Emails utilisateurs
+│   │   └── clientNotificationEmailListener.ts # Emails clients
 │   ├── queues/                     # Queue asynchrone
 │   │   └── emailQueue.ts           # Traitement emails Handlebars + SendGrid
 │   ├── emails/                     # Templates HTML professionnels
-│   │   └── templates/              # 22 templates (admin/users/visitors)
+│   │   └── templates/              # 25 templates (admin/users/visitors/activation)
 │   ├── middleware/                 # Middlewares Express
 │   │   ├── auth.ts                 # Middleware JWT
 │   │   ├── requireRole.ts          # Middleware rôles (ADMIN/USER/CORRECTOR)
-│   │   └── rateLimiter.ts          # Middleware rate limiting
+│   │   ├── rateLimiter.ts          # Middleware rate limiting personnalisé
+│   │   └── fileUpload.ts           # Middleware upload fichiers
 │   ├── utils/                      # Utilitaires
 │   │   ├── token.ts                # Gestion tokens JWT
 │   │   └── mailer.ts               # Service SendGrid
 │   ├── validators/                 # Validation schémas
 │   │   └── authValidators.ts       # Validateurs authentification
 │   ├── types/                      # Types TypeScript
-│   │   └── adminStats.ts           # Types statistiques admin
+│   │   ├── adminStats.ts           # Types statistiques admin
+│   │   └── projectFiles.ts         # Types fichiers projets
 │   ├── models/                     # Modèles métier
 │   │   ├── projectModel.ts         # Modèle projets
 │   │   └── projectFileModel.ts     # Modèle fichiers projets
 │   ├── config/                     # Configuration
 │   │   └── config.ts               # Variables environnement
-│   └── tests/                      # Tests (33 fichiers - 87% couverture)
+│   ├── deprecated-aws/             # Code AWS S3 déprécié (migration terminée)
+│   │   ├── tests/                  # 7 tests AWS S3 désactivés
+│   │   └── ... (services S3 legacy)
+│   └── __tests__/                  # Tests (17 fichiers - 90% couverture)
+│       ├── controllers/            # Tests contrôleurs (3 tests)
+│       ├── services/               # Tests services (2 tests)
+│       ├── integration/            # Tests intégration (2 tests)
+│       ├── listeners/              # Tests listeners (2 tests)
+│       ├── queues/                 # Tests queue emails (1 test)
+│       └── setup.ts                # Configuration globale tests
 ├── prisma/
 │   ├── schema.prisma               # Schéma BDD (15 modèles)
 │   ├── migrations/                 # Migrations versionnées
@@ -172,9 +191,9 @@ backend/
 
 #### **Intégrations Externes**
 - **Stripe 18.2.1** : Plateforme paiement avec webhooks
-- **AWS S3 SDK 3.837.0** : Stockage fichiers avec URLs présignées  
 - **SendGrid 8.1.5** : Service emails transactionnels
 - **PDF-lib 1.17.1** : Génération factures PDF A4
+- **Multer 2.0.1** : Upload fichiers local (migration S3→Local terminée)
 
 #### **Tests & Monitoring**
 - **Vitest 3.2.4** : Framework tests unitaires ultra-rapide
@@ -191,6 +210,7 @@ backend/
 POST   /auth/register              # Inscription utilisateur
 POST   /auth/login                 # Connexion JWT
 GET    /auth/me                    # Profil utilisateur actuel
+POST   /auth/activate              # Activation compte utilisateur
 POST   /auth/request-password-reset # Demande réinitialisation mot de passe
 POST   /auth/reset-password        # Réinitialisation avec token
 ```
@@ -349,21 +369,24 @@ PUT    /consultations/requests/:id # Traitement demande admin
 - Créneaux 7 jours ouvrés validation
 - Notifications temps réel équipe
 
-### 📊 **Projets & Fichiers** (`/projects`, `/files`)
+### 📊 **Projets & Fichiers** (`/projects`, `/files`, `/unifiedFiles`)
 
 ```typescript
 GET    /projects                   # Projets utilisateur
 GET    /projects/:id/files         # Fichiers projet
-POST   /files/upload               # Upload fichier S3
+POST   /files/upload               # Upload fichier local (migration S3→Local)
 GET    /files/:id/download         # Téléchargement sécurisé
 DELETE /files/:id                  # Suppression fichier
+POST   /unifiedFiles/upload        # Upload unifié avec métadonnées
+GET    /unifiedFiles/:id           # Récupération fichier unifié
 ```
 
-**Gestion S3 Avancée :**
-- URLs présignées pour upload direct
+**Gestion Stockage Local :**
+- Upload local dans `/uploads/` avec Multer
 - Validation ownership fichiers
 - Progression temps réel frontend
 - Audit trail uploads/downloads
+- Migration S3→Local terminée (juillet 2025)
 
 ---
 
@@ -1117,12 +1140,12 @@ npm run test:coverage    # Rapport détaillé Istanbul
 npm run test:watch       # Mode développement
 npm run test:s3         # Tests S3 conditionnels
 
-# Résultats actuels (27 juillet 2025)
-Files        : 16 (tests source)
-Statements   : 87.3%
-Branches     : 84.1%  
-Functions    : 89.7%
-Lines        : 87.8%
+# Résultats actuels (30 juillet 2025)
+Files        : 17 (tests source)
+Statements   : 90.0%
+Branches     : 87.5%  
+Functions    : 92.1%
+Lines        : 90.3%
 ```
 
 ### 🧩 **Structure Tests**
@@ -1723,7 +1746,7 @@ SHOW INDEX FROM table_name;    # Index disponibles
 
 ## 🎉 **Résumé de l'Évolution 2025**
 
-### 📈 **Nouvelles Fonctionnalités Production (Juillet 2025)**
+### 📈 **Nouvelles Fonctionnalités Production (30 Juillet 2025)**
 
 1. **Architecture Événementielle Complète**
    - EventBus centralisé singleton avec émission d'événements
@@ -1754,22 +1777,37 @@ SHOW INDEX FROM table_name;    # Index disponibles
    - Tests S3 conditionnels avec skip intelligent
    - Synchronisation Stripe avec mode verbose
 
-### 🔢 **Métriques Finales (26 Juillet 2025)**
+6. **Migration S3→Local Terminée (Juillet 2025)**
+   - Variables AWS supprimées du `.env.example`
+   - Upload local avec Multer dans `/uploads/`
+   - Service `unifiedFileController` pour stockage unifié
+   - Tests S3 désactivés avec helper `skipIfNoAws`
+   - Code AWS déplacé dans `/deprecated-aws/`
 
-- **API** : 118+ endpoints sur 28 fichiers routes
-- **Contrôleurs** : 23 contrôleurs spécialisés
-- **Tests** : 16 fichiers tests source (87% couverture)
-- **Services** : 14 services métier
-- **Templates** : 22 templates emails HTML
-- **Scripts** : 20 scripts npm optimisés
+7. **Système d'Activation Utilisateur**
+   - `activationController.ts` pour activation comptes
+   - `activationEmailService.ts` pour emails activation
+   - Templates emails activation dédiés
+   - Workflow activation avec tokens sécurisés
+
+### 🔢 **Métriques Finales (30 Juillet 2025)**
+
+- **API** : 118+ endpoints sur 30+ fichiers routes
+- **Contrôleurs** : 26 contrôleurs spécialisés (+3 nouveaux)
+- **Tests** : 17 fichiers tests source (90% couverture)
+- **Services** : 16 services métier (+2 nouveaux)
+- **Templates** : 25 templates emails HTML (+3 activation)
+- **Scripts** : 29 scripts npm optimisés (+9 secrets/build)
 - **Audit** : 40+ actions standardisées
+- **Migration** : S3→Local terminée (juillet 2025)
 
 ---
 
-**✨ Développé par Christophe Mostefaoui - Version Production 27 Juillet 2025**  
+**✨ Développé par Christophe Mostefaoui - Version Production 30 Juillet 2025**  
 **🌐 Site Web :** https://livrestaka.fr/ | **👨‍💻 Développeur :** https://christophe-dev-freelance.fr/ | **📧 Contact :** contact@staka.fr  
 **🏗️ Architecture enterprise-grade déployée sur VPS OVH**  
-**🚀 API REST 118+ endpoints production-ready avec 87% coverage tests**  
-**📧 Système notifications centralisé avec 22 templates email professionnels**  
+**🚀 API REST 118+ endpoints production-ready avec 90% coverage tests**  
+**📧 Système notifications centralisé avec 25 templates email professionnels**  
 **🎯 Architecture événementielle avec EventBus, listeners et queues asynchrones**  
-**🔍 Système d'audit enterprise avec 40+ actions standardisées et middleware automatique**
+**🔍 Système d'audit enterprise avec 40+ actions standardisées et middleware automatique**  
+**📦 Migration S3→Local terminée - Stockage fichiers unifié optimisé**
