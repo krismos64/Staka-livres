@@ -22,6 +22,7 @@ interface AdminCommandeFilesModalProps {
   onClose: () => void;
   commandeId: string;
   commandeTitle: string;
+  commandeDescription?: string;
   clientName: string;
 }
 
@@ -302,6 +303,7 @@ export default function AdminCommandeFilesModal({
   onClose,
   commandeId,
   commandeTitle,
+  commandeDescription,
   clientName,
 }: AdminCommandeFilesModalProps) {
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -398,16 +400,29 @@ export default function AdminCommandeFilesModal({
       <div className="space-y-6">
         {/* Header avec informations */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+          <div className="flex items-start space-x-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
               <i className="fas fa-folder-open text-white"></i>
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-gray-900">{commandeTitle}</h3>
               <p className="text-sm text-gray-600">Client: {clientName}</p>
               <p className="text-sm text-gray-500">
                 {count} fichier{count !== 1 ? 's' : ''} au total
               </p>
+              
+              {/* Description du projet si disponible */}
+              {commandeDescription && (
+                <div className="mt-3 pt-3 border-t border-blue-200">
+                  <h4 className="text-sm font-medium text-gray-700 mb-1">
+                    <i className="fas fa-info-circle mr-1"></i>
+                    Description du projet
+                  </h4>
+                  <p className="text-sm text-gray-600 bg-white p-2 rounded border border-blue-100 max-h-20 overflow-y-auto">
+                    {commandeDescription}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { sendContactMessage, sendFreeSampleRequest } from "../controllers/publicController";
 import { uploadMiddleware } from "../controllers/fileController";
 import { createPublicOrder, getPublicOrderById } from "../controllers/publicCommandeController";
-import { activateAccount, verifyActivationToken } from "../controllers/activationController";
+import { activateAccount, verifyActivationToken, activateAccountWithPassword } from "../controllers/activationController";
 import { handleOrderFileUploads } from "../middleware/fileUpload";
 
 const router = Router();
@@ -60,5 +60,12 @@ router.get("/activate/:token", activateAccount);
  * Vérifier le statut d'un token d'activation (sans l'activer)
  */
 router.get("/activate/:token/verify", verifyActivationToken);
+
+/**
+ * POST /public/activate/:token/set-password
+ * Activer un compte avec définition de mot de passe
+ * Body: { password }
+ */
+router.post("/activate/:token/set-password", activateAccountWithPassword);
 
 export default router;

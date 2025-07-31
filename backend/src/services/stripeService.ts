@@ -84,6 +84,7 @@ export const stripeService = {
     // Créer une session avec le priceId fourni ou un prix dynamique
     const sessionConfig: any = {
       mode: "payment",
+      billing_address_collection: "required", // Collecte automatique de l'adresse de facturation
       metadata: {
         userId: params.userId,
         commandeId: params.commandeId,
@@ -101,17 +102,27 @@ export const stripeService = {
         },
       ];
     } else {
-      // Sinon, utiliser un prix dynamique (avec montant fourni ou 468€ par défaut)
-      const amount = params.amount || 46800; // 468€ par défaut
+      // Sinon, utiliser un prix dynamique (avec montant fourni ou 280€ par défaut pour 150 pages)
+      const amount = params.amount || 28000; // 280€ par défaut (correspondant à 150 pages)
+      // S'assurer que le montant est un entier valide en centimes
+      const validAmount = Math.round(Number(amount));
+      
+      console.log(`💳 [STRIPE] Création session avec unit_amount: ${validAmount} centimes (${validAmount/100}€)`);
+      console.log(`💳 [STRIPE] Configuration price_data:`, {
+        currency: "eur",
+        unit_amount: validAmount,
+        amount_in_euros: validAmount / 100
+      });
+      
       sessionConfig.line_items = [
         {
           price_data: {
             currency: "eur",
             product_data: {
-              name: "Correction de manuscrit",
-              description: "Service de correction et relecture professionnelle",
+              name: "Service de correction professionnelle",
+              description: "Correction et relecture de manuscrit",
             },
-            unit_amount: amount,
+            unit_amount: validAmount,
           },
           quantity: 1,
         },

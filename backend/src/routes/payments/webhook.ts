@@ -176,16 +176,18 @@ router.post("/", async (req: express.Request, res: express.Response) => {
           console.log(`🎯 [Stripe Webhook] PendingCommande trouvée: ${pendingCommande.id} pour ${pendingCommande.email}`);
 
           try {
-            // 👤 ÉTAPE 1: Créer l'utilisateur (inactif)
+            // 👤 ÉTAPE 1: Créer l'utilisateur (inactif, sans mot de passe défini)
             const newUser = await prisma.user.create({
               data: {
                 prenom: pendingCommande.prenom,
                 nom: pendingCommande.nom,
                 email: pendingCommande.email,
-                password: pendingCommande.passwordHash, // Déjà hashé
+                password: pendingCommande.passwordHash === "PENDING_ACTIVATION" 
+                  ? await bcrypt.hash("temporary_password_" + Date.now(), 12) // Mot de passe temporaire sécurisé
+                  : pendingCommande.passwordHash, // Rétrocompatibilité
                 telephone: pendingCommande.telephone,
-                adresse: pendingCommande.adresse,
-                isActive: false, // ⚠️ INACTIF en attendant activation
+                // adresse collectée par Stripe automatiquement
+                isActive: false, // ⚠️ INACTIF en attendant activation + définition mot de passe
                 role: "USER",
               },
             });
@@ -202,16 +204,22 @@ router.post("/", async (req: express.Request, res: express.Response) => {
             const serviceDescription = service?.description || "Correction professionnelle de manuscrit";
 
             // 📝 ÉTAPE 3: Créer la commande
+            // Combiner la description du service avec la description du client
+            const finalDescription = pendingCommande.description 
+              ? `${serviceDescription}\n\n--- Description du client ---\n${pendingCommande.description}`
+              : serviceDescription;
+
             const newCommande = await prisma.commande.create({
               data: {
                 userId: newUser.id,
                 titre: serviceTitle,
-                description: serviceDescription,
+                description: finalDescription, // Description combinée service + client
                 statut: "PAYEE", // Directement payée
                 paymentStatus: "paid",
                 stripeSessionId: session.id,
                 amount: session.amount_total,
                 packType: pendingCommande.serviceId, // Référence au service
+                pagesDeclarees: pendingCommande.nombrePages, // Transférer le nombre de pages déclaré
               },
             });
 

@@ -16,6 +16,8 @@ export interface Project {
   progress: number;
   rating?: number;
   canDownload: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ProjectFilters {
@@ -219,6 +221,8 @@ export class ProjectModel {
         progress: this.calculateProgress(commande.statut),
         rating,
         canDownload,
+        createdAt: commande.createdAt.toISOString(),
+        updatedAt: commande.updatedAt.toISOString(),
       };
     });
 

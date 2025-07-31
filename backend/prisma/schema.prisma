@@ -21,8 +21,8 @@ model User {
   adresse                 String?          @db.Text
   avatar                  String?          @db.VarChar(500)
   telephone               String?          @db.VarChar(20)
-  bio                     String?          @db.Text
   preferences             Json?
+  bio                     String?          @db.Text
   commandes               Commande[]
   files                   File[]           @relation("FileOwner")
   receivedMessages        Message[]        @relation("MessageReceiver")
@@ -57,12 +57,11 @@ model Commande {
   dateEcheance    DateTime?
   dateFinition    DateTime?
   priorite        Priorite       @default(NORMALE)
-  // Champs spécifiques Pack Intégral
-  packType        String?        @db.VarChar(100)     // Type de pack (pack-integral-default, etc.)
-  pagesDeclarees  Int?                                // Nombre de pages déclaré par le client
-  pagesVerifiees  Int?                                // Nombre de pages vérifié par l'admin
-  prixEstime      Int?                                // Prix estimé en centimes
-  prixFinal       Int?                                // Prix final après vérification
+  packType        String?        @db.VarChar(100)
+  pagesDeclarees  Int?
+  pagesVerifiees  Int?
+  prixEstime      Int?
+  prixFinal       Int?
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   files           File[]         @relation("CommandeFiles")
   invoices        Invoice[]
@@ -366,23 +365,25 @@ model PasswordReset {
 
 /// Commandes temporaires en attente d'activation (tunnel invité)
 model PendingCommande {
-  id                String   @id @default(uuid())
-  prenom            String   @db.VarChar(100)
-  nom               String   @db.VarChar(100)
-  email             String   @db.VarChar(255)
-  passwordHash      String   @db.VarChar(255)
-  telephone         String?  @db.VarChar(20)
-  adresse           String?  @db.Text
-  serviceId         String   @db.VarChar(255) // Référence au service/tarif
-  consentementRgpd  Boolean  @default(false)
-  stripeSessionId   String?  @unique @db.VarChar(255)
-  activationToken   String?  @unique @db.VarChar(255)
-  tokenExpiresAt    DateTime?
-  isProcessed       Boolean  @default(false)
-  userId            String?  // Lien vers User créé après paiement
-  commandeId        String?  // Lien vers Commande créée après paiement
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id               String    @id @default(uuid())
+  prenom           String    @db.VarChar(100)
+  nom              String    @db.VarChar(100)
+  email            String    @db.VarChar(255)
+  passwordHash     String    @db.VarChar(255)
+  telephone        String?   @db.VarChar(20)
+  adresse          String?   @db.Text
+  serviceId        String    @db.VarChar(255)
+  consentementRgpd Boolean   @default(false)
+  stripeSessionId  String?   @unique @db.VarChar(255)
+  activationToken  String?   @unique @db.VarChar(255)
+  tokenExpiresAt   DateTime?
+  isProcessed      Boolean   @default(false)
+  userId           String?
+  commandeId       String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  nombrePages      Int?
+  description      String?   @db.Text
 
   @@index([email])
   @@index([stripeSessionId])
@@ -402,10 +403,10 @@ enum Role {
 /// Statuts des commandes
 enum StatutCommande {
   EN_ATTENTE
-  EN_ATTENTE_VERIFICATION  // Pack Intégral - Admin vérifie nb pages
-  EN_ATTENTE_CONSULTATION  // Pack Rédaction - Consultation requise
-  ESTIMATION_ENVOYEE       // Devis personnalisé envoyé
-  PAYEE                    // Paiement effectué
+  EN_ATTENTE_VERIFICATION
+  EN_ATTENTE_CONSULTATION
+  ESTIMATION_ENVOYEE
+  PAYEE
   EN_COURS
   TERMINE
   ANNULEE

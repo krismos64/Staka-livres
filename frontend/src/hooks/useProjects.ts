@@ -15,6 +15,8 @@ export interface Project {
   progress: number;
   rating?: number;
   canDownload: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Interface pour la réponse paginée
@@ -95,9 +97,8 @@ export const useProjects = (params: ProjectsParams) => {
   return useQuery({
     queryKey: ['projects', params],
     queryFn: () => fetchProjects(params),
-    keepPreviousData: true,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (remplace cacheTime)
     refetchOnWindowFocus: false,
     retry: 2,
   });
@@ -109,7 +110,7 @@ export const useProjectCounts = () => {
     queryKey: ['projects', 'counts'],
     queryFn: fetchProjectCounts,
     staleTime: 2 * 60 * 1000, // 2 minutes
-    cacheTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes (remplace cacheTime)
     refetchOnWindowFocus: false,
     retry: 2,
   });
@@ -120,11 +121,11 @@ export const useInvalidateProjects = () => {
   const queryClient = useQueryClient();
   
   const invalidateProjects = () => {
-    queryClient.invalidateQueries(['projects']);
+    queryClient.invalidateQueries({ queryKey: ['projects'] });
   };
 
   const invalidateProjectCounts = () => {
-    queryClient.invalidateQueries(['projects', 'counts']);
+    queryClient.invalidateQueries({ queryKey: ['projects', 'counts'] });
   };
 
   return {

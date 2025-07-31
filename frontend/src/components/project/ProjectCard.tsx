@@ -234,12 +234,12 @@ function ProjectCard({
         </div>
         <div>
           <p className="text-xs text-gray-500 mb-1">
-            {project.status === "Terminé"
-              ? "Date de livraison"
-              : "Livraison prévue"}
+            Statut du projet
           </p>
           <p className="text-sm font-medium text-gray-900">
-            {project.delivery}
+            {project.status === "completed" ? "Terminé" : 
+             project.status === "active" ? "En cours" : 
+             project.status === "pending" ? "En attente" : "En cours"}
           </p>
         </div>
         <div>

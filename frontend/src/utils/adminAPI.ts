@@ -681,7 +681,22 @@ class AdaptiveAdminAPI {
       return MockDataService.getFactureStats();
     }
 
-    return this.realApiCall("/admin/factures/stats");
+    // Le backend n'a pas encore d'endpoint stats spécifique, on va les calculer depuis la liste
+    const factures = await this.getFactures(1, 1000); // Récupérer un grand nombre pour calculer
+    const total = factures.pagination?.total || factures.data?.length || 0;
+    const payees = factures.data?.filter(f => f.statut === StatutFacture.PAYEE).length || 0;
+    const enAttente = factures.data?.filter(f => f.statut === StatutFacture.EN_ATTENTE).length || 0;
+    const montantTotal = factures.data?.reduce((sum, f) => sum + (f.montant || 0), 0) || 0;
+
+    return {
+      total,
+      payees,
+      enAttente,
+      montantTotal,
+      montantTotalFormate: `${(montantTotal / 100).toFixed(2)} €`,
+      montantMensuel: 0, // À implémenter si nécessaire
+      montantMensuelFormate: "0,00 €"
+    };
   }
 
   async getFactures(
@@ -706,7 +721,61 @@ class AdaptiveAdminAPI {
     if (sortBy) params.append("sortBy", sortBy);
     if (sortOrder) params.append("sortOrder", sortOrder);
 
-    return this.realApiCall(`/admin/factures?${params}`);
+    const response = await this.realApiCall<{
+      invoices: any[];
+      pagination: any;
+    }>(`/admin/factures?${params}`);
+
+    // Transformer les données du backend (format Invoice) vers le format Facture attendu par le frontend
+    const transformedInvoices = response.invoices.map((invoice: any) => ({
+      id: invoice.id,
+      commandeId: invoice.commande?.id || '',
+      userId: invoice.commande?.client?.id || '',
+      numero: invoice.number,
+      montant: invoice.amount,
+      montantFormate: invoice.amountFormatted,
+      statut: this.mapInvoiceStatusToStatutFacture(invoice.commande?.statut),
+      dateEcheance: undefined, // Pas dans le format backend actuel
+      datePaiement: undefined, // Pas dans le format backend actuel
+      pdfUrl: invoice.pdfUrl,
+      stripePaymentId: undefined, // Pas dans le format backend actuel
+      createdAt: invoice.createdAt,
+      updatedAt: invoice.createdAt, // Utiliser createdAt comme fallback
+      user: invoice.commande?.client ? {
+        id: invoice.commande.client.id,
+        prenom: invoice.commande.client.nom.split(' ')[0] || '',
+        nom: invoice.commande.client.nom.split(' ').slice(1).join(' ') || invoice.commande.client.nom,
+        email: invoice.commande.client.email,
+      } : undefined,
+      commande: invoice.commande ? {
+        id: invoice.commande.id,
+        titre: invoice.commande.titre,
+        statut: invoice.commande.statut,
+        amount: invoice.commande.amount,
+        user: invoice.commande.client,
+      } : undefined,
+    }));
+
+    return {
+      data: transformedInvoices,
+      pagination: response.pagination,
+    };
+  }
+
+  // Méthode utilitaire pour mapper les statuts
+  private mapInvoiceStatusToStatutFacture(commandeStatut?: string): StatutFacture {
+    switch (commandeStatut) {
+      case 'PAYEE':
+      case 'TERMINE':
+        return StatutFacture.PAYEE;
+      case 'EN_COURS':
+      case 'ESTIMATION_ENVOYEE':
+        return StatutFacture.EN_ATTENTE;
+      case 'ANNULEE':
+        return StatutFacture.ANNULEE;
+      default:
+        return StatutFacture.EN_ATTENTE;
+    }
   }
 
   async getFactureById(id: string): Promise<Facture> {
@@ -714,7 +783,39 @@ class AdaptiveAdminAPI {
       return MockDataService.getFactureById(id);
     }
 
-    return this.realApiCall(`/admin/factures/${id}`);
+    const invoice = await this.realApiCall<any>(`/admin/factures/${id}`);
+
+    // Transformer les données du backend vers le format Facture
+    return {
+      id: invoice.id,
+      commandeId: invoice.commande?.id || '',
+      userId: invoice.commande?.client?.id || '',
+      numero: invoice.number,
+      montant: invoice.amount,
+      montantFormate: invoice.amountFormatted,
+      statut: this.mapInvoiceStatusToStatutFacture(invoice.commande?.statut),
+      dateEcheance: undefined,
+      datePaiement: undefined,
+      pdfUrl: invoice.pdfUrl,
+      stripePaymentId: undefined,
+      createdAt: invoice.createdAt,
+      updatedAt: invoice.createdAt,
+      user: invoice.commande?.client ? {
+        id: invoice.commande.client.id,
+        prenom: invoice.commande.client.prenom || '',
+        nom: invoice.commande.client.nom || '',
+        email: invoice.commande.client.email,
+      } : undefined,
+      commande: invoice.commande ? {
+        id: invoice.commande.id,
+        titre: invoice.commande.titre,
+        description: invoice.commande.description,
+        statut: invoice.commande.statut,
+        amount: invoice.commande.amount,
+        createdAt: invoice.commande.createdAt,
+        user: invoice.commande.client,
+      } : undefined,
+    };
   }
 
   async updateFacture(
@@ -751,7 +852,7 @@ class AdaptiveAdminAPI {
     }
 
     try {
-      await this.realApiCall<void>(`/admin/factures/${id}/reminder`, "POST");
+      await this.realApiCall<void>(`/admin/factures/${id}/resend`, "POST");
     } catch (error) {
       console.error("❌ Erreur lors de l'envoi de la relance:", error);
       throw error;
@@ -772,12 +873,15 @@ class AdaptiveAdminAPI {
     }
 
     try {
-      const response = await this.realApiCall<{
-        message: string;
-        factureNumber: string;
-        info: string;
-      }>(`/admin/factures/${id}/pdf`, "GET");
-      return response;
+      // Pour le téléchargement PDF, on ouvre directement l'URL
+      const downloadUrl = `${this.baseURL}/admin/factures/${id}/download`;
+      window.open(downloadUrl, '_blank');
+      
+      return {
+        message: "Téléchargement démarré",
+        factureNumber: `INV-${id}`,
+        info: "Le fichier PDF va être téléchargé",
+      };
     } catch (error) {
       console.error("❌ Erreur lors du téléchargement du PDF:", error);
       throw error;

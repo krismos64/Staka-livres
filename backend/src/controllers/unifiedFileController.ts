@@ -403,23 +403,72 @@ export const downloadProjectFile = async (
       return;
     }
 
-    // Construire le chemin du fichier
+    // Construire le chemin du fichier avec gestion robuste
     let filePath: string;
+    let fileFound = false;
     
     // Déterminer le répertoire selon l'URL stockée
     // Note: __dirname pointe vers /app/backend/dist/controllers/, uploads est dans /app/backend/uploads/
+    const baseDir = path.join(__dirname, "../../uploads");
+    let targetDir: string;
+    
     if (file.url.includes('/uploads/projects/')) {
-      filePath = path.join(__dirname, "../../uploads/projects", file.storedName);
+      targetDir = path.join(baseDir, "projects");
     } else if (file.url.includes('/uploads/messages/')) {
-      filePath = path.join(__dirname, "../../uploads/messages", file.storedName);
+      targetDir = path.join(baseDir, "messages");
     } else {
       // Fallback pour les anciens fichiers
-      filePath = path.join(__dirname, "../../uploads/projects", file.storedName);
+      targetDir = path.join(baseDir, "projects");
+    }
+    
+    // Essayer plusieurs stratégies pour trouver le fichier
+    const possiblePaths = [
+      // 1. Chemin direct avec storedName
+      path.join(targetDir, file.storedName),
+      // 2. Chemin extrait de l'URL
+      path.join(baseDir, file.url.replace(/^\/uploads\//, '')),
+    ];
+    
+    // Si aucune des stratégies précédentes ne fonctionne, essayer de chercher par nom de fichier original
+    if (!fileFound) {
+      try {
+        const files = fs.readdirSync(targetDir);
+        // Chercher un fichier qui contient le nom original (pour les anciens fichiers avec nommage différent)
+        const baseFilename = path.parse(file.filename).name.toLowerCase();
+        const extension = path.parse(file.filename).ext;
+        
+        const matchingFile = files.find(f => {
+          const lowerFile = f.toLowerCase();
+          return lowerFile.includes(baseFilename.substring(0, Math.min(10, baseFilename.length))) && 
+                 lowerFile.endsWith(extension.toLowerCase());
+        });
+        
+        if (matchingFile) {
+          possiblePaths.push(path.join(targetDir, matchingFile));
+        }
+      } catch (error) {
+        console.log(`⚠️ [FILES] Erreur lors de la recherche dans ${targetDir}:`, error);
+      }
+    }
+    
+    // Tester chaque chemin possible
+    for (const testPath of possiblePaths) {
+      if (fs.existsSync(testPath)) {
+        filePath = testPath;
+        fileFound = true;
+        console.log(`✅ [FILES] Fichier trouvé: ${testPath}`);
+        break;
+      }
     }
 
-    // Vérifier que le fichier existe physiquement
-    if (!fs.existsSync(filePath)) {
-      console.log(`⚠️ [FILES] Fichier physique non trouvé: ${filePath}`);
+    // Si aucun fichier n'a été trouvé
+    if (!fileFound) {
+      console.log(`⚠️ [FILES] Fichier physique non trouvé après toutes les tentatives:`);
+      console.log(`  - storedName: ${file.storedName}`);
+      console.log(`  - url: ${file.url}`);
+      console.log(`  - filename: ${file.filename}`);
+      console.log(`  - chemins testés: ${possiblePaths.join(', ')}`);
+      
       res.status(404).json({ 
         error: "Fichier physique non trouvé",
         message: "Le fichier n'existe plus sur le serveur"

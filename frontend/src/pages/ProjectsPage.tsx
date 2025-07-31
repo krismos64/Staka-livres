@@ -175,11 +175,13 @@ const ProjectCard: React.FC<{ project: Project }> = ({ project }) => {
         <p>
           <span className="font-medium">Commencé le :</span> {project.startedAt}
         </p>
-        {project.deliveryAt && (
-          <p>
-            <span className="font-medium">Livraison :</span> {project.deliveryAt}
-          </p>
-        )}
+        <p>
+          <span className="font-medium">Statut :</span> {
+            project.status === "completed" ? "Terminé" : 
+            project.status === "active" ? "En cours de correction" : 
+            project.status === "pending" ? "En attente de traitement" : "En cours"
+          }
+        </p>
       </div>
 
       <div className="mt-4">

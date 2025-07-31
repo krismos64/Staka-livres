@@ -1,8 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../components/layout/ToastProvider";
 import { buildApiUrl } from "../utils/api";
+
+// Schéma de validation pour le mot de passe
+const passwordSchema = z.object({
+  password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères").max(100),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Les mots de passe ne correspondent pas",
+  path: ["confirmPassword"],
+});
+
+type PasswordFormData = z.infer<typeof passwordSchema>;
 
 interface ActivationData {
   user: {
@@ -37,7 +51,19 @@ export default function ActivateAccountPage() {
   const [activating, setActivating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activationData, setActivationData] = useState<ActivationData | null>(null);
-  const [activationResult, setActivationResult] = useState<ActivationResult | null>(null);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+
+  // Form pour le mot de passe
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch
+  } = useForm<PasswordFormData>({
+    resolver: zodResolver(passwordSchema)
+  });
+
+  const password = watch("password");
 
   // Vérifier le token au chargement
   useEffect(() => {
@@ -61,6 +87,13 @@ export default function ActivateAccountPage() {
       }
 
       setActivationData(data);
+      
+      if (data.isAlreadyActive) {
+        showToast("info", "Compte déjà activé", "Votre compte est déjà activé. Vous pouvez vous connecter.");
+        setTimeout(() => navigate("/login"), 2000);
+      } else {
+        setShowPasswordForm(true);
+      }
     } catch (err) {
       console.error('Erreur lors de la vérification du token:', err);
       setError("Erreur de connexion. Veuillez réessayer.");
@@ -69,42 +102,44 @@ export default function ActivateAccountPage() {
     }
   };
 
-  const activateAccount = async () => {
+  const onSubmitPassword = async (data: PasswordFormData) => {
     if (!token) return;
 
     setActivating(true);
     setError(null);
 
     try {
-      const response = await fetch(buildApiUrl(`/public/activate/${token}`), {
-        method: 'GET'
+      const response = await fetch(buildApiUrl(`/public/activate/${token}/set-password`), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password: data.password })
       });
-      const data = await response.json();
+
+      const result = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Erreur lors de l'activation");
+        if (result.details && Array.isArray(result.details)) {
+          const errorMessages = result.details
+            .map((error: any) => error.message)
+            .join(", ");
+          setError(`Erreurs de validation : ${errorMessages}`);
+        } else {
+          setError(result.message || "Erreur lors de l'activation");
+        }
         return;
       }
 
-      setActivationResult(data);
-      
-      // Connexion automatique avec le token JWT
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-        login(data.user);
-        
-        showToast(
-          'success',
-          'Compte activé !',
-          `Bienvenue ${data.user.prenom} ! Votre compte a été activé avec succès.`,
-          { duration: 5000 }
-        );
+      // Succès - connecter automatiquement l'utilisateur
+      showToast("success", "Compte activé !", 
+        `Bienvenue ${result.user.prenom} ! Votre compte est maintenant actif.`);
 
-        // Redirection vers le dashboard après un court délai
-        setTimeout(() => {
-          navigate('/app/dashboard');
-        }, 2000);
-      }
+      // Connexion automatique
+      await login(result.user, result.token);
+      
+      // Redirection
+      navigate(result.redirectUrl || '/app/dashboard');
 
     } catch (err) {
       console.error('Erreur lors de l\'activation:', err);
@@ -116,21 +151,14 @@ export default function ActivateAccountPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600">
-        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
           <div className="text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            </div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Vérification en cours...
+              Vérification du lien d'activation...
             </h2>
-            <p className="text-gray-600">
-              Nous vérifions votre lien d'activation, patientez un instant.
-            </p>
+            <p className="text-gray-600">Veuillez patienter.</p>
           </div>
         </div>
       </div>
@@ -139,33 +167,29 @@ export default function ActivateAccountPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-600 via-red-500 to-pink-600">
-        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
           <div className="text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+              <i className="fas fa-exclamation-triangle text-red-600 text-xl"></i>
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Activation impossible
+              Erreur d'activation
             </h2>
-            <p className="text-gray-600 mb-6">
-              {error}
-            </p>
+            <p className="text-gray-600 mb-6">{error}</p>
             <div className="space-y-3">
               <button
-                onClick={() => navigate('/login')}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+                onClick={() => window.location.reload()}
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition"
               >
-                Aller à la connexion
+                Réessayer
               </button>
-              <a
-                href="mailto:contact@staka.fr"
-                className="block w-full text-center bg-gray-100 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-200 transition-colors"
+              <button
+                onClick={() => navigate("/")}
+                className="w-full bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 transition"
               >
-                Contacter le support
-              </a>
+                Retour à l'accueil
+              </button>
             </div>
           </div>
         </div>
@@ -173,135 +197,127 @@ export default function ActivateAccountPage() {
     );
   }
 
-  if (activationResult) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-600 via-green-500 to-emerald-600">
-        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              🎉 Compte activé !
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Bienvenue <strong>{activationResult.user.prenom}</strong> ! Votre compte a été activé avec succès.
-            </p>
-            <div className="bg-green-50 p-4 rounded-md mb-6">
-              <p className="text-sm text-green-800">
-                <strong>Connexion automatique en cours...</strong><br />
-                Vous serez redirigé vers votre espace client dans quelques secondes.
-              </p>
-            </div>
-            <button
-              onClick={() => navigate('/app/dashboard')}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
-            >
-              Accéder à mon espace client
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (activationData?.isAlreadyActive) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-600 via-yellow-500 to-orange-600">
-        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="h-8 w-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.864-.833-2.634 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Compte déjà activé
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Bonjour <strong>{activationData.user.prenom}</strong>, votre compte est déjà activé.
-            </p>
-            <p className="text-sm text-gray-500 mb-6">
-              Vous pouvez vous connecter normalement avec vos identifiants.
-            </p>
-            <button
-              onClick={() => navigate('/login')}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
-            >
-              Se connecter
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+  if (!showPasswordForm || !activationData) {
+    return null;
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600">
-      <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m0 0a2 2 0 012 2m-2-2a2 2 0 00-2 2m2-2V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2m0 0a2 2 0 102 2h10a2 2 0 100-2m-10 0V7a2 2 0 012-2h2a2 2 0 012 2v8a2 2 0 01-2 2H9a2 2 0 01-2-2V9z" />
-            </svg>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
+        <div className="text-center mb-8">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+            <i className="fas fa-user-check text-green-600 text-xl"></i>
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Activer votre compte
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Activation de votre compte
           </h2>
-          {activationData && (
-            <>
-              <p className="text-gray-600 mb-4">
-                Bonjour <strong>{activationData.user.prenom} {activationData.user.nom}</strong>
-              </p>
-              <div className="bg-blue-50 p-4 rounded-md mb-6 text-left">
-                <h3 className="font-medium text-blue-900 mb-2">📧 Détails du compte</h3>
-                <p className="text-sm text-blue-800">
-                  <strong>Email :</strong> {activationData.user.email}
-                </p>
-                <p className="text-sm text-blue-800 mt-1">
-                  <strong>Expire le :</strong> {new Date(activationData.expiresAt).toLocaleDateString('fr-FR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </p>
-              </div>
-              <p className="text-sm text-gray-600 mb-6">
-                Cliquez sur le bouton ci-dessous pour activer votre compte et accéder à votre espace client.
-              </p>
-              <button
-                onClick={activateAccount}
-                disabled={activating}
-                className={`w-full py-3 px-4 rounded-md font-medium text-white transition-colors ${
-                  activating
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-                }`}
-              >
-                {activating ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Activation en cours...
-                  </span>
-                ) : (
-                  '🔓 Activer mon compte'
-                )}
-              </button>
-              <div className="mt-4 text-center">
-                <p className="text-xs text-gray-500">
-                  Une fois activé, vous serez automatiquement connecté et redirigé vers votre espace client.
-                </p>
-              </div>
-            </>
-          )}
+          <p className="text-gray-600">
+            Bienvenue <strong>{activationData.user.prenom} {activationData.user.nom}</strong>!
+            <br />
+            Définissez votre mot de passe pour finaliser l'activation.
+          </p>
         </div>
+
+        <form onSubmit={handleSubmit(onSubmitPassword)} className="space-y-6">
+          {/* Mot de passe */}
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              Mot de passe *
+            </label>
+            <input
+              type="password"
+              id="password"
+              {...register("password")}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                errors.password ? "border-red-500" : "border-gray-300"
+              }`}
+              placeholder="Votre mot de passe"
+              disabled={activating}
+            />
+            {errors.password && (
+              <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+            )}
+            
+            {/* Indicateur de force du mot de passe */}
+            {password && (
+              <div className="mt-2">
+                <div className="text-xs text-gray-600 mb-1">Force du mot de passe :</div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      password.length >= 12 ? 'bg-green-500 w-full' :
+                      password.length >= 8 ? 'bg-yellow-500 w-2/3' :
+                      'bg-red-500 w-1/3'
+                    }`}
+                  ></div>
+                </div>
+                <div className="text-xs mt-1 text-gray-500">
+                  {password.length >= 12 ? 'Fort' :
+                   password.length >= 8 ? 'Moyen' : 'Faible'}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Confirmation mot de passe */}
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+              Confirmer le mot de passe *
+            </label>
+            <input
+              type="password"
+              id="confirmPassword"
+              {...register("confirmPassword")}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                errors.confirmPassword ? "border-red-500" : "border-gray-300"
+              }`}
+              placeholder="Confirmez votre mot de passe"
+              disabled={activating}
+            />
+            {errors.confirmPassword && (
+              <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
+            )}
+          </div>
+
+          {/* Conseils de sécurité */}
+          <div className="bg-blue-50 p-4 rounded-md">
+            <h4 className="text-sm font-medium text-blue-800 mb-2">
+              💡 Conseils pour un mot de passe sécurisé :
+            </h4>
+            <ul className="text-xs text-blue-700 space-y-1">
+              <li>• Au moins 8 caractères (12+ recommandés)</li>
+              <li>• Mélangez majuscules, minuscules, chiffres et symboles</li>
+              <li>• Évitez les mots du dictionnaire</li>
+              <li>• Utilisez un gestionnaire de mots de passe</li>
+            </ul>
+          </div>
+
+          {/* Bouton d'activation */}
+          <button
+            type="submit"
+            disabled={activating}
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            {activating ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Activation en cours...
+              </span>
+            ) : (
+              <>
+                <i className="fas fa-check mr-2"></i>
+                Activer mon compte
+              </>
+            )}
+          </button>
+
+          <p className="text-xs text-gray-500 text-center">
+            🔒 Vos données sont sécurisées et chiffrées
+          </p>
+        </form>
       </div>
     </div>
   );

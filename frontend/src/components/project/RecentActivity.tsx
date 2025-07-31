@@ -54,7 +54,7 @@ const RecentActivity: React.FC = () => {
 
     // Activités des projets récents
     projects.slice(0, 3).forEach(project => {
-      if (project.status === "TERMINE" || project.status === "Terminé") {
+      if (project.status === "completed") {
         activities.push({
           color: "green",
           bg: "bg-green-100",
@@ -68,7 +68,7 @@ const RecentActivity: React.FC = () => {
           time: formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true, locale: fr }),
           date: new Date(project.updatedAt)
         });
-      } else if (project.status === "EN_COURS" || project.status === "En cours") {
+      } else if (project.status === "active") {
         activities.push({
           color: "blue",
           bg: "bg-blue-100",
@@ -82,7 +82,7 @@ const RecentActivity: React.FC = () => {
           time: formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true, locale: fr }),
           date: new Date(project.updatedAt)
         });
-      } else if (project.status === "EN_ATTENTE" || project.status === "En attente") {
+      } else if (project.status === "pending") {
         activities.push({
           color: "yellow",
           bg: "bg-yellow-100",

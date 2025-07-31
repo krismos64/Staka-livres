@@ -161,59 +161,27 @@ export const useDeleteFile = (
 export const useDownloadFile = (projectId: string) => {
   const downloadFile = async (file: ProjectFile): Promise<void> => {
     try {
-      // Pour les fichiers S3, utiliser directement l'URL
-      if (file.url.includes("s3.amazonaws.com") || file.url.includes("s3.")) {
-        const link = document.createElement("a");
-        link.href = file.url;
-        link.download = file.filename;
-        link.target = "_blank";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        return;
-      }
-
-      // Pour les autres fichiers, passer par l'API
       const token = localStorage.getItem("auth_token");
       
       if (!token) {
         throw new Error("Token d'authentification manquant");
       }
 
-      const response = await fetch(`/api/files/download/${file.id}`, {
+      console.log(`📥 Téléchargement du fichier ${file.filename} (ID: ${file.id})`);
+
+      const response = await fetch(`http://localhost:3001/api/files/download/${file.id}`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
         },
-        redirect: 'manual' // Empêcher la redirection automatique
       });
 
       if (!response.ok) {
-        throw new Error(`Erreur lors du téléchargement: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Erreur ${response.status}: ${response.statusText}`);
       }
 
-      // Gérer les redirections (fichiers S3)
-      if (response.status === 302 || response.status === 301) {
-        const location = response.headers.get('Location');
-        if (location) {
-          // Ouvrir directement l'URL S3 dans un nouvel onglet
-          window.open(location, '_blank');
-          return;
-        }
-      }
-
-      // Vérifier si la réponse est du JSON (URL de téléchargement)
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const data = await response.json();
-        if (data.downloadUrl) {
-          // Ouvrir l'URL de téléchargement
-          window.open(data.downloadUrl, '_blank');
-          return;
-        }
-      }
-
-      // Sinon, traiter comme un blob (fichiers locaux)
+      // Traiter comme un blob (fichiers stockage local)
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -224,8 +192,10 @@ export const useDownloadFile = (projectId: string) => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
+      console.log(`✅ Fichier ${file.filename} téléchargé avec succès`);
+
     } catch (error) {
-      console.error("Erreur lors du téléchargement:", error);
+      console.error("❌ Erreur lors du téléchargement:", error);
       throw error;
     }
   };

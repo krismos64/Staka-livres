@@ -40,7 +40,6 @@ const AdminCommandes: React.FC = () => {
     loadCommandes,
     refreshCommandes,
     loadCommandeStats,
-    viewCommande,
     updateCommandeStatut,
     deleteCommande,
     setCurrentPage,
@@ -54,9 +53,6 @@ const AdminCommandes: React.FC = () => {
   const [statutFilter, setStatutFilter] = useState<StatutFilter>("TOUS");
   const [sortColumn, setSortColumn] = useState<string | undefined>();
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [selectedCommande, setSelectedCommande] =
-    useState<CommandeDetailed | null>(null);
-  const [showCommandeModal, setShowCommandeModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [commandeToDelete, setCommandeToDelete] = useState<Commande | null>(
     null
@@ -121,13 +117,6 @@ const AdminCommandes: React.FC = () => {
     );
   };
 
-  const handleViewCommande = async (commandeId: string) => {
-    const commande = await viewCommande(commandeId);
-    if (commande) {
-      setSelectedCommande(commande);
-      setShowCommandeModal(true);
-    }
-  };
 
   const handleUpdateStatut = async (
     commande: Commande,
@@ -451,14 +440,6 @@ const AdminCommandes: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex justify-end space-x-1">
                             <button
-                              onClick={() => handleViewCommande(commande.id)}
-                              disabled={isOperationLoading}
-                              className="text-blue-600 hover:text-blue-900 disabled:opacity-50 p-2 rounded-md hover:bg-blue-50"
-                              title="Voir les détails"
-                            >
-                              <i className="fas fa-eye"></i>
-                            </button>
-                            <button
                               onClick={() => handleManageFiles(commande)}
                               disabled={isOperationLoading}
                               className="text-green-600 hover:text-green-900 disabled:opacity-50 p-2 rounded-md hover:bg-green-50"
@@ -559,14 +540,6 @@ const AdminCommandes: React.FC = () => {
                     {/* Actions */}
                     <div className="flex gap-2 pt-3 border-t border-gray-100">
                       <button
-                        onClick={() => handleViewCommande(commande.id)}
-                        disabled={isOperationLoading}
-                        className="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <i className="fas fa-eye mr-2"></i>
-                        Détails
-                      </button>
-                      <button
                         onClick={() => handleManageFiles(commande)}
                         disabled={isOperationLoading}
                         className="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-green-600 bg-green-50 rounded-md hover:bg-green-100 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -591,379 +564,6 @@ const AdminCommandes: React.FC = () => {
         )}
       </div>
 
-      {/* Modal détails commande */}
-      {showCommandeModal && selectedCommande && (
-        <Modal
-          isOpen={showCommandeModal}
-          onClose={() => {
-            setShowCommandeModal(false);
-            setSelectedCommande(null);
-          }}
-          title="Détails de la commande"
-          size="xl"
-        >
-          <div className="space-y-6">
-            {/* En-tête avec informations principales */}
-            <div className="flex items-start space-x-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border">
-              <div className="flex-shrink-0">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md">
-                  <i className="fas fa-file-alt text-2xl text-white"></i>
-                </div>
-              </div>
-              <div className="flex-grow">
-                <h3 className="text-xl font-bold text-gray-900 mb-1">
-                  {selectedCommande.titre}
-                </h3>
-                <p className="text-gray-600 mb-3">
-                  ID: {selectedCommande.id.slice(0, 8)}...
-                </p>
-                <div className="flex items-center space-x-3">
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${getStatutBadgeColor(
-                      selectedCommande.statut
-                    )}`}
-                  >
-                    {getStatutLabel(selectedCommande.statut)}
-                  </span>
-                  {selectedCommande.priorite && (
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        selectedCommande.priorite === "URGENTE"
-                          ? "bg-red-100 text-red-800"
-                          : selectedCommande.priorite === "ELEVEE"
-                          ? "bg-orange-100 text-orange-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      Priorité {selectedCommande.priorite?.toLowerCase()}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Informations en grille */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Informations de base */}
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
-                  Informations générales
-                </h4>
-
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <i className="fas fa-calendar text-blue-600"></i>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Créée le</p>
-                      <p className="font-medium text-gray-900">
-                        {new Date(
-                          selectedCommande.createdAt
-                        ).toLocaleDateString("fr-FR", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                      <i className="fas fa-clock text-orange-600"></i>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">
-                        Dernière mise à jour
-                      </p>
-                      <p className="font-medium text-gray-900">
-                        {new Date(
-                          selectedCommande.updatedAt
-                        ).toLocaleDateString("fr-FR", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                  </div>
-
-                  {selectedCommande.dateEcheance && (
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                        <i className="fas fa-exclamation-triangle text-red-600"></i>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Date d'échéance</p>
-                        <p className="font-medium text-gray-900">
-                          {new Date(
-                            selectedCommande.dateEcheance
-                          ).toLocaleDateString("fr-FR", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedCommande.dateFinition && (
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <i className="fas fa-check-circle text-green-600"></i>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">
-                          Date de finition
-                        </p>
-                        <p className="font-medium text-gray-900">
-                          {new Date(
-                            selectedCommande.dateFinition
-                          ).toLocaleDateString("fr-FR", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Informations client */}
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
-                  Informations client
-                </h4>
-
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                      <i className="fas fa-user text-purple-600"></i>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Nom complet</p>
-                      <p className="font-medium text-gray-900">
-                        {selectedCommande.user?.prenom}{" "}
-                        {selectedCommande.user?.nom}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <i className="fas fa-envelope text-green-600"></i>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Email</p>
-                      <p className="font-medium text-gray-900">
-                        {selectedCommande.user?.email}
-                      </p>
-                    </div>
-                  </div>
-
-                  {selectedCommande.user?.telephone && (
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                        <i className="fas fa-phone text-yellow-600"></i>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Téléphone</p>
-                        <p className="font-medium text-gray-900">
-                          {selectedCommande.user.telephone}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Informations financières et techniques */}
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
-                  Informations techniques
-                </h4>
-
-                <div className="space-y-3">
-                  {selectedCommande.amount && (
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                        <i className="fas fa-euro-sign text-emerald-600"></i>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Montant</p>
-                        <p className="font-medium text-gray-900">
-                          {(selectedCommande.amount / 100).toFixed(2)} €
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedCommande.paymentStatus && (
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                        <i className="fas fa-credit-card text-indigo-600"></i>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">
-                          Statut de paiement
-                        </p>
-                        <p className="font-medium text-gray-900">
-                          {selectedCommande.paymentStatus}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedCommande.fichierUrl && (
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center">
-                        <i className="fas fa-paperclip text-pink-600"></i>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Fichier joint</p>
-                        <a
-                          href={selectedCommande.fichierUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-medium text-blue-600 hover:text-blue-800"
-                        >
-                          Télécharger
-                        </a>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Statistiques si disponibles */}
-                  {selectedCommande._count && (
-                    <>
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">
-                          <i className="fas fa-comments text-teal-600"></i>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Messages</p>
-                          <p className="font-medium text-gray-900">
-                            {selectedCommande._count.messages || 0}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-cyan-100 rounded-full flex items-center justify-center">
-                          <i className="fas fa-file-invoice text-cyan-600"></i>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Factures</p>
-                          <p className="font-medium text-gray-900">
-                            {selectedCommande._count.invoices || 0}
-                          </p>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Description */}
-            {selectedCommande.description && (
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                  <i className="fas fa-align-left mr-2 text-gray-600"></i>
-                  Description du projet
-                </h4>
-                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-                  {selectedCommande.description}
-                </p>
-              </div>
-            )}
-
-            {/* Notes */}
-            {(selectedCommande.noteClient ||
-              selectedCommande.noteCorrecteur) && (
-              <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
-                <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                  <i className="fas fa-sticky-note mr-2 text-amber-600"></i>
-                  Notes et commentaires
-                </h4>
-                <div className="space-y-4">
-                  {selectedCommande.noteClient && (
-                    <div>
-                      <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                        <i className="fas fa-user mr-1 text-blue-500"></i>
-                        Note du client :
-                      </h5>
-                      <div className="bg-white p-3 rounded border border-amber-200">
-                        <p className="text-gray-600 whitespace-pre-wrap">
-                          {selectedCommande.noteClient}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  {selectedCommande.noteCorrecteur && (
-                    <div>
-                      <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                        <i className="fas fa-user-edit mr-1 text-green-500"></i>
-                        Note du correcteur :
-                      </h5>
-                      <div className="bg-white p-3 rounded border border-amber-200">
-                        <p className="text-gray-600 whitespace-pre-wrap">
-                          {selectedCommande.noteCorrecteur}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Actions rapides */}
-            <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => setShowCommandeModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
-                >
-                  Fermer
-                </button>
-              </div>
-              <div className="flex space-x-3">
-                {selectedCommande.statut !== StatutCommande.TERMINE && (
-                  <button
-                    onClick={() => {
-                      handleUpdateStatut(
-                        selectedCommande,
-                        StatutCommande.TERMINE
-                      );
-                      setShowCommandeModal(false);
-                    }}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200"
-                  >
-                    Marquer comme terminée
-                  </button>
-                )}
-                <button
-                  onClick={() => {
-                    setShowCommandeModal(false);
-                    handleDeleteCommande(selectedCommande);
-                  }}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200"
-                >
-                  Supprimer
-                </button>
-              </div>
-            </div>
-          </div>
-        </Modal>
-      )}
 
       {/* Modal confirmation suppression */}
       {showDeleteModal && commandeToDelete && (
@@ -993,6 +593,7 @@ const AdminCommandes: React.FC = () => {
           }}
           commandeId={commandeForFiles.id}
           commandeTitle={commandeForFiles.titre}
+          commandeDescription={commandeForFiles.description}
           clientName={`${commandeForFiles.user?.prenom || ''} ${commandeForFiles.user?.nom || ''}`.trim() || 'Client'}
         />
       )}

@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ProjectDetailsModal from "../components/modals/ProjectDetailsModal";
 import RecentActivity from "../components/project/RecentActivity";
 import { useAuth } from "../contexts/AuthContext";
 import { useProjects, Project } from "../hooks/useProjects";
+import { useMessages } from "../hooks/useMessages";
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -15,6 +18,12 @@ const Dashboard: React.FC = () => {
     page: 1,
     limit: 5, // Limiter à 5 projets pour le dashboard
     status: 'all'
+  });
+
+  // Récupérer les messages pour les statistiques de messages non lus
+  const { conversations, isLoading: messagesLoading } = useMessages({
+    page: 1,
+    limit: 10
   });
 
   const projects = projectsResponse?.data || [];
@@ -27,12 +36,19 @@ const Dashboard: React.FC = () => {
 
   // Calculer les statistiques à partir des données réelles
   const activeProjects = projects.filter(p => 
-    p.status === "En cours" || p.status === "En correction" || p.status === "En attente"
+    p.status === "active"
+  ).length;
+  
+  const pendingProjects = projects.filter(p => 
+    p.status === "pending"
   ).length;
   
   const completedProjects = projects.filter(p => 
-    p.status === "Terminé" || p.status === "Livré"
+    p.status === "completed"
   ).length;
+
+  // Calculer les messages non lus à partir des conversations
+  const unreadMessages = conversations ? conversations.reduce((total, conv) => total + conv.unreadCount, 0) : 0;
 
   const averageRating = projects.filter(p => p.rating).length > 0 
     ? (projects.filter(p => p.rating).reduce((sum, p) => sum + (p.rating || 0), 0) / 
@@ -40,13 +56,15 @@ const Dashboard: React.FC = () => {
     : "N/A";
 
   // Statistiques principales calculées dynamiquement
+  const totalActiveProjects = activeProjects + pendingProjects; // Projets actifs = en cours + en attente
+  
   const stats = [
     {
       label: "Projets actifs",
-      value: activeProjects,
+      value: totalActiveProjects,
       icon: "fas fa-folder-open text-blue-600",
       iconBg: "bg-blue-100",
-      change: isLoading ? "..." : `${activeProjects} en cours`,
+      change: isLoading ? "..." : `${activeProjects} en cours, ${pendingProjects} en attente`,
       changeColor: "text-blue-600",
     },
     {
@@ -59,11 +77,11 @@ const Dashboard: React.FC = () => {
     },
     {
       label: "Messages non lus",
-      value: isLoading ? "..." : 0, // TODO: intégrer avec useMessages
+      value: (isLoading || messagesLoading) ? "..." : unreadMessages,
       icon: "fas fa-envelope text-yellow-600",
       iconBg: "bg-yellow-100",
-      change: "À consulter",
-      changeColor: "text-blue-600",
+      change: unreadMessages > 0 ? `${unreadMessages} nouveaux messages` : "Aucun message",
+      changeColor: unreadMessages > 0 ? "text-orange-600" : "text-green-600",
     },
     {
       label: "Satisfaction",
@@ -122,29 +140,29 @@ const Dashboard: React.FC = () => {
       }
     };
 
-    const getDeliveryText = () => {
+    const getStatusDescription = () => {
       switch (project.status) {
-        case "Terminé":
-          return `Livré le ${project.delivery}`;
-        case "En correction":
-          return `Livraison prévue: ${project.delivery}`;
-        case "En attente":
-          return `Début prévu: ${project.started}`;
+        case "completed":
+          return "Projet terminé";
+        case "active":
+          return "En cours de correction";
+        case "pending":
+          return "En attente de traitement";
         default:
-          return `Livraison prévue: ${project.delivery}`;
+          return "Statut du projet";
       }
     };
 
     const getStatusText = () => {
       switch (project.status) {
-        case "Terminé":
-          return "Correction terminée";
-        case "En correction":
-          return "En correction";
-        case "En attente":
+        case "completed":
+          return "Terminé";
+        case "active":
+          return "En cours";
+        case "pending":
           return "En attente";
         default:
-          return project.status;
+          return "En cours";
       }
     };
 
@@ -181,7 +199,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600">{getDeliveryText()}</span>
+          <span className="text-gray-600">{getStatusDescription()}</span>
           <button className="text-blue-600 hover:text-blue-700 font-medium">
             {getButtonText()}
           </button>
@@ -258,7 +276,10 @@ const Dashboard: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-900">
                 Projets en cours
               </h3>
-              <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+              <button 
+                onClick={() => navigate('/app/projects')}
+                className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200 hover:underline"
+              >
                 Voir tout →
               </button>
             </div>

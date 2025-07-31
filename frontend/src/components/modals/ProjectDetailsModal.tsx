@@ -1,5 +1,8 @@
-import React from "react";
-import { Project } from "../../pages/ProjectsPage";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Project } from "../../hooks/useProjects";
+import ContactModal from "./ContactModal";
+import ProjectFilesModal from "./ProjectFilesModal";
 
 interface ProjectDetailsModalProps {
   project: Project;
@@ -16,6 +19,10 @@ function ProjectDetailsModal({
   isOpen,
   onClose,
 }: ProjectDetailsModalProps) {
+  const navigate = useNavigate();
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [isFilesModalOpen, setIsFilesModalOpen] = useState(false);
+
   if (!isOpen) return null;
 
   // Gestion de la fermeture avec échap
@@ -71,7 +78,7 @@ function ProjectDetailsModal({
                   {project.title}
                 </h3>
                 <p className="text-sm text-gray-600">
-                  {project.type} • {project.pages} pages
+                  {project.type} {project.pages ? `• ${project.pages} pages` : ''}
                 </p>
               </div>
             </div>
@@ -105,7 +112,7 @@ function ProjectDetailsModal({
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Nombre de pages</span>
                     <span className="font-medium text-gray-900">
-                      {project.pages} pages
+                      {project.pages || 'Non spécifié'} {project.pages ? 'pages' : ''}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -114,12 +121,6 @@ function ProjectDetailsModal({
                       className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor()}`}
                     >
                       {project.status}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Correcteur</span>
-                    <span className="font-medium text-gray-900">
-                      {project.corrector}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -155,13 +156,15 @@ function ProjectDetailsModal({
                     <div>
                       <span className="text-gray-600 block">Début</span>
                       <div className="font-medium text-gray-900">
-                        {project.started}
+                        {new Date(project.startedAt).toLocaleDateString('fr-FR')}
                       </div>
                     </div>
                     <div>
-                      <span className="text-gray-600 block">Fin prévue</span>
+                      <span className="text-gray-600 block">Statut</span>
                       <div className="font-medium text-gray-900">
-                        {project.delivery}
+                        {project.status === "completed" ? "Terminé" : 
+                         project.status === "active" ? "En cours" : 
+                         project.status === "pending" ? "En attente" : "En cours"}
                       </div>
                     </div>
                   </div>
@@ -178,8 +181,7 @@ function ProjectDetailsModal({
                 </h4>
                 <div className="bg-gray-50 rounded-xl p-4">
                   <p className="text-gray-700 leading-relaxed">
-                    {project.description ||
-                      "Aucune description disponible pour ce projet."}
+                    {"Projet de " + project.type.toLowerCase() + (project.pages ? ` de ${project.pages} pages` : '') + "."}
                   </p>
                 </div>
               </div>
@@ -191,18 +193,30 @@ function ProjectDetailsModal({
                 </h4>
                 <div className="space-y-3">
                   {project.status === "Terminé" && project.canDownload ? (
-                    <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                    <button 
+                      onClick={() => setIsFilesModalOpen(true)}
+                      className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                    >
                       <i className="fas fa-download"></i>
                       Télécharger les fichiers
                     </button>
                   ) : (
-                    <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                    <button 
+                      onClick={() => {
+                        onClose();
+                        navigate('/app/messages');
+                      }}
+                      className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                    >
                       <i className="fas fa-comment"></i>
-                      Contacter le correcteur
+                      Contacter l'équipe
                     </button>
                   )}
 
-                  <button className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
+                  <button 
+                    onClick={() => setIsFilesModalOpen(true)}
+                    className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                  >
                     <i className="fas fa-folder"></i>
                     Voir les fichiers
                   </button>
@@ -231,7 +245,7 @@ function ProjectDetailsModal({
                           Projet créé
                         </p>
                         <p className="text-xs text-gray-600">
-                          {project.started}
+                          {new Date(project.startedAt).toLocaleDateString('fr-FR')}
                         </p>
                       </div>
                     </div>
@@ -242,9 +256,6 @@ function ProjectDetailsModal({
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-900">
                             Correction démarrée
-                          </p>
-                          <p className="text-xs text-gray-600">
-                            Assigné à {project.corrector}
                           </p>
                         </div>
                       </div>
@@ -258,7 +269,7 @@ function ProjectDetailsModal({
                             Correction terminée
                           </p>
                           <p className="text-xs text-gray-600">
-                            {project.delivery}
+                            {project.deliveryAt ? new Date(project.deliveryAt).toLocaleDateString('fr-FR') : 'Non définie'}
                           </p>
                         </div>
                       </div>
@@ -275,7 +286,7 @@ function ProjectDetailsModal({
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-600">
               <i className="fas fa-calendar-alt mr-2"></i>
-              Dernière mise à jour: {project.delivery}
+              Créé le: {new Date(project.startedAt).toLocaleDateString('fr-FR')}
             </div>
             <button
               onClick={onClose}
@@ -286,6 +297,19 @@ function ProjectDetailsModal({
           </div>
         </div>
       </div>
+
+      {/* Nested Modals */}
+      <ContactModal
+        project={project}
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+      />
+      
+      <ProjectFilesModal
+        project={project}
+        isOpen={isFilesModalOpen}
+        onClose={() => setIsFilesModalOpen(false)}
+      />
     </div>
   );
 }

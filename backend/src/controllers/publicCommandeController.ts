@@ -7,16 +7,15 @@ import { extractFileMetadata, enrichFileData, EnrichedFileData } from "../middle
 
 const prisma = new PrismaClient();
 
-// Schéma de validation Zod pour la commande publique
+// Schéma de validation Zod pour la commande publique - Workflow simplifié sans mot de passe
 const publicOrderSchema = z.object({
   prenom: z.string().min(2, "Le prénom doit contenir au moins 2 caractères").max(100),
   nom: z.string().min(2, "Le nom doit contenir au moins 2 caractères").max(100),
   email: z.string().email("Format d'email invalide").max(255),
-  password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères").max(100),
   telephone: z.string().optional(),
-  adresse: z.string().optional(),
   serviceId: z.string().min(1, "L'ID du service est requis"),
   nombrePages: z.number().min(1).max(1000).optional(),
+  description: z.string().max(2000, "La description ne peut pas dépasser 2000 caractères").optional(),
   prixCalcule: z.number().min(0).optional(),
   consentementRgpd: z.boolean().refine(val => val === true, "Le consentement RGPD est obligatoire")
 });
@@ -25,11 +24,10 @@ interface PublicOrderRequest {
   prenom: string;
   nom: string;
   email: string;
-  password: string;
   telephone?: string;
-  adresse?: string;
   serviceId: string;
   nombrePages?: number;
+  description?: string;
   prixCalcule?: number;
   consentementRgpd: boolean;
 }
@@ -64,7 +62,7 @@ export const createPublicOrder = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    const { prenom, nom, email, password, telephone, adresse, serviceId, nombrePages, prixCalcule, consentementRgpd } = validationResult.data;
+    const { prenom, nom, email, telephone, serviceId, nombrePages, description, prixCalcule, consentementRgpd } = validationResult.data;
 
     // Récupérer les fichiers uploadés et leurs métadonnées
     const uploadedFiles = req.files as Express.Multer.File[] || [];
@@ -112,20 +110,17 @@ export const createPublicOrder = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    // Hasher le mot de passe
-    const saltRounds = 12;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
-
-    // Créer une entrée temporaire dans PendingCommande
+    // Créer une entrée temporaire dans PendingCommande - Sans mot de passe
     const pendingCommande = await prisma.pendingCommande.create({
       data: {
         prenom: prenom.trim(),
         nom: nom.trim(),
         email: email.toLowerCase().trim(),
-        passwordHash,
+        passwordHash: "PENDING_ACTIVATION", // Valeur temporaire - sera défini lors de l'activation
         telephone: telephone?.trim() || null,
-        adresse: adresse?.trim() || null,
         serviceId,
+        nombrePages, // Stocker le nombre de pages déclaré
+        description: description?.trim() || null, // Stocker la description du projet
         consentementRgpd
       }
     });
@@ -137,10 +132,15 @@ export const createPublicOrder = async (req: Request, res: Response): Promise<vo
       let priceId = service.stripePriceId || "default";
       let amount: number | undefined;
       
-      // Si un prix calculé est fourni, utiliser le prix dynamique
+      // Si un prix calculé est fourni, utiliser le prix dynamique (services à la page)
       if (prixCalcule !== undefined && nombrePages !== undefined) {
         console.log(`💰 [PUBLIC ORDER] Prix calculé dynamique: ${prixCalcule}€ pour ${nombrePages} pages`);
         amount = Math.round(prixCalcule * 100); // Convertir en centimes
+        priceId = "default"; // Forcer l'utilisation du prix dynamique
+      } else if (!service.stripePriceId) {
+        // Si pas de stripePriceId et pas de prix calculé, utiliser le prix du service
+        console.log(`💰 [PUBLIC ORDER] Prix fixe du service: ${service.prix / 100}€`);
+        amount = service.prix; // Le prix est déjà en centimes
         priceId = "default"; // Forcer l'utilisation du prix dynamique
       }
       
