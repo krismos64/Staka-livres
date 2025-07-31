@@ -287,7 +287,7 @@ export default function Footer() {
               &copy; {new Date().getFullYear()} Staka. Tous droits réservés.
             </p>
             <div className="flex space-x-4 mt-4 md:mt-0">
-              <Link to="/pages/mentions-legales" className="hover:text-white">
+              <Link to="/mentions-legales" className="hover:text-white">
                 Mentions légales
               </Link>
               <Link
@@ -296,7 +296,7 @@ export default function Footer() {
               >
                 Politique de confidentialité
               </Link>
-              <Link to="/pages/cgv" className="hover:text-white">
+              <Link to="/cgv" className="hover:text-white">
                 CGV
               </Link>
               <Link to="/pages/rgpd" className="hover:text-white">
