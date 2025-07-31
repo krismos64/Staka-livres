@@ -44,6 +44,9 @@ import SettingsPage from "./pages/SettingsPage";
 import SignupPage from "./pages/SignupPage";
 import MentionsLegalesPage from "./pages/MentionsLegalesPage";
 import CGVPage from "./pages/CGVPage";
+import PremierChapitreArticle from "./pages/blog/PremierChapitreArticle";
+import AmazonKDPGuideArticle from "./pages/blog/AmazonKDPGuideArticle";
+import ErreursAutoeditionArticle from "./pages/blog/ErreursAutoeditionArticle";
 import "./styles/global.css";
 
 type SectionName =
@@ -141,6 +144,9 @@ const AppRoutes: React.FC = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
       <Route path="/cgv" element={<CGVPage />} />
+      <Route path="/blog/premier-chapitre" element={<PremierChapitreArticle />} />
+      <Route path="/blog/amazon-kdp-guide" element={<AmazonKDPGuideArticle />} />
+      <Route path="/blog/erreurs-autoedition" element={<ErreursAutoeditionArticle />} />
       <Route path="/pages/:slug" element={<StaticPageBySlug />} />
       <Route
         path="/payment/success"

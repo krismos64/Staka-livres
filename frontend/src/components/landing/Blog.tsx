@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface BlogArticle {
   id: string;
@@ -15,6 +16,7 @@ interface BlogArticle {
 
 export default function Blog() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
+  const navigate = useNavigate();
 
   const handleNewsletterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +61,16 @@ export default function Blog() {
   ];
 
   const handleArticleClick = (articleId: string) => {
-    console.log("Navigation vers l'article:", articleId);
+    const routes = {
+      "premier-chapitre": "/blog/premier-chapitre",
+      "amazon-kdp-guide": "/blog/amazon-kdp-guide", 
+      "erreurs-autoedition": "/blog/erreurs-autoedition"
+    };
+    
+    const route = routes[articleId as keyof typeof routes];
+    if (route) {
+      navigate(route);
+    }
   };
 
   return (
