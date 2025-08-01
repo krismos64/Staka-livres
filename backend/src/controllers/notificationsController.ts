@@ -452,3 +452,23 @@ export const notifyClientCommandeCreated = async (
     true // sendEmail = true pour déclencher l'envoi d'email
   );
 };
+
+/**
+ * Notifie les admins qu'un projet nécessite un règlement avant transmission à l'équipe support
+ */
+export const notifyAdminProjectAwaitingPayment = async (
+  customerName: string,
+  customerEmail: string,
+  commandeTitle: string,
+  commandeId: string,
+  amount: number
+): Promise<void> => {
+  await createAdminNotification(
+    "Projet en attente de règlement",
+    `Le projet "${commandeTitle}" de ${customerName} (${customerEmail}) doit être réglé (${(amount / 100).toFixed(2)}€) avant d'être transmis à l'équipe support.`,
+    NotificationType.WARNING,
+    NotificationPriority.HAUTE,
+    `/admin/commandes?id=${commandeId}`,
+    { customerName, customerEmail, commandeTitle, commandeId, amount }
+  );
+};

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projet en attente de règlement - Staka Livres</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+            text-align: center;
+        }
+        .content {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+            border: 1px solid #e9ecef;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .project-details {
+            background: white;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .customer-info {
+            background: #e3f2fd;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .amount {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #e67e22;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 10px 5px;
+            font-weight: bold;
+        }
+        .btn:hover {
+            background: #5a6fd8;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚠️ Projet en attente de règlement</h1>
+        <p>Administration Staka Livres</p>
+    </div>
+    
+    <div class="content">
+        <div class="warning-box">
+            <strong>⏳ Action requise :</strong> Un projet nécessite un règlement avant d'être transmis à l'équipe support.
+        </div>
+
+        <div class="project-details">
+            <h3>📋 Détails du projet</h3>
+            <p><strong>Titre :</strong> {{commandeTitle}}</p>
+            <p><strong>ID Commande :</strong> {{commandeId}}</p>
+            <p><strong>Montant à régler :</strong> <span class="amount">{{amount}}€</span></p>
+        </div>
+
+        <div class="customer-info">
+            <h3>👤 Informations client</h3>
+            <p><strong>Nom :</strong> {{customerName}}</p>
+            <p><strong>Email :</strong> {{customerEmail}}</p>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{frontendUrl}}/admin/commandes?id={{commandeId}}" class="btn">
+                🔍 Voir la commande
+            </a>
+            <a href="{{frontendUrl}}/admin/dashboard" class="btn">
+                📊 Dashboard Admin
+            </a>
+        </div>
+
+        <div style="background: #f1f3f4; padding: 15px; border-radius: 6px; margin-top: 20px;">
+            <h4>📋 Prochaines étapes :</h4>
+            <ol>
+                <li>Vérifier le statut du paiement dans l'administration</li>
+                <li>Une fois le paiement confirmé, le projet sera automatiquement transmis à l'équipe support</li>
+                <li>Le client recevra une notification de confirmation</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>
+            <strong>Staka Livres</strong><br>
+            Système de notifications automatiques<br>
+            📧 {{supportEmail}} | 🌐 <a href="{{frontendUrl}}">{{frontendUrl}}</a>
+        </p>
+    </div>
+</body>
+</html>

@@ -4,6 +4,7 @@ import { Request, Response } from "express";
 import { stripeService } from "../services/stripeService";
 import { z } from "zod";
 import { extractFileMetadata, enrichFileData, EnrichedFileData } from "../middleware/fileUpload";
+import { notifyAdminProjectAwaitingPayment } from "./notificationsController";
 
 const prisma = new PrismaClient();
 
@@ -161,6 +162,22 @@ export const createPublicOrder = async (req: Request, res: Response): Promise<vo
 
       console.log(`💳 [PUBLIC ORDER] Session Stripe créée: ${checkoutSession.id} pour ${email}`);
 
+      // Notifier les admins qu'un projet est en attente de règlement
+      try {
+        const finalAmount = amount || service.prix; // Prix en centimes
+        await notifyAdminProjectAwaitingPayment(
+          `${prenom} ${nom}`,
+          email,
+          service.nom,
+          pendingCommande.id,
+          finalAmount
+        );
+        console.log(`🔔 [PUBLIC ORDER] Notification admin envoyée pour projet en attente de règlement: ${pendingCommande.id}`);
+      } catch (notifError) {
+        console.error(`⚠️ [PUBLIC ORDER] Erreur lors de l'envoi de la notification admin:`, notifError);
+        // Ne pas faire échouer la création de commande si la notification échoue
+      }
+
       // Sauvegarder les fichiers temporairement avec pendingCommandeId
       if (enrichedFiles.length > 0) {
         try {
@@ -185,9 +202,7 @@ export const createPublicOrder = async (req: Request, res: Response): Promise<vo
             console.log(`👤 [PUBLIC ORDER] Utilisateur temporaire créé: ${tempUser.id}`);
           }
           
-          // Sauvegarder les métadonnées des fichiers pour la migration
-          const fileMetadataMap = new Map();
-          
+          // Sauvegarder les métadonnées des fichiers
           for (const fileData of enrichedFiles) {
             const fileRecord = await prisma.file.create({
               data: {

@@ -5,7 +5,7 @@ import { NotificationType } from "@prisma/client";
 const templateMap: Record<NotificationType, string> = {
   INFO: "admin-info.hbs",
   SUCCESS: "admin-success.hbs", 
-  WARNING: "admin-warning.hbs",
+  WARNING: "admin-project-payment-pending.hbs", // Template spécialisé pour les projets en attente de paiement
   ERROR: "admin-error.hbs",
   PAYMENT: "admin-payment.hbs",
   ORDER: "admin-order.hbs",
@@ -54,6 +54,12 @@ eventBus.on("admin.notification.created", async (notification) => {
       }
     }
 
+    // Format amount for payment-related notifications
+    const formattedData = { ...data };
+    if (data?.amount && typeof data.amount === 'number') {
+      formattedData.amount = (data.amount / 100).toFixed(2);
+    }
+
     await emailQueue.add("sendAdminNotifEmail", {
       to: adminEmail,
       template,
@@ -65,8 +71,10 @@ eventBus.on("admin.notification.created", async (notification) => {
         createdAt: notification.createdAt,
         actionUrl: notification.actionUrl,
         dashboardUrl: `${frontendUrl}/admin`,
+        frontendUrl,
+        supportEmail: process.env.SUPPORT_EMAIL || "contact@staka.fr",
         subject: `[Admin] ${notification.title}`,
-        ...data, // Spread notification data
+        ...formattedData, // Spread formatted notification data
       },
     });
 

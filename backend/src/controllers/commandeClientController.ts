@@ -1,6 +1,6 @@
 import { PrismaClient, StatutCommande } from "@prisma/client";
 import { Request, Response } from "express";
-import { notifyAdminNewCommande, notifyClientCommandeCreated } from "./notificationsController";
+import { notifyAdminNewCommande, notifyClientCommandeCreated, notifyAdminProjectAwaitingPayment } from "./notificationsController";
 import { stripeService } from "../services/stripeService";
 import { z } from "zod";
 import { extractFileMetadata, enrichFileData } from "../middleware/fileUpload";
@@ -615,11 +615,12 @@ export const createPaidProject = async (
           nouvelleCommande.id,
           service.typeService
         ),
-        notifyAdminNewCommande(
+        notifyAdminProjectAwaitingPayment(
           `${user.prenom} ${user.nom}`,
           user.email,
           nouvelleCommande.titre,
-          nouvelleCommande.id
+          nouvelleCommande.id,
+          Math.round(prixFinal * 100)
         )
       ]);
 
