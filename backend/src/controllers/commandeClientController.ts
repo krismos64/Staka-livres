@@ -491,6 +491,7 @@ export const createPaidProject = async (
           prenom: true,
           telephone: true,
           adresse: true,
+          password: true,
         }
       }),
       prisma.tarif.findFirst({
@@ -527,35 +528,28 @@ export const createPaidProject = async (
     // Calculer le prix final (prix calculé ou prix du service)
     const prixFinal = prixCalcule || service.prix;
 
-    // Créer la commande en base
-    const nouvelleCommande = await prisma.commande.create({
+    // Créer une entrée temporaire en attendant le paiement (comme pour les commandes publiques)
+    const pendingCommande = await prisma.pendingCommande.create({
       data: {
-        titre,
+        prenom: user.prenom,
+        nom: user.nom,
+        email: user.email,
+        telephone: user.telephone,
+        serviceId,
+        nombrePages,
         description: description || `Projet ${service.nom}`,
-        userId,
-        packType: serviceId, // Utiliser packType au lieu de tarifId
-        statut: StatutCommande.EN_ATTENTE,
-        paymentStatus: 'PENDING',
-        amount: Math.round(prixFinal * 100), // Prix en centimes
-        prixEstime: Math.round(prixFinal * 100), // Prix estimé en centimes
-        prixFinal: Math.round(prixFinal * 100),  // Prix final en centimes
-        pagesDeclarees: nombrePages || null,
-      },
-      select: {
-        id: true,
-        titre: true,
-        amount: true,
-        statut: true,
-        paymentStatus: true,
+        consentementRgpd: true, // Utilisateur connecté = consentement implicite
+        passwordHash: user.password, // Utiliser le hash existant de l'utilisateur
+        userId: user.id, // Lier à l'utilisateur existant
       }
     });
 
-    console.log(`✅ [PAID PROJECT] Commande créée avec l'ID: ${nouvelleCommande.id}`);
+    console.log(`✅ [PAID PROJECT] PendingCommande créée avec l'ID: ${pendingCommande.id}`);
 
-    // Sauvegarder les fichiers uploadés et les lier à la commande
+    // Sauvegarder les fichiers temporairement (comme pour commandes publiques)
     if (enrichedFiles.length > 0) {
       try {
-        console.log(`📎 [PAID PROJECT] Sauvegarde de ${enrichedFiles.length} fichier(s) pour la commande ${nouvelleCommande.id}`);
+        console.log(`📎 [PAID PROJECT] Sauvegarde de ${enrichedFiles.length} fichier(s) temporaire(s)`);
         
         for (const fileData of enrichedFiles) {
           await prisma.file.create({
@@ -567,17 +561,17 @@ export const createPaidProject = async (
               url: `/uploads/orders/${fileData.fileName}`,
               type: 'DOCUMENT',
               uploadedById: user.id,
-              commandeId: nouvelleCommande.id,
-              description: fileData.description || `Fichier uploadé pour ${titre}`,
+              commandeId: null, // Sera mis à jour lors du webhook après paiement
+              description: `TEMP_PENDING:${pendingCommande.id}|${fileData.description || `Fichier uploadé pour ${titre}`}`,
               isPublic: false,
             }
           });
         }
         
-        console.log(`✅ [PAID PROJECT] ${enrichedFiles.length} fichier(s) sauvegardé(s) avec succès`);
+        console.log(`✅ [PAID PROJECT] ${enrichedFiles.length} fichier(s) sauvegardé(s) temporairement`);
       } catch (fileError) {
         console.error(`❌ [PAID PROJECT] Erreur lors de la sauvegarde des fichiers:`, fileError);
-        // Ne pas faire échouer la commande pour des erreurs de fichiers
+        // Ne pas faire échouer pour des erreurs de fichiers
       }
     }
 
@@ -586,7 +580,7 @@ export const createPaidProject = async (
       const checkoutSession = await stripeService.createCheckoutSession({
         priceId: "default", // Prix dynamique
         userId: user.id,
-        commandeId: nouvelleCommande.id,
+        commandeId: pendingCommande.id, // Utiliser l'ID de la PendingCommande
         successUrl: `${process.env.FRONTEND_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${process.env.FRONTEND_URL}/app/projects`,
         amount: Math.round(prixFinal * 100), // Prix en centimes
@@ -595,54 +589,42 @@ export const createPaidProject = async (
       // Extraire l'URL de checkout
       const checkoutUrl = typeof checkoutSession === 'string' ? checkoutSession : checkoutSession.url;
 
-      // Mettre à jour la commande avec l'ID de session Stripe
+      // Mettre à jour la PendingCommande avec l'ID de session Stripe
       if (typeof checkoutSession === 'object' && checkoutSession.id) {
-        await prisma.commande.update({
-          where: { id: nouvelleCommande.id },
+        await prisma.pendingCommande.update({
+          where: { id: pendingCommande.id },
           data: {
             stripeSessionId: checkoutSession.id,
           }
         });
       }
 
-      console.log(`💳 [PAID PROJECT] Session Stripe créée pour la commande ${nouvelleCommande.id}`);
+      console.log(`💳 [PAID PROJECT] Session Stripe créée pour la PendingCommande ${pendingCommande.id}`);
 
-      // Envoyer les notifications avec les bonnes signatures
-      await Promise.all([
-        notifyClientCommandeCreated(
-          user.id,
-          nouvelleCommande.titre,
-          nouvelleCommande.id,
-          service.typeService
-        ),
-        notifyAdminProjectAwaitingPayment(
-          `${user.prenom} ${user.nom}`,
-          user.email,
-          nouvelleCommande.titre,
-          nouvelleCommande.id,
-          Math.round(prixFinal * 100)
-        )
-      ]);
+      // Notifier seulement les admins qu'un projet est en attente de paiement
+      // PAS de notification client car pas encore de projet créé
+      await notifyAdminProjectAwaitingPayment(
+        `${user.prenom} ${user.nom}`,
+        user.email,
+        titre, // Utiliser le titre depuis les données
+        pendingCommande.id,
+        Math.round(prixFinal * 100)
+      );
 
       res.status(201).json({
         success: true,
-        message: "Projet créé avec succès",
+        message: "Redirection vers le paiement, le projet sera créé après confirmation du paiement",
         checkoutUrl,
-        pendingCommandeId: nouvelleCommande.id,
-        commande: {
-          id: nouvelleCommande.id,
-          titre: nouvelleCommande.titre,
-          prix: prixFinal,
-          statut: nouvelleCommande.statut,
-        }
+        pendingCommandeId: pendingCommande.id,
+        // Pas de commande car pas encore créée
       });
 
     } catch (stripeError) {
       console.error(`❌ [PAID PROJECT] Erreur Stripe:`, stripeError);
       
-      // Supprimer la commande créée en cas d'erreur Stripe
-      await prisma.commande.delete({
-        where: { id: nouvelleCommande.id }
+      // Supprimer la PendingCommande créée en cas d'erreur Stripe
+      await prisma.pendingCommande.delete({
+        where: { id: pendingCommande.id }
       });
 
       res.status(500).json({

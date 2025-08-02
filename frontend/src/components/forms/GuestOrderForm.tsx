@@ -75,11 +75,13 @@ export default function GuestOrderForm({
   const { showToast } = useToast();
   const [searchParams] = useSearchParams();
   const defaultPackSlug = searchParams.get("pack") ?? undefined;
+  const preCalculatedPages = searchParams.get("pages") ? parseInt(searchParams.get("pages")!) : undefined;
+  const preCalculatedPrice = searchParams.get("calculatedPrice") ? parseFloat(searchParams.get("calculatedPrice")!) : undefined;
   const [showPageInput, setShowPageInput] = useState(false);
   
   // Hook de tarification pour calculer les prix dynamiques
   const { calculatePrice, pricing, setPages } = usePricing({
-    initialPages: 150,
+    initialPages: preCalculatedPages || 150,
     enableDebugLogs: process.env.NODE_ENV === "development",
   });
   // Utilitaire pour générer un slug à partir du nom
@@ -116,7 +118,7 @@ export default function GuestOrderForm({
     resolver: zodResolver(guestOrderSchema),
     defaultValues: {
       consentementRgpd: false,
-      nombrePages: 150,
+      nombrePages: preCalculatedPages || 150,
     },
   });
 
@@ -149,7 +151,10 @@ export default function GuestOrderForm({
   
   
   // Calculer le prix dynamique pour les services à la page
-  const dynamicPrice = isPageBasedService && nombrePages ? calculatePrice(nombrePages) : null;
+  // Utiliser le prix pré-calculé si disponible, sinon calculer
+  const dynamicPrice = isPageBasedService && nombrePages ? 
+    (preCalculatedPrice && nombrePages === preCalculatedPages ? preCalculatedPrice : calculatePrice(nombrePages)) 
+    : null;
   
   // Mettre à jour le nombre de pages dans le hook pricing
   useEffect(() => {
@@ -420,6 +425,12 @@ export default function GuestOrderForm({
         {/* Champ nombre de pages (conditionnel) */}
         {showPageInput && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            {preCalculatedPages && (
+              <div className="mb-3 p-2 bg-blue-100 border border-blue-300 rounded text-sm text-blue-800">
+                <i className="fas fa-calculator mr-1"></i>
+                <strong>Valeurs pré-calculées</strong> depuis le calculateur de prix
+              </div>
+            )}
             <label
               htmlFor="nombrePages"
               className="block text-sm font-medium text-gray-700 mb-2"

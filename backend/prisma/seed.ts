@@ -17,7 +17,7 @@ async function main() {
     prisma.message.deleteMany(),
     prisma.file.deleteMany(),
     prisma.paymentMethod.deleteMany(),
-    prisma.passwordReset.deleteMany(),
+    // prisma.passwordReset.deleteMany(), // Temporairement commenté
     prisma.supportRequest.deleteMany(),
     prisma.commande.deleteMany(),
     prisma.invoice.deleteMany(),
@@ -86,7 +86,7 @@ async function main() {
       nom: "Correction Standard",
       description: "Correction orthographique, grammaticale et typographique de votre manuscrit",
       prix: 200, // 2€
-      prixFormate: "2€",
+      prixFormate: "2€/page",
       typeService: "Correction",
       dureeEstimee: "7-10 jours",
       actif: true,

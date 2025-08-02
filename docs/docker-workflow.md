@@ -51,11 +51,11 @@ Staka-livres/
 
 ### Mapping des ports
 
-| Service  | Dev (local) | Prod (VPS) | Container | Description |
-|----------|-------------|------------|-----------|-------------|
+| Service  | Dev (local) | Prod (VPS) | Container | Description      |
+| -------- | ----------- | ---------- | --------- | ---------------- |
 | Frontend | 3000        | 80/443     | 5173      | React + Vite HMR |
-| Backend  | 3001        | 3000       | 3000      | Node + Express |
-| MySQL    | 3306        | 3306       | 3306      | Base de données |
+| Backend  | 3001        | 3000       | 3000      | Node + Express   |
+| MySQL    | 3306        | 3306       | 3306      | Base de données  |
 
 ## 🛠️ Configuration développement
 
@@ -80,7 +80,7 @@ npm run dev:watch
 ✅ **Image Debian Bookworm** : glibc compatible avec binaires natifs (vs Alpine musl)  
 ✅ **Réseau isolé** : `staka-dev-net` pour communication inter-services  
 ✅ **Healthchecks robustes** : `/health` endpoints avec retry et timeout configurés  
-✅ **Script reset automatisé** : `./scripts/dev-reset.sh` pour résoudre conflits instantanément  
+✅ **Script reset automatisé** : `./scripts/dev-reset.sh` pour résoudre conflits instantanément
 
 ### Accès en développement
 
@@ -94,11 +94,11 @@ npm run dev:watch
 
 ```yaml
 services:
-  - frontend    # React build statique (Nginx)
-  - backend     # Node.js API
-  - db          # MySQL 8
-  - nginx       # Reverse proxy + SSL
-  - watchtower  # Auto-update images
+  - frontend # React build statique (Nginx)
+  - backend # Node.js API
+  - db # MySQL 8
+  - nginx # Reverse proxy + SSL
+  - watchtower # Auto-update images
 ```
 
 ### Caractéristiques prod (VPS OVH Production)
@@ -109,7 +109,7 @@ services:
 ✅ **Auto-update** : Watchtower poll 5min + cleanup automatique  
 ✅ **Healthchecks production** : Nginx + Backend + DB avec monitoring  
 ✅ **Reverse proxy** : Nginx optimisé + headers sécurité + compression gzip  
-✅ **Déploiement automatisé** : Script complet VPS OVH avec sauvegarde pré-déploiement  
+✅ **Déploiement automatisé** : Script complet VPS OVH avec sauvegarde pré-déploiement
 
 ### Variables d'environnement
 
@@ -255,6 +255,7 @@ HEALTH_CHECK_INTERVAL=300
 ### Erreur "Port déjà utilisé"
 
 **Symptômes** :
+
 ```
 Error: bind for 0.0.0.0:3000 failed: port is already allocated
 ```
@@ -262,6 +263,7 @@ Error: bind for 0.0.0.0:3000 failed: port is already allocated
 **Solutions** :
 
 1. **Scanner les ports occupés** :
+
 ```bash
 # macOS/Linux
 lsof -i :3000
@@ -272,6 +274,7 @@ netstat -ano | findstr :3000
 ```
 
 2. **Tuer les processus** :
+
 ```bash
 # Processus Node.js
 pkill -f "node.*3000"
@@ -281,6 +284,7 @@ kill -9 <PID>
 ```
 
 3. **Alternative : changer les ports** :
+
 ```bash
 # Modifier docker-compose.dev.yml temporairement
 ports:
@@ -290,6 +294,7 @@ ports:
 ### 💡 Erreur Rollup native (ARM64/x64, musl/glibc) - **RÉSOLU**
 
 **Symptômes** :
+
 ```
 Error: Cannot find module '@rollup/rollup-linux-x64-musl'
 Error: Cannot find module '@rollup/rollup-darwin-arm64'
@@ -301,6 +306,7 @@ Cannot find module '@esbuild/darwin-arm64'
 **Solutions implémentées** :
 
 1. **Volumes isolés** (solution principale) :
+
 ```yaml
 # docker-compose.dev.yml - Configuration actuelle
 volumes:
@@ -313,6 +319,7 @@ volumes:
 ```
 
 2. **Script de reset automatisé** :
+
 ```bash
 # Reset complet avec detection conflits
 ./scripts/dev-reset.sh
@@ -331,6 +338,7 @@ volumes:
 ```
 
 3. **Image Debian Bookworm** (vs Alpine) :
+
 ```dockerfile
 # frontend/Dockerfile.dev - Base glibc au lieu de musl
 FROM node:18-bookworm-slim
@@ -340,6 +348,7 @@ FROM node:18-bookworm-slim
 ### Problèmes de volumes et caches - **AUTOMATISÉ**
 
 **Symptômes** :
+
 - Modifications non reflétées (cache Vite/esbuild)
 - `node_modules` corrompus (mélange host/container)
 - Erreurs de build étranges (architecture mixte)
@@ -369,13 +378,14 @@ docker compose -f docker-compose.dev.yml up
 
 # Vérification détection automatique conflits
 lsof -i :3000  # Frontend
-lsof -i :3001  # Backend  
+lsof -i :3001  # Backend
 lsof -i :3306  # MySQL
 ```
 
 ### Healthcheck failures
 
 **Diagnostic** :
+
 ```bash
 # Logs des services
 docker compose -f docker-compose.dev.yml logs backend
@@ -387,6 +397,7 @@ curl -f http://localhost:3000/
 ```
 
 **Corrections courantes** :
+
 - Vérifier que `/health` renvoie 200
 - Ajuster les `start_period` si services lents
 - Valider la connectivité réseau entre containers
@@ -394,12 +405,14 @@ curl -f http://localhost:3000/
 ### 7. **Tests Frontend Échouent (Architecture Séparée)**
 
 **Symptôme :**
+
 ```
 Network Error - connect ECONNREFUSED 127.0.0.1:3001
 Tests d'intégration échouent en CI/CD
 ```
 
 **Solutions :**
+
 ```bash
 # Vérifier type de tests à exécuter
 docker compose -f docker-compose.dev.yml exec frontend npm run test:unit        # CI/CD
@@ -424,6 +437,7 @@ docker compose -f docker-compose.dev.yml exec frontend npm run test:unit -- --re
 ```
 
 **Architecture recommandée :**
+
 ```bash
 # En développement local
 docker compose -f docker-compose.dev.yml up -d                    # Tous services
@@ -440,12 +454,14 @@ docker compose -f docker-compose.dev.yml exec frontend npm run test:integration 
 ### 8. **Emails Ne S'Envoient Pas (Système Centralisé)**
 
 **Symptôme :**
+
 ```
 [EmailQueue] ❌ Erreur envoi email: Invalid API key
 [EventBus] ⚠️ Listener adminNotificationEmailListener failed
 ```
 
 **Solutions :**
+
 ```bash
 # Vérifier configuration SendGrid complète
 docker compose -f docker-compose.dev.yml exec backend env | grep SENDGRID
@@ -484,6 +500,7 @@ docker compose -f docker-compose.dev.yml exec backend find src/emails/templates/
 ### Problèmes de build multi-arch - **OPTIMISÉ**
 
 **Support ARM64 + x64 intégré** :
+
 ```bash
 # Build automatique multi-arch (script)
 ./scripts/docker-build.sh latest --push
@@ -550,6 +567,7 @@ docker compose -f docker-compose.dev.yml exec frontend env | grep VITE
 ### Workflow développement (ARM64/x64)
 
 1. **Toujours utiliser dev compose avec reset** :
+
    ```bash
    npm run docker:dev              # ✅ Correct (hot-reload garanti)
    ./scripts/dev-reset.sh          # 🔄 En cas de problème (ONE-CLICK)
@@ -558,6 +576,7 @@ docker compose -f docker-compose.dev.yml exec frontend env | grep VITE
    ```
 
 2. **Vérification automatique des conflits** :
+
    ```bash
    # Le script docker-build.sh scanne automatiquement
    ./scripts/docker-build.sh dev   # Détecte ports 3000, 3001, 3306
@@ -565,14 +584,15 @@ docker compose -f docker-compose.dev.yml exec frontend env | grep VITE
    ```
 
 3. **Nettoyage intelligent automatisé** :
+
    ```bash
    # Nettoyage sélectif (garde les caches utiles)
    ./scripts/dev-reset.sh --keep-volumes
-   
+
    # Nettoyage complet hebdomadaire
    docker system prune -f --volumes
    docker builder prune -f
-   
+
    # Nettoyage automatique dans scripts
    ./scripts/docker-build.sh       # Nettoie avant build
    ./scripts/deploy-vps.sh         # Nettoie sur VPS avant déploiement
@@ -581,48 +601,51 @@ docker compose -f docker-compose.dev.yml exec frontend env | grep VITE
 ### Workflow production automatisé
 
 1. **Pipeline de déploiement sécurisé** :
+
    ```bash
    # 1. Build multi-arch local + tests
    ./scripts/docker-build.sh v1.4.0 --push
-   
+
    # 2. Simulation déploiement (safe)
    ./scripts/deploy-vps.sh v1.4.0 --dry-run
-   
+
    # 3. Déploiement réel avec sauvegarde automatique
    ./scripts/deploy-vps.sh v1.4.0
-   
+
    # 4. Setup complet VPS (première fois)
    ./scripts/deployment/deploy-ovh-production.sh
    ```
 
 2. **Sauvegarde et recovery automatisés** :
+
    ```bash
    # Sauvegarde avant chaque déploiement (automatique)
    # - Base de données MySQL complet
    # - Configuration .env + nginx
    # - Certificats SSL
    # - Rétention : 5 dernières + 30 jours
-   
+
    # Sauvegarde manuelle
    ssh root@51.254.102.133 '/usr/local/bin/staka-backup.sh'
-   
+
    # Recovery d'urgence
    ssh root@51.254.102.133 'cd /opt/staka-livres && ./restore-backup.sh YYYYMMDD_HHMMSS'
    ```
 
 3. **Monitoring production avancé** :
+
    ```bash
    # Statut services en temps réel
    ssh root@51.254.102.133 'cd /opt/staka-livres && docker compose -f docker-compose.prod.yml ps'
-   
+
    # Logs structurés par service
    ssh root@51.254.102.133 'cd /opt/staka-livres && docker compose -f docker-compose.prod.yml logs -f backend'
    ssh root@51.254.102.133 'cd /opt/staka-livres && docker compose -f docker-compose.prod.yml logs -f frontend'
-   
+
    # Tests connectivité automatiques
    curl -I https://livrestaka.fr/health
    curl -I https://livrestaka.fr/api/health
-   
+
    # Monitoring SSL
    openssl s_client -connect livrestaka.fr:443 -servername livrestaka.fr < /dev/null 2>/dev/null | openssl x509 -noout -dates
    ```
@@ -630,30 +653,33 @@ docker compose -f docker-compose.dev.yml exec frontend env | grep VITE
 ### Sécurité production renforcée
 
 1. **Fichiers sensibles (JAMAIS commit)** :
+
    ```bash
    # Ajoutés automatiquement au .gitignore
    .env.deploy                    # Credentials VPS OVH
    backend/.env.prod             # Secrets production
    ~/.ssh/id_rsa*                # Clés SSH privées
-   
+
    # Vérification avant commit
    git status | grep -E '\.(env|key|pem)$'
    ```
 
 2. **Rotation des secrets automatisée** :
+
    ```bash
    # Docker Hub Token (6 mois)
    DOCKERHUB_TOKEN=dckr_pat_xxxxx  # Générer nouveau token
-   
+
    # MySQL passwords (forts + rotation)
    MYSQL_ROOT_PASSWORD="$(openssl rand -base64 32)"
    MYSQL_PASSWORD="$(openssl rand -base64 24)"
-   
+
    # JWT Secret (64 caractères minimum)
    JWT_SECRET="$(openssl rand -base64 64)"
    ```
 
 3. **VPS OVH sécurisé** :
+
    ```bash
    # Configuration automatique par deploy-ovh-production.sh
    # - Clés SSH uniquement (désactive mot de passe)
@@ -661,7 +687,7 @@ docker compose -f docker-compose.dev.yml exec frontend env | grep VITE
    # - UFW firewall (22, 80, 443 uniquement)
    # - SSL Let's Encrypt + auto-renewal
    # - Headers sécurité Nginx
-   
+
    # Vérification sécurité
    ssh root@51.254.102.133 'ufw status verbose'
    ssh root@51.254.102.133 'fail2ban-client status'
@@ -915,7 +941,7 @@ certbot renew --dry-run
 ```bash
 # Tests connectivité HTTPS
 curl -I https://livrestaka.fr                  # → 200 OK
-curl -I https://livrestaka.fr/api/health       # → 200 OK  
+curl -I https://livrestaka.fr/api/health       # → 200 OK
 curl -I http://livrestaka.fr                   # → 301 Redirect
 
 # Tests fonctionnels
@@ -1056,14 +1082,14 @@ crontab -e
 
 #### **🎯 Métriques de Performance**
 
-| Métrique | Objectif | Validation |
-|----------|----------|------------|
-| **Temps chargement** | < 2 secondes | `curl -w "%{time_total}\n" https://livrestaka.fr` |
-| **SSL Score** | Grade A+ | SSL Labs Test |
-| **Uptime containers** | 99.9% | `docker compose -f docker-compose.prod.yml ps` |
-| **Espace disque libre** | > 20% | `df -h /` |
-| **Mémoire disponible** | > 500MB | `free -h` |
-| **CPU utilisation** | < 70% | `htop` |
+| Métrique                | Objectif     | Validation                                        |
+| ----------------------- | ------------ | ------------------------------------------------- |
+| **Temps chargement**    | < 2 secondes | `curl -w "%{time_total}\n" https://livrestaka.fr` |
+| **SSL Score**           | Grade A+     | SSL Labs Test                                     |
+| **Uptime containers**   | 99.9%        | `docker compose -f docker-compose.prod.yml ps`    |
+| **Espace disque libre** | > 20%        | `df -h /`                                         |
+| **Mémoire disponible**  | > 500MB      | `free -h`                                         |
+| **CPU utilisation**     | < 70%        | `htop`                                            |
 
 ### 🆘 **Procédures de Maintenance Production**
 
@@ -1129,8 +1155,9 @@ En cas de problème non résolu :
 - ✅ **Déploiement VPS automatisé** : Script setup complet OVH + monitoring
 
 **Améliorations récentes (26 juillet 2025) :**
+
 - Images et footer intégrés en production
-- Workflow Docker optimisé ARM64/x64 
+- Workflow Docker optimisé ARM64/x64
 - Scripts de déploiement sécurisés avec backup automatique
 - Tests avancés de sécurité et workflow
 - Architecture dev/prod parfaitement séparée
@@ -1152,13 +1179,13 @@ En cas de problème non résolu :
 
 ### 🏆 **Services Docker Production (Images Multi-arch)**
 
-| Service | Status | Port | Health | Détails | Architecture |
-|---------|--------|------|--------|---------|-------------|
-| **MySQL** | ✅ Running | 3306 | Healthy | Seed complet + backup quotidien | linux/amd64 |
-| **Backend** | ✅ Running | 3001→3000 | Healthy | API + EventBus + Emails + Tests | linux/amd64,arm64 |
-| **Frontend** | ✅ Running | 3000→80 | Running | React + Vite + images optimisées | linux/amd64,arm64 |
-| **Nginx** | ✅ Running | 80, 443 | Healthy | SSL + HTTP/2 + Headers + Gzip | linux/amd64 |
-| **Watchtower** | ✅ Running | - | Healthy | Auto-update 5min + cleanup | linux/amd64,arm64 |
+| Service        | Status     | Port      | Health  | Détails                          | Architecture      |
+| -------------- | ---------- | --------- | ------- | -------------------------------- | ----------------- |
+| **MySQL**      | ✅ Running | 3306      | Healthy | Seed complet + backup quotidien  | linux/amd64       |
+| **Backend**    | ✅ Running | 3001→3000 | Healthy | API + EventBus + Emails + Tests  | linux/amd64,arm64 |
+| **Frontend**   | ✅ Running | 3000→80   | Running | React + Vite + images optimisées | linux/amd64,arm64 |
+| **Nginx**      | ✅ Running | 80, 443   | Healthy | SSL + HTTP/2 + Headers + Gzip    | linux/amd64       |
+| **Watchtower** | ✅ Running | -         | Healthy | Auto-update 5min + cleanup       | linux/amd64,arm64 |
 
 ### 🔐 **Accès Admin Production**
 
@@ -1261,16 +1288,16 @@ VPS_USER=root
 BACKUP_RETENTION_DAYS=7
 ```
 
-#### **Migration Inverse Prod → Dev** 
+#### **Migration Inverse Prod → Dev**
 
 ```bash
-# Script: ./scripts/migrate-db-reverse.sh  
+# Script: ./scripts/migrate-db-reverse.sh
 # Fonctionnalités : Synchronisation données production vers développement
 
 # Synchronisation complète prod → dev
 ./scripts/migrate-db-reverse.sh --force
 
-# Simulation sans modifications  
+# Simulation sans modifications
 ./scripts/migrate-db-reverse.sh --dry-run
 
 # Sauvegarde locale automatique avant sync
@@ -1288,7 +1315,7 @@ BACKUP_RETENTION_DAYS=7
 
 # Le script exécute automatiquement :
 # 1. Vérification environnement
-# 2. Préparation base de données  
+# 2. Préparation base de données
 # 3. Tests critique/smoke/integration
 # 4. Rapport de résultats
 # 5. Nettoyage post-tests
@@ -1301,7 +1328,7 @@ BACKUP_RETENTION_DAYS=7
   "scripts": {
     // Scripts existants...
     "migrate:db": "./scripts/migrate-db.sh",
-    "migrate:db:schema": "./scripts/migrate-db.sh --schema-only", 
+    "migrate:db:schema": "./scripts/migrate-db.sh --schema-only",
     "migrate:db:dry": "./scripts/migrate-db.sh --dry-run",
     "migrate:db:reverse": "./scripts/migrate-db-reverse.sh",
     "migrate:db:reverse:dry": "./scripts/migrate-db-reverse.sh --dry-run",
@@ -1317,7 +1344,7 @@ BACKUP_RETENTION_DAYS=7
 ✅ **Logs détaillés** : Couleurs + timestamps + progression  
 ✅ **Rollback automatique** : En cas d'échec critique  
 ✅ **Validation environnement** : Vérification prérequis  
-✅ **Rétention configurée** : 7 jours par défaut  
+✅ **Rétention configurée** : 7 jours par défaut
 
 ---
 

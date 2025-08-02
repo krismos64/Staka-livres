@@ -1,9 +1,8 @@
-import React, { useState } from "react";
-import { useCreateCommande } from "../../hooks/useCreateCommande";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCreateCommande } from "../../hooks/useCreateCommande";
 import { useToast } from "../layout/ToastProvider";
 import PackIntegralEstimationModal from "./PackIntegralEstimationModal";
-import { calculatePackIntegralPrice } from "../../utils/pricing";
 
 interface ModalNouveauProjetProps {
   open: boolean;
@@ -71,6 +70,9 @@ export default function ModalNouveauProjet({
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [showEstimationModal, setShowEstimationModal] = useState(false);
+  const [pageError, setPageError] = useState("");
+
+  const isPageRequired = selectedPack === "pack-integral-default";
 
   const navigate = useNavigate();
   const createCommande = useCreateCommande();
@@ -87,7 +89,6 @@ export default function ModalNouveauProjet({
         className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-4xl relative max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close */}
         <button
           className="absolute top-4 right-4 md:top-6 md:right-6 text-gray-400 hover:text-gray-600 text-2xl z-10"
           onClick={onClose}
@@ -95,7 +96,6 @@ export default function ModalNouveauProjet({
         >
           <i className="fas fa-times"></i>
         </button>
-        {/* Title */}
         <h2 className="text-2xl font-bold text-gray-900 mb-1">
           Nouveau projet
         </h2>
@@ -103,37 +103,35 @@ export default function ModalNouveauProjet({
           <span className="font-medium">Décrivez votre projet</span> pour
           obtenir une correction sur-mesure.
         </p>
-        {/* Form */}
         <form
           className="space-y-5"
           onSubmit={async (e) => {
             e.preventDefault();
-            
-            // Vérifier si c'est le Pack Intégral pour afficher la modale d'estimation
+
+            if (isPageRequired && (!pages || parseInt(pages) <= 0)) {
+              setPageError("Le nombre de pages est requis pour ce pack.");
+              return;
+            }
+
             if (selectedPack === "pack-integral-default") {
               setShowEstimationModal(true);
               return;
             }
-            
+
             try {
-              // Préparer les données pour la commande (autres packs)
               const commandeData = {
                 titre: title,
-                description: `Type: ${manuscriptType} | Pages: ${pages} | Pack: ${selectedPack}${desc ? ` | Description: ${desc}` : ''}`,
+                description: `Type: ${manuscriptType} | Pages: ${pages} | Pack: ${selectedPack}${
+                  desc ? ` | Description: ${desc}` : ""
+                }`,
                 fichierUrl: fileUrl || undefined,
                 pack: selectedPack,
                 type: manuscriptType,
                 pages: parseInt(pages) || undefined,
               };
 
-              console.log("📝 Création de la commande:", commandeData);
-
-              // Créer la commande via l'API
               const result = await createCommande.mutateAsync(commandeData);
-              
-              console.log("✅ Commande créée:", result);
 
-              // Notification de succès
               showToast(
                 "success",
                 "Projet créé avec succès !",
@@ -141,19 +139,17 @@ export default function ModalNouveauProjet({
                 { duration: 5000 }
               );
 
-              // Fermer la modale
               onClose();
 
-              // Attendre un peu pour que la toast s'affiche avant la redirection
               setTimeout(() => {
                 navigate("/app/projects");
               }, 500);
-
             } catch (error) {
-              console.error("❌ Erreur lors de la création:", error);
-              
-              const errorMessage = error instanceof Error ? error.message : "Une erreur inattendue s'est produite";
-              
+              const errorMessage =
+                error instanceof Error
+                  ? error.message
+                  : "Une erreur inattendue s'est produite";
+
               showToast(
                 "error",
                 "Erreur lors de la création",
@@ -163,7 +159,6 @@ export default function ModalNouveauProjet({
             }
           }}
         >
-          {/* Top grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -196,20 +191,31 @@ export default function ModalNouveauProjet({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nombre de pages <span className="text-red-500">*</span>
+                Nombre de pages{" "}
+                {isPageRequired && <span className="text-red-500">*</span>}
               </label>
               <input
                 type="number"
-                required
                 min={1}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                required={isPageRequired}
+                className={`w-full px-4 py-3 border ${
+                  pageError ? "border-red-500" : "border-gray-300"
+                } rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition`}
                 placeholder="150"
                 value={pages}
-                onChange={(e) => setPages(e.target.value)}
+                onChange={(e) => {
+                  setPages(e.target.value);
+                  setPageError("");
+                }}
               />
+              {pageError && (
+                <span className="text-sm text-red-600 mt-1 block">
+                  {pageError}
+                </span>
+              )}
             </div>
           </div>
-          {/* Packs */}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Pack choisi <span className="text-red-500">*</span>
@@ -259,9 +265,8 @@ export default function ModalNouveauProjet({
               ))}
             </div>
           </div>
-          {/* Description et Fichier sur la même ligne */}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Description */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Description du projet
@@ -274,7 +279,6 @@ export default function ModalNouveauProjet({
                 onChange={(e) => setDesc(e.target.value)}
               />
             </div>
-            {/* Fichier manuscrit */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Fichier manuscrit
@@ -288,13 +292,8 @@ export default function ModalNouveauProjet({
                     if (e.target.files && e.target.files[0]) {
                       const file = e.target.files[0];
                       setFileName(file.name);
-                      
-                      // TODO: Implémenter l'upload du fichier vers S3/backend
-                      // Pour l'instant, on simule juste l'URL
                       const simulatedUrl = `files/${Date.now()}-${file.name}`;
                       setFileUrl(simulatedUrl);
-                      
-                      console.log("📎 Fichier sélectionné:", file.name);
                     }
                   }}
                 />
@@ -311,12 +310,20 @@ export default function ModalNouveauProjet({
               </label>
             </div>
           </div>
-          {/* Submit */}
+
           <button
             type="submit"
-            disabled={createCommande.isPending || !title.trim() || !manuscriptType || !pages}
+            disabled={
+              createCommande.isPending ||
+              !title.trim() ||
+              !manuscriptType ||
+              (isPageRequired && !pages)
+            }
             className={`w-full font-semibold rounded-xl text-base py-3 transition flex items-center justify-center gap-2 ${
-              createCommande.isPending || !title.trim() || !manuscriptType || !pages
+              createCommande.isPending ||
+              !title.trim() ||
+              !manuscriptType ||
+              (isPageRequired && !pages)
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-blue-600 hover:bg-blue-700 text-white"
             }`}
@@ -334,17 +341,16 @@ export default function ModalNouveauProjet({
             )}
           </button>
 
-          {/* Error message */}
           {createCommande.error && (
             <div className="text-red-600 text-sm text-center bg-red-50 border border-red-200 rounded-lg p-3">
               <i className="fas fa-exclamation-triangle mr-2"></i>
-              {createCommande.error.message || "Erreur lors de la création du projet"}
+              {createCommande.error.message ||
+                "Erreur lors de la création du projet"}
             </div>
           )}
         </form>
       </div>
-      
-      {/* Modale d'estimation Pack Intégral */}
+
       <PackIntegralEstimationModal
         open={showEstimationModal}
         onClose={() => setShowEstimationModal(false)}
@@ -352,24 +358,21 @@ export default function ModalNouveauProjet({
         projectTitle={title}
         onConfirm={async (estimatedPrice: number, pagesCount: number) => {
           try {
-            // Créer la commande avec estimation Pack Intégral
             const commandeData = {
               titre: title,
-              description: `Type: ${manuscriptType} | Pages: ${pagesCount} | Pack: ${selectedPack}${desc ? ` | Description: ${desc}` : ''}`,
+              description: `Type: ${manuscriptType} | Pages: ${pagesCount} | Pack: ${selectedPack}${
+                desc ? ` | Description: ${desc}` : ""
+              }`,
               fichierUrl: fileUrl || undefined,
               pack: selectedPack,
               type: manuscriptType,
               pages: pagesCount,
               packType: selectedPack,
               pagesDeclarees: pagesCount,
-              prixEstime: estimatedPrice * 100, // Convertir en centimes
+              prixEstime: estimatedPrice * 100,
             };
 
-            console.log("📝 Création commande Pack Intégral:", commandeData);
-
             const result = await createCommande.mutateAsync(commandeData);
-            
-            console.log("✅ Commande Pack Intégral créée:", result);
 
             showToast(
               "success",
@@ -378,20 +381,18 @@ export default function ModalNouveauProjet({
               { duration: 7000 }
             );
 
-            // Fermer les modales
             setShowEstimationModal(false);
             onClose();
 
-            // Redirection après un délai
             setTimeout(() => {
               navigate("/app/projects");
             }, 500);
-
           } catch (error) {
-            console.error("❌ Erreur Pack Intégral:", error);
-            
-            const errorMessage = error instanceof Error ? error.message : "Une erreur inattendue s'est produite";
-            
+            const errorMessage =
+              error instanceof Error
+                ? error.message
+                : "Une erreur inattendue s'est produite";
+
             showToast(
               "error",
               "Erreur lors de la soumission",

@@ -54,7 +54,7 @@ export default function PricingCalculator({
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9\-]/g, "");
 
-  // Remplacer handleOrderClick par navigation directe
+  // Navigation avec transmission du prix et nombre de pages calculés
   const handleOrderClick = () => {
     const selectedTarif = tarifs?.find(
       (t) =>
@@ -63,7 +63,14 @@ export default function PricingCalculator({
           t.nom.toLowerCase().includes("correction"))
     );
     const slug = selectedTarif ? getSlug(selectedTarif.nom) : "premium";
-    navigate(`/commande-invitee?pack=${slug}`);
+    
+    // Construire l'URL avec les paramètres calculés
+    const searchParams = new URLSearchParams();
+    searchParams.set("pack", slug);
+    searchParams.set("pages", pages.toString());
+    searchParams.set("calculatedPrice", pricing.total.toString());
+    
+    navigate(`/commande-invitee?${searchParams.toString()}`);
   };
 
   const handleFreeTestClick = () => {

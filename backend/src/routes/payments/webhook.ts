@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import express from "express";
-import { notifyAdminNewPayment, notifyPaymentSuccess } from "../../controllers/notificationsController";
+import { notifyAdminNewPayment, notifyPaymentSuccess, notifyClientCommandeCreated } from "../../controllers/notificationsController";
 import { InvoiceService } from "../../services/invoiceService";
 import { stripeService } from "../../services/stripeService";
 import { ActivationEmailService } from "../../services/activationEmailService";
@@ -176,23 +176,32 @@ router.post("/", async (req: express.Request, res: express.Response) => {
           console.log(`🎯 [Stripe Webhook] PendingCommande trouvée: ${pendingCommande.id} pour ${pendingCommande.email}`);
 
           try {
-            // 👤 ÉTAPE 1: Créer l'utilisateur (inactif, sans mot de passe défini)
-            const newUser = await prisma.user.create({
-              data: {
-                prenom: pendingCommande.prenom,
-                nom: pendingCommande.nom,
-                email: pendingCommande.email,
-                password: pendingCommande.passwordHash === "PENDING_ACTIVATION" 
-                  ? await bcrypt.hash("temporary_password_" + Date.now(), 12) // Mot de passe temporaire sécurisé
-                  : pendingCommande.passwordHash, // Rétrocompatibilité
-                telephone: pendingCommande.telephone,
-                // adresse collectée par Stripe automatiquement
-                isActive: false, // ⚠️ INACTIF en attendant activation + définition mot de passe
-                role: "USER",
-              },
+            // 👤 ÉTAPE 1: Vérifier si l'utilisateur existe déjà ou le créer
+            let targetUser = await prisma.user.findUnique({
+              where: { email: pendingCommande.email }
             });
 
-            console.log(`👤 [Stripe Webhook] Utilisateur créé (inactif): ${newUser.id} - ${newUser.email}`);
+            if (targetUser) {
+              // 🔄 UTILISATEUR EXISTANT : Projet d'un utilisateur connecté
+              console.log(`👤 [Stripe Webhook] Utilisateur existant trouvé: ${targetUser.id} - ${targetUser.email}`);
+            } else {
+              // 🆕 NOUVEL UTILISATEUR : Commande publique (invité)
+              targetUser = await prisma.user.create({
+                data: {
+                  prenom: pendingCommande.prenom,
+                  nom: pendingCommande.nom,
+                  email: pendingCommande.email,
+                  password: pendingCommande.passwordHash === "PENDING_ACTIVATION" 
+                    ? await bcrypt.hash("temporary_password_" + Date.now(), 12) // Mot de passe temporaire sécurisé
+                    : pendingCommande.passwordHash, // Rétrocompatibilité
+                  telephone: pendingCommande.telephone,
+                  // adresse collectée par Stripe automatiquement
+                  isActive: false, // ⚠️ INACTIF en attendant activation + définition mot de passe
+                  role: "USER",
+                },
+              });
+              console.log(`👤 [Stripe Webhook] Nouvel utilisateur créé (inactif): ${targetUser.id} - ${targetUser.email}`);
+            }
 
             // 📋 ÉTAPE 2: Récupérer les détails du service
             const service = await prisma.tarif.findFirst({
@@ -211,7 +220,7 @@ router.post("/", async (req: express.Request, res: express.Response) => {
 
             const newCommande = await prisma.commande.create({
               data: {
-                userId: newUser.id,
+                userId: targetUser.id,
                 titre: serviceTitle,
                 description: finalDescription, // Description combinée service + client
                 statut: "PAYEE", // Directement payée
@@ -229,40 +238,45 @@ router.post("/", async (req: express.Request, res: express.Response) => {
             await prisma.pendingCommande.update({
               where: { id: pendingCommande.id },
               data: {
-                userId: newUser.id,
+                userId: targetUser.id,
                 commandeId: newCommande.id,
+                isProcessed: true, // Marquer comme traité
               },
             });
 
-            // 🔑 ÉTAPE 5: Générer token d'activation et envoyer email
-            try {
-              await ActivationEmailService.sendActivationEmail(
-                {
-                  id: pendingCommande.id,
-                  prenom: pendingCommande.prenom,
-                  nom: pendingCommande.nom,
-                  email: pendingCommande.email,
-                  activationToken: pendingCommande.activationToken,
-                },
-                newCommande.titre
-              );
+            // 🔑 ÉTAPE 5: Générer token d'activation et envoyer email (seulement pour nouveaux utilisateurs)
+            if (!targetUser.isActive) {
+              try {
+                await ActivationEmailService.sendActivationEmail(
+                  {
+                    id: pendingCommande.id,
+                    prenom: pendingCommande.prenom,
+                    nom: pendingCommande.nom,
+                    email: pendingCommande.email,
+                    activationToken: pendingCommande.activationToken,
+                  },
+                  newCommande.titre
+                );
 
-              console.log(`📧 [Stripe Webhook] Email d'activation envoyé à ${pendingCommande.email}`);
-            } catch (emailError) {
-              console.error(`❌ [Stripe Webhook] Erreur email d'activation:`, emailError);
-              // Ne pas faire échouer le webhook pour un problème d'email
+                console.log(`📧 [Stripe Webhook] Email d'activation envoyé à ${pendingCommande.email}`);
+              } catch (emailError) {
+                console.error(`❌ [Stripe Webhook] Erreur email d'activation:`, emailError);
+                // Ne pas faire échouer le webhook pour un problème d'email
+              }
+            } else {
+              console.log(`✅ [Stripe Webhook] Utilisateur déjà actif, pas d'email d'activation nécessaire`);
             }
 
             // 🧾 ÉTAPE 6: Génération de la facture
             try {
               const commandeForInvoice = {
                 ...newCommande,
-                user: newUser,
+                user: targetUser,
                 amount: session.amount_total,
               };
 
               await InvoiceService.processInvoiceForCommande(commandeForInvoice);
-              console.log(`✅ [Stripe Webhook] Facture générée pour la commande invitée`);
+              console.log(`✅ [Stripe Webhook] Facture générée pour la commande`);
             } catch (invoiceError) {
               console.error(`❌ [Stripe Webhook] Erreur génération facture:`, invoiceError);
             }
@@ -280,24 +294,28 @@ router.post("/", async (req: express.Request, res: express.Response) => {
               console.error(`❌ [Stripe Webhook] Erreur notification admin:`, notificationError);
             }
 
-            // 💬 ÉTAPE 8: Créer conversation initiale de bienvenue
-            try {
-              await WelcomeConversationService.createWelcomeConversation(
-                {
-                  id: newUser.id,
-                  prenom: newUser.prenom,
-                  nom: newUser.nom,
-                  email: newUser.email
-                },
-                {
-                  id: newCommande.id,
-                  titre: newCommande.titre
-                }
-              );
-              console.log(`💬 [Stripe Webhook] Conversation de bienvenue créée pour ${pendingCommande.email}`);
-            } catch (conversationError) {
-              console.error(`❌ [Stripe Webhook] Erreur création conversation:`, conversationError);
-              // Ne pas faire échouer le flux pour un problème de conversation
+            // 💬 ÉTAPE 8: Créer conversation initiale de bienvenue (seulement pour nouveaux utilisateurs)
+            if (!targetUser.isActive) {
+              try {
+                await WelcomeConversationService.createWelcomeConversation(
+                  {
+                    id: targetUser.id,
+                    prenom: targetUser.prenom,
+                    nom: targetUser.nom,
+                    email: targetUser.email
+                  },
+                  {
+                    id: newCommande.id,
+                    titre: newCommande.titre
+                  }
+                );
+                console.log(`💬 [Stripe Webhook] Conversation de bienvenue créée pour ${pendingCommande.email}`);
+              } catch (conversationError) {
+                console.error(`❌ [Stripe Webhook] Erreur création conversation:`, conversationError);
+                // Ne pas faire échouer le flux pour un problème de conversation
+              }
+            } else {
+              console.log(`✅ [Stripe Webhook] Utilisateur existant, pas de conversation de bienvenue nécessaire`);
             }
 
             // 📎 ÉTAPE FINALE: Migrer les fichiers temporaires vers la vraie commande
@@ -322,7 +340,7 @@ router.post("/", async (req: express.Request, res: express.Response) => {
                   await prisma.file.update({
                     where: { id: tempFile.id },
                     data: {
-                      uploadedById: newUser.id,
+                      uploadedById: targetUser.id,
                       commandeId: newCommande.id,
                       description: originalDescription
                     }
@@ -336,7 +354,24 @@ router.post("/", async (req: express.Request, res: express.Response) => {
               // Ne pas faire échouer le flux pour un problème de fichier
             }
 
-            console.log(`🎉 [Stripe Webhook] Flux commande invitée complété avec succès pour ${pendingCommande.email}`);
+            // 🔔 ÉTAPE FINALE: Notifier le client que son projet a été créé après paiement
+            try {
+              if (targetUser.isActive) {
+                // Pour utilisateur existant : notification de projet créé
+                await notifyClientCommandeCreated(
+                  targetUser.id,
+                  newCommande.titre,
+                  newCommande.id,
+                  service?.nom || "correction"
+                );
+                console.log(`🔔 [Stripe Webhook] Notification client envoyée pour projet créé après paiement`);
+              }
+              // Pour nouveaux utilisateurs, la notification sera envoyée lors de l'activation
+            } catch (clientNotifError) {
+              console.error(`❌ [Stripe Webhook] Erreur notification client:`, clientNotifError);
+            }
+
+            console.log(`🎉 [Stripe Webhook] Flux commande complété avec succès pour ${pendingCommande.email}`);
 
           } catch (processingError) {
             console.error(`❌ [Stripe Webhook] Erreur lors du traitement PendingCommande:`, processingError);
