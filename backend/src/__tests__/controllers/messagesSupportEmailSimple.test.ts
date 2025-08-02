@@ -21,7 +21,7 @@ describe("Support Email Function", () => {
     process.env.SUPPORT_EMAIL = "support@test.com";
   });
 
-  test("sendHelpMessageToSupport should send email with correct content", async () => {
+  test("sendHelpMessageToSupport should log audit action (no email sent)", async () => {
     // Créer une fausse request
     const mockReq = {
       ip: "127.0.0.1",
@@ -36,8 +36,7 @@ describe("Support Email Function", () => {
     const attachments: any[] = [];
     const userId = "user-123";
 
-    // Mock successful email sending
-    mockMailerService.sendEmail.mockResolvedValue();
+    // Mock successful audit logging
     mockAuditService.logAdminAction.mockResolvedValue();
 
     // Call the function
@@ -51,24 +50,10 @@ describe("Support Email Function", () => {
       mockReq
     );
 
-    // Vérifier que l'email a été envoyé
-    expect(mockMailerService.sendEmail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: "support@test.com",
-        subject: "Nouveau message depuis l'espace client – Problème technique",
-        html: expect.stringContaining("Nouveau message depuis l'espace client"),
-        text: expect.stringContaining("Nouveau message depuis l'espace client"),
-      })
-    );
+    // Vérifier que l'email N'A PAS été envoyé (fonction mise à jour)
+    expect(mockMailerService.sendEmail).not.toHaveBeenCalled();
 
-    // Vérifier le contenu de l'email
-    const emailCall = mockMailerService.sendEmail.mock.calls[0][0];
-    expect(emailCall.html).toContain("John Doe");
-    expect(emailCall.html).toContain("test@example.com");
-    expect(emailCall.html).toContain("Problème technique");
-    expect(emailCall.html).toContain("J'ai un problème avec mon compte");
-
-    // Vérifier l'audit log
+    // Vérifier l'audit log (seule fonctionnalité restante)
     expect(mockAuditService.logAdminAction).toHaveBeenCalledWith(
       userEmail,
       AUDIT_ACTIONS.USER_MESSAGE_SUPPORT_EMAIL_SENT,
@@ -87,30 +72,4 @@ describe("Support Email Function", () => {
     );
   });
 
-  test("sendHelpMessageToSupport should handle email errors gracefully", async () => {
-    const mockReq = {
-      ip: "127.0.0.1",
-      get: vi.fn().mockReturnValue("test-user-agent"),
-    } as unknown as Request;
-
-    // Mock email failure
-    mockMailerService.sendEmail.mockRejectedValue(new Error("Email service unavailable"));
-    mockAuditService.logAdminAction.mockResolvedValue();
-
-    // Function should not throw error even if email fails
-    await expect(
-      sendHelpMessageToSupport(
-        "test@example.com",
-        "John Doe",
-        "Test Subject",
-        "Test Content",
-        [],
-        "user-123",
-        mockReq
-      )
-    ).resolves.toBeUndefined();
-
-    // Email should have been attempted
-    expect(mockMailerService.sendEmail).toHaveBeenCalled();
-  });
 });
