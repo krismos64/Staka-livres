@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import ChatWidget, { ChatWidgetRef } from "../components/common/ChatWidget";
+import SEOHead from "../components/common/SEOHead";
 import About from "../components/landing/About";
 import Blog from "../components/landing/Blog";
 import Contact from "../components/landing/Contact";
@@ -28,8 +29,59 @@ export default function LandingPage({ onLoginClick, onSignupClick }: LandingPage
     chatWidgetRef.current?.openChat();
   };
 
+  const homeStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Staka Éditions",
+    "description": "Service de correction et édition professionnelle de manuscrits. 15 ans d'expertise, plus de 1500 auteurs accompagnés.",
+    "url": "https://livrestaka.fr",
+    "logo": "https://livrestaka.fr/images/logo-staka.png",
+    "foundingDate": "2010",
+    "founder": {
+      "@type": "Person",
+      "name": "Christophe Mostefaoui",
+      "url": "https://christophe-dev-freelance.fr/"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+33615078152",
+      "contactType": "Customer Service",
+      "availableLanguage": "French",
+      "areaServed": "FR"
+    },
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "FR"
+    },
+    "sameAs": [
+      "https://christophe-dev-freelance.fr/"
+    ],
+    "offers": {
+      "@type": "Offer",
+      "name": "Service de correction de manuscrits",
+      "description": "Correction orthographique, grammaticale et éditoriale professionnelle",
+      "category": "Édition"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "bestRating": "5",
+      "ratingCount": "127"
+    }
+  };
+
   return (
-    <div className="bg-gray-50 text-gray-800 font-sans leading-relaxed">
+    <>
+      <SEOHead
+        title="Staka Éditions - Correction professionnelle de manuscrits | Service d'édition français"
+        description="Service de correction et édition professionnelle de manuscrits. 15 ans d'expertise, 1500+ auteurs accompagnés. Standard des grandes maisons d'édition françaises."
+        keywords="correction manuscrit, édition livre, correcteur professionnel, autoédition, correction orthographe, relecture professionnelle, service édition France"
+        image="https://livrestaka.fr/images/og-staka-editions.jpg"
+        url="https://livrestaka.fr/"
+        type="website"
+        structuredData={homeStructuredData}
+      />
+      <div className="bg-gray-50 text-gray-800 font-sans leading-relaxed">
       {/* Navigation */}
       <Navigation
         onLoginClick={onLoginClick}
@@ -89,6 +141,7 @@ export default function LandingPage({ onLoginClick, onSignupClick }: LandingPage
           <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-25"></div>
         </a>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

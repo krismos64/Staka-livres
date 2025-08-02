@@ -1,122 +1,39 @@
 services:
   frontend:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
-    container_name: staka_frontend
-    platform: linux/amd64
-    ports:
-      - "3000:80"
-    environment:
-      - VITE_API_URL=http://backend:3001
-      - DOCKER_ENV=true
-    depends_on:
-      - backend
-    restart: unless-stopped
-
-  frontend-dev:
-    build:
-      context: .
+    build: 
+      context: ./frontend
       dockerfile: Dockerfile.dev
-    container_name: staka_frontend_dev
+    container_name: staka_frontend
     ports:
-      - "5173:5173"
-      - "8080:8080"
+      - "3000:5173"
     environment:
-      - VITE_API_URL=http://backend:3001
-      - DOCKER_ENV=true
-      - NODE_ENV=test
+      - VITE_API_URL=http://localhost:3001
     volumes:
       - ./frontend:/app
       - ./shared:/app/shared
+      - /app/node_modules
     depends_on:
-      backend:
-        condition: service_healthy
-    profiles:
-      - test
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
-  cypress:
-    image: cypress/included:13.6.0
-    container_name: staka_cypress
-    working_dir: /e2e
-    volumes:
-      - ./frontend:/e2e
-    environment:
-      - CYPRESS_baseUrl=http://host.docker.internal:5173
-      - CYPRESS_video=false
-      - CYPRESS_screenshotOnRunFailure=false
-    depends_on:
-      - db
       - backend
-      - frontend
-    command:
-      [
-        "npx",
-        "cypress",
-        "run",
-        "--browser",
-        "electron",
-        "--headless",
-        "--config-file",
-        "cypress.config.cjs",
-      ]
-    profiles:
-      - test
 
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile.dev
     container_name: staka_backend
     ports:
       - "3001:3001"
-      - "5555:5555"
     env_file:
       - ./backend/.env
     volumes:
-      - ./backend:/app/backend
+      - ./backend:/app
       - ./shared:/app/shared
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
-  app:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    container_name: staka_app_test
-    environment:
-      - NODE_ENV=test
-      - AWS_S3_BUCKET=staka-invoices
-      - AWS_REGION=eu-west-3
-      # AWS credentials passed via command line for S3 tests
-    env_file:
-      - ./backend/.env
-    volumes:
-      - ./backend:/app/backend
-      - ./shared:/app/shared
+      - /app/node_modules
     depends_on:
       - db
-    profiles:
-      - test
 
   db:
     image: mysql:8
     container_name: staka_db
-    command: --innodb-buffer-pool-size=512M
     ports:
       - "3306:3306"
     environment:
@@ -126,23 +43,6 @@ services:
       - MYSQL_PASSWORD=staka
     volumes:
       - db_data:/var/lib/mysql
-    restart: unless-stopped
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "mysqladmin",
-          "ping",
-          "-h",
-          "localhost",
-          "-u",
-          "staka",
-          "-pstaka",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
 
 volumes:
   db_data:

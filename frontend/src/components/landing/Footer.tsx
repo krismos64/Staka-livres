@@ -78,6 +78,18 @@ export default function Footer() {
                 </div>
               </a>
             </div>
+            
+            {/* Payment Security Badge */}
+            <div className="mt-6 pt-6 border-t border-gray-700">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <img 
+                  src="/images/footer/paiment-secure.webp" 
+                  alt="Paiement sécurisé - Visa, PayPal" 
+                  className="h-12 sm:h-14 w-auto opacity-80 hover:opacity-100 transition-opacity"
+                />
+                <span className="text-sm text-gray-400">Paiement 100% sécurisé</span>
+              </div>
+            </div>
           </div>
 
           {/* Services */}

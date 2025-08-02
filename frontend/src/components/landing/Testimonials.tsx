@@ -10,7 +10,7 @@ interface Testimonial {
 
 const testimonials: Testimonial[] = [
   {
-    name: "Marie Castello",
+    name: "Marie C",
     role: "Auteure de romans",
     text: `"Une équipe exceptionnelle ! Ma correction était parfaite et la mise en page magnifique. Mon livre se vend très bien sur Amazon grâce à leur accompagnement."`,
     projectInfo: "Romans - 280 pages",
@@ -19,7 +19,7 @@ const testimonials: Testimonial[] = [
     image: "/images/temoignage-1.webp",
   },
   {
-    name: "Pierre Dubois",
+    name: "Pierre D",
     role: "Auteur d'essais",
     text: `"Professionnel, rapide et d'une qualité irréprochable. L'équipe Staka a transformé mon manuscrit brut en un livre digne d'une grande maison d'édition."`,
     projectInfo: "Essai - 180 pages",
@@ -28,7 +28,7 @@ const testimonials: Testimonial[] = [
     image: "/images/temoignage-2.webp",
   },
   {
-    name: "Sophie Laurent",
+    name: "Sophie L",
     role: "Première publication",
     text: `"En tant que débutante, j'avais peur de me lancer. L'équipe m'a accompagnée de A à Z avec patience et bienveillance. Mon rêve est devenu réalité !"`,
     projectInfo: "Biographie - 220 pages",
@@ -76,8 +76,11 @@ export default function Testimonials() {
                 {t.image ? (
                   <img
                     src={t.image}
-                    alt={t.name}
+                    alt={`Photo de profil de ${t.name}, ${t.role} - client Staka Éditions`}
                     className="w-16 h-16 rounded-full object-cover"
+                    loading="lazy"
+                    width="64"
+                    height="64"
                   />
                 ) : (
                   <div

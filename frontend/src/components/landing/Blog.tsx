@@ -49,8 +49,8 @@ export default function Blog() {
     },
     {
       id: "erreurs-autoedition",
-      category: "⚠️ Erreurs",
-      categoryIcon: "fas fa-exclamation-triangle",
+      category: "",
+      categoryIcon: "",
       title: "Les 10 erreurs courantes en autoédition",
       summary:
         "Évitez les pièges les plus fréquents et maximisez vos chances de succès avec nos conseils d'experts.",
@@ -63,10 +63,10 @@ export default function Blog() {
   const handleArticleClick = (articleId: string) => {
     const routes = {
       "premier-chapitre": "/blog/premier-chapitre",
-      "amazon-kdp-guide": "/blog/amazon-kdp-guide", 
-      "erreurs-autoedition": "/blog/erreurs-autoedition"
+      "amazon-kdp-guide": "/blog/amazon-kdp-guide",
+      "erreurs-autoedition": "/blog/erreurs-autoedition",
     };
-    
+
     const route = routes[articleId as keyof typeof routes];
     if (route) {
       navigate(route);
@@ -104,9 +104,11 @@ export default function Blog() {
                 {article.image ? (
                   <img
                     src={article.image}
-                    alt={article.title}
+                    alt={`Illustration de l'article : ${article.title}`}
                     className="w-full h-full object-cover"
                     loading="lazy"
+                    width="320"
+                    height="192"
                   />
                 ) : (
                   <i
@@ -114,9 +116,11 @@ export default function Blog() {
                     aria-hidden="true"
                   ></i>
                 )}
-                <div className="absolute top-4 left-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full px-3 py-1 text-sm font-medium shadow-lg">
-                  {article.category}
-                </div>
+                {article.category && (
+                  <div className="absolute top-4 left-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full px-3 py-1 text-sm font-medium shadow-lg">
+                    {article.category}
+                  </div>
+                )}
               </div>
               <div className="p-6">
                 <h3 className="font-bold text-xl mb-3">{article.title}</h3>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+
+  <!-- Page d'accueil -->
+  <url>
+    <loc>https://livrestaka.fr/</loc>
+    <lastmod>2025-08-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://livrestaka.fr/images/logo-staka.png</image:loc>
+      <image:title>Logo Staka Éditions</image:title>
+      <image:caption>Service professionnel de correction de manuscrits</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Articles de blog -->
+  <url>
+    <loc>https://livrestaka.fr/blog/premier-chapitre</loc>
+    <lastmod>2025-07-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://livrestaka.fr/images/chapitre-captivant.webp</image:loc>
+      <image:title>Comment écrire un premier chapitre captivant</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://livrestaka.fr/blog/erreurs-autoedition</loc>
+    <lastmod>2025-07-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://livrestaka.fr/images/Les-erreurs-courantes-en-auto-edition.webp</image:loc>
+      <image:title>Les 10 erreurs courantes en autoédition</image:title>
+    </image:image>
+  </url>
+
+  <url>
+    <loc>https://livrestaka.fr/blog/amazon-kdp-guide</loc>
+    <lastmod>2025-07-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://livrestaka.fr/images/Amazon-KDP-2025.webp</image:loc>
+      <image:title>Guide complet Amazon KDP 2025</image:title>
+    </image:image>
+  </url>
+
+  <!-- Pages légales -->
+  <url>
+    <loc>https://livrestaka.fr/mentions-legales</loc>
+    <lastmod>2025-08-02</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <url>
+    <loc>https://livrestaka.fr/cgv</loc>
+    <lastmod>2025-08-02</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <!-- Pages de service (publiques uniquement) -->
+  <url>
+    <loc>https://livrestaka.fr/contact</loc>
+    <lastmod>2025-08-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://livrestaka.fr/services</loc>
+    <lastmod>2025-08-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://livrestaka.fr/tarifs</loc>
+    <lastmod>2025-08-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://livrestaka.fr/echantillon-gratuit</loc>
+    <lastmod>2025-08-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+</urlset>

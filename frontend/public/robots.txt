@@ -1,0 +1,47 @@
+User-agent: *
+Allow: /
+
+# Bloque les pages d'administration
+Disallow: /admin/
+Disallow: /app/
+Disallow: /dashboard/
+Disallow: /login/
+Disallow: /signup/
+Disallow: /reset-password/
+Disallow: /activate/
+
+# Bloque les pages de paiement et de données sensibles
+Disallow: /payment/
+Disallow: /billing/
+Disallow: /settings/
+Disallow: /notifications/
+Disallow: /messages/
+Disallow: /files/
+Disallow: /projects/
+
+# Permet l'indexation des pages importantes
+Allow: /
+Allow: /blog/
+Allow: /mentions-legales
+Allow: /cgv
+
+# Pages de test et développement
+Disallow: /test/
+Disallow: /dev/
+Disallow: /_*
+
+# Sitemap
+Sitemap: https://livrestaka.fr/sitemap.xml
+
+# Crawl-delay pour ne pas surcharger le serveur
+Crawl-delay: 1
+
+# Spécifique à Google
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Spécifique à Bing
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
