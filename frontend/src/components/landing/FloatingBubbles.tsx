@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 
 interface AuthorBubble {
   id: number;
@@ -89,7 +89,7 @@ const authors: AuthorBubble[] = [
   }
 ];
 
-export default function FloatingBubbles() {
+function FloatingBubbles() {
   const containerRef = useRef<HTMLDivElement>(null);
   const particleIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -228,6 +228,7 @@ export default function FloatingBubbles() {
           <img
             src={author.image}
             alt={author.name}
+            loading="lazy"
             className="w-full h-full object-cover rounded-full transition-all duration-300 hover:scale-105"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
@@ -419,3 +420,5 @@ export default function FloatingBubbles() {
     </section>
   );
 }
+
+export default React.memo(FloatingBubbles);

@@ -1,9 +1,4 @@
-import {
-  PageStatus,
-  PageType,
-  PrismaClient,
-  Role,
-} from "@prisma/client";
+import { PageStatus, PageType, PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -67,12 +62,12 @@ async function main() {
   // 1. Pack KDP
   await prisma.tarif.create({
     data: {
-      nom: "Pack KDP Autoédition",
-      description: "Pack complet pour auto-publication sur Amazon KDP",
+      nom: "Pack KDP",
+      description: "Idéal pour débuter",
       prix: 35000, // 350€
       prixFormate: "350€",
       typeService: "Pack",
-      dureeEstimee: "15-20 jours",
+      dureeEstimee: "5-7 jours",
       actif: true,
       ordre: 1,
       stripeProductId: null,
@@ -83,12 +78,12 @@ async function main() {
   // 2. Correction Standard
   await prisma.tarif.create({
     data: {
-      nom: "Correction Standard",
-      description: "Correction orthographique, grammaticale et typographique de votre manuscrit",
+      nom: "Pack Intégral",
+      description: "Solution complète",
       prix: 200, // 2€
       prixFormate: "2€/page",
       typeService: "Correction",
-      dureeEstimee: "7-10 jours",
+      dureeEstimee: "10-15 jours",
       actif: true,
       ordre: 2,
       stripeProductId: null,
@@ -99,12 +94,12 @@ async function main() {
   // 3. Pack Rédaction Complète
   await prisma.tarif.create({
     data: {
-      nom: "Pack Rédaction Complète",
-      description: "Service complet de rédaction et édition professionnelle",
+      nom: "Pack Rédaction",
+      description: "Coaching complet",
       prix: 145000, // 1450€
       prixFormate: "1450€",
       typeService: "Rédaction",
-      dureeEstimee: "30-45 jours",
+      dureeEstimee: "3-6 semaines",
       actif: true,
       ordre: 3,
       stripeProductId: null,
@@ -154,7 +149,8 @@ async function main() {
       question: "Quels sont les moyens de paiement acceptés ?",
       answer:
         "Nous acceptons les cartes bancaires (Visa, Mastercard, American Express) via notre plateforme sécurisée Stripe. Le paiement est demandé à la validation de votre commande.",
-      details: "Paiement 100% sécurisé • Facturation automatique • Garantie remboursement si non satisfait",
+      details:
+        "Paiement 100% sécurisé • Facturation automatique • Garantie remboursement si non satisfait",
       categorie: "Paiement",
       ordre: 4,
       visible: true,
@@ -163,7 +159,8 @@ async function main() {
       question: "Proposez-vous un échantillon gratuit ?",
       answer:
         "Oui ! Nous proposons la correction gratuite des 5 premières pages de votre manuscrit pour que vous puissiez évaluer la qualité de notre travail avant de commander.",
-      details: "Service gratuit • Sans engagement • Délai 24h • Parfait pour tester notre approche",
+      details:
+        "Service gratuit • Sans engagement • Délai 24h • Parfait pour tester notre approche",
       categorie: "Échantillon",
       ordre: 5,
       visible: true,
@@ -172,7 +169,8 @@ async function main() {
       question: "Comment suivre l'avancement de ma commande ?",
       answer:
         "Vous disposez d'un espace client personnalisé où vous pouvez suivre l'état de votre commande, échanger avec nos correcteurs et télécharger vos fichiers corrigés.",
-      details: "Notifications par email • Messagerie intégrée • Historique complet • Téléchargements illimités",
+      details:
+        "Notifications par email • Messagerie intégrée • Historique complet • Téléchargements illimités",
       categorie: "Suivi",
       ordre: 6,
       visible: true,
@@ -181,18 +179,11 @@ async function main() {
       question: "Que comprend exactement le Pack KDP ?",
       answer:
         "Le Pack KDP comprend la correction complète, la mise en page professionnelle, la création de la couverture et l'optimisation pour la publication sur Amazon KDP.",
-      details: "Correction orthographique et stylistique • Mise en page professionnelle • Couverture personnalisée • Format prêt pour KDP • Guide de publication",
+      details:
+        "Correction orthographique et stylistique • Mise en page professionnelle • Couverture personnalisée • Format prêt pour KDP • Guide de publication",
       categorie: "Packs",
       ordre: 7,
       visible: true,
-    },
-    {
-      question: "FAQ cachée pour tests admin",
-      answer: "Cette FAQ n'est visible que pour les administrateurs lors des tests.",
-      details: "Question de test non visible publiquement",
-      categorie: "Test",
-      ordre: 8,
-      visible: false,
     },
   ];
 
@@ -202,11 +193,15 @@ async function main() {
     });
   }
 
-  console.log(`✅ ${faqData.length} FAQ créées (${faqData.filter(f => f.visible).length} visibles, ${faqData.filter(f => !f.visible).length} cachées)`);
+  console.log(
+    `✅ ${faqData.length} FAQ créées (${
+      faqData.filter((f) => f.visible).length
+    } visibles, ${faqData.filter((f) => !f.visible).length} cachées)`
+  );
 
   // Pages légales (identiques au seed-prod)
   console.log("📄 Création des pages légales...");
-  
+
   await prisma.page.deleteMany();
 
   const pagesLegales = [
@@ -249,7 +244,9 @@ async function main() {
 
   console.log("🌱 Seed synchronisé avec succès !");
   console.log(`👤 2 utilisateurs créés (admin + user test)`);
-  console.log(`💰 3 tarifs créés (Pack KDP, Correction Standard, Pack Rédaction)`);
+  console.log(
+    `💰 3 tarifs créés (Pack KDP, Correction Standard, Pack Rédaction)`
+  );
   console.log(`❓ ${faqData.length} FAQ créées`);
   console.log(`📄 ${pagesLegales.length} pages légales créées`);
 }

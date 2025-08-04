@@ -12,6 +12,7 @@ import {
   roleCheckers,
   tokenUtils,
 } from "../utils/auth";
+import { debugLog, errorLog } from "../utils/debug";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -41,7 +42,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const userData = await authAPI.me();
       setUser(userData);
     } catch (err) {
-      console.error("Erreur auth:", err);
+      errorLog("Erreur authentification:", err);
       tokenUtils.remove();
       setUser(null);
     } finally {
@@ -52,21 +53,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (credentials: LoginRequest): Promise<User | null> => {
     setIsLoading(true);
     setError(null);
-    console.log(
-      "[AuthContext] Tentative de connexion pour:",
-      credentials.email
-    );
+    debugLog("Tentative de connexion pour:", credentials.email);
 
     try {
       const response = await authAPI.login(credentials);
-      console.log("[AuthContext] Connexion réussie, réponse API:", response);
+      debugLog("Connexion réussie, réponse API:", response);
       tokenUtils.set(response.token);
       setUser(response.user);
       return response.user;
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Erreur de connexion";
-      console.error("[AuthContext] Erreur de connexion:", err);
+      errorLog("Erreur de connexion:", err);
       setError(errorMessage);
       return null;
     } finally {

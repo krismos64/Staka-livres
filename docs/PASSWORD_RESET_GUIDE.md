@@ -3,9 +3,9 @@
 ![Production](https://img.shields.io/badge/Status-Production%20Deployed-brightgreen)
 ![Live](https://img.shields.io/badge/Live-livrestaka.fr-blue)
 ![Security](https://img.shields.io/badge/RGPD-Compliant-green)
-![Tests](https://img.shields.io/badge/Tests-100%25-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-En%20D%C3%A9veloppement-yellow)
 
-**✨ Version Juillet 2025 - Dernière mise à jour : 27 Juillet 2025**  
+**✨ Version Août 2025 - Dernière mise à jour : 3 Août 2025**  
 **🌐 Production URL** : [livrestaka.fr](https://livrestaka.fr/)  
 **👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
 
@@ -57,7 +57,8 @@ Le système de réinitialisation de mot de passe de Staka Livres est conçu pour
 backend/
 ├── src/
 │   ├── services/
-│   │   └── passwordResetService.ts     # Service principal
+│   │   ├── passwordResetService.ts     # Service principal
+│   │   └── auditService.ts             # Service d'audit
 │   ├── validators/
 │   │   └── authValidators.ts           # Validation des mots de passe
 │   ├── middleware/
@@ -68,7 +69,7 @@ backend/
 │   │   └── auth.ts                     # Routes publiques
 │   └── emails/
 │       └── templates/
-│           └── resetPassword.hbs       # Template email
+│           └── resetPassword.hbs       # Template email HTML
 │
 frontend/
 ├── src/
@@ -78,14 +79,11 @@ frontend/
 │   └── app.tsx                         # Routes
 │
 ├── __tests__/
-│   ├── services/
-│   │   └── passwordResetService.test.ts
-│   └── integration/
-│       └── passwordResetEndpoints.test.ts
+│   └── ↓ Tests en développement ↓
 │
 └── cypress/
     └── e2e/
-        └── passwordReset.cy.ts
+        └── ↓ Tests E2E en développement ↓
 ```
 
 ### 🗄️ Modèle de données
@@ -312,23 +310,30 @@ const hashToken = (token: string): string => {
 
 ### 📊 Audit et logging
 
-Tous les événements sont tracés avec `AuditService` :
+Tous les événements sont tracés avec `AuditService.logPasswordResetEvent()` :
 
 ```typescript
-// Événements trackés
-export const AUDIT_ACTIONS = {
-  PASSWORD_RESET_REQUEST: 'PASSWORD_RESET_REQUEST',
-  PASSWORD_RESET_SUCCESS: 'PASSWORD_RESET_SUCCESS', 
-  PASSWORD_RESET_FAILED: 'PASSWORD_RESET_FAILED',
-};
+// Types d'événements trackés
+type PasswordResetEventType = 'request' | 'success' | 'failed';
 
-// Exemple d'appel
+// Méthode d'audit intégrée
 await AuditService.logPasswordResetEvent(
-  email,
-  'request',
-  userId,
-  ipAddress,
-  userAgent
+  email: string,              // Email de l'utilisateur
+  action: PasswordResetEventType, // Type d'événement
+  userId?: string,            // ID utilisateur (optionnel)
+  ipAddress?: string,         // Adresse IP
+  userAgent?: string,         // User agent
+  details?: any              // Détails supplémentaires (raison d'échec, etc.)
+);
+
+// Exemples d'utilisation réelle
+await AuditService.logPasswordResetEvent(
+  email, 'request', user.id, ip, userAgent
+);
+
+await AuditService.logPasswordResetEvent(
+  email, 'failed', undefined, ip, userAgent, 
+  { reason: 'user_not_found' }
 );
 ```
 
@@ -346,58 +351,57 @@ await AuditService.logPasswordResetEvent(
 
 ## 🧪 Tests
 
-### 🔬 Tests unitaires
+### 📋 État actuel des tests
 
-**Fichier** : `passwordResetService.test.ts`
+**⚠️ Tests en développement** : Le système de réinitialisation de mot de passe est fonctionnel en production mais les tests automatisés sont en cours de développement.
 
-```bash
-# Exécution
-cd backend
-npm test src/__tests__/services/passwordResetService.test.ts
+### 🔬 Tests unitaires (À développer)
 
-# Couverture
-npm run test:coverage
-```
+**Fichiers à créer** :
+- `backend/src/tests/services/passwordResetService.test.ts`
+- `backend/src/tests/validators/authValidators.test.ts`
+- `backend/src/tests/middleware/rateLimiter.test.ts`
 
-**Cas testés** :
-- Création de token valide
-- Vérification de token
-- Consommation de token
-- Gestion des erreurs
-- Nettoyage des tokens expirés
+**Cas à tester** :
+- ✅ Création de token valide
+- ✅ Vérification de token  
+- ✅ Consommation de token (usage unique)
+- ✅ Gestion des erreurs
+- ✅ Nettoyage des tokens expirés
+- ✅ Validation complexité mot de passe
+- ✅ Rate limiting
 
-### 🔗 Tests d'intégration
+### 🔗 Tests d'intégration (À développer)
 
-**Fichier** : `passwordResetEndpoints.test.ts`
+**Fichiers à créer** :
+- `backend/src/tests/integration/passwordResetEndpoints.test.ts`
 
-```bash
-# Exécution
-npm test src/__tests__/integration/passwordResetEndpoints.test.ts
-```
+**Cas à tester** :
+- ✅ POST /auth/request-password-reset
+- ✅ POST /auth/reset-password  
+- ✅ Rate limiting en action
+- ✅ Validation des données
+- ✅ Audit logging complet
 
-**Cas testés** :
-- Endpoints complets
-- Rate limiting
-- Validation des données
-- Gestion des erreurs
-- Audit logging
+### 🌐 Tests E2E (À développer)
 
-### 🌐 Tests E2E
+**Fichiers à créer** :
+- `cypress/e2e/passwordReset.cy.ts`
 
-**Fichier** : `passwordReset.cy.ts`
+**Cas à tester** :
+- ✅ Flux complet utilisateur
+- ✅ Page ForgotPassword.tsx
+- ✅ Page ResetPassword.tsx
+- ✅ Validation formulaires temps réel
+- ✅ États de chargement
+- ✅ Messages d'erreur appropriés
 
-```bash
-# Exécution
-cd frontend
-npm run test:e2e -- --spec cypress/e2e/passwordReset.cy.ts
-```
+### 🎯 Priorités de développement
 
-**Cas testés** :
-- Flux complet utilisateur
-- Validation formulaires
-- States loading
-- Messages d'erreur
-- Navigation
+1. **Tests unitaires PasswordResetService** (Critique)
+2. **Tests validation AuthValidators** (Important)  
+3. **Tests intégration endpoints** (Important)
+4. **Tests E2E flux complet** (Moyen)
 
 ---
 
@@ -406,34 +410,45 @@ npm run test:e2e -- --spec cypress/e2e/passwordReset.cy.ts
 ### 🔧 Variables d'environnement
 
 ```env
-# Backend
-JWT_SECRET="your-jwt-secret"
-FRONTEND_URL="http://localhost:3001"
+# Backend - Authentification
+JWT_SECRET="your-jwt-secret-change-in-production"
+FRONTEND_URL="https://livrestaka.fr"  # URL frontend pour les liens
+PORT=3000
 
-# Email
-SENDGRID_API_KEY="your-sendgrid-key"
+# Email - Configuration SendGrid
+SENDGRID_API_KEY="SG.xxx..."
 FROM_EMAIL="contact@staka.fr"
+FROM_NAME="Staka Livres"
+SUPPORT_EMAIL="contact@staka.fr"
 
 # Base de données
-DATABASE_URL="mysql://user:password@localhost:3306/staka_livres"
+DATABASE_URL="mysql://staka:staka@db:3306/stakalivres"
+
+# Sécurité (Optionnel - Rate limiting avancé)
+RATE_LIMIT_ENABLED=true
+PASSWORD_RESET_MAX_ATTEMPTS=5
+PASSWORD_RESET_WINDOW_HOURS=1
 ```
 
 ### 📧 Configuration email
 
-Template HTML dans `resetPassword.hbs` :
+**Template HTML complet** dans `resetPassword.hbs` :
 
-```html
-<div style="font-family: Arial, sans-serif; max-width: 600px;">
-  <h2 style="color: #2563eb;">🔐 Réinitialisation de mot de passe</h2>
-  <p>Bonjour <strong>{{prenom}}</strong>,</p>
-  <div style="text-align: center; margin: 30px 0;">
-    <a href="{{resetUrl}}" style="background-color: #2563eb; color: white; padding: 15px 30px;">
-      Réinitialiser mon mot de passe
-    </a>
-  </div>
-  <p>Ce lien est valable pendant 1 heure.</p>
-</div>
+Le système utilise un template Handlebars professionnel avec :
+- Design responsive et moderne
+- CSS inline pour compatibilité email  
+- Sections sécurisées (warning, security notes)
+- Bouton CTA principal + lien de fallback
+- Footer avec informations de contact
+- Variables dynamiques : `{{prenom}}`, `{{resetUrl}}`
+
+**Variables disponibles :**
+```handlebars
+{{prenom}}     # Prénom de l'utilisateur
+{{resetUrl}}   # URL complète de réinitialisation avec token
 ```
+
+**Alternative intégrée :** L'email peut aussi être généré directement dans le contrôleur avec HTML inline pour plus de flexibilité.
 
 ---
 
@@ -505,6 +520,37 @@ ORDER BY timestamp DESC;
 
 ---
 
+## 🚀 Améliorations Futures
+
+### 📋 Roadmap de développement
+
+#### Phase 1 - Tests (Priorité haute)
+- [ ] **Tests unitaires complets** : PasswordResetService, AuthValidators
+- [ ] **Tests d'intégration** : Endpoints + Rate limiting
+- [ ] **Tests E2E Cypress** : Flux complet utilisateur
+- [ ] **Coverage 90%+** : Objectif couverture de tests
+
+#### Phase 2 - Fonctionnalités avancées (Priorité moyenne)  
+- [ ] **Template email dynamique** : Utilisation systématique du template Handlebars
+- [ ] **Monitoring avancé** : Métriques détaillées des tentatives de reset
+- [ ] **Rate limiting distribué** : Support Redis pour scaling
+- [ ] **Notifications admin** : Alertes sur tentatives suspectes
+
+#### Phase 3 - Optimisations (Priorité basse)
+- [ ] **Cache intelligent** : Optimisation des requêtes DB
+- [ ] **Logs structurés** : Format JSON pour analyse
+- [ ] **Multi-langue** : Support i18n pour emails
+- [ ] **2FA Recovery** : Intégration avec l'authentification 2FA
+
+### 🎯 Métriques à surveiller
+
+- **Taux de succès** : % de réinitialisations réussies
+- **Temps de réponse** : Latence moyenne des endpoints
+- **Tentatives bloquées** : Efficacité du rate limiting
+- **Tokens expirés** : % d'utilisation dans la fenêtre 1h
+
+---
+
 ## 📚 Ressources
 
 ### 📖 Documentation connexe
@@ -527,18 +573,19 @@ ORDER BY timestamp DESC;
 Le système de réinitialisation de mot de passe de Staka Livres offre un **niveau de sécurité élevé** tout en maintenant une **expérience utilisateur optimale**. 
 
 Les fonctionnalités clés incluent :
-- ✅ Conformité RGPD/CNIL
-- ✅ Tokens sécurisés usage unique
-- ✅ Rate limiting efficace
-- ✅ Audit complet
-- ✅ Interface intuitive
-- ✅ Tests exhaustifs
+- ✅ **Conformité RGPD/CNIL** : Validation stricte des mots de passe
+- ✅ **Tokens sécurisés usage unique** : SHA-256 + expiration 1h
+- ✅ **Rate limiting intelligent** : 5 tentatives/heure par IP+email
+- ✅ **Audit complet** : Traçabilité via AuditService
+- ✅ **Interface intuitive** : Pages React avec validation temps réel
+- ✅ **Email professionnel** : Template Handlebars responsive
+- ✅ **Architecture robuste** : Service + Validator + Controller séparés
 
-Le système est **déployé en production sur [livrestaka.fr](https://livrestaka.fr/)** avec une couverture de tests de 100% et une architecture sécurisée.
+Le système est **déployé en production sur [livrestaka.fr](https://livrestaka.fr/)** avec une architecture sécurisée éprouvée. Les tests automatisés sont en cours de développement pour atteindre une couverture complète.
 
 ---
 
 **📧 Contact production** : contact@staka.fr  
-**👨‍💻 Développé par** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/) - Juillet 2025
+**👨‍💻 Développé par** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/) - Août 2025
 
-*Guide mis à jour le 27 juillet 2025 - Version 1.0 - Production déployée*
+*Guide mis à jour le 3 août 2025 - Version 1.1 - Production déployée - Tests en développement*

@@ -1,45 +1,46 @@
 # 🗄️ Guide Complet de la Base de Données - Staka Livres
 
-![MySQL](https://img.shields.io/badge/MySQL-8.4-orange)
+![MySQL](https://img.shields.io/badge/MySQL-8.0-orange)
 ![Prisma](https://img.shields.io/badge/Prisma-6.10-purple)
 ![Docker](https://img.shields.io/badge/Docker-Ready-blue)
-![Production](https://img.shields.io/badge/Status-Production%20Deployed-success)
+![Production](https://img.shields.io/badge/Status-Production%20HTTPS-success)
 
 ## 📋 **Vue d'ensemble**
 
-**✨ Version Production - Déployée le 30 juillet 2025 - https://livrestaka.fr/ :**
+**✨ Version Production - Déployée le 3 Août 2025 - https://livrestaka.fr/ :**
 
-La base de données **Staka Livres** est une architecture complète MySQL 8 gérée par **Prisma ORM** et déployée avec **Docker**. Elle couvre tous les aspects d'une plateforme de correction de manuscrits moderne : utilisateurs, projets, **système de messagerie unifié**, **notifications temps réel**, **système de réservation de consultations**, support client, **facturation automatique** et contenu éditorial.
+La base de données **Staka Livres** est une architecture complète MySQL 8 gérée par **Prisma ORM** et déployée avec **Docker**. Elle couvre tous les aspects d'une plateforme de correction de manuscrits moderne avec **HTTPS Let's Encrypt** : utilisateurs, projets, **système de messagerie unifié**, **notifications temps réel**, **système de tarification dynamique**, support client, **facturation automatique** et contenu éditorial.
 
-### 🆕 **Évolutions Juillet 2025**
+### 🆕 **Évolutions Août 2025**
 
-- **👤 Extension User** : Ajout du champ `bio` (TEXT) pour profils utilisateur enrichis
-- **🆕 Nouveau modèle PendingCommande** : Système tunnel invité pour paiements directs
-- **💳 Tests Stripe stabilisés** : Architecture paiement enterprise-grade avec webhooks
-- **🧪 Tests E2E streamlinés** : Architecture 3 niveaux optimisée (34 tests organisés)
-- **📊 Métriques actualisées** : 34 tests backend (87% couverture) + architecture E2E moderne
-- **🔒 Sécurité renforcée** : AuditLog avec traçabilité complète des actions admin
-- **📱 Architecture responsive** : Optimisations performance mobile/desktop
-- **🌐 Webhooks synchronisés** : Intégration Stripe bulletproof avec retry logic
-- **🗄️ Scripts migration** : Nouveaux scripts `migrate-db.sh` et `migrate-db-reverse.sh`
+- **🔒 HTTPS Let's Encrypt** : Certificat SSL valide déployé en production
+- **💾 Stockage local unifié** : Migration complète de AWS S3 vers stockage local VPS
+- **🎯 StatutCommande étendus** : 9 statuts (EN_ATTENTE_VERIFICATION, ESTIMATION_ENVOYEE, PAYEE, etc.)
+- **📊 Commande enrichie** : Nouveaux champs packType, pagesDeclarees, pagesVerifiees, prixEstime, prixFinal
+- **🆕 PendingCommande amélioré** : Ajout nombrePages et description pour tunnel invité
+- **🧪 Tests E2E production** : 34 tests Cypress validés sur livrestaka.fr
+- **📈 Métriques actualisées** : 16 modèles de données, 20+ relations, 70+ index optimisés
+- **🔧 Scripts automatisés** : Seed production avec 3 tarifs + 8 FAQ + utilisateurs
+- **🌐 API REST complète** : 60+ endpoints avec authentification JWT et CORS
+- **📱 Architecture responsive** : Optimisations mobile/desktop avec React 18 + Vite 5
 
 ### 🏗️ **Architecture Technique Production**
 
-- **Base de données** : MySQL 8.0 déployée en production sur https://livrestaka.fr/
+- **Base de données** : MySQL 8.0 déployée avec HTTPS sur https://livrestaka.fr/
 - **ORM** : Prisma 6.10+ avec client TypeScript généré et migrations versionnées
 - **Environnement** : Docker Compose multi-architecture avec volumes persistants
-- **Ports** : 3306 (MySQL), 5555 (Prisma Studio), 3001 (Backend API)
-- **Containers** : `staka_db` (MySQL), `staka_backend` (API + Prisma), `staka_frontend` (React)
-- **Modèles** : **15 modèles** de données interconnectés (100% déployés)
-- **Relations** : **20+ relations** avec contraintes d'intégrité strictes
-- **Index** : **65 index optimisés** pour performance maximale
-- **Enums** : **16 énumérations** pour validation stricte des données
+- **Containers** : `staka_frontend_ssl` (Nginx + SSL), `staka_backend_prod` (API), `staka_db_prod` (MySQL)
+- **Stockage** : Stockage local unifié dans `/backend/uploads/` (AWS S3 supprimé)
+- **Modèles** : **16 modèles** de données interconnectés (100% déployés)
+- **Relations** : **25+ relations** avec contraintes d'intégrité strictes
+- **Index** : **70+ index optimisés** pour performance maximale
+- **Enums** : **17 énumérations** pour validation stricte des données
 
 ---
 
-## 🎯 **Modèles de Données - Architecture Complète**
+## 🎯 **Modèles de Données - Architecture Complète (16 modèles)**
 
-### 👤 **1. User - Utilisateurs (Mis à jour Juillet 2025)**
+### 👤 **1. User - Utilisateurs (Production Ready)**
 
 **Table** : `users`
 
@@ -57,10 +58,10 @@ model User {
   adresse                 String?          @db.Text
   avatar                  String?          @db.VarChar(500)
   telephone               String?          @db.VarChar(20)
-  bio                     String?          @db.Text         // 🆕 NOUVEAU JUILLET 2025
-  preferences             Json?            // Paramètres utilisateur personnalisés
+  bio                     String?          @db.Text         // Profils enrichis
+  preferences             Json?            // Paramètres personnalisés
 
-  // Relations (35+ relations interconnectées)
+  // Relations (30+ relations interconnectées)
   commandes               Commande[]
   files                   File[]           @relation("FileOwner")
   receivedMessages        Message[]        @relation("MessageReceiver")
@@ -76,14 +77,15 @@ model User {
   @@index([isActive])
   @@map("users")
 }
+
+enum Role {
+  USER
+  ADMIN
+  CORRECTOR
+}
 ```
 
-**🆕 Nouveautés 2025 :**
-- **Champ `bio`** : Descriptions personnalisées pour profils utilisateur enrichis
-- **Préférences JSON** : Stockage flexible des paramètres utilisateur
-- **Relations étendues** : PaymentMethods Stripe, Notifications, AuditLogs
-
-### 📋 **2. Commande - Projets de Correction (Stabilisé)**
+### 📋 **2. Commande - Projets de Correction (Enrichi Août 2025)**
 
 **Table** : `commandes`
 
@@ -97,16 +99,23 @@ model Commande {
   statut          StatutCommande @default(EN_ATTENTE)
   noteClient      String?        @db.Text
   noteCorrecteur  String?        @db.Text
-  priorite        Priorite       @default(NORMALE)
   dateEcheance    DateTime?
   dateFinition    DateTime?
+  priorite        Priorite       @default(NORMALE)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
-  // 💳 Intégration Stripe stabilisée
+  // 💳 Intégration Stripe complète
   paymentStatus   String?        @db.VarChar(50)    // paid, pending, failed
   stripeSessionId String?        @db.VarChar(255)   // cs_xxx session ID
   amount          Int?                              // Montant en centimes
+
+  // 🆕 Nouveaux champs tarification (Août 2025)
+  packType        String?        @db.VarChar(100)   // Type de pack
+  pagesDeclarees  Int?                              // Pages déclarées client
+  pagesVerifiees  Int?                              // Pages vérifiées admin
+  prixEstime      Int?                              // Prix estimé centimes
+  prixFinal       Int?                              // Prix final centimes
 
   // Relations optimisées
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -121,11 +130,15 @@ model Commande {
 }
 
 enum StatutCommande {
-  EN_ATTENTE
-  EN_COURS
-  TERMINE
-  ANNULEE
-  SUSPENDUE
+  EN_ATTENTE               // Commande créée
+  EN_ATTENTE_VERIFICATION  // En attente vérification admin
+  EN_ATTENTE_CONSULTATION  // En attente consultation client
+  ESTIMATION_ENVOYEE       // Estimation de prix envoyée
+  PAYEE                    // Paiement confirmé
+  EN_COURS                 // Correction en cours
+  TERMINE                  // Correction terminée
+  ANNULEE                  // Commande annulée
+  SUSPENDUE                // Temporairement suspendue
 }
 
 enum Priorite {
@@ -136,7 +149,7 @@ enum Priorite {
 }
 ```
 
-### 📁 **3. File - Gestion Avancée des Fichiers**
+### 📁 **3. File - Gestion Stockage Local Unifié**
 
 **Table** : `files`
 
@@ -147,7 +160,7 @@ model File {
   storedName         String              @db.VarChar(255)   // Nom sécurisé stockage
   mimeType           String              @db.VarChar(100)
   size               Int                                     // Taille en bytes
-  url                String              @db.VarChar(500)   // URL S3 ou locale
+  url                String              @db.VarChar(500)   // URL locale /uploads/
   type               FileType            @default(DOCUMENT)
   uploadedById       String
   commandeId         String?
@@ -178,11 +191,14 @@ enum FileType {
 }
 ```
 
-### 💬 **4. Message - Messagerie Unifiée Optimisée**
+**🆕 Stockage Local :**
+- **Chemin** : `/backend/uploads/projects/`, `/backend/uploads/orders/`, `/backend/uploads/messages/`
+- **Sécurité** : Noms de fichiers hashés, validation MIME stricte
+- **Performance** : Accès direct sans latence réseau (vs S3)
+
+### 💬 **4. Message - Messagerie Unifiée Production**
 
 **Table** : `messages`
-
-Le système de messagerie **refactorisé et optimisé** pour flexibilité maximale avec support visiteurs anonymes et conversations structurées.
 
 ```prisma
 model Message {
@@ -191,9 +207,9 @@ model Message {
   
   // Utilisateurs connectés
   senderId         String?             // ID utilisateur connecté
-  receiverId       String?             // Toujours admin pour premiers messages
+  receiverId       String?             // Destinataire (admin pour premiers messages)
   
-  // Visiteurs non connectés (nouveau système)
+  // Visiteurs non connectés
   visitorEmail     String?             @db.VarChar(255)
   visitorName      String?             @db.VarChar(100)
   isFromVisitor    Boolean             @default(false)
@@ -211,11 +227,11 @@ model Message {
   deletedByAdmin   Boolean             @default(false)
   parentId         String?             // Threading conversations
   
-  // 🆕 Champs affichage admin (Juillet 2025)
+  // Champs affichage admin
   displayFirstName String?             @db.VarChar(100)
   displayLastName  String?             @db.VarChar(100)
   displayRole      String?             @db.VarChar(100)
-  metadata         Json?               // Données spécifiques type message
+  metadata         Json?               // Données spécifiques
   status           String?             @db.VarChar(50)   // Statut personnalisé
   
   createdAt        DateTime            @default(now())
@@ -223,7 +239,7 @@ model Message {
 
   // Relations
   attachments      MessageAttachment[]
-  parent           Message?            @relation("MessageThread", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parent           Message?            @relation("MessageThread", fields: [parentId], references: [id])
   replies          Message[]           @relation("MessageThread")
   receiver         User?               @relation("MessageReceiver", fields: [receiverId], references: [id])
   sender           User?               @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
@@ -232,9 +248,7 @@ model Message {
   @@index([senderId])
   @@index([receiverId])
   @@index([visitorEmail])
-  @@index([type])
-  @@index([isRead])
-  @@index([createdAt])
+  @@index([parentId])
   @@map("messages")
 }
 
@@ -244,7 +258,7 @@ enum MessageType {
   NOTIFICATION          // Notifications intégrées
   SUPPORT_MESSAGE       // Messages support technique
   ADMIN_MESSAGE         // Messages admin → client
-  CONSULTATION_REQUEST  // 🆕 Demandes consultation (Juillet 2025)
+  CONSULTATION_REQUEST  // Demandes consultation
 }
 
 enum MessageStatut {
@@ -277,7 +291,7 @@ model MessageAttachment {
 }
 ```
 
-### 💳 **6. PaymentMethod - Méthodes Paiement Stripe (Enterprise)**
+### 💳 **6. PaymentMethod - Méthodes Paiement Stripe**
 
 **Table** : `payment_methods`
 
@@ -302,12 +316,11 @@ model PaymentMethod {
   @@index([userId])
   @@index([stripePaymentMethodId])
   @@index([isDefault])
-  @@index([isActive])
   @@map("payment_methods")
 }
 ```
 
-### 🧾 **7. Invoice - Facturation Automatisée S3**
+### 🧾 **7. Invoice - Facturation Automatisée**
 
 **Table** : `invoices`
 
@@ -318,7 +331,7 @@ model Invoice {
   number     String        @unique @db.VarChar(50)    // FACT-2025-001
   amount     Int                                       // Montant HT centimes
   taxAmount  Int           @default(0)                // TVA centimes
-  pdfUrl     String        @db.VarChar(500)          // URL S3 PDF
+  pdfUrl     String        @db.VarChar(500)          // URL PDF local
   status     InvoiceStatus @default(GENERATED)
   issuedAt   DateTime?                               // Date émission
   dueAt      DateTime?                               // Date échéance
@@ -345,7 +358,7 @@ enum InvoiceStatus {
 }
 ```
 
-### 🔔 **8. Notification - Système Temps Réel (Production Ready)**
+### 🔔 **8. Notification - Système Temps Réel**
 
 **Table** : `notifications`
 
@@ -373,7 +386,6 @@ model Notification {
   @@index([type])
   @@index([isRead])
   @@index([isDeleted])
-  @@index([priority])
   @@index([createdAt])
   @@map("notifications")
 }
@@ -387,7 +399,7 @@ enum NotificationType {
   ORDER             // 📋 Commandes
   MESSAGE           // 💬 Messages
   SYSTEM            // 🔧 Système
-  CONSULTATION      // 📞 Consultations (Juillet 2025)
+  CONSULTATION      // 📞 Consultations
 }
 
 enum NotificationPriority {
@@ -398,7 +410,7 @@ enum NotificationPriority {
 }
 ```
 
-### 📄 **9. Page - CMS Complet (Production Ready)**
+### 📄 **9. Page - CMS Complet**
 
 **Table** : `pages`
 
@@ -567,7 +579,7 @@ enum SupportRequestStatus {
 }
 ```
 
-### 🛡️ **13. AuditLog - Logs Sécurisés (Enterprise Security)**
+### 🛡️ **13. AuditLog - Logs Sécurisés Enterprise**
 
 **Table** : `audit_logs`
 
@@ -629,39 +641,42 @@ model PasswordReset {
 
   @@index([userId])
   @@index([expiresAt])
-  @@index([tokenHash])
   @@map("password_resets")
 }
 ```
 
-### 🎫 **15. PendingCommande - Tunnel Invité (NOUVEAU 2025)**
+### 🎫 **15. PendingCommande - Tunnel Invité Amélioré (Août 2025)**
 
 **Table** : `pending_commandes`
 
 ```prisma
 model PendingCommande {
-  id                String   @id @default(uuid())
-  prenom            String   @db.VarChar(100)     // Prénom utilisateur invité
-  nom               String   @db.VarChar(100)     // Nom utilisateur invité
-  email             String   @db.VarChar(255)     // Email utilisateur invité
-  passwordHash      String   @db.VarChar(255)     // Mot de passe hashé
-  telephone         String?  @db.VarChar(20)      // Téléphone optionnel
-  adresse           String?  @db.Text             // Adresse optionnelle
-  serviceId         String   @db.VarChar(255)     // Référence service/tarif
-  consentementRgpd  Boolean  @default(false)      // Consentement RGPD
+  id               String    @id @default(uuid())
+  prenom           String    @db.VarChar(100)     // Prénom utilisateur invité
+  nom              String    @db.VarChar(100)     // Nom utilisateur invité
+  email            String    @db.VarChar(255)     // Email utilisateur invité
+  passwordHash     String    @db.VarChar(255)     // Mot de passe hashé
+  telephone        String?   @db.VarChar(20)      // Téléphone optionnel
+  adresse          String?   @db.Text             // Adresse optionnelle
+  serviceId        String    @db.VarChar(255)     // Référence service/tarif
+  consentementRgpd Boolean   @default(false)      // Consentement RGPD
   
   // 💳 Intégration Stripe session
-  stripeSessionId   String?  @unique @db.VarChar(255)    // cs_xxx session ID
-  activationToken   String?  @unique @db.VarChar(255)    // Token activation compte
-  tokenExpiresAt    DateTime?                            // Expiration token
+  stripeSessionId  String?   @unique @db.VarChar(255)    // cs_xxx session ID
+  activationToken  String?   @unique @db.VarChar(255)    // Token activation compte
+  tokenExpiresAt   DateTime?                            // Expiration token
   
   // États de traitement
-  isProcessed       Boolean  @default(false)      // Commande traitée
-  userId            String?                       // User créé après paiement
-  commandeId        String?                       // Commande créée après paiement
+  isProcessed      Boolean   @default(false)      // Commande traitée
+  userId           String?                        // User créé après paiement
+  commandeId       String?                        // Commande créée après paiement
   
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  // 🆕 Nouveaux champs (Août 2025)
+  nombrePages      Int?                           // Nombre de pages manuscrit
+  description      String?   @db.Text             // Description du projet
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   @@index([email])
   @@index([stripeSessionId])
@@ -672,12 +687,6 @@ model PendingCommande {
 }
 ```
 
-**🆕 Fonctionnalités 2025 :**
-- **Tunnel invité** : Permet paiement direct sans création compte immédiate
-- **Activation différée** : Compte créé après validation paiement Stripe
-- **RGPD compliant** : Consentement explicite et données temporaires
-- **Sécurité renforcée** : Tokens d'activation avec expiration
-
 ---
 
 ## 🐳 **Utilisation Docker et Prisma Studio**
@@ -685,59 +694,62 @@ model PendingCommande {
 ### **1. Démarrage Environnement Complet**
 
 ```bash
-# Stack complète (DB + Backend + Frontend)
-docker-compose up -d
+# Développement local (hot-reload)
+npm run dev:watch
+# = docker compose -f docker-compose.dev.yml up --build
 
 # Vérifier la santé des services
-docker-compose ps
+docker compose -f docker-compose.dev.yml ps
 
 # Logs en temps réel
-docker-compose logs -f backend
+docker compose -f docker-compose.dev.yml logs -f backend
 ```
 
 ### **2. Prisma Studio - Interface d'Administration**
 
 ```bash
-# Lancer Prisma Studio
-docker exec -it staka_backend npx prisma studio
+# Lancer Prisma Studio en développement
+docker compose -f docker-compose.dev.yml exec backend npx prisma studio
 
 # Interface accessible : http://localhost:5555
-# Exploration complète des 15 modèles de données
+# Exploration complète des 16 modèles de données
 ```
 
-### **3. Commandes Maintenance Prisma**
+### **3. Production (https://livrestaka.fr)**
+
+```bash
+# Déploiement complet avec SSL
+./deploy.sh
+
+# Vérification production
+curl -I https://livrestaka.fr/api/tarifs
+curl -I https://livrestaka.fr/api/faq
+```
+
+### **4. Commandes Maintenance Prisma**
 
 ```bash
 # Migrations production
-docker exec -it staka_backend npx prisma migrate deploy
+docker compose exec backend npx prisma migrate deploy
 
 # Génération client après modifications schéma
-docker exec -it staka_backend npx prisma generate
+docker compose exec backend npx prisma generate
 
 # Push développement (sans migration)
-docker exec -it staka_backend npx prisma db push
+docker compose exec backend npx prisma db push
 
 # Reset complet base (développement uniquement)
-docker exec -it staka_backend npx prisma migrate reset
-```
+docker compose exec backend npx prisma migrate reset
 
-### **4. Scripts Données de Test**
-
-```bash
-# Seed complet base de données
-docker exec -it staka_backend npm run prisma:seed
-
-# Scripts spécialisés disponibles
-docker exec -it staka_backend npm run stripe:sync-all
-docker exec -it staka_backend ts-node scripts/sync-tarifs-stripe.ts
-docker exec -it staka_backend ts-node scripts/generateSecrets.ts
+# Seed production automatique
+docker compose exec backend npx ts-node prisma/seed-prod.ts
 ```
 
 ---
 
 ## 📊 **Optimisations Performance Avancées**
 
-### 🚀 **Index Stratégiques (65 index optimisés)**
+### 🚀 **Index Stratégiques (70+ index optimisés)**
 
 ```prisma
 // Index primaires utilisateur
@@ -747,21 +759,22 @@ docker exec -it staka_backend ts-node scripts/generateSecrets.ts
 
 // Index commandes et projets
 @@index([userId])          // Commande: projets utilisateur
-@@index([statut])          // Commande: filtrage statut
+@@index([statut])          // Commande: filtrage statut 9 valeurs
 @@index([priorite])        // Commande: tri priorité
-@@index([createdAt])        // Commande: tri chronologique
+@@index([createdAt])       // Commande: tri chronologique
 
 // Index messagerie optimisée
 @@index([conversationId])  // Message: regroupement conversations
 @@index([senderId])        // Message: messages envoyés
 @@index([receiverId])      // Message: messages reçus
 @@index([visitorEmail])    // Message: visiteurs anonymes
+@@index([parentId])        // Message: threading
 
 // Index notifications temps réel
 @@index([userId])          // Notification: par utilisateur
 @@index([isRead])          // Notification: compteur non-lues
 @@index([type])            // Notification: filtrage type
-@@index([priority])        // Notification: tri priorité
+@@index([isDeleted])       // Notification: soft delete
 
 // Index facturation et paiement
 @@index([stripePaymentMethodId])  // PaymentMethod: Stripe
@@ -778,6 +791,11 @@ docker exec -it staka_backend ts-node scripts/generateSecrets.ts
 @@index([status])          // Page: contenu publié
 @@index([categorie])       // FAQ: organisation
 @@index([visible])         // FAQ: contenu visible
+
+// Index tarification
+@@index([actif])           // Tarif: services actifs
+@@index([ordre])           // Tarif: ordre affichage
+@@index([stripeProductId]) // Tarif: synchronisation Stripe
 ```
 
 ### 📊 **Requêtes Prisma Optimisées 2025**
@@ -818,45 +836,12 @@ const notifications = await prisma.notification.findMany({
   take: 20,
   skip: (page - 1) * 20
 });
-
-// Marquer notifications comme lues (bulk)
-await prisma.notification.updateMany({
-  where: {
-    userId: userId,
-    isRead: false
-  },
-  data: {
-    isRead: true,
-    readAt: new Date()
-  }
-});
 ```
 
 #### **💳 Stripe et Paiements**
 
 ```typescript
-// Méthodes paiement utilisateur optimisées
-const paymentMethods = await prisma.paymentMethod.findMany({
-  where: {
-    userId: userId,
-    isActive: true
-  },
-  select: {
-    id: true,
-    stripePaymentMethodId: true,
-    brand: true,
-    last4: true,
-    expMonth: true,
-    expYear: true,
-    isDefault: true
-  },
-  orderBy: [
-    { isDefault: "desc" },   // Carte par défaut en premier
-    { createdAt: "desc" }    // Plus récentes ensuite
-  ]
-});
-
-// Commandes avec statut paiement
+// Commandes avec statut paiement enrichi
 const commandesWithPayment = await prisma.commande.findMany({
   where: { userId: userId },
   include: {
@@ -873,45 +858,60 @@ const commandesWithPayment = await prisma.commande.findMany({
   orderBy: { createdAt: "desc" }
 });
 
-// Statistiques revenus mensuels (< 100ms)
+// Statistiques revenus avec nouveau modèle
 const monthlyStats = await prisma.commande.groupBy({
-  by: ["paymentStatus"],
-  _sum: { amount: true },
+  by: ["statut", "paymentStatus"],
+  _sum: { 
+    amount: true,
+    prixFinal: true,
+    prixEstime: true
+  },
+  _avg: { pagesDeclarees: true },
   _count: { id: true },
   where: {
     createdAt: {
       gte: startOfMonth,
       lt: endOfMonth
-    },
-    amount: { gt: 0 }
+    }
   }
 });
 ```
 
-#### **📊 Dashboard Admin Optimisé**
+#### **📊 Dashboard Admin Enrichi**
 
 ```typescript
-// Statistiques globales avec agrégations
+// Statistiques globales avec nouveaux champs
 const [userStats, commandeStats, revenueStats] = await Promise.all([
-  // Utilisateurs par rôle et statut
+  // Utilisateurs par rôle (3 rôles: USER, ADMIN, CORRECTOR)
   prisma.user.groupBy({
     by: ["role", "isActive"],
     _count: { id: true }
   }),
   
-  // Commandes par statut
+  // Commandes par statut (9 statuts enrichis)
   prisma.commande.groupBy({
     by: ["statut"],
     _count: { id: true },
+    _avg: { 
+      pagesDeclarees: true,
+      pagesVerifiees: true 
+    },
     where: {
       createdAt: { gte: last30Days }
     }
   }),
   
-  // Revenus période
+  // Revenus avec estimation vs final
   prisma.commande.aggregate({
-    _sum: { amount: true },
-    _avg: { amount: true },
+    _sum: { 
+      amount: true,
+      prixEstime: true,
+      prixFinal: true
+    },
+    _avg: { 
+      amount: true,
+      pagesDeclarees: true
+    },
     _count: { id: true },
     where: {
       paymentStatus: "paid",
@@ -919,286 +919,144 @@ const [userStats, commandeStats, revenueStats] = await Promise.all([
     }
   })
 ]);
-
-// Activité récente optimisée
-const recentActivity = await prisma.auditLog.findMany({
-  where: {
-    severity: { in: ["HIGH", "CRITICAL"] }
-  },
-  select: {
-    id: true,
-    timestamp: true,
-    adminEmail: true,
-    action: true,
-    targetType: true,
-    severity: true
-  },
-  orderBy: { timestamp: "desc" },
-  take: 10
-});
-```
-
-#### **💬 Messagerie Avancée**
-
-```typescript
-// Conversations avec derniers messages
-const conversations = await prisma.message.findMany({
-  where: {
-    OR: [
-      { senderId: userId },
-      { receiverId: userId }
-    ]
-  },
-  distinct: ["conversationId"],
-  include: {
-    sender: {
-      select: {
-        id: true,
-        prenom: true,
-        nom: true,
-        avatar: true,
-        role: true
-      }
-    },
-    receiver: {
-      select: {
-        id: true,
-        prenom: true,
-        nom: true,
-        avatar: true,
-        role: true
-      }
-    }
-  },
-  orderBy: { createdAt: "desc" },
-  take: 50
-});
-
-// Messages conversation avec pièces jointes
-const conversationDetail = await prisma.message.findMany({
-  where: { conversationId: conversationId },
-  include: {
-    sender: {
-      select: { prenom: true, nom: true, avatar: true, role: true }
-    },
-    attachments: {
-      include: {
-        file: {
-          select: {
-            id: true,
-            filename: true,
-            mimeType: true,
-            size: true,
-            url: true,
-            type: true
-          }
-        }
-      }
-    }
-  },
-  orderBy: { createdAt: "asc" }
-});
-
-// Statistiques messagerie admin
-const messageStats = await prisma.message.groupBy({
-  by: ["type", "statut"],
-  _count: { id: true },
-  where: {
-    createdAt: { gte: last7Days }
-  }
-});
-```
-
-#### **🎨 CMS et Contenu**
-
-```typescript
-// Pages publiques avec SEO
-const publicPages = await prisma.page.findMany({
-  where: {
-    status: "PUBLISHED",
-    isPublic: true,
-    publishedAt: { lte: new Date() }
-  },
-  select: {
-    id: true,
-    title: true,
-    slug: true,
-    excerpt: true,
-    type: true,
-    metaTitle: true,
-    metaDescription: true,
-    publishedAt: true
-  },
-  orderBy: [
-    { type: "asc" },        // Par type d'abord
-    { sortOrder: "asc" }    // Puis par ordre
-  ]
-});
-
-// FAQ organisées par catégorie
-const faqByCategory = await prisma.fAQ.groupBy({
-  by: ["categorie"],
-  _count: { id: true },
-  where: { visible: true },
-  orderBy: { categorie: "asc" }
-});
-
-// Tarifs actifs synchronisés Stripe
-const activeTarifs = await prisma.tarif.findMany({
-  where: {
-    actif: true,
-    stripeProductId: { not: null }  // Synchronisés Stripe
-  },
-  select: {
-    id: true,
-    nom: true,
-    description: true,
-    prix: true,
-    prixFormate: true,
-    dureeEstimee: true,
-    stripePriceId: true,
-    stripeProductId: true
-  },
-  orderBy: [
-    { ordre: "asc" },
-    { prix: "asc" }
-  ]
-});
 ```
 
 ---
 
-## 🔧 **Scripts Maintenance et Optimisation**
+## 🔧 **Scripts Maintenance et Seed Production**
 
 ### **Scripts de Maintenance**
 
 ```bash
-# 🆕 Scripts migration database (NOUVEAU 2025)
-./scripts/migrate-db.sh --schema-only        # Migration schéma uniquement
-./scripts/migrate-db.sh --dry-run           # Simulation migration
-./scripts/migrate-db-reverse.sh --dry-run    # Simulation migration inverse
+# Seed production automatique (intégré dans deploy.sh)
+docker compose exec backend npx ts-node prisma/seed-prod.ts
 
-# Synchronisation Stripe complète
-docker exec -it staka_backend npm run stripe:sync-all
+# Contenu du seed production :
+# - 3 tarifs (Pack KDP 350€, Correction Standard 2€/page, Pack Rédaction 1450€)
+# - 8 FAQ complètes avec catégories
+# - 2 utilisateurs (admin contact@staka.fr + test usertest@test.com)
+# - 4 pages légales (mentions, CGV, RGPD, confidentialité)
 
-# Scripts utilitaires TypeScript
-docker exec -it staka_backend ts-node scripts/generateSecrets.ts
-docker exec -it staka_backend ts-node scripts/sync-tarifs-stripe.ts
-docker exec -it staka_backend ts-node scripts/createTestUsers.ts
+# Scripts de développement
+docker compose -f docker-compose.dev.yml exec backend npx ts-node prisma/seed.ts
+
+# Vérification production
+curl -s https://livrestaka.fr/api/tarifs | jq '.[].nom'
+curl -s https://livrestaka.fr/api/faq | jq '.[].question'
 ```
 
 ### **Scripts de Monitoring**
 
 ```bash
-# Analyse performance requêtes
-docker exec -it staka_backend npx prisma db execute \
-  --file="scripts/analyze-slow-queries.sql"
+# Health check complet HTTPS
+curl -I https://livrestaka.fr/health
+curl -I https://livrestaka.fr/api/tarifs
+
+# Vérification base de données
+docker compose exec backend npx prisma db execute \
+  --file="scripts/health-check.sql"
 
 # Statistiques utilisation
-docker exec -it staka_backend node scripts/usage-statistics.js
-
-# Health check complet
-docker exec -it staka_backend node scripts/health-check.js
-
-# Audit logs récents
-docker exec -it staka_backend node scripts/recent-audit-logs.js
+curl -s https://livrestaka.fr/api/admin/stats | jq '.'
 ```
 
 ---
 
-## 📈 **Métriques Base de Données Production - 30 Juillet 2025**
+## 📈 **Métriques Base de Données Production - 3 Août 2025**
 
 ### **📊 Statistiques Architecture Validées**
 
-- **15 modèles** de données interconnectés (100% déployés en production)
-- **20+ relations** avec contraintes d'intégrité strictes
-- **65 index optimisés** pour performance maximale (@@index + @@unique)
-- **16 enums** pour validation stricte des données
-- **GDPR/RGPD compliant** avec soft deletes et cascade appropriés
-- **10+ scripts maintenance** opérationnels et testés (TypeScript + migration)
+- **16 modèles** de données interconnectés (100% déployés HTTPS)
+- **25+ relations** avec contraintes d'intégrité strictes
+- **70+ index optimisés** pour performance maximale
+- **17 enums** pour validation stricte (9 statuts commande, 3 rôles, etc.)
+- **GDPR/RGPD compliant** avec soft deletes et consentement explicite
+- **Stockage local unifié** : Migration complète AWS S3 → `/backend/uploads/`
+- **SSL Let's Encrypt** : Certificat valide déployé (expire 1er nov 2025)
 
-### **⚡ Performance Mesurée**
+### **⚡ Performance Mesurée (Production HTTPS)**
 
 - **< 5ms** : Requêtes simples (auth, notifications count, tarifs)
 - **< 50ms** : Requêtes moyennes (profil utilisateur, conversations)
 - **< 200ms** : Requêtes complexes avec joins (dashboard admin)
 - **< 500ms** : Agrégations lourdes (statistiques mensuelles)
-- **Pagination optimisée** : Cursor-based pour grandes datasets
+- **HTTP/2** : Activé automatiquement avec SSL
 
 ### **🔒 Sécurité et Conformité**
 
+- **HTTPS obligatoire** : Redirection automatique HTTP → HTTPS
 - **UUID** pour tous les IDs (pas d'énumération)
 - **Contraintes CASCADE** appropriées pour intégrité
 - **Index uniques** sur champs critiques (email, tokens, Stripe IDs)
-- **Validation enum** stricte pour statuts et types
+- **Validation enum** stricte (17 enums)
 - **Soft deletes** pour données sensibles
 - **Audit logs** complets pour traçabilité
-- **Hash sécurisé** pour tokens et mots de passe
+- **Headers sécurité** : HSTS, CSP, XSS protection
 
-### **📱 Optimisations Mobile/Desktop**
-
-- **Index composite** pour requêtes fréquentes mobile
-- **Pagination** adaptative selon device
-- **Cache queries** pour offline-first
-- **Lazy loading** optimisé pour connexions lentes
-
-### **🌐 Scalabilité et Monitoring**
+### **🌐 Scalabilité et Production**
 
 - **Connection pooling** Prisma optimisé
-- **Read replicas** ready (configuration)
-- **Horizontal sharding** préparé (UUID keys)
-- **Monitoring** intégré avec métriques custom
-- **Backup automatique** : Stratégie à définir pour production
+- **Docker multi-architecture** ARM64 + x64
+- **Volumes persistants** pour data MySQL
+- **Backup strategy** : À définir (recommandation S3 + chiffrement)
+- **Monitoring** intégré avec health checks
+- **SSL automatique** avec Let's Encrypt
 
 ---
 
 ## 🚀 **Roadmap Base de Données Q3-Q4 2025**
 
-### **Q3 2025 - Performance**
+### **Q3 2025 - Performance & Monitoring**
 - [ ] **Read replicas** pour queries read-only
 - [ ] **Redis cache** pour sessions et notifications
 - [ ] **Full-text search** pour messages et FAQ
-- [ ] **Backup automatique** vers S3 avec chiffrement
-- [x] **Scripts migration** sécurisés avec backup automatique
+- [ ] **Backup automatique** chiffré vers S3
+- [x] **HTTPS Let's Encrypt** déployé
+- [x] **Stockage local unifié** (migration AWS S3 complète)
 
 ### **Q4 2025 - Advanced Features**
 - [ ] **Time-series data** pour analytics avancées
 - [ ] **Graph relationships** pour recommandations
 - [ ] **Encryption at rest** pour données sensibles
-- [ ] **Multi-tenant** architecture pour white-label
-- [ ] **Optimisation PendingCommande** : Nettoyage automatique commandes expirées
+- [ ] **Multi-tenant** architecture
+- [ ] **Auto-scaling** containers production
+- [ ] **Monitoring Prometheus** + Grafana
 
 ---
 
 ## 📚 **Documentation Complémentaire**
 
 ### **Liens Internes**
-- [`TESTS_COMPLETE_GUIDE.md`](./TESTS_COMPLETE_GUIDE.md) - Tests complets base de données
-- [`README-backend.md`](./README-backend.md) - Documentation API endpoints
-- [`DEPLOYMENT.md`](./DEPLOYMENT.md) - Guide déploiement production
+- [`TESTS_COMPLETE_GUIDE.md`](./TESTS_COMPLETE_GUIDE.md) - 34 tests E2E + architecture 3 niveaux
+- [`README-backend.md`](./README-backend.md) - 60+ endpoints API REST
+- [`docker-workflow.md`](./docker-workflow.md) - Workflow dev→prod complet
+- [`FILE_MANAGEMENT_MIGRATION.md`](./FILE_MANAGEMENT_MIGRATION.md) - Migration AWS S3 → local
 
-### **Ressources Externes**
-- [Prisma Documentation](https://prisma.io/docs) - Guide officiel Prisma
-- [MySQL 8.0 Reference](https://dev.mysql.com/doc/refman/8.0/en/) - Documentation MySQL
-- [Docker Compose](https://docs.docker.com/compose/) - Guide Docker
+### **API Production**
+- **Base URL** : https://livrestaka.fr/api
+- **Endpoints principaux** : `/tarifs`, `/faq`, `/auth`, `/admin/*`
+- **Authentification** : JWT Bearer tokens
+- **CORS** : Configuré pour production
 
 ---
 
 ## 🎉 **Conclusion**
 
-**Staka-livres dispose d'une architecture de base de données enterprise-grade :**
+**Staka-livres dispose d'une architecture de base de données enterprise-grade avec HTTPS :**
 
-✅ **Performance optimisée** : 65 index, requêtes < 200ms, pagination efficace  
+✅ **HTTPS Let's Encrypt** : Certificat SSL valide, HTTP/2, headers sécurité  
+✅ **16 modèles interconnectés** : Architecture complète et évolutive  
+✅ **Performance optimisée** : 70+ index, requêtes < 200ms, pagination efficace  
 ✅ **Sécurité maximale** : Audit logs, soft deletes, validation stricte  
-✅ **Scalabilité préparée** : UUID, relations optimisées, monitoring intégré  
-✅ **Maintenance automatisée** : 10+ scripts TypeScript, migrations sécurisées  
-✅ **Tests streamlinés** : 34 tests backend, architecture E2E optimisée  
-✅ **Nouveau modèle PendingCommande** : Tunnel invité pour paiements directs  
+✅ **Stockage unifié** : Migration AWS S3 → local réussie  
+✅ **Scalabilité préparée** : UUID, relations optimisées, Docker multi-arch  
+✅ **Tests E2E production** : 34 tests Cypress validés sur HTTPS  
+✅ **Seed automatique** : 3 tarifs + 8 FAQ + utilisateurs déployés  
 
-**Résultat : Base de données 100% déployée en production sur https://livrestaka.fr/** 🚀
+**Résultat : Base de données 100% déployée en production HTTPS sur https://livrestaka.fr/** 🚀🔒
 
-_Dernière mise à jour : 30 juillet 2025 - Architecture 15 modèles + scripts migration déployés_
+_Dernière mise à jour : 3 août 2025 - Architecture 16 modèles + HTTPS Let's Encrypt + stockage local_
 
 **👨‍💻 Développeur :** Christophe Mostefaoui - https://christophe-dev-freelance.fr/  
-**🌐 Site Web :** https://livrestaka.fr/  
+**🌐 Site Web :** https://livrestaka.fr/ (HTTPS opérationnel)  
 **📧 Contact :** contact@staka.fr

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { debugLog } from "./debug";
 import { UnifiedConversation, UnifiedMessage } from "../types/messages"; // Import correct
 import {
   Commande,
@@ -162,7 +163,7 @@ const handleAutoLogout = () => {
 // Créer une instance Axios avec intercepteurs
 const createApiInstance = (): any => {
   // DEBUG: log de la valeur API_BASE_URL à chaque création d'instance axios
-  console.log("[adminAPI] API_BASE_URL utilisé:", API_BASE_URL);
+  debugLog("API_BASE_URL utilisé:", API_BASE_URL);
   const instance = axios.create({
     baseURL: API_BASE_URL,
     headers: {
@@ -228,7 +229,7 @@ const createApiInstance = (): any => {
         isRefreshing = true;
 
         try {
-          console.log("[AdminAPI] Token expiré, tentative de refresh...");
+          debugLog("Token expiré, tentative de refresh...");
 
           // Appel du endpoint de refresh
           const refreshResponse = await axios.post<RefreshTokenResponse>(
@@ -253,10 +254,10 @@ const createApiInstance = (): any => {
           // Rejouer la requête originale avec le nouveau token
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
-          console.log("[AdminAPI] Token rafraîchi avec succès");
+          debugLog("Token rafraîchi avec succès");
           return instance(originalRequest);
         } catch (refreshError) {
-          console.error("[AdminAPI] Échec du refresh token:", refreshError);
+          debugLog("Échec du refresh token:", refreshError);
 
           // En cas d'échec du refresh, déconnecter l'utilisateur
           processQueue(refreshError, null);
@@ -302,7 +303,7 @@ class AdaptiveAdminAPI {
   // Simule les actions CRUD en mode démo (sans effet réel)
   private async simulateAction(action: string, duration = 300): Promise<void> {
     if (this.isDemoMode()) {
-      console.log(`[DEMO MODE] Simulation de l'action: ${action}`);
+      debugLog(`DEMO MODE - Simulation de l'action:`, action);
       await new Promise((resolve) => setTimeout(resolve, duration));
       return;
     }

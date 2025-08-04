@@ -643,6 +643,7 @@ export default function GuestOrderForm({
               <a
                 href="/pages/politique-de-confidentialite"
                 target="_blank"
+                rel="noopener noreferrer"
                 className="text-blue-600 hover:underline"
               >
                 politique de confidentialité
@@ -651,6 +652,7 @@ export default function GuestOrderForm({
               <a
                 href="/pages/conditions-generales"
                 target="_blank"
+                rel="noopener noreferrer"
                 className="text-blue-600 hover:underline"
               >
                 conditions générales d'utilisation

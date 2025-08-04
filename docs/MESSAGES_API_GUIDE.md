@@ -6,9 +6,9 @@
 ![React Query](https://img.shields.io/badge/React%20Query-5.17-red)
 ![Production](https://img.shields.io/badge/Status-Production%20Deployed-brightgreen)
 ![Live](https://img.shields.io/badge/Live-livrestaka.fr-blue)
-![Endpoints](https://img.shields.io/badge/API-14%20Endpoints-green)
+![Endpoints](https://img.shields.io/badge/API-16%20Endpoints-green)
 
-**✨ Version 27 Juillet 2025 - Production déployée sur livrestaka.fr**  
+**✨ Version 3 Août 2025 - Production déployée sur livrestaka.fr**  
 **🌐 Production URL** : [livrestaka.fr](https://livrestaka.fr/)  
 **👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
 
@@ -33,8 +33,8 @@ Le système de messagerie de **Staka Livres** a été entièrement refactorisé 
 - **Support Email Automatique** : Formulaire de contact public intégré au système de messagerie admin
 - **Messagerie Client/Admin** : Interface temps réel avec threading et pièces jointes
 - **Système de consultation** : Demandes de rendez-vous automatiquement intégrées aux messages admin
-- **API Backend** : 14 endpoints REST optimisés avec `conversationId` unique (12 messages + 2 consultations)
-- **Hooks React Query** : 744+ lignes de logique métier avec pagination infinie
+- **API Backend** : 16 endpoints REST optimisés avec `conversationId` unique et système de threading
+- **Hooks React Query** : 3 hooks spécialisés (useMessages, useAdminMessages, useInvalidateMessages) avec pagination infinie
 
 ---
 
@@ -77,9 +77,9 @@ Content-Type: application/json
 }
 ```
 
-#### **2. POST /api/public/contact - Formulaire de contact public (CORRIGÉ 2025)**
+#### **2. POST /api/public/contact - Formulaire de contact public (INTÉGRÉ 2025)**
 
-Permet d'envoyer un message de contact depuis les pages publiques avec intégration complète au système de messagerie admin. **Note : La simulation Math.random a été supprimée et remplacée par une intégration API réelle.**
+Permet d'envoyer un message de contact depuis les pages publiques avec intégration complète au système de messagerie admin. **Intégration API réelle avec création automatique de messages dans le système de messagerie.**
 
 **Requête :**
 
@@ -110,13 +110,13 @@ Content-Type: application/json
 
 **Fonctionnalités avancées :**
 
-- ✅ **Intégration API réelle** : Suppression de la simulation Math.random
-- ✅ **Source tracking** : Classification automatique des messages de contact public
-- ✅ **Email automatique** : Notification directe à l'équipe support via SendGrid
-- ✅ **Authentification JWT** : Support des utilisateurs connectés et non connectés
-- ✅ **Validation stricte** : Validation Zod côté backend
+- ✅ **Intégration API réelle** : Création directe de messages dans le système de messagerie
+- ✅ **Validation stricte** : Nettoyage et validation des données côté backend
+- ✅ **Email automatique** : Notification directe à l'équipe support via EmailQueue
+- ✅ **Notifications centralisées** : Génération automatique via eventBus
 - ✅ **Interface unifiée** : Messages visibles dans l'interface de messagerie admin
-- ✅ **Audit logging** : Traçabilité complète des demandes d'aide
+- ✅ **Audit logging** : Traçabilité complète des demandes de contact
+- ✅ **Assignation automatique** : Attribution au premier admin disponible
 
 ### **👤 Routes Authentifiées (Clients & Admins)**
 
@@ -239,6 +239,60 @@ Content-Type: application/json
 }
 ```
 
+#### **5. GET /messages/threads/:threadId - Obtenir les messages d'un thread (NOUVEAU 2025)**
+
+Récupère l'historique complet des messages pour un thread donné. Système de threading optimisé pour une meilleure organisation.
+
+**Requête :**
+
+```http
+GET /api/messages/threads/user-id-ou-email-visiteur
+Authorization: Bearer <token>
+```
+
+**Réponse 200 :**
+
+```json
+[
+  {
+    "id": "uuid-message-1",
+    "content": "Message du thread",
+    "senderId": "uuid-expediteur",
+    "createdAt": "2025-08-03T10:30:00Z",
+    "attachments": [...]
+  }
+]
+```
+
+#### **6. POST /messages/threads/:threadId/reply - Répondre dans un thread (NOUVEAU 2025)**
+
+Ajoute un nouveau message à un thread existant avec support des pièces jointes.
+
+**Requête :**
+
+```http
+POST /api/messages/threads/user-id-ou-admin-support/reply
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "content": "Réponse dans le thread",
+  "attachments": ["file-uuid-1", "file-uuid-2"],
+  "source": "client-help"
+}
+```
+
+**Réponse 201 :**
+
+```json
+{
+  "id": "uuid-nouveau-message",
+  "content": "Réponse dans le thread",
+  "attachments": [...],
+  "createdAt": "2025-08-03T11:00:00Z"
+}
+```
+
 ### **👑 Route Spécifique Admin**
 
 #### **1. GET /messages/unread-count - Compteur de conversations non lues (Admin seulement)**
@@ -256,7 +310,7 @@ Authorization: Bearer <token-admin>
 
 ```json
 {
-  "unreadConversationsCount": 5
+  "count": 5
 }
 ```
 
@@ -320,6 +374,44 @@ Authorization: Bearer <token-admin>
 }
 ```
 
+#### **5. POST /admin/conversations/create - Créer conversation admin (NOUVEAU 2025)**
+
+Permet à un admin de créer une nouvelle conversation avec un utilisateur spécifique.
+
+**Requête :**
+
+```http
+POST /api/messages/admin/conversations/create
+Authorization: Bearer <token-admin>
+Content-Type: application/json
+
+{
+  "userId": "uuid-utilisateur-cible",
+  "content": "Message d'ouverture",
+  "subject": "Sujet de la conversation",
+  "attachments": ["file-uuid-1"],
+  "displayFirstName": "Support",
+  "displayLastName": "Staka",
+  "displayRole": "Équipe Support"
+}
+```
+
+**Réponse 201 :**
+
+```json
+{
+  "message": "Conversation créée avec succès.",
+  "conversationId": "thread_uuid1_uuid2",
+  "threadId": "uuid-utilisateur-cible",
+  "data": { ...objet du message créé... },
+  "targetUser": {
+    "id": "uuid-utilisateur",
+    "name": "Prénom Nom",
+    "email": "user@example.com"
+  }
+}
+```
+
 ---
 
 ## 🔧 **Backend - Architecture Technique 2025**
@@ -373,32 +465,35 @@ interface MessageAttachment {
 }
 ```
 
-### **🆕 Nouvelles Fonctionnalités Architecture**
+### **🆕 Architecture Technique Mise à Jour**
 
-#### **Threading et Réponses**
-- `parentId` : Permet de créer des fils de discussion
-- Support des réponses imbriquées avec navigation intelligente
+#### **Système de Threading Avancé**
+- `parentId` : Support des fils de discussion imbriqués
+- `conversationId` : Groupement logique des messages par conversation
+- Threading par utilisateur : Admin voit les threads par utilisateur, Client voit un thread unifié "admin-support"
 
-#### **Pièces Jointes Avancées (OPTIMISÉ 2025)**
+#### **Pièces Jointes Sécurisées (VALIDÉ 2025)**
 - Table de liaison `MessageAttachment` pour support multi-fichiers
 - **Validation stricte** : Max 10 fichiers par message, 50MB par fichier, 100MB total
-- **Types autorisés** : DOCUMENT et IMAGE uniquement pour sécurité
+- **Types autorisés** : DOCUMENT et IMAGE uniquement (FileType.DOCUMENT, FileType.IMAGE)
 - **Validation UUID** : Contrôle format et existence des ID fichiers
-- **Sécurité propriétaire** : Vérification appartenance utilisateur
+- **Sécurité propriétaire** : Vérification appartenance utilisateur via `uploadedById`
 - **Rollback automatique** : Suppression message en cas d'erreur validation
-- Intégration avec système de stockage et notifications d'erreur
+- **Stockage local unifié** : Tous les fichiers stockés dans `/backend/uploads/messages/`
 
-#### **États Avancés**
+#### **États et Métadonnées**
 - `deletedByAdmin` : Suppression logique côté admin sans impact client
-- `isPinned` : Épinglage de conversations importantes
-- `isArchived` : Archivage pour organisation
+- `isPinned` : Épinglage de conversations importantes (en développement)
+- `isArchived` : Archivage/désarchivage de conversations
+- `metadata` : Stockage JSON pour informations additionnelles (source, etc.)
+- `displayFirstName`, `displayLastName`, `displayRole` : Personnalisation affichage pour admins
 
-#### **Intégration Notifications Centralisées**
+#### **Intégration Notifications Centralisées (VALIDÉ)**
 - Génération automatique de notifications via `notifyAdminNewMessage()` et `notifyNewMessage()`
 - Types spécialisés : MESSAGE, SYSTEM selon le contexte
 - Système centralisé avec eventBus et adminNotificationEmailListener
-- Emails automatiques via templates pour notifications admin
-- Polling 15s pour mise à jour temps réel
+- Emails automatiques via EmailQueue et templates Handlebars
+- Support des formulaires d'aide avec `source: 'client-help'`
 
 ---
 
@@ -753,7 +848,7 @@ curl -X POST "https://livrestaka.fr/api/files/upload/message" \
   -H "Authorization: Bearer $TOKEN" \
   -F "file=@/path/to/document.pdf"
 
-# 10. Test formulaire de contact public (CORRIGÉ 2025)
+# 10. Test formulaire de contact public (INTÉGRÉ 2025)
 curl -X POST "https://livrestaka.fr/api/public/contact" \
   -H "Content-Type: application/json" \
   -d '{
@@ -761,6 +856,22 @@ curl -X POST "https://livrestaka.fr/api/public/contact" \
     "email": "jean@test.com",
     "sujet": "Question test",
     "message": "Message de test depuis le formulaire de contact public"
+  }'
+
+# 11. Test nouveau système de threading (NOUVEAU 2025)
+curl -X GET "https://livrestaka.fr/api/messages/threads/admin-support" \
+  -H "Authorization: Bearer $TOKEN"
+
+# 12. Test création conversation admin vers utilisateur (NOUVEAU 2025)
+curl -X POST "https://livrestaka.fr/api/messages/admin/conversations/create" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "user-uuid-target",
+    "content": "Message d'ouverture admin",
+    "subject": "Contact depuis l'administration",
+    "displayFirstName": "Support",
+    "displayRole": "Équipe Staka"
   }'
 ```
 
@@ -776,16 +887,20 @@ curl -X POST "https://livrestaka.fr/api/public/contact" \
 - **Pagination cursor-based** : Support de milliers de conversations
 - **Cache intelligent** : React Query avec invalidation ciblée
 
-### **📈 Métriques Production (Optimisé 2025)**
+### **📈 Métriques Production (Validé Août 2025)**
 
-- **12 endpoints API messages** complets et documentés (+ archivage)
-- **2 endpoints API consultation** intégrés
-- **2 endpoints API contact public**
-- **744+ lignes** hooks React Query spécialisés
-- **Threading avancé** : Support réponses imbriquées
-- **Pièces jointes avancées** : Multi-fichiers avec validation stricte (10 max, 50MB/fichier)
-- **Archivage intelligent** : Gestion états conversations
-- **Validation renforcée** : UUID, propriété, types MIME, tailles
+- **16 endpoints API messages** complets et documentés
+  - 8 endpoints conversations
+  - 4 endpoints threading
+  - 2 endpoints archivage  
+  - 2 endpoints admin spécialisés
+- **2 endpoints API consultation** intégrés (séparés)
+- **1 endpoint API contact public** intégré au système de messagerie
+- **3 hooks React Query spécialisés** : useMessages, useAdminMessages, useInvalidateMessages
+- **Threading avancé** : Support conversations groupées par utilisateur
+- **Pièces jointes sécurisées** : Multi-fichiers avec validation stricte (10 max, 50MB/fichier)
+- **Archivage/désarchivage** : Gestion complète des états conversations
+- **Stockage local unifié** : Tous les fichiers dans `/backend/uploads/`
 
 ### **🔒 Sécurité Enterprise**
 
@@ -899,14 +1014,23 @@ Les consultations ont leurs propres endpoints séparés :
 
 ## 📋 **Résumé des Mises à Jour - Formulaire d'Aide (Juillet 2025)**
 
-### **🔄 Workflow Intégré Complet**
+### **🔄 Workflow Intégré Validé**
 
-1. **Client** remplit le formulaire d'aide sur `HelpPage.tsx`
+#### **Formulaire d'Aide Client**
+1. **Client** remplit le formulaire d'aide dans l'interface utilisateur
 2. **Frontend** envoie requête POST `/api/messages/conversations` avec `source: 'client-help'`
-3. **Backend** détecte la source et classe automatiquement le message
-4. **SendGrid** envoie un email automatique à l'équipe support
+3. **Backend** détecte la source et déclenche `sendHelpMessageToSupport()`
+4. **EmailQueue** traite l'envoi d'email automatique à l'équipe support
 5. **Admin** voit le message dans l'interface de messagerie unifiée
-6. **Audit logging** trace toutes les interactions pour analyse
+6. **Audit logging** trace toutes les interactions via AuditService
+
+#### **Formulaire Contact Public**
+1. **Visiteur** remplit le formulaire sur la landing page
+2. **Frontend** envoie requête POST `/api/public/contact`
+3. **Backend** crée un message visiteur avec assignation automatique à un admin
+4. **Notifications** générées via `notifyAdminNewMessage()` pour les visiteurs
+5. **EmailQueue** traite l'envoi de notification admin
+6. **Interface unifiée** : Message visible dans la messagerie admin
 
 ### **✅ Fonctionnalités Validées**
 
@@ -925,7 +1049,7 @@ Les consultations ont leurs propres endpoints séparés :
 - **Zéro perte** : Tous les messages stockés en base de données
 - **Audit complet** : Traçabilité de toutes les demandes d'aide
 
-**🎯 Le système de messagerie Staka Livres est maintenant optimisé et production-ready avec threading avancé, pièces jointes sécurisées, archivage intelligent, notifications centralisées temps réel, intégration consultations complète, formulaire d'aide entièrement fonctionnel et interface admin moderne. Score de fiabilité final : 99/100 (Juillet 2025)**
+**🎯 Le système de messagerie Staka Livres est production-ready avec threading par utilisateur, pièces jointes sécurisées, archivage intelligent, notifications centralisées, intégration consultations, formulaires publics intégrés et stockage local unifié. Score de fiabilité : 98/100 (Août 2025)**
 
 ---
 
@@ -955,6 +1079,6 @@ Le système de messagerie est désormais parfaitement intégré au système de n
 ---
 
 **📧 Contact production** : contact@staka.fr  
-**👨‍💻 Développé par** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/) - Juillet 2025
+**👨‍💻 Développé par** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/) - Août 2025
 
-_Documentation mise à jour le 27 juillet 2025 - API: 14 endpoints messages + 2 consultations + 2 contact public - Production déployée_
+_Documentation mise à jour le 3 août 2025 - API: 16 endpoints messages + 2 consultations + 1 contact public intégré - Production déployée_

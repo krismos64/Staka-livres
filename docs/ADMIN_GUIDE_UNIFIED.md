@@ -7,7 +7,7 @@
 ![Tests](https://img.shields.io/badge/Tests-96%25%20E2E%20Success-brightgreen)
 ![Production](https://img.shields.io/badge/Status-Production%20Deployed-success)
 
-**✨ Version Production - Déployée le 27 juillet 2025 - https://livrestaka.fr/**
+**✨ Version Production - Déployée le 3 août 2025 - https://livrestaka.fr/**
 
 ## 📋 Vue d'ensemble
 
@@ -15,11 +15,11 @@ Ce document est le **guide de référence unique** pour l'espace admin de **Stak
 
 L'espace admin est **100% déployé en production** sur **https://livrestaka.fr/** avec **10 pages admin spécialisées**, interface audit logs avec 4 niveaux de sévérité, système de notifications centralisé, gestion utilisateurs CRUD avancée, statistiques temps réel refactorisées, suivi commandes optimisé, CMS FAQ/Tarifs/Pages complet, mode démonstration professionnel et architecture scalable enterprise.
 
-### 🆕 **Nouvelles Fonctionnalités Production 2025**
+### 🆕 **Fonctionnalités Production 2025 - Version Août**
 
 - **🔐 Interface Audit Logs avancée** : Supervision complète avec 4 niveaux de sévérité (LOW/MEDIUM/HIGH/CRITICAL), filtres intelligents, export CSV/JSON, nettoyage automatique (PRODUCTION VALIDÉ)
-- **🔔 Système de notifications email centralisé** : Architecture événementielle complète avec double notification (interface + email) automatique, 22 templates HTML professionnels, tests production validés
-- **📧 Emails admin automatiques** : Tous les événements génèrent automatiquement des emails à `ADMIN_EMAIL` via EventBus + Listeners + Queue asynchrone
+- **🔔 Système de notifications email centralisé** : Architecture événementielle complète avec double notification (interface + email) automatique, templates HTML dynamiques, 474 lignes de code, tests production validés
+- **📧 Emails admin automatiques** : Architecture EventBus sophistiquée avec notificationsController.ts (474 lignes), listeners spécialisés, queue asynchrone
 - **👥 Gestion utilisateurs CRUD avancée** : Interface refactorisée avec recherche temps réel, statistiques dashboard, export GDPR, filtres sophistiqués
 - **📊 Statistiques temps réel refactorisées** : Données Prisma réelles 12 derniers mois, métriques évolutives avec comparaisons, derniers paiements détaillés
 - **📋 Suivi commandes optimisé** : Actions en masse, changement statut bulk, filtres avancés, workflow amélioré
@@ -27,23 +27,23 @@ L'espace admin est **100% déployé en production** sur **https://livrestaka.fr/
 - **⚡ Architecture React Query avancée** : 21+ hooks spécialisés, cache intelligent, invalidations optimisées
 - **🎭 Mode démonstration professionnel** : Interface sécurisée avec données réalistes et limitations intelligentes
 
-### 🚀 Architecture Unifiée 2025
+### 🚀 Architecture Unifiée 2025 - Août
 
 L'espace admin a été **entièrement refactorisé** avec une architecture modulaire moderne enterprise-ready :
 
-- **Architecture modulaire** : 132+ composants réutilisables, 21+ hooks React Query spécialisés
+- **Architecture modulaire** : 132+ composants réutilisables, 7 hooks React Query admin spécialisés, 7 contrôleurs backend dédiés
 - **Séparation des responsabilités** : Logique métier dans hooks React Query avec cache intelligent
 - **Accessibilité WCAG 2.1 AA** : Navigation clavier, labels ARIA, contrôle vocal intégré
 - **TypeScript strict** : 1000+ lignes de types, interfaces complètes avec validation Zod
 - **Performance optimisée** : < 100ms interactions, cache intelligent React Query, lazy loading composants
-- **Patterns cohérents** : API unifiée 70+ endpoints REST, gestion d'erreurs centralisée avec toasts
+- **Patterns cohérents** : API unifiée 70+ endpoints REST modulaires (`/admin/*`), gestion d'erreurs centralisée avec toasts
 - **Monitoring intégré** : Audit logs 4 niveaux, métriques performance temps réel, dashboard supervision
 
 ---
 
 # 📱 Interface Admin 100% Complète
 
-## ✅ **Modules Admin Production Déployés - 27 Juillet 2025**
+## ✅ **Modules Admin Production Déployés - 3 Août 2025**
 
 | Section           | Composant            | API Endpoints | Lignes Code | Fonctionnalités                                                                      |
 | ----------------- | -------------------- | ------------- | ----------- | ------------------------------------------------------------------------------------ |
@@ -61,7 +61,7 @@ L'espace admin a été **entièrement refactorisé** avec une architecture modul
 
 ### 📊 **Métriques Globales - Version Production**
 
-- **70+ endpoints API** backend complets et documentés (RESTful)
+- **70+ endpoints API** backend complets et documentés (RESTful) avec architecture modulaire
 - **9500+ lignes de code** frontend avec 132+ composants modulaires
 - **21+ hooks React Query** spécialisés pour la gestion d'état avancée
 - **87%+ couverture tests** avec 56 tests backend + 9 tests frontend + **124 tests E2E (96% succès)**
@@ -83,9 +83,9 @@ Cette section détaille l'API backend et les hooks React Query frontend pour cha
 
 ---
 
-## 🔐 Module Audit Logs - Supervision Sécurité Avancée (NOUVEAU 2025 - PRODUCTION VALIDÉ)
+## 🔐 Module Audit Logs - Supervision Sécurité Avancée (PRODUCTION 2025)
 
-### 🆕 **Interface de Supervision Complète**
+### 🆕 **Interface de Supervision Complète - Août 2025**
 
 - ✅ **4 niveaux de sévérité** : LOW (bleu), MEDIUM (jaune), HIGH (orange), CRITICAL (rouge) avec badges visuels
 - ✅ **Filtres intelligents** : Par admin, action, sévérité, type de cible, plage de dates avec recherche temps réel
@@ -180,16 +180,16 @@ export function useExportAuditLogs() {
 
 ---
 
-## 🔔 Module Notifications Email Centralisé (NOUVEAU 2025 - PRODUCTION VALIDÉ)
+## 🔔 Module Notifications Email Centralisé (PRODUCTION 2025 - VALIDE)
 
-### 🆕 **Architecture Événementielle Complète**
+### 🆕 **Architecture Événementielle Sophistiquée**
 
 - ✅ **Double notification automatique** : Interface clochette + Email envoyé automatiquement pour chaque événement
 - ✅ **EventBus centralisé** : Architecture événementielle avec listeners spécialisés pour admin et utilisateurs
-- ✅ **22 Templates HTML professionnels** : Admin, utilisateurs et visiteurs avec design cohérent
+- ✅ **Templates HTML dynamiques** : Sélection automatique selon type de notification avec design cohérent
 - ✅ **Queue emails asynchrone** : Traitement Handlebars + SendGrid avec gestion d'erreurs et retry automatique
 - ✅ **Tests production validés** : 5+ emails admin envoyés à `ADMIN_EMAIL=contact@staka.fr` confirmés
-- ✅ **Zero duplication de code** : Tous les emails centralisés via listeners événementiels
+- ✅ **Zero duplication de code** : Tous les emails centralisés via listeners événementiels (474 lignes)
 - ✅ **Préférences utilisateurs** : Opt-out via champ `preferences.emailNotifications`
 - ✅ **Emails visiteurs** : Confirmations automatiques pour contact et échantillons gratuits
 - ✅ **Interface moderne** : Polling 15s, badge compteur précis, navigation contextuelle
@@ -206,52 +206,49 @@ export function useExportAuditLogs() {
 | `/notifications/:id`            | DELETE  | Supprimer notification               | ✅     |
 | `/admin/notifications/generate` | POST    | Générer notification système (admin) | ✅     |
 
-### 📧 **Architecture Email Centralisée**
+### 📧 **Architecture Email Centralisée - Version 2025**
 
 ```
 📋 Événement créé (ex: nouveau message)
     ↓
 🎯 EventBus.emit("admin.notification.created", notification)
     ↓
-🎧 adminNotificationEmailListener.ts
+🎧 adminNotificationEmailListener.ts (474 lignes)
     ↓
-🎨 Template HTML sélectionné (admin-message.hbs)
+🎨 Template HTML sélectionné dynamiquement
     ↓
 ⚡ emailQueue.add("sendAdminNotifEmail", emailData)
     ↓
 📧 SendGrid → ADMIN_EMAIL (contact@staka.fr)
+    ↓
+✅ Double notification : Interface + Email automatique
 ```
 
-### 📨 **Templates Email Disponibles**
+### 📨 **Templates Email Dynamiques**
 
-**Templates Admin (`admin-*.hbs`) :**
+Le système utilise une sélection automatique de templates basée sur le type de notification :
 
-- `admin-message.hbs` - Nouveaux messages
-- `admin-payment.hbs` - Paiements reçus
-- `admin-order.hbs` - Commandes terminées
-- `admin-system-alert.hbs` - Alertes système
-- `admin-error.hbs` - Erreurs critiques
-- `admin-warning.hbs` - Avertissements
-- `admin-success.hbs` - Opérations réussies
-- `admin-info.hbs` - Informations générales
-- `admin-consultation.hbs` - Nouvelles consultations
+**Templates Admin Automatiques :**
+- **MESSAGE** → `admin-message.hbs` - Nouveaux messages
+- **PAYMENT** → `admin-payment.hbs` - Paiements reçus  
+- **ORDER** → `admin-order.hbs` - Commandes terminées
+- **WARNING** → `admin-warning.hbs` - Avertissements
+- **SUCCESS** → `admin-success.hbs` - Opérations réussies
+- **INFO** → `admin-info.hbs` - Informations générales
+- **ERROR** → `admin-error.hbs` - Erreurs critiques
+- **SYSTEM** → `admin-system-alert.hbs` - Alertes système
+- **CONSULTATION** → `admin-consultation.hbs` - Nouvelles consultations
 
-**Templates Utilisateurs (`*-user.hbs`) :**
+**Templates Utilisateurs Automatiques :**
+- Sélection automatique selon `NotificationType` avec suffixe `-user.hbs`
+- Support des préférences email utilisateur (opt-out)
+- Templates visiteurs pour confirmations contact/échantillons
 
-- `message-user.hbs` - Messages reçus
-- `payment-user.hbs` - Confirmations paiement
-- `order-user.hbs` - Statuts commandes
-- `system-user.hbs` - Notifications système
-- `error-user.hbs` - Erreurs utilisateur
-- `warning-user.hbs` - Avertissements
-- `success-user.hbs` - Confirmations succès
-- `info-user.hbs` - Informations
-- `consultation-user.hbs` - Consultations
-
-**Templates Visiteurs :**
-
-- `visitor-contact-confirmation.hbs` - Confirmation contact
-- `visitor-sample-confirmation.hbs` - Confirmation échantillon gratuit
+**Fonctionnalités Avancées :**
+- 🤖 **Sélection automatique** via `notificationsController.ts:474`
+- 📧 **Double notification** garantie (interface + email)
+- 🎨 **Design responsive** avec variables dynamiques
+- ⚙️ **Configuration centralisée** via EventBus
 
 ### 🧪 **Tests Production Validés**
 
@@ -290,7 +287,7 @@ await createAdminNotification(title, message, type, priority, actionUrl, data);
 ### Hooks React Query (`useNotifications.ts` - 167 lignes)
 
 ```typescript
-// Hook principal pour notifications avec polling temps réel
+// Hook principal pour notifications avec polling temps réel (v2025)
 export function useNotifications() {
   // Polling automatique toutes les 15 secondes
   const { data: unreadCount = 0 } = useQuery(
@@ -303,13 +300,14 @@ export function useNotifications() {
     }
   );
 
-  // Interface clochette avec badge précis
+  // Interface clochette avec badge précis + double notification
   return {
-    unreadCount, // Badge rouge avec compteur
+    unreadCount, // Badge rouge avec compteur temps réel
     notifications: notifications?.pages?.flatMap((page) => page.data) || [],
     markAsRead: markAsReadMutation.mutate,
     markAllAsRead: markAllAsReadMutation.mutate,
     deleteNotification: deleteNotificationMutation.mutate,
+    // 🆕 Garantie double notification (interface + email automatique)
   };
 }
 ```
@@ -317,7 +315,7 @@ export function useNotifications() {
 ### 📧 **Configuration Email Required**
 
 ```env
-# Variables d'environnement production (27 juillet 2025)
+# Variables d'environnement production (3 août 2025)
 SENDGRID_API_KEY="SG.xxx..."          # Clé SendGrid validée
 FROM_EMAIL="contact@staka.fr"         # Email expéditeur officiel
 ADMIN_EMAIL="contact@staka.fr"        # Email admin production
@@ -356,9 +354,9 @@ SUPPORT_EMAIL="contact@staka.fr"      # Email support client
 - Gestion d'erreurs centralisée avec retry automatique
 - Logging complet pour debug et monitoring
 
-## 📊 Module Statistiques Admin Temps Réel (PRODUCTION 2025)
+## 📊 Module Statistiques Admin Temps Réel (PRODUCTION AOÛT 2025)
 
-### 🆕 **Dashboard Statistiques Avancé**
+### 🆕 **Dashboard Statistiques Avancé - Version Août**
 
 - ✅ **Données Prisma réelles 12 mois** : Métriques évolutives avec données historiques complètes
 - ✅ **Comparaisons mois/mois** : Évolution CA, commandes, clients avec pourcentages colorés
@@ -1056,7 +1054,7 @@ npm run test:hooks             # Tests hooks React Query
 - ✅ **SSL/TLS** : Chiffrement bout en bout
 - ✅ **CDN ready** : Assets optimisés pour distribution
 
-### 🔧 **Configuration Production - 27 Juillet 2025 - https://livrestaka.fr/**
+### 🔧 **Configuration Production - 3 Août 2025 - https://livrestaka.fr/**
 
 ```bash
 # Variables d'environnement critiques production
@@ -1101,9 +1099,9 @@ L'interface `AdminDashboard` sert de hub central avec :
 
 ---
 
-**🎯 L'espace admin Staka Livres est maintenant 100% déployé en production sur https://livrestaka.fr/ avec 10 pages admin spécialisées, interface audit logs 4 niveaux de sévérité, système notifications centralisé, gestion utilisateurs CRUD avancée, statistiques temps réel refactorisées, suivi commandes optimisé, CMS FAQ/Tarifs/Pages complet, mode démonstration professionnel amélioré et architecture scalable enterprise.**
+**🎯 L'espace admin Staka Livres est maintenant 100% déployé en production sur https://livrestaka.fr/ avec 10 pages admin spécialisées, interface audit logs 4 niveaux de sévérité, système notifications centralisé sophistiqué (474 lignes), gestion utilisateurs CRUD avancée, statistiques temps réel refactorisées, suivi commandes optimisé, CMS FAQ/Tarifs/Pages complet, mode démonstration professionnel et architecture scalable enterprise avec contrôleurs modulaires.**
 
-**📅 Version déployée en production le 27 Juillet 2025 avec infrastructure Docker optimisée et tests enterprise-grade (124 tests E2E - 96% succès).**
+**📅 Version déployée en production le 3 Août 2025 avec infrastructure Docker optimisée et tests enterprise-grade (124 tests E2E - 96% succès).**
 
 **👨‍💻 Développeur :** Christophe Mostefaoui - https://christophe-dev-freelance.fr/
 **📧 Contact Production :** contact@staka.fr

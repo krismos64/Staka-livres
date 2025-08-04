@@ -5,24 +5,24 @@
 ![Stripe](https://img.shields.io/badge/Stripe-Integration-blueviolet)
 ![Invoice](https://img.shields.io/badge/PDF-Generation-orange)
 
-**✨ Version Juillet 2025 - Dernière mise à jour : 30 Juillet 2025**  
+**✨ Version Août 2025 - Dernière mise à jour : 3 Août 2025**  
 **🌐 Production URL** : [livrestaka.fr](https://livrestaka.fr/)  
 **👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
 
 > **Guide unifié consolidé** : Système complet de paiement Stripe + génération automatique de factures PDF + stockage local sécurisé - **déployé et opérationnel en production**. Migration S3→Local terminée juillet 2025.
 
-## 🎯 **CORRECTIF CRITIQUE STRIPE - 30 JUILLET 2025**
+## 🎯 **MISE À JOUR TECHNIQUE - 3 AOÛT 2025**
 
-**✅ PROBLÈME RÉSOLU** : Les paiements Stripe fonctionnent maintenant **100% en production**
+**✅ ÉTAT ACTUEL CONFIRMÉ** : Système de paiement et facturation **100% opérationnel**
 
-**Corrections techniques appliquées** :
-- **Mode Stripe production activé** : Clés `sk_live_*` opérationnelles (fin du mode mock)
-- **Webhook configuré** : `https://livrestaka.fr/payments/webhook` fonctionnel
-- **Configuration nginx** : Route `/payments/webhook` ajoutée pour proxy backend
-- **Variables production** : `.env.prod` mis à jour avec secrets Stripe valides
-- **Tests validation** : Flux Stripe → Backend → Webhook → Facturation confirmé
+**Architecture validée** :
+- **Webhook double flux** : Gestion utilisateurs connectés + commandes invitées (PendingCommande)
+- **Stockage local unifié** : Migration S3→Local terminée, fichiers PDF générés avec pdf-lib
+- **Service Invoice** : Génération PDF automatique + upload local + notifications
+- **Mode développement** : Mock Stripe intelligent avec simulation webhook
+- **Tests de base** : Tests unitaires pour formatting paiement implémentés
 
-**Impact** : Les clients peuvent maintenant effectuer de **vrais paiements** sur livrestaka.fr
+**Impact** : Système production-ready avec double flux de paiement sur livrestaka.fr
 
 ---
 
@@ -47,8 +47,8 @@ Client Paiement → Stripe Checkout → Webhook Sécurisé → PDF Génération 
   + Simulation    Double Flux      User Creation    Professional  UUID Files   + Activation
 ```
 
-### 🚀 **Métriques Production 2025** ✅ **VALIDÉES 30 JUILLET 2025**
-- ✅ **1756+ lignes de tests** validés (Coverage 90%+)
+### 🚀 **Métriques Production 2025** ✅ **VALIDÉES 3 AOÛT 2025**
+- ⚠️ **Tests en développement** : couverture basique (1 test principal)
 - ✅ **Migration S3→Local terminée** : 3 factures PDF en production
 - ✅ **Double flux paiement** : Utilisateurs connectés + Commandes invités
 - ✅ **Performance optimisée** : Traitement complet < 1 seconde
@@ -591,149 +591,57 @@ export function useSendReminder() {
 
 ## 🧪 5. Tests Production Unifiés
 
-### 📊 **Architecture Tests Consolidée (1756+ lignes)**
+### 📊 **Architecture Tests En Développement**
 
-#### Tests Webhook + Invoice Intégrés
-**`webhookWithInvoice.test.ts` (286 lignes) :**
+#### Tests Actuels Identifiés
+**`projectPaymentNotification.test.ts` (47 lignes) :**
 ```typescript
-describe('Webhook → Invoice Integration', () => {
-  it('devrait générer facture automatiquement après paiement', async () => {
-    const mockSession = {
-      id: 'cs_test_payment_success',
-      amount_total: 46800, // 468€
-      payment_status: 'paid'
-    };
-
-    // Mock webhook checkout.session.completed
-    const response = await request(app)
-      .post('/payments/webhook')
-      .set('stripe-signature', validSignature)
-      .send({
-        type: 'checkout.session.completed',
-        data: { object: mockSession }
-      });
-
-    expect(response.status).toBe(200);
-    
-    // Vérifications automatiques
-    expect(mockPrismaCommande.update).toHaveBeenCalledWith({
-      where: { stripeSessionId: mockSession.id },
-      data: expect.objectContaining({
-        paymentStatus: 'paid',
-        statut: 'EN_COURS'
-      })
-    });
-    
-    // Vérifier génération facture appelée
-    expect(InvoiceService.processInvoiceForCommande).toHaveBeenCalledWith(
-      expect.objectContaining({
-        amount: 46800 // Montant exact Stripe
-      })
-    );
+describe('Project Payment Notification', () => {
+  it('should format payment amount correctly', () => {
+    const amount = 5000; // 50.00€ en centimes
+    const expectedAmount = (amount / 100).toFixed(2);
+    expect(expectedAmount).toBe('50.00');
   });
 
-  it('devrait continuer webhook même si facturation échoue', async () => {
-    // Mock erreur facturation
-    jest.spyOn(InvoiceService, 'processInvoiceForCommande')
-        .mockRejectedValueOnce(new Error('S3 Upload failed'));
-
-    const response = await request(app)
-      .post('/payments/webhook')
-      .set('stripe-signature', validSignature)
-      .send(mockPaymentEvent);
-
-    // Webhook doit retourner 200 même si facturation échoue
-    expect(response.status).toBe(200);
-    expect(response.body.received).toBe(true);
+  it('should create correct notification message', () => {
+    const customerName = 'Jean Dupont';
+    const commandeTitle = 'Correction de manuscrit';
+    const amount = 5000;
+    
+    const message = `Le projet "${commandeTitle}" de ${customerName} doit être réglé (${(amount / 100).toFixed(2)}€)`;
+    expect(message).toContain('Jean Dupont');
+    expect(message).toContain('50.00€');
   });
 });
 ```
 
-#### Tests Stockage Local Intégrés
-**`invoiceService.integration.test.ts` (420 lignes) :**
-```typescript
-describe('Invoice Local Storage Integration', () => {
-  const testInvoicesDir = path.join(__dirname, '../../../uploads/invoices/test');
-  
-  beforeEach(async () => {
-    // Créer dossier test si nécessaire
-    if (!fs.existsSync(testInvoicesDir)) {
-      fs.mkdirSync(testInvoicesDir, { recursive: true });
-    }
-  });
+#### Zones à Tester (Recommandations)
+- **Webhooks Stripe** : Double flux + validation signatures
+- **Génération PDF** : Templates + stockage local  
+- **Tests d'intégration** : Backend + Stripe + bases de données
+- **Tests E2E** : Paiement complet via Cypress
 
-  afterEach(async () => {
-    // Nettoyage fichiers test
-    if (fs.existsSync(testInvoicesDir)) {
-      const files = fs.readdirSync(testInvoicesDir);
-      files.forEach(file => {
-        fs.unlinkSync(path.join(testInvoicesDir, file));
-      });
-    }
-  });
+---
 
-  it('devrait générer et sauvegarder PDF localement', async () => {
-    const mockCommande = {
-      id: 'cmd-test-123',
-      titre: 'Correction de manuscrit',
-      description: 'Roman fantasy 350 pages',
-      amount: 46800, // 468€
-      user: {
-        id: 'user-123',
-        prenom: 'Jean',
-        nom: 'Dupont',
-        email: 'jean.dupont@example.com'
-      }
-    };
-    
-    // Génération PDF avec pdf-lib
-    const pdfBuffer = await InvoiceService.generateInvoicePDF(mockCommande);
-    
-    expect(pdfBuffer).toBeInstanceOf(Buffer);
-    expect(pdfBuffer.length).toBeGreaterThan(1000); // PDF valide > 1KB
-    
-    // Sauvegarde locale
-    const fileName = `INV-${mockCommande.id.slice(-8).toUpperCase()}-${Date.now()}.pdf`;
-    const filePath = path.join(testInvoicesDir, fileName);
-    
-    fs.writeFileSync(filePath, pdfBuffer);
-    
-    // Vérifications filesystem
-    expect(fs.existsSync(filePath)).toBe(true);
-    const savedFile = fs.readFileSync(filePath);
-    expect(savedFile.length).toBe(pdfBuffer.length);
-    expect(savedFile.equals(pdfBuffer)).toBe(true);
-  });
+## 6. Conclusion
 
-  it('devrait vérifier intégrité fichier uploadé', async () => {
-    const originalContent = 'PDF test content for integrity check';
-    const mockPdf = Buffer.from(originalContent);
-    
-    const signedUrl = await S3InvoiceService.uploadInvoicePdf(mockPdf, 'integrity-test');
-    
-    // Download et vérification
-    const downloadResponse = await fetch(signedUrl);
-    const downloadedContent = await downloadResponse.text();
-    
-    expect(downloadedContent).toBe(originalContent);
-    
-    // Cleanup
-    await S3InvoiceService.deleteInvoicePdf('integrity-test');
-  });
-});
-```
+Le système de paiement et facturation Staka-Livres est opérationnel en production avec :
 
-#### Tests Frontend Components
-**`BillingPage.test.tsx` (180 lignes) :**
-```typescript
-describe('BillingPage Production', () => {
-  it('devrait afficher factures avec pagination', async () => {
-    const mockInvoices = [
-      { id: '1', number: 'FACT-2025-001', amount: 46800, status: 'PAID' },
-      { id: '2', number: 'FACT-2025-002', amount: 32400, status: 'GENERATED' }
-    ];
-    
-    jest.spyOn(invoicesAPI, 'getInvoices').mockResolvedValue({
+- ✅ **Double flux de paiement** fonctionnel (utilisateurs connectés + invités)
+- ✅ **Webhooks Stripe robustes** avec gestion différenciée des commandes
+- ✅ **Génération PDF professionnelle** via pdf-lib avec design corporate
+- ✅ **Stockage local unifié** remplaçant l'architecture AWS S3
+- ✅ **Notifications automatisées** via EventBus et templates e-mail
+- ⚠️ **Tests basiques** : couverture minimale, développement recommandé
+
+### Prochaines Améliorations Recommandées
+
+1. **Tests compréhensifs** : webhooks, PDF, intégration
+2. **Monitoring avancé** : métriques paiements, performances
+3. **Dashboard admin** : suivi factures, statistiques
+4. **Archive factures** : historique, recherche, filtrage
+
+Le système actuel répond aux besoins production de livrestaka.fr avec une architecture moderne et évolutive.
       invoices: mockInvoices,
       total: 2,
       page: 1,
@@ -1148,14 +1056,14 @@ const alerts = {
 
 | Composant               | Lignes Code | Tests   | Coverage | Performance | Status        |
 |-------------------------|-------------|---------|----------|-------------|---------------|
-| **Webhook Stripe**     | 238 lignes  | 15 tests| 92%      | ~5.8s       | ✅ Production  |
-| **Invoice System**     | 115 lignes  | 14 tests| 89%      | ~4.2s       | ✅ Production  |
-| **Local Storage**      | 87 lignes   | 8 tests | 90%      | ~95ms       | ✅ Production  |
-| **User Creation Flow** | 180 lignes  | 6 tests | 85%      | ~890ms      | ✅ Production  |
-| **PaymentSuccess Page**| 257 lignes  | 4 tests | 88%      | ~300ms      | ✅ Production  |
-| **Admin API**          | 531 lignes  | 12 tests| 91%      | ~200ms      | ✅ Production  |
-| **Frontend React**     | 2034 lignes | 25 tests| 85%      | ~120ms      | ✅ Production  |
-| **Total Système**      | **3442 lignes** | **84 tests** | **90%+** | **< 6s** | **✅ Production** |
+| **Webhook Stripe**     | 238 lignes  | Limité  | Basique  | ~5.8s       | ✅ Production  |
+| **Invoice System**     | 115 lignes  | Limité  | Basique  | ~4.2s       | ✅ Production  |
+| **Local Storage**      | 87 lignes   | Limité  | Basique  | ~95ms       | ✅ Production  |
+| **User Creation Flow** | 180 lignes  | Limité  | Basique  | ~890ms      | ✅ Production  |
+| **PaymentSuccess Page**| 257 lignes  | Limité  | Basique  | ~300ms      | ✅ Production  |
+| **Admin API**          | 531 lignes  | Basique | Basique  | ~200ms      | ✅ Production  |
+| **Frontend React**     | 2034 lignes | Basique | Basique  | ~120ms      | ✅ Production  |
+| **Total Système**      | **3442 lignes** | **1 test** | **Tests limités** | **< 6s** | **✅ Production** |
 
 ---
 
@@ -1163,12 +1071,12 @@ const alerts = {
 
 Le **Système Paiement & Facturation Staka Livres 2025** est un système complet, moderne et production-ready qui intègre parfaitement :
 
-### ✅ **Réalisations Majeures** ✅ **MISES À JOUR 30 JUILLET 2025**
+### ✅ **Réalisations Majeures** ✅ **MISES À JOUR 3 AOÛT 2025**
 - **Migration S3→Local réussie** : Stockage filesystem sécurisé, 3 factures produites
 - **Double flux paiement** : Utilisateurs connectés + workflow invités complet
 - **Architecture unifiée** : Vision système complète avec création user automatique
 - **Production opérationnelle** : Déployé et fonctionnel sur [livrestaka.fr](https://livrestaka.fr/)
-- **Tests exhaustifs** : 1756+ lignes validant filesystem + workflows
+- **Tests en développement** : couverture basique, expansion recommandée
 - **Performance optimisée** : Traitement invité complet < 6 secondes
 - **Sécurité enterprise** : Validation cryptographique + accès filesystem contrôlé + JWT
 - **✅ CORRECTIF STRIPE APPLIQUÉ** : Paiements réels 100% opérationnels en production
@@ -1178,7 +1086,7 @@ Le **Système Paiement & Facturation Staka Livres 2025** est un système complet
 ### 🚀 **Système Évolutif**
 - **Monitoring complet** : Logs structurés + métriques filesystem + alertes spécialisées
 - **Documentation exhaustive** : Architecture + API + migration + troubleshooting local
-- **Maintenance simplifiée** : Un seul document unifié + tests filesystem automatisés
+- **Maintenance simplifiée** : Un seul document unifié + tests basiques
 - **Scalabilité** : Queue asynchrone + stockage local performant + mode mock développement
 - **Backup ready** : Fichiers locaux facilement sauvegardables + migration cloud future
 
@@ -1187,4 +1095,4 @@ Le **Système Paiement & Facturation Staka Livres 2025** est un système complet
 **📧 Contact production** : contact@staka.fr  
 **👨‍💻 Développé par** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/) - Juillet 2025
 
-*Guide unifié consolidé - 30 Juillet 2025 - Migration S3→Local terminée - Production livrestaka.fr*
+*Guide unifié consolidé - 3 Août 2025 - Migration S3→Local terminée - Production livrestaka.fr*

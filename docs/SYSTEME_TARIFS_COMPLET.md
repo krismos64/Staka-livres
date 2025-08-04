@@ -7,7 +7,7 @@
 ![Invoices](https://img.shields.io/badge/Invoices-Local%20Storage-green)
 ![Webhooks](https://img.shields.io/badge/Webhooks-Production-blue)
 
-**✨ Version Juillet 2025 - Dernière mise à jour : 29 Juillet 2025**  
+**✨ Version Août 2025 - Dernière mise à jour : 3 Août 2025**  
 **🌐 Production URL** : [livrestaka.fr](https://livrestaka.fr/)  
 **👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
 
@@ -27,7 +27,7 @@ Le système de tarification de Staka Livres est une solution complète intégran
 - **Webhooks production** : Traitement automatique des paiements Stripe
 - **Facturation locale** : Génération PDF et stockage local avec InvoiceService
 - **Commandes clients** : Flux complet avec projets payants et gestion fichiers
-- **Tests automatisés** : Validation complète (33 tests backend + 6 frontend + 34 E2E)
+- **Tests automatisés** : 1 test frontend de synchronisation + 34 tests E2E
 
 ---
 
@@ -491,32 +491,23 @@ const AdminTarifs = () => {
 
 ## 🧪 Tests Automatisés
 
-### Tests Backend (33 tests ✅)
+### Tests Backend
 
-**Couverture** : 87% - Fichiers principaux :
-- `backend/src/tests/unit/` : Tests unitaires services et contrôleurs
-- `backend/tests/unit/webhookWithInvoice.test.ts` : Webhooks + facturation
-- `backend/tests/unit/invoiceRoutes.test.ts` : Routes factures admin
-- `backend/tests/unit/paymentMethods.test.ts` : Méthodes de paiement
+⚠️ **Tests tarification spécifiques** : Aucun test dédié aux tarifs identifié
+- Tests existants : principalement paiements et facturation
+- Recommandation : Ajouter tests pour TarifStripeSyncService
+- Mode mock Stripe fonctionnel pour développement
 
-**Fonctionnalités testées** :
-- ✅ Synchronisation Stripe (mode mock)
-- ✅ Génération factures PDF (InvoiceService)
-- ✅ Webhooks de paiement complets
-- ✅ CRUD commandes client
-- ✅ Audit logs et sécurité
+### Tests Frontend (1 test principal ✅)
 
-### Tests Frontend (6 tests ✅)
+**Fichier principal** :
+- `frontend/src/__tests__/tarifsInvalidation.test.tsx` : Test synchronisation admin→landing
 
-**Fichiers** :
-- `frontend/src/__tests__/tarifsInvalidation.test.tsx` : Cache et synchronisation
-- Tests intégration avec backend via `vite.config.integration.ts`
-
-**Couverture** : 85% - Composants testés :
-- ✅ Synchronisation admin → landing page
-- ✅ Cache React Query partagé
-- ✅ Fallbacks et gestion d'erreurs
-- ✅ États de chargement
+**Couverture fonctionnelle** :
+- ✅ Flux modification admin → invalidation cache → update landing instantané
+- ✅ Cache React Query partagé entre PricingCalculator et Packs
+- ✅ Gestion d'erreurs et fallbacks
+- ✅ États de chargement et performance
 
 ### Tests E2E Cypress (34 tests 🎯)
 
@@ -532,9 +523,8 @@ const AdminTarifs = () => {
 
 ```bash
 # Tests backend (dans conteneur Docker)
-docker compose run --rm app npm run test:ci   # Tous avec couverture
-docker exec backend npm test src/tests/unit/  # Tests unitaires
-docker exec backend npm test tests/unit/webhookWithInvoice.test.ts
+docker compose run --rm app npm run test:ci   # Tous tests existants
+# Note: Aucun test spécifique aux tarifs actuellement
 
 # Tests frontend
 npm run test:unit        # Tests unitaires (CI/CD)
@@ -843,7 +833,7 @@ docker exec backend npm run stripe:sync-all --force
 - ✅ **Webhooks production** : Traitement automatique Stripe complet
 - ✅ **Facturation locale** : PDF génération + stockage + email intégrés
 - ✅ **Interface CRUD complète** avec modals modernes et responsive
-- ✅ **73 tests automatisés** (33 backend + 6 frontend + 34 E2E)
+- ✅ **35 tests automatisés** (1 frontend synchronisation + 34 E2E)
 - ✅ **Service Stripe** avec détection mode mock intelligente
 - ✅ **Cache React Query** optimisé et partagé entre composants
 - ✅ **Audit logs complets** : traçage sécurisé toutes actions
@@ -855,7 +845,7 @@ docker exec backend npm run stripe:sync-all --force
 ### Métriques Finales Production
 
 - **Score de fiabilité** : 98/100 ⬆️
-- **Coverage tests** : 87% backend + 85% frontend ✅
+- **Coverage tests** : Test synchronisation frontend + E2E complets ✅
 - **Performance** : < 2s sync + < 3s PDF + < 5s webhook ✅
 - **Sécurité** : JWT + audit + signatures Stripe ✅
 - **Endpoints** : 20+ routes sécurisées et documentées ✅
@@ -868,4 +858,4 @@ Le système de tarification et paiement Staka Livres 2025 est **déployé et op�
 **📧 Contact production** : contact@staka.fr  
 **👨‍💻 Développé par** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/) - Juillet 2025
 
-*Guide technique complet mis à jour le 29 juillet 2025 - Production déployée avec webhooks, facturation locale et système de commandes client avancé*
+*Guide technique complet mis à jour le 3 août 2025 - Production déployée avec webhooks, facturation locale et système de commandes client avancé*

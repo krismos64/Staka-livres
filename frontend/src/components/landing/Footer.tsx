@@ -1,14 +1,55 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { debugLog, errorLog } from "../../utils/debug";
 
 export default function Footer() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<{
+    type: 'success' | 'error' | null;
+    message: string;
+  }>({ type: null, message: '' });
 
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implémenter l'inscription newsletter
-    console.log("Newsletter inscription:", newsletterEmail);
-    setNewsletterEmail("");
+    
+    if (!newsletterEmail.trim()) return;
+    
+    setIsSubmitting(true);
+    setSubmitStatus({ type: null, message: '' });
+    
+    try {
+      const response = await fetch('/api/public/newsletter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: newsletterEmail.trim() }),
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok) {
+        setSubmitStatus({
+          type: 'success',
+          message: 'Inscription réussie ! Vous recevrez bientôt nos actualités.',
+        });
+        setNewsletterEmail("");
+      } else {
+        setSubmitStatus({
+          type: 'error',
+          message: result.error || 'Une erreur est survenue lors de l\'inscription.',
+        });
+      }
+    } catch (error) {
+      errorLog("Erreur newsletter:", error);
+      setSubmitStatus({
+        type: 'error',
+        message: 'Erreur de connexion. Veuillez réessayer.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -85,6 +126,7 @@ export default function Footer() {
                 <img 
                   src="/images/footer/paiment-secure.webp" 
                   alt="Paiement sécurisé - Visa, PayPal" 
+                  loading="lazy"
                   className="h-12 sm:h-14 w-auto opacity-80 hover:opacity-100 transition-opacity"
                 />
                 <span className="text-sm text-gray-400">Paiement 100% sécurisé</span>
@@ -223,22 +265,43 @@ export default function Footer() {
             </div>
             <form
               onSubmit={handleNewsletterSubmit}
-              className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+              className="flex flex-col gap-3 max-w-md mx-auto"
             >
-              <input
-                type="email"
-                placeholder="Votre adresse email"
-                value={newsletterEmail}
-                onChange={(e) => setNewsletterEmail(e.target.value)}
-                className="flex-1 px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
-                required
-              />
-              <button
-                type="submit"
-                className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 px-6 py-3 rounded-xl font-semibold whitespace-nowrap transition"
-              >
-                S'abonner
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="email"
+                  placeholder="Votre adresse email"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  className="flex-1 px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+                  required
+                  disabled={isSubmitting}
+                />
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`px-6 py-3 rounded-xl font-semibold whitespace-nowrap transition ${
+                    isSubmitting
+                      ? 'bg-gray-600 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600'
+                  }`}
+                >
+                  {isSubmitting ? 'Inscription...' : 'S\'abonner'}
+                </button>
+              </div>
+              
+              {/* Status message */}
+              {submitStatus.type && (
+                <div
+                  className={`text-sm px-3 py-2 rounded-lg ${
+                    submitStatus.type === 'success'
+                      ? 'bg-green-900/50 text-green-300 border border-green-700'
+                      : 'bg-red-900/50 text-red-300 border border-red-700'
+                  }`}
+                >
+                  {submitStatus.message}
+                </div>
+              )}
             </form>
           </div>
         </div>
@@ -260,6 +323,7 @@ export default function Footer() {
               <img
                 src="/images/logo-staka.png"
                 alt="Staka.fr"
+                loading="lazy"
                 className="h-12 w-auto bg-white rounded-lg p-2 transition-all duration-300"
               />
             </a>
@@ -272,6 +336,7 @@ export default function Footer() {
               <img
                 src="/images/logo-entremises.png"
                 alt="Entremises.fr"
+                loading="lazy"
                 className="h-12 w-auto bg-white rounded-lg p-2 transition-all duration-300"
               />
             </a>
@@ -284,6 +349,7 @@ export default function Footer() {
               <img
                 src="/images/logo-uppr-transparent.png"
                 alt="Uppreditions.fr"
+                loading="lazy"
                 className="h-12 w-auto bg-white rounded-lg p-2 transition-all duration-300"
               />
             </a>

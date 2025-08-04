@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import ScrollToTopButton from "../../components/common/ScrollToTopButton";
 import Footer from "../../components/landing/Footer";
+import { formatContentToHtmlSafe } from "../../utils/htmlSanitizer";
 
 interface StaticPage {
   id: string;
@@ -13,36 +14,6 @@ interface StaticPage {
   updatedAt?: string;
 }
 
-const formatContentToHtml = (text: string): string => {
-  if (!text) return "";
-
-  const titleRegex = /^\d+\.\s|:\s*$/;
-  const definitionRegex = /^(\w+\s*et\s*\w+|\w+)\s*:/;
-
-  return text
-    .split(/\n\s*\n/)
-    .map((block) => block.trim())
-    .filter((block) => block.length > 0)
-    .map((block) => {
-      const lines = block.split("\n");
-      const firstLine = lines[0];
-
-      if (titleRegex.test(firstLine)) {
-        return `<h3>${firstLine}</h3><p>${lines.slice(1).join("<br />")}</p>`;
-      }
-
-      const match = firstLine.match(definitionRegex);
-      if (match) {
-        const term = match[1];
-        const restOfLine = firstLine.substring(match[0].length).trim();
-        const definition = [restOfLine, ...lines.slice(1)].join("<br />");
-        return `<p><strong>${term} :</strong> ${definition}</p>`;
-      }
-
-      return `<p>${lines.join("<br />")}</p>`;
-    })
-    .join("");
-};
 
 const StaticPageBySlug: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -117,7 +88,7 @@ const StaticPageBySlug: React.FC = () => {
                      prose-strong:text-blue-800 prose-strong:font-semibold
                      prose-a:text-blue-700 hover:prose-a:underline"
           dangerouslySetInnerHTML={{
-            __html: formatContentToHtml(page.contenu),
+            __html: formatContentToHtmlSafe(page.contenu),
           }}
         />
         {page.updatedAt && (

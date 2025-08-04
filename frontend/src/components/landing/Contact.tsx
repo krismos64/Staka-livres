@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { debugLog, errorLog } from "../../utils/debug";
 
 interface ContactProps {
   onChatClick?: () => void;
@@ -47,7 +48,7 @@ export default function Contact({ onChatClick }: ContactProps) {
         });
       }
     } catch (error) {
-      console.error('Erreur lors de l\'envoi du formulaire:', error);
+      errorLog('Erreur lors de l\'envoi du formulaire:', error);
       setSubmitStatus({
         type: 'error',
         message: 'Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer.'

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { FAQ as FAQType } from "../../types/shared";
+import { debugLog, errorLog } from "../../utils/debug";
 
 interface FAQItemProps {
   id: string;
@@ -27,7 +28,7 @@ export default function FAQ() {
       const data = await response.json();
       setFaqItems(data.data || []);
     } catch (error) {
-      console.error("Erreur FAQ:", error);
+      errorLog("Erreur FAQ:", error);
       setIsError(true);
     } finally {
       setIsLoading(false);
@@ -194,7 +195,10 @@ export default function FAQ() {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button className="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition">
+            <button 
+              className="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition"
+              aria-label="Démarrer une conversation avec notre équipe"
+            >
               <i className="fas fa-comments mr-2"></i>
               Chat en direct
             </button>

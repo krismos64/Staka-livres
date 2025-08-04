@@ -9,12 +9,10 @@ echo "🚀 Déploiement Staka-livres version: $TAG"
 
 # 1. Build et push images
 echo "📦 Building images..."
-docker build -t $DOCKER_REGISTRY/frontend:$TAG ./frontend
-docker build -t $DOCKER_REGISTRY/backend:$TAG ./backend
+docker buildx build --platform linux/amd64 -t $DOCKER_REGISTRY/frontend:$TAG -f ./frontend/Dockerfile . --push
+docker buildx build --platform linux/amd64 -t $DOCKER_REGISTRY/backend:$TAG -f ./backend/Dockerfile . --push
 
-echo "⬆️ Pushing to Docker Hub..."
-docker push $DOCKER_REGISTRY/frontend:$TAG
-docker push $DOCKER_REGISTRY/backend:$TAG
+echo "⬆️ Images pushed to Docker Hub with buildx"
 
 # 2. Déploiement sur VPS
 echo "🔄 Deploying to VPS..."
@@ -22,6 +20,8 @@ sshpass -p $VPS_PASSWORD ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 
     cd /opt/staka-livres
     docker compose pull
     docker compose up -d --force-recreate
+    echo "🌱 Exécution du seed de production..."
+    docker compose exec backend npx ts-node prisma/seed-prod.ts
     docker system prune -f
 EOF
 

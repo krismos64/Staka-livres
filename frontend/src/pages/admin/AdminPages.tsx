@@ -4,6 +4,7 @@ import Modal from "../../components/common/Modal";
 import { useAdminPages, useUpdatePage } from "../../hooks/useAdminPages";
 import { PageStatique } from "../../types/shared";
 import { useToasts } from "../../utils/toast";
+import { sanitizeBasicHtml } from "../../utils/htmlSanitizer";
 
 // Liste des slugs légaux à afficher
 const LEGAL_SLUGS = [
@@ -139,7 +140,7 @@ const AdminPages: React.FC = () => {
               <div
                 className="prose max-w-none p-5 pt-0 text-slate-600"
                 dangerouslySetInnerHTML={{
-                  __html: page.contenu.replace(/\n/g, "<br />"),
+                  __html: sanitizeBasicHtml(page.contenu),
                 }}
               />
             </div>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, Suspense, lazy } from "react";
 import {
   BrowserRouter,
   Navigate,
@@ -15,32 +15,36 @@ import { ToastProvider } from "./components/layout/ToastProvider";
 import PackSelectionModal from "./components/modals/PackSelectionModal";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import ActivateAccountPage from "./pages/ActivateAccountPage";
-import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
-import AdminCommandes from "./pages/admin/AdminCommandes";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminFactures from "./pages/admin/AdminFactures";
-import AdminFAQ from "./pages/admin/AdminFAQ";
-import AdminMessagerie from "./pages/admin/AdminMessagerie";
-import AdminPages from "./pages/admin/AdminPages";
-import AdminStatistiques from "./pages/admin/AdminStatistiques";
-import AdminTarifs from "./pages/admin/AdminTarifs";
-import AdminUtilisateurs from "./pages/admin/AdminUtilisateurs";
-import BillingPage from "./pages/BillingPage";
-import DashboardPage from "./pages/DashboardPage";
-import FilesPage from "./pages/FilesPage";
+// Lazy loading des pages admin pour code splitting
+const AdminAuditLogs = lazy(() => import("./pages/admin/AdminAuditLogs"));
+const AdminCommandes = lazy(() => import("./pages/admin/AdminCommandes"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminFactures = lazy(() => import("./pages/admin/AdminFactures"));
+const AdminFAQ = lazy(() => import("./pages/admin/AdminFAQ"));
+const AdminMessagerie = lazy(() => import("./pages/admin/AdminMessagerie"));
+const AdminPages = lazy(() => import("./pages/admin/AdminPages"));
+const AdminStatistiques = lazy(() => import("./pages/admin/AdminStatistiques"));
+const AdminTarifs = lazy(() => import("./pages/admin/AdminTarifs"));
+const AdminUtilisateurs = lazy(() => import("./pages/admin/AdminUtilisateurs"));
+// Lazy loading des pages principales utilisateur
+const BillingPage = lazy(() => import("./pages/BillingPage"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const FilesPage = lazy(() => import("./pages/FilesPage"));
+const MessagesPage = lazy(() => import("./pages/MessagesPage"));
+const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
+const ProfilPage = lazy(() => import("./pages/ProfilPage"));
+const ProjectsPage = lazy(() => import("./pages/ProjectsPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const HelpPage = lazy(() => import("./pages/HelpPage"));
+
+// Pages critiques gardées en synchrone pour une UX optimale
 import ForgotPassword from "./pages/ForgotPassword";
-import HelpPage from "./pages/HelpPage";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
-import MessagesPage from "./pages/MessagesPage";
-import NotificationsPage from "./pages/NotificationsPage";
 import StaticPageBySlug from "./pages/pages/[slug]";
 import PaymentCancelPage from "./pages/PaymentCancelPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
-import ProfilPage from "./pages/ProfilPage";
-import ProjectsPage from "./pages/ProjectsPage";
 import ResetPassword from "./pages/ResetPassword";
-import SettingsPage from "./pages/SettingsPage";
 import SignupPage from "./pages/SignupPage";
 import MentionsLegalesPage from "./pages/MentionsLegalesPage";
 import CGVPage from "./pages/CGVPage";
@@ -217,27 +221,29 @@ const AppContent: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
       pageTitle={currentPage.title}
       onNewProjectClick={() => setNewProjectModalOpen(true)}
     >
-      <Routes>
-        <Route index element={<DashboardPage />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route
-          path="projects"
-          element={
-            <ProjectsPage
-              onNewProjectClick={() => setNewProjectModalOpen(true)}
-            />
-          }
-        />
-        <Route path="messages" element={<MessagesPage />} />
-        <Route path="notifications" element={<NotificationsPage />} />
-        <Route path="projects/:projectId/files" element={<FilesPage />} />
-        <Route path="files" element={<FilesPage />} />
-        <Route path="billing" element={<BillingPage />} />
-        <Route path="help" element={<HelpPage />} />
-        <Route path="profile" element={<ProfilPage />} />
-        <Route path="settings" element={<SettingsPage />} />
-        <Route path="*" element={<PageIntrouvable />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route index element={<DashboardPage />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route
+            path="projects"
+            element={
+              <ProjectsPage
+                onNewProjectClick={() => setNewProjectModalOpen(true)}
+              />
+            }
+          />
+          <Route path="messages" element={<MessagesPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="projects/:projectId/files" element={<FilesPage />} />
+          <Route path="files" element={<FilesPage />} />
+          <Route path="billing" element={<BillingPage />} />
+          <Route path="help" element={<HelpPage />} />
+          <Route path="profile" element={<ProfilPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="*" element={<PageIntrouvable />} />
+        </Routes>
+      </Suspense>
       <PackSelectionModal
         isOpen={isNewProjectModalOpen}
         onClose={() => setNewProjectModalOpen(false)}
@@ -250,25 +256,35 @@ const AppContent: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
   );
 };
 
+// Composant de fallback pour le lazy loading
+const PageLoader: React.FC = () => (
+  <div className="flex items-center justify-center min-h-[400px]">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <span className="ml-3 text-gray-600">Chargement de la page...</span>
+  </div>
+);
+
 const AdminRoutes: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
   return (
     <AdminLayout onLogout={onLogout}>
-      <Routes>
-        <Route index element={<AdminDashboard />} />
-        <Route path="dashboard" element={<AdminDashboard />} />
-        <Route path="users" element={<AdminUtilisateurs />} />
-        <Route path="utilisateurs" element={<AdminUtilisateurs />} />
-        <Route path="commandes" element={<AdminCommandes />} />
-        <Route path="factures" element={<AdminFactures />} />
-        <Route path="faq" element={<AdminFAQ />} />
-        <Route path="tarifs" element={<AdminTarifs />} />
-        <Route path="pages" element={<AdminPages />} />
-        <Route path="statistiques" element={<AdminStatistiques />} />
-        <Route path="messagerie" element={<AdminMessagerie />} />
-        <Route path="audit-logs" element={<AdminAuditLogs />} />
-        <Route path="notifications" element={<NotificationsPage />} />
-        <Route path="*" element={<PageIntrouvable />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route index element={<AdminDashboard />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="users" element={<AdminUtilisateurs />} />
+          <Route path="utilisateurs" element={<AdminUtilisateurs />} />
+          <Route path="commandes" element={<AdminCommandes />} />
+          <Route path="factures" element={<AdminFactures />} />
+          <Route path="faq" element={<AdminFAQ />} />
+          <Route path="tarifs" element={<AdminTarifs />} />
+          <Route path="pages" element={<AdminPages />} />
+          <Route path="statistiques" element={<AdminStatistiques />} />
+          <Route path="messagerie" element={<AdminMessagerie />} />
+          <Route path="audit-logs" element={<AdminAuditLogs />} />
+          <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="*" element={<PageIntrouvable />} />
+        </Routes>
+      </Suspense>
     </AdminLayout>
   );
 };

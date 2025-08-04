@@ -1,6 +1,6 @@
 # 🚀 Backend API Staka Livres - Guide Technique Complet
 
-![Node.js](https://img.shields.io/badge/Node.js-18.20.2-green)
+![Node.js](https://img.shields.io/badge/Node.js-20.15.1-green)
 ![Express](https://img.shields.io/badge/Express-4.18.2-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue)
 ![Prisma](https://img.shields.io/badge/Prisma-6.10.1-purple)
@@ -8,28 +8,29 @@
 ![MySQL](https://img.shields.io/badge/MySQL-8.4-orange)
 ![Tests](https://img.shields.io/badge/Tests-87%25%20Coverage-brightgreen)
 ![Production](https://img.shields.io/badge/Status-Production%20Deployed-success)
-![OVH](https://img.shields.io/badge/Deployed-VPS%20OVH-blue)
+![HTTPS](https://img.shields.io/badge/HTTPS-Let's%20Encrypt-green)
 
-**📅 Mis à jour le 30 juillet 2025 par Christophe Mostefaoui - https://livrestaka.fr/**
+**📅 Mis à jour le 3 août 2025 par Christophe Mostefaoui - https://livrestaka.fr/**
 
 ---
 
 ## 📋 **Vue d'ensemble**
 
-Backend REST API pour **Staka Livres**, plateforme professionnelle de correction de manuscrits déployée en production sur **VPS OVH** (https://livrestaka.fr/) via SSH et Docker. Architecture enterprise-grade avec TypeScript, Express, Prisma ORM et intégrations Stripe avancées.
+Backend REST API pour **Staka Livres**, plateforme professionnelle de correction de manuscrits déployée en production avec **HTTPS Let's Encrypt** (https://livrestaka.fr/) via Docker. Architecture enterprise-grade avec TypeScript, Express, Prisma ORM, stockage local unifié et intégrations Stripe avancées.
 
-### 🏆 **Métriques Production (30 Juillet 2025)**
+### 🏆 **Métriques Production (3 Août 2025)**
 
 | Composant | Détail | Statut |
 |-----------|--------|---------|
-| **🌐 Endpoints API** | 118+ endpoints répartis sur 28 fichiers routes | ✅ Production |
+| **🌐 Endpoints API** | 124+ endpoints répartis sur 30 fichiers routes | ✅ Production |
 | **📁 Contrôleurs** | 26 contrôleurs spécialisés | ✅ Optimisés |
-| **🧪 Tests** | 17 fichiers tests source (90% couverture) | ✅ Robustes |
-| **🗄️ Base de données** | 14 modèles Prisma avec 20 relations | ✅ Optimisée |
-| **🔒 Sécurité** | JWT + RGPD + Audit logs + Rate limiting | ✅ Conforme |
-| **📧 Emails** | 22 templates HTML + queue asynchrone | ✅ Production |
-| **💳 Paiements** | Stripe webhooks + facturation PDF | ✅ Opérationnel |
-| **🐳 Déploiement** | VPS OVH + Docker + SSH | ✅ Production |
+| **🧪 Tests** | 23 fichiers tests source (87% couverture) | ✅ Robustes |
+| **🗄️ Base de données** | 16 modèles Prisma avec relations avancées | ✅ Optimisée |
+| **🔒 Sécurité** | JWT + RGPD + Audit logs + Rate limiting + HTTPS | ✅ Conforme |
+| **📧 Emails** | 26 templates HTML + queue asynchrone + événementiel | ✅ Production |
+| **💳 Paiements** | Stripe webhooks + facturation PDF + méthodes sauvegardées | ✅ Opérationnel |
+| **📁 Stockage** | Migration AWS S3 → Stockage local unifié | ✅ Optimisé |
+| **🐳 Déploiement** | Docker + HTTPS Let's Encrypt + Auto-renewal | ✅ Production |
 
 ---
 
@@ -128,7 +129,7 @@ backend/
 │   ├── queues/                     # Queue asynchrone
 │   │   └── emailQueue.ts           # Traitement emails Handlebars + SendGrid
 │   ├── emails/                     # Templates HTML professionnels
-│   │   └── templates/              # 25 templates (admin/users/visitors/activation)
+│   │   └── templates/              # 26 templates (admin/users/visitors/activation)
 │   ├── middleware/                 # Middlewares Express
 │   │   ├── auth.ts                 # Middleware JWT
 │   │   ├── requireRole.ts          # Middleware rôles (ADMIN/USER/CORRECTOR)
@@ -150,7 +151,7 @@ backend/
 │   ├── deprecated-aws/             # Code AWS S3 déprécié (migration terminée)
 │   │   ├── tests/                  # 7 tests AWS S3 désactivés
 │   │   └── ... (services S3 legacy)
-│   └── __tests__/                  # Tests (17 fichiers - 90% couverture)
+│   └── tests/                      # Tests (23 fichiers - 87% couverture)
 │       ├── controllers/            # Tests contrôleurs (3 tests)
 │       ├── services/               # Tests services (2 tests)
 │       ├── integration/            # Tests intégration (2 tests)
@@ -158,7 +159,7 @@ backend/
 │       ├── queues/                 # Tests queue emails (1 test)
 │       └── setup.ts                # Configuration globale tests
 ├── prisma/
-│   ├── schema.prisma               # Schéma BDD (15 modèles)
+│   ├── schema.prisma               # Schéma BDD (16 modèles)
 │   ├── migrations/                 # Migrations versionnées
 │   └── seed.ts                     # Données de test
 ├── Dockerfile                      # Container production
@@ -169,7 +170,7 @@ backend/
 ### 🛠️ **Stack Technique**
 
 #### **Runtime & Framework**
-- **Node.js 18.20.2** : Runtime JavaScript avec support ES2022
+- **Node.js 20.15.1** : Runtime JavaScript avec support ES2022
 - **Express 4.18.2** : Framework web minimaliste et performant
 - **TypeScript 5.8.3** : Typage statique strict pour robustesse
 
@@ -193,7 +194,7 @@ backend/
 - **Stripe 18.2.1** : Plateforme paiement avec webhooks
 - **SendGrid 8.1.5** : Service emails transactionnels
 - **PDF-lib 1.17.1** : Génération factures PDF A4
-- **Multer 2.0.1** : Upload fichiers local (migration S3→Local terminée)
+- **Multer 2.0.1** : Upload fichiers local (/uploads/projects, /orders, /messages)
 
 #### **Tests & Monitoring**
 - **Vitest 3.2.4** : Framework tests unitaires ultra-rapide
@@ -202,7 +203,7 @@ backend/
 
 ---
 
-## 🌐 **API Endpoints (118+ endpoints)**
+## 🌐 **API Endpoints (124+ endpoints)**
 
 ### 🔐 **Authentification** (`/auth`)
 
@@ -1746,7 +1747,7 @@ SHOW INDEX FROM table_name;    # Index disponibles
 
 ## 🎉 **Résumé de l'Évolution 2025**
 
-### 📈 **Nouvelles Fonctionnalités Production (30 Juillet 2025)**
+### 📈 **Nouvelles Fonctionnalités Production (3 Août 2025)**
 
 1. **Architecture Événementielle Complète**
    - EventBus centralisé singleton avec émission d'événements
@@ -1760,7 +1761,7 @@ SHOW INDEX FROM table_name;    # Index disponibles
    - Logs enrichis avec IP, User-Agent et métadonnées
 
 3. **Templates Emails Professionnels**
-   - 22 templates HTML responsive Handlebars
+   - 26 templates HTML responsive Handlebars
    - Helpers personnalisés (formatDate, formatPrice, capitalize)
    - Templates admin (9) + utilisateurs (9) + visiteurs (4)
    - Tracking ouvertures et clics intégré SendGrid
@@ -1777,7 +1778,7 @@ SHOW INDEX FROM table_name;    # Index disponibles
    - Tests S3 conditionnels avec skip intelligent
    - Synchronisation Stripe avec mode verbose
 
-6. **Migration S3→Local Terminée (Juillet 2025)**
+6. **Migration S3→Local Terminée et Stockage Local Unifié (Août 2025)**
    - Variables AWS supprimées du `.env.example`
    - Upload local avec Multer dans `/uploads/`
    - Service `unifiedFileController` pour stockage unifié
@@ -1790,12 +1791,14 @@ SHOW INDEX FROM table_name;    # Index disponibles
    - Templates emails activation dédiés
    - Workflow activation avec tokens sécurisés
 
-### 🔢 **Métriques Finales (30 Juillet 2025)**
+### 🔢 **Métriques Finales (3 Août 2025)**
 
-- **API** : 118+ endpoints sur 30+ fichiers routes
-- **Contrôleurs** : 26 contrôleurs spécialisés (+3 nouveaux)
-- **Tests** : 17 fichiers tests source (90% couverture)
-- **Services** : 16 services métier (+2 nouveaux)
+- **API** : 124+ endpoints sur 30 fichiers routes
+- **Contrôleurs** : 26 contrôleurs spécialisés
+- **Tests** : 23 fichiers tests source (87% couverture)
+- **Services** : 16 services métier
+- **Base de données** : 16 modèles Prisma avec 9 statuts commandes
+- **Déploiement** : HTTPS Let's Encrypt avec auto-renewal
 - **Templates** : 25 templates emails HTML (+3 activation)
 - **Scripts** : 29 scripts npm optimisés (+9 secrets/build)
 - **Audit** : 40+ actions standardisées
@@ -1803,11 +1806,11 @@ SHOW INDEX FROM table_name;    # Index disponibles
 
 ---
 
-**✨ Développé par Christophe Mostefaoui - Version Production 30 Juillet 2025**  
+**✨ Développé par Christophe Mostefaoui - Version Production 3 Août 2025**  
 **🌐 Site Web :** https://livrestaka.fr/ | **👨‍💻 Développeur :** https://christophe-dev-freelance.fr/ | **📧 Contact :** contact@staka.fr  
-**🏗️ Architecture enterprise-grade déployée sur VPS OVH**  
-**🚀 API REST 118+ endpoints production-ready avec 90% coverage tests**  
-**📧 Système notifications centralisé avec 25 templates email professionnels**  
+**🔒 Architecture enterprise-grade avec HTTPS Let's Encrypt**  
+**🚀 API REST 124+ endpoints production-ready avec 87% coverage tests**  
+**📧 Système notifications centralisé avec 26 templates email professionnels**  
 **🎯 Architecture événementielle avec EventBus, listeners et queues asynchrones**  
 **🔍 Système d'audit enterprise avec 40+ actions standardisées et middleware automatique**  
-**📦 Migration S3→Local terminée - Stockage fichiers unifié optimisé**
+**📁 Migration S3→Local terminée - Stockage fichiers local unifié optimisé**

@@ -1,15 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import ErrorMessage from "../ui/ErrorMessage";
 import Loader from "../ui/Loader";
 import { usePricing } from "./hooks/usePricing";
+import { debugLog } from "../../utils/debug";
 
 interface PricingCalculatorProps {
   onChatClick?: () => void;
   onSignupClick?: () => void;
 }
 
-export default function PricingCalculator({
+function PricingCalculator({
   onChatClick,
   onSignupClick,
 }: PricingCalculatorProps) {
@@ -30,22 +31,22 @@ export default function PricingCalculator({
   const [selectedPreset, setSelectedPreset] = useState(150);
   const navigate = useNavigate();
 
-  const comparisonPrices = getComparisonPrices();
+  const comparisonPrices = useMemo(() => getComparisonPrices(), [getComparisonPrices]);
 
-  const handlePageChange = (newPages: number) => {
+  const handlePageChange = useCallback((newPages: number) => {
     const validPages = Math.max(1, Math.min(1000, newPages));
     setPages(validPages);
-  };
+  }, [setPages]);
 
-  const handlePresetClick = (presetPages: number) => {
+  const handlePresetClick = useCallback((presetPages: number) => {
     setPages(presetPages);
     setSelectedPreset(presetPages);
-  };
+  }, [setPages]);
 
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSliderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newPages = parseInt(e.target.value);
     handlePageChange(newPages);
-  };
+  }, [handlePageChange]);
 
   // Utilitaire pour générer un slug à partir du nom
   const getSlug = (nom: string) =>
@@ -55,7 +56,7 @@ export default function PricingCalculator({
       .replace(/[^a-z0-9\-]/g, "");
 
   // Navigation avec transmission du prix et nombre de pages calculés
-  const handleOrderClick = () => {
+  const handleOrderClick = useCallback(() => {
     const selectedTarif = tarifs?.find(
       (t) =>
         t.actif &&
@@ -71,26 +72,25 @@ export default function PricingCalculator({
     searchParams.set("calculatedPrice", pricing.total.toString());
     
     navigate(`/commande-invitee?${searchParams.toString()}`);
-  };
+  }, [tarifs, pages, pricing.total, navigate]);
 
-  const handleFreeTestClick = () => {
-    console.log("Redirection vers test gratuit 10 pages");
-    // TODO: Rediriger vers #commande-gratuite
+  const handleFreeTestClick = useCallback(() => {
+    debugLog("Redirection vers test gratuit 10 pages");
     const element = document.getElementById("commande-gratuite");
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
     }
-  };
+  }, []);
 
-  const handleExpertChatClick = () => {
-    console.log("Ouverture chat expert");
+  const handleExpertChatClick = useCallback(() => {
+    debugLog("Ouverture chat expert");
     if (onChatClick) {
       onChatClick();
     }
-  };
+  }, [onChatClick]);
 
   // Fonction pour générer les cartes de tarification depuis les règles de pricing
-  const getPricingCards = () => {
+  const pricingCards = useMemo(() => {
     // Utiliser les règles de pricing pour construire les cartes selon la maquette
     // La structure doit toujours être : GRATUIT | TIER2 | TIER3
 
@@ -168,9 +168,7 @@ export default function PricingCalculator({
         description: "Tarif dégressif",
       },
     ];
-  };
-
-  const pricingCards = getPricingCards();
+  }, [tarifs]);
 
   return (
     <section
@@ -522,3 +520,5 @@ export default function PricingCalculator({
     </section>
   );
 }
+
+export default React.memo(PricingCalculator);

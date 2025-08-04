@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 import { fetchTarifs, TarifAPI } from "../../../utils/api";
+import { debugLog } from "../../../utils/debug";
 
 interface PricingBreakdown {
   free: number;
@@ -48,16 +49,15 @@ export function usePricing(options: UsePricingOptions = {}) {
     queryKey: ["tarifs", "public"],
     queryFn: async () => {
       if (enableDebugLogs) {
-        console.log("🔄 [usePricing] Fetching tarifs publics...");
+        debugLog("🔄 [usePricing] Fetching tarifs publics...");
       }
       const data = await fetchTarifs();
       if (enableDebugLogs) {
-        console.log(
+        debugLog(
           "✅ [usePricing] Tarifs publics récupérés:",
-          data.length,
-          "tarifs"
+          data.length + " tarifs"
         );
-        console.log(
+        debugLog(
           "📋 [usePricing] Détail des tarifs reçus:",
           data.map((t) => ({
             id: t.id,
@@ -78,24 +78,23 @@ export function usePricing(options: UsePricingOptions = {}) {
 
   // Gestion des erreurs avec un effet séparé
   if (error && enableDebugLogs) {
-    console.error("❌ Erreur lors du fetch des tarifs:", error);
+    debugLog("❌ Erreur lors du fetch des tarifs:", error);
   }
 
   const pricingRules = useMemo(() => {
     const tarifsArray = Array.isArray(tarifs) ? tarifs : [];
     if (tarifsArray.length > 0) {
       if (enableDebugLogs) {
-        console.log(
+        debugLog(
           "📊 Calcul des règles de pricing depuis",
-          tarifsArray.length,
-          "tarifs"
+          tarifsArray.length + " tarifs"
         );
       }
       return extractPricingRules(tarifsArray);
     }
     // Fallback sur les règles par défaut si les tarifs ne sont pas disponibles
     if (enableDebugLogs) {
-      console.log("⚠️ Utilisation des règles de pricing par défaut");
+      debugLog("⚠️ Utilisation des règles de pricing par défaut");
     }
     return [
       { threshold: 10, price: 0, isFree: true },
@@ -131,16 +130,16 @@ export function usePricing(options: UsePricingOptions = {}) {
    */
   const refreshTarifs = useCallback(async () => {
     if (enableDebugLogs) {
-      console.log("🔄 Force refresh des tarifs publics...");
+      debugLog("🔄 Force refresh des tarifs publics...");
     }
     try {
       await refetch();
       if (enableDebugLogs) {
-        console.log("✅ Tarifs publics rafraîchis avec succès");
+        debugLog("✅ Tarifs publics rafraîchis avec succès");
       }
     } catch (error) {
       if (enableDebugLogs) {
-        console.error("❌ Erreur lors du refresh des tarifs:", error);
+        debugLog("❌ Erreur lors du refresh des tarifs:", error);
       }
     }
   }, [refetch, enableDebugLogs]);
@@ -151,7 +150,7 @@ export function usePricing(options: UsePricingOptions = {}) {
    */
   const invalidateCache = useCallback(async () => {
     if (enableDebugLogs) {
-      console.log("🗑️ Invalidation du cache des tarifs publics...");
+      debugLog("🗑️ Invalidation du cache des tarifs publics...");
     }
     await queryClient.invalidateQueries({
       queryKey: ["tarifs", "public"],
@@ -171,10 +170,9 @@ export function usePricing(options: UsePricingOptions = {}) {
     const isStale = now - dataUpdatedAt > staleTime;
 
     if (enableDebugLogs && isStale) {
-      console.log(
+      debugLog(
         "⏰ Cache des tarifs périmé, âge:",
-        (now - dataUpdatedAt) / 1000,
-        "secondes"
+        (now - dataUpdatedAt) / 1000 + " secondes"
       );
     }
 
@@ -276,7 +274,7 @@ function extractPricingRules(tarifs: TarifAPI[]): PricingRule[] {
       t.nom.toLowerCase().includes("page")
   );
 
-  console.log(
+  debugLog(
     "🔍 [extractPricingRules] Tarifs de correction trouvés:",
     correctionTarifs.length
   );
@@ -286,7 +284,7 @@ function extractPricingRules(tarifs: TarifAPI[]): PricingRule[] {
     // Organiser par prix croissant pour détecter la progressivité
     const sortedTarifs = correctionTarifs.sort((a, b) => a.prix - b.prix);
 
-    console.log(
+    debugLog(
       "📊 [extractPricingRules] Tarifs triés par prix:",
       sortedTarifs.map((t) => ({
         nom: t.nom,
@@ -306,7 +304,7 @@ function extractPricingRules(tarifs: TarifAPI[]): PricingRule[] {
       // ✅ CORRECTION: Convertir centimes → euros pour le calcul par page
       const prixEnEuros = sortedTarifs[0].prix / 100;
       rules.push({ threshold: 300, price: prixEnEuros });
-      console.log(
+      debugLog(
         `💰 [extractPricingRules] Règle tier2: ${sortedTarifs[0].prix} centimes → ${prixEnEuros}€/page`
       );
 
@@ -314,7 +312,7 @@ function extractPricingRules(tarifs: TarifAPI[]): PricingRule[] {
         // ✅ CORRECTION: Convertir centimes → euros pour le calcul par page
         const prixTier3EnEuros = sortedTarifs[1].prix / 100;
         rules.push({ threshold: Infinity, price: prixTier3EnEuros });
-        console.log(
+        debugLog(
           `💰 [extractPricingRules] Règle tier3: ${sortedTarifs[1].prix} centimes → ${prixTier3EnEuros}€/page`
         );
       } else {
@@ -323,7 +321,7 @@ function extractPricingRules(tarifs: TarifAPI[]): PricingRule[] {
           threshold: Infinity,
           price: prixTier3,
         });
-        console.log(
+        debugLog(
           `💰 [extractPricingRules] Règle tier3 calculée: ${prixTier3}€/page`
         );
       }
@@ -331,17 +329,17 @@ function extractPricingRules(tarifs: TarifAPI[]): PricingRule[] {
       // Fallback sur les règles par défaut
       rules.push({ threshold: 300, price: 2 });
       rules.push({ threshold: Infinity, price: 1 });
-      console.log(
+      debugLog(
         "⚠️ [extractPricingRules] Utilisation des règles par défaut (pas de tarifs correction)"
       );
     }
 
-    console.log("✅ [extractPricingRules] Règles finales:", rules);
+    debugLog("✅ [extractPricingRules] Règles finales:", rules);
     return rules;
   }
 
   // Fallback sur les règles par défaut
-  console.log(
+  debugLog(
     "⚠️ [extractPricingRules] Aucun tarif de correction trouvé - règles par défaut"
   );
   return [

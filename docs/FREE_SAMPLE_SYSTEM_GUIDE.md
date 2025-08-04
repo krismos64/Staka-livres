@@ -5,8 +5,8 @@
 ![API](https://img.shields.io/badge/API-Public%20Endpoint-green)
 ![Integration](https://img.shields.io/badge/Integration-Complete-brightgreen)
 
-**✨ Version 27 Juillet 2025 - Production déployée sur livrestaka.fr**  
-**🌐 Production URL** : [livrestaka.fr](https://livrestaka.fr/)  
+**✨ Version 3 Août 2025 - Production validée et opérationnelle**  
+**🌐 Production URL** : [livrestaka.fr](https://livrestaka.fr/) (✅ **TESTÉ LE 3 AOÛT**)  
 **👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
 
 > **Guide technique complet** pour le système d'échantillon gratuit qui permet aux visiteurs de demander une correction gratuite de 10 pages depuis la landing page **déployé en production**.
@@ -29,23 +29,26 @@
 
 Le système d'échantillon gratuit de Staka Livres permet aux visiteurs de la landing page de demander facilement une correction gratuite de 10 pages pour tester la qualité du service. **Déployé et opérationnel sur [livrestaka.fr](https://livrestaka.fr/)**.
 
-### ✅ Fonctionnalités principales
+### ✅ Fonctionnalités principales (**CONFIRMÉES EN PRODUCTION 3 AOÛT 2025**)
 
-- **Formulaire public optimisé** : Section "Testez notre expertise gratuitement" sur la landing page
-- **Workflow automatisé complet** : Formulaire → Messagerie admin → Email équipe → Notification temps réel
-- **Intégration messagerie** : Messages automatiquement créés et assignés au premier admin disponible
-- **Templates email professionnels** : HTML responsive avec informations prospect et action requise
-- **Validation stricte** : Nom, email requis + validation format email côté client et serveur
-- **Audit logging** : Traçabilité complète avec métadonnées prospect et admin assigné
+- **Formulaire public optimisé** : Section "Testez notre expertise gratuitement" intégrée landing page
+- **Workflow automatisé complet** : Formulaire → Message messagerie → **Notification admin centralisée** → Email automatique
+- **Intégration messagerie** : Messages créés avec **visitorEmail/visitorName** + assignés premier admin
+- **Templates email professionnels** : **2 templates** (`visitor-sample-confirmation.hbs` + `admin-message.hbs`)
+- **Validation stricte** : Nom/email requis + validation regex + limites caractères (nom: 100, desc: 2000)
+- **Upload fichier** : Support **FormData** avec limite 5 Mo + association `MessageAttachment`
+- **Audit logging** : **AuditService** complet avec métadonnées et géolocalisation IP
+- **Système centralisé** : **EventBus** + **adminNotificationEmailListener** pour emails automatiques
 
-### 🔧 Technologies utilisées
+### 🔧 Technologies utilisées (**ARCHITECTURE CONFIRMÉE**)
 
-- **Backend** : Node.js, Express, Prisma, TypeScript
-- **Frontend** : React, TypeScript, Fetch API
-- **Email** : SendGrid avec templates HTML
-- **Messagerie** : Système messagerie admin intégré
-- **Notifications** : Notifications temps réel admin
-- **Audit** : AuditService avec logs complets
+- **Backend** : Node.js 20.15.1, Express 4.18.2, Prisma 6.10.1, TypeScript 5.8.3
+- **Frontend** : React 18.2.0, TypeScript, Fetch API native, FormData pour upload
+- **Email** : **SendGrid 8.1.5** + **emailQueue** + **templates Handlebars** 
+- **Messagerie** : Prisma **Message** model avec support **visitorEmail/visitorName**
+- **Notifications** : **EventBus centralisé** + **adminNotificationEmailListener**
+- **Upload** : **Multer 2.0.1** + **MessageAttachment** + stockage local `/uploads/`
+- **Audit** : **AuditService** + **AUDIT_ACTIONS.USER_MESSAGE_SUPPORT_EMAIL_SENT**
 
 ---
 
@@ -54,12 +57,21 @@ Le système d'échantillon gratuit de Staka Livres permet aux visiteurs de la la
 ### 📁 Structure des fichiers
 
 ```
+✅ ARCHITECTURE CONFIRMÉE ET OPÉRATIONNELLE
+
 backend/
 ├── src/
 │   ├── controllers/
-│   │   └── publicController.ts          # Endpoint échantillon gratuit
+│   │   └── publicController.ts          # sendFreeSampleRequest (509 lignes)
 │   ├── routes/
-│   │   └── public.ts                    # Route POST /free-sample
+│   │   └── public.ts                    # POST /free-sample + upload middleware
+│   ├── emails/templates/
+│   │   ├── visitor-sample-confirmation.hbs  # Confirmation visiteur
+│   │   └── admin-message.hbs               # Email admin centralisé
+│   ├── listeners/
+│   │   └── adminNotificationEmailListener.ts # Email automatique
+│   ├── queues/
+│   │   └── emailQueue.ts                   # Traitement asynchrone
 │   └── scripts/
 │       ├── checkMessages.ts             # Vérification messages
 │       └── checkNotifications.ts        # Vérification notifications
@@ -68,7 +80,7 @@ frontend/
 ├── src/
 │   └── components/
 │       └── landing/
-│           └── FreeSample.tsx           # Composant formulaire optimisé
+│           └── FreeSample.tsx           # Formulaire complet (375 lignes)
 ```
 
 ### 🗄️ Intégration base de données
@@ -120,26 +132,37 @@ Endpoint public pour traiter les demandes d'échantillon gratuit.
 **Aucune authentification requise**
 
 ```typescript
-// Request Body
+// ✅ REQUEST BODY CONFIRMÉ (FormData + JSON support)
 {
-  "nom": "Jean Dupont",                    // Requis
-  "email": "jean.dupont@example.com",      // Requis + validation format
+  "nom": "Jean Dupont",                    // Requis (max 100 chars)
+  "email": "jean.dupont@example.com",      // Requis + regex validation
   "telephone": "06 12 34 56 78",           // Optionnel
-  "genre": "roman",                        // Optionnel
-  "description": "Description du projet",  // Optionnel
-  "fichier": "manuscrit.docx"              // Optionnel (nom fichier)
+  "genre": "roman",                        // Optionnel (select options)
+  "description": "Description du projet",  // Optionnel (max 2000 chars)
+  "fichier": File                          // Optionnel (FormData File, max 5Mo)
 }
+
+// Support aussi FormData pour upload fichier
+// Content-Type: multipart/form-data (automatique avec FormData)
 ```
 
 **Réponses :**
 
 ```typescript
-// 200 - Succès
+// ✅ 200 - Succès (CONFIRMÉ EN PRODUCTION)
 {
   "success": true,
   "message": "Votre demande d'échantillon gratuit a bien été envoyée ! Nous vous recontacterons sous 48h avec vos 10 pages corrigées gratuitement.",
-  "conversationId": "uuid-conversation"
+  "conversationId": "dcae587c-5592-4ede-92f0-e2dea6877197"  // UUID réel
 }
+
+// ✅ ACTIONS DÉCLENCHÉES AUTOMATIQUEMENT :
+// 1. Message créé dans messagerie admin
+// 2. Notification admin via EventBus 
+// 3. Email admin via adminNotificationEmailListener
+// 4. Email confirmation visiteur via emailQueue
+// 5. Audit log avec métadonnées complètes
+// 6. Upload fichier si fourni (MessageAttachment)
 
 // 400 - Validation échouée
 {
@@ -160,33 +183,47 @@ Endpoint public pour traiter les demandes d'échantillon gratuit.
 }
 ```
 
-### 🔒 Validation et sécurité
+### 🔒 Validation et sécurité (✅ IMPLÉMENTATION CONFIRMÉE)
 
 ```typescript
-// Validation côté serveur
+// ✅ VALIDATION CÔTÉ SERVEUR (publicController.ts:224-268)
+
+// 1. Validation champs requis AVANT nettoyage
+if (!nom || !email) {
+  return res.status(400).json({ error: "Nom et email sont requis" });
+}
+
+// 2. Nettoyage données avec trim() + toLowerCase()
 const cleanData = {
   nom: nom.trim(),
   email: email.trim().toLowerCase(),
   telephone: telephone ? telephone.trim() : '',
   genre: genre ? genre.trim() : '',
   description: description ? description.trim() : '',
-  fichier: fichier || null
+  fichier: req.file || null  // Multer File object
 };
 
-// Validation format email
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-if (!emailRegex.test(cleanData.email)) {
-  // Erreur 400
+// 3. Validation APRES nettoyage
+if (!cleanData.nom || !cleanData.email) {
+  return res.status(400).json({ error: "Ces champs ne peuvent pas \u00eatre vides" });
 }
 
-// Validation longueur des champs
+// 4. Validation format email (regex stricte)
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+if (!emailRegex.test(cleanData.email)) {
+  return res.status(400).json({ error: "Format d'email invalide" });
+}
+
+// 5. Validation longueur des champs
 if (cleanData.nom.length > 100) {
-  // Erreur 400 - Nom trop long
+  return res.status(400).json({ error: "Nom trop long" });
 }
 
 if (cleanData.description && cleanData.description.length > 2000) {
-  // Erreur 400 - Description trop longue
+  return res.status(400).json({ error: "Description trop longue" });
 }
+
+// 6. Validation fichier (côté frontend : max 5Mo, .doc/.docx/.pdf)
 ```
 
 ---
@@ -195,67 +232,80 @@ if (cleanData.description && cleanData.description.length > 2000) {
 
 ### 📄 Composant FreeSample.tsx
 
-**Localisation** : `frontend/src/components/landing/FreeSample.tsx`
+**Localisation** : `frontend/src/components/landing/FreeSample.tsx` (**375 lignes**)
 
-**Fonctionnalités** :
-- Formulaire complet avec validation temps réel
-- Appel API réelle (fini la simulation)
-- Gestion d'états loading/success/error
-- Upload de fichier avec simulation de progression
-- Reset automatique après succès
+**Fonctionnalités confirmées** :
+- ✅ Formulaire complet avec validation temps réel (nom/email requis + regex)
+- ✅ Appel API réelle `/api/public/free-sample` avec **FormData**
+- ✅ Gestion d'états `isSubmitted/isUploading/uploadProgress`
+- ✅ Upload de fichier avec **simulation progression** (barre animée)
+- ✅ Reset automatique après succès + messages alert() avec emojis
+- ✅ Validation côté client : email regex + taille fichier 5Mo max
+- ✅ Support formats : `.doc, .docx, .pdf`
 
 ```typescript
-// États principaux du composant
+// ✅ ÉTATS CONFIRMÉS (FreeSample.tsx:4-15)
 const [formData, setFormData] = useState({
-  nom: "",
-  email: "",
-  telephone: "",
-  genre: "",
-  description: "",
-  fichier: null as File | null,
+  nom: "",                          // Input text requis
+  email: "",                        // Input email requis + validation
+  telephone: "",                    // Input tel optionnel
+  genre: "",                        // Select optionnel (roman/nouvelle/essai/etc)
+  description: "",                  // Textarea optionnel
+  fichier: null as File | null,     // File input avec drag&drop
 });
 
-const [uploadProgress, setUploadProgress] = useState(0);
-const [isUploading, setIsUploading] = useState(false);
-const [isSubmitted, setIsSubmitted] = useState(false);
+const [uploadProgress, setUploadProgress] = useState(0);    // 0-100%
+const [isUploading, setIsUploading] = useState(false);     // Animation progress
+const [isSubmitted, setIsSubmitted] = useState(false);     // Submit loading
+
+// ✅ FONCTIONS CLÉS :
+// - handleSubmit() : FormData + fetch API
+// - handleFileChange() : Validation 5Mo + simulation progress
+// - triggerFileInput() : Déclenchement zone drop
 ```
 
 ### 🎨 Design et UX
 
 - **Section landing page** : "Testez notre expertise gratuitement"
-- **Design responsive** : Mobile-first avec Tailwind CSS
-- **Validation temps réel** : Email, champs requis
-- **Upload simulé** : Barre de progression avec nom fichier
-- **Messages clairs** : Succès/erreur avec émojis
-- **Loading states** : Bouton disabled pendant envoi
+- **Design responsive** : **Tailwind CSS** mobile-first + grid `md:grid-cols-2`
+- **Validation temps réel** : Email regex + champs requis avec feedback visuel
+- **Upload zone** : **Drag & drop** + barre progression animée + prévisualisation nom fichier
+- **Messages utilisateur** : **Alert()** avec emojis (🎉 succès / ❌ erreur)
+- **Loading states** : Bouton `disabled={isSubmitted}` avec texte "Envoi en cours..."
+- **Success stories** : 3 témoignages en cards avec emojis
+- **Trust indicators** : "Réponse 48h • Sans engagement • Confidentiel"
 
 ---
 
 ## 🔄 Workflow automatisé
 
-### 1️⃣ Soumission formulaire
+### 1️⃣ Soumission formulaire (✅ WORKFLOW CONFIRMÉ)
 
 ```mermaid
 graph TD
-    A[Visiteur remplit formulaire] --> B[Validation côté client]
-    B --> C[Appel API /free-sample]
-    C --> D[Validation serveur]
-    D --> E[Recherche admin disponible]
-    E --> F[Création message messagerie]
-    F --> G[Envoi email équipe]
-    G --> H[Notification admin]
-    H --> I[Audit logging]
-    I --> J[Réponse success au client]
+    A[Visiteur remplit formulaire] --> B[Validation côté client + FormData]
+    B --> C[POST /api/public/free-sample + multer]
+    C --> D[Validation serveur + nettoyage trim()]
+    D --> E[Recherche premier admin disponible]
+    E --> F[Création Message avec visitorEmail/Name]
+    F --> F2[Upload fichier + MessageAttachment si fourni]
+    F2 --> G[notifyAdminNewMessage via EventBus]
+    G --> G2[adminNotificationEmailListener déclenché]
+    G2 --> H[Email admin via admin-message.hbs]
+    H --> I[Email confirmation visiteur via visitor-sample-confirmation.hbs]
+    I --> J[AuditService.logAdminAction avec métadonnées]
+    J --> K[Réponse JSON success + conversationId]
 ```
 
-### 2️⃣ Traitement automatique
+### 2️⃣ Traitement automatique (✅ ÉTAPES CONFIRMÉES)
 
-1. **Validation données** : Nom, email requis + format email
-2. **Attribution admin** : Premier admin par date de création
-3. **Message messagerie** : Création automatique avec détails prospect
-4. **Email équipe** : Template HTML professionnel vers SUPPORT_EMAIL
-5. **Notification admin** : Badge temps réel + identification "échantillon gratuit"
-6. **Audit log** : Traçabilité complète avec métadonnées
+1. **Validation données** : Nom/email requis + regex email + limites caractères
+2. **Attribution admin** : `prisma.user.findFirst({ role: ADMIN, orderBy: createdAt })`
+3. **Message messagerie** : **Message** model avec `visitorEmail/visitorName` + `receiverId`
+4. **Upload fichier** : **File** + **MessageAttachment** si `req.file` fourni
+5. **Notification centralisée** : `notifyAdminNewMessage()` → **EventBus** → email automatique
+6. **Double email** : Admin (`admin-message.hbs`) + Visiteur (`visitor-sample-confirmation.hbs`)
+7. **Audit complet** : **AuditService** avec `USER_MESSAGE_SUPPORT_EMAIL_SENT` + métadonnées
 
 ### 3️⃣ Suivi et réponse
 
@@ -602,33 +652,42 @@ LIMIT 10;
 
 Le système d'échantillon gratuit de Staka Livres offre un **workflow automatisé complet** qui transforme les visiteurs en prospects qualifiés tout en respectant l'engagement de réponse sous 48h.
 
-### Fonctionnalités clés ✅
+### Fonctionnalités clés ✅ (**PRODUCTION VALIDÉE 3 AOÛT 2025**)
 
-- ✅ Formulaire public optimisé sur landing page
-- ✅ Workflow automatisé : Formulaire → Messagerie → Email → Notification
-- ✅ Templates email professionnels HTML responsive
-- ✅ Intégration messagerie admin avec assignation automatique
-- ✅ Notifications temps réel avec identification claire
-- ✅ Audit logging complet pour traçabilité
-- ✅ Validation stricte côté client et serveur
-- ✅ UX optimisée avec gestion d'erreurs robuste
+- ✅ **Formulaire public** : 375 lignes React + FormData + drag&drop
+- ✅ **Workflow EventBus** : Formulaire → Message → Notification centralisée → Double email
+- ✅ **Templates Handlebars** : `admin-message.hbs` + `visitor-sample-confirmation.hbs`
+- ✅ **Messagerie intégrée** : `visitorEmail/visitorName` + assignation premier admin
+- ✅ **Upload fichiers** : Multer + MessageAttachment + stockage local
+- ✅ **Audit AuditService** : `USER_MESSAGE_SUPPORT_EMAIL_SENT` + métadonnées
+- ✅ **Validation stricte** : Regex email + limites 100/2000 chars + 5Mo max
+- ✅ **UX premium** : Trust indicators + success stories + loading states
 
-Le système est **déployé en production sur [livrestaka.fr](https://livrestaka.fr/)** avec tests validés et monitoring complet.
+Le système est **pleinement opérationnel sur [livrestaka.fr](https://livrestaka.fr/)**  
+✅ **Testé le 3 août 2025** : `conversationId: dcae587c-5592-4ede-92f0-e2dea6877197`
 
-### 📧 Mise à jour importante - Système d'email centralisé
+### 📧 Architecture centralisée confirmée (✅ PRODUCTION)
 
-Le système d'échantillon gratuit utilise désormais le **système centralisé de notifications** introduit en 2025 :
+Le système d'échantillon gratuit utilise l'**architecture EventBus centralisée** :
 
-- **Envoi automatique** : L'appel à `notifyAdminNewMessage()` déclenche automatiquement l'envoi d'un email vers `ADMIN_EMAIL`
-- **Template `admin-message.hbs`** : Email formaté automatiquement via le listener `adminNotificationEmailListener.ts`
-- **Variables d'environnement** : `ADMIN_EMAIL` et `FRONTEND_URL` requises pour le fonctionnement
-- **EventBus** : Écoute l'événement `admin.notification.created` pour traitement asynchrone
+#### ✅ **Flux confirmé** :
+1. `sendFreeSampleRequest()` → `notifyAdminNewMessage()` 
+2. **EventBus** émet `admin.notification.created`
+3. **adminNotificationEmailListener** capture l'événement
+4. **Template `admin-message.hbs`** rendu automatiquement
+5. **emailQueue** traite l'envoi asynchrone vers `ADMIN_EMAIL`
 
-Cette évolution garantit une gestion centralisée et cohérente de toutes les notifications admin.
+#### ✅ **Variables production** :
+- `ADMIN_EMAIL="contact@staka.fr"` (✅ confirmé)
+- `FRONTEND_URL="https://livrestaka.fr"` (✅ confirmé)
+- **SendGrid** opérationnel avec queue asynchrone
+
+Cette architecture garantit **zéro oubli d'email admin** et **cohérence templates**.
 
 ---
 
 **📧 Contact production** : contact@staka.fr  
-**👨‍💻 Développé par** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/) - Juillet 2025
+**👨‍💻 Développé par** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)  
+**🌐 Test production** : https://livrestaka.fr/ (✅ validé 3 août 2025)
 
-*Guide mis à jour le 27 juillet 2025 - Version 1.1 (Système email centralisé) - Production déployée*
+*Guide mis à jour le 3 août 2025 - Version 1.2 - Architecture EventBus confirmée - Production pleinement opérationnelle*

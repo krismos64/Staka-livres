@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
 RUN corepack enable
 
 # Copy package files (ne pas copier node_modules du host)
-COPY frontend/package.json frontend/yarn.lock* frontend/package-lock.json* frontend/pnpm-lock.yaml* ./
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 
 # Install dependencies (sera dans le volume isolé)  
 # Force la recompilation des modules natifs pour ARM64
@@ -29,8 +29,13 @@ RUN if [ -f yarn.lock ]; then \
       npm install @rollup/rollup-linux-arm64-gnu --save-optional || true; \
     fi
 
-# Copy shared types
-COPY shared/ /shared
+# Copy shared types  
+COPY ../shared/ /shared
+
+# Copy frontend source code
+COPY . ./
+
+WORKDIR /app
 
 # Expose Vite dev server port
 EXPOSE 5173

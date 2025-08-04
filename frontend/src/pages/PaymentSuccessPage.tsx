@@ -57,6 +57,46 @@ export default function PaymentSuccessPage({
     }
   }, [sessionId, processingComplete]);
 
+  // Google Ads conversion tracking
+  useEffect(() => {
+    // N'injecter le script que si le paiement est complètement traité
+    if (processingComplete && sessionId) {
+      // Vérifier si le script n'est pas déjà injecté
+      if (!window.gtag && !document.querySelector('script[src*="googletagmanager.com/gtag/js"]')) {
+        
+        // Injecter le script gtag.js de manière asynchrone
+        const gtagScript = document.createElement('script');
+        gtagScript.async = true;
+        gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=AW-958038378';
+        document.head.appendChild(gtagScript);
+
+        // Initialiser gtag et configurer Google Ads
+        gtagScript.onload = () => {
+          window.dataLayer = window.dataLayer || [];
+          function gtag(...args: any[]) {
+            window.dataLayer?.push(args);
+          }
+          
+          // Attacher gtag à window pour usage global
+          window.gtag = gtag;
+          
+          gtag('js', new Date());
+          gtag('config', 'AW-958038378');
+          
+          console.log('[Google Ads] Tag de conversion injecté');
+        };
+
+        // Gérer les erreurs de chargement
+        gtagScript.onerror = () => {
+          console.error('[Google Ads] Erreur lors du chargement du script');
+        };
+      } else if (window.gtag) {
+        // Si gtag existe déjà, juste logger la conversion
+        console.log('[Google Ads] Tag de conversion déjà présent - événement enregistré');
+      }
+    }
+  }, [processingComplete, sessionId]);
+
   const handleRetryProcessing = () => {
     setError(null);
     setIsProcessing(true);

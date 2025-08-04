@@ -1,3 +1,5 @@
+import { debugLog } from "../../utils/debug";
+
 interface AboutProps {
   onChatClick?: () => void;
 }
@@ -8,14 +10,14 @@ export default function About({ onChatClick }: AboutProps) {
       onChatClick();
     } else {
       // Simulation d'ouverture du chat (fallback)
-      console.log("Ouverture du chat...");
+      debugLog("Ouverture du chat...");
       alert("Chat en cours d'ouverture... 💬");
     }
   };
 
   const handleBookingClick = () => {
     // Simulation d'ouverture de la modal de réservation
-    console.log("Ouverture de la modal de réservation...");
+    debugLog("Ouverture de la modal de réservation...");
     // Ici on pourrait intégrer un vrai système de réservation
     alert("Système de réservation en cours d'ouverture... 📅");
   };
@@ -102,6 +104,7 @@ export default function About({ onChatClick }: AboutProps) {
                     <a
                       href="https://wa.me/33615078152?text=Bonjour,%20j'aimerais%20des%20informations%20sur%20vos%20services%20de%20correction%20de%20manuscrit"
                       target="_blank"
+                      rel="noopener noreferrer"
                       className="text-green-600 hover:underline"
                     >
                       06 15 07 81 52

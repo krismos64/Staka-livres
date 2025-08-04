@@ -388,8 +388,6 @@ export interface UpdateConversationRequest {
   titre?: string;
 }
 
-export * from "../../../shared/types";
-
 // Types étendus spécifiques au frontend
 export interface UserDetailed extends User {
   avatar?: string;

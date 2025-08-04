@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@shared": path.resolve(__dirname, "../shared/types"),
+      "@/*": path.resolve(__dirname, "./src"),
     },
   },
   optimizeDeps: {
@@ -16,7 +16,7 @@ export default defineConfig({
   },
   server: {
     host: "0.0.0.0",
-    port: 3000,
+    port: 5173,
     strictPort: true,
     allowedHosts: ["host.docker.internal", "localhost", "127.0.0.1"],
     watch: {
@@ -25,7 +25,7 @@ export default defineConfig({
     },
     proxy: {
       "/api": {
-        target: "http://staka_backend_dev:3000",
+        target: "http://backend:3001",
         changeOrigin: true,
         // Ne pas supprimer /api car le backend l'attend maintenant
       },

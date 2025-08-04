@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { debugLog } from "../../utils/debug";
 
 interface BlogArticle {
   id: string;
@@ -20,7 +21,7 @@ export default function Blog() {
 
   const handleNewsletterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Newsletter blog inscription:", newsletterEmail);
+    debugLog("Newsletter blog inscription:", newsletterEmail);
     setNewsletterEmail("");
   };
 

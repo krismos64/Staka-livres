@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { debugLog, errorLog } from "../../utils/debug";
 
 export default function FreeSample() {
   const [formData, setFormData] = useState({
@@ -77,7 +78,7 @@ export default function FreeSample() {
         );
       }
     } catch (error) {
-      console.error("Erreur lors de l'envoi de la demande:", error);
+      errorLog("Erreur lors de l'envoi de la demande:", error);
       alert(
         "❌ Erreur de connexion. Veuillez vérifier votre connexion internet et réessayer."
       );
