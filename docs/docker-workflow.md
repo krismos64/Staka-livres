@@ -1,46 +1,78 @@
-# 🐳 Workflow Docker Staka-Livres - Simplifié
+# 🐳 Workflow Docker Staka-Livres - Optimisé
 
 ![Production](https://img.shields.io/badge/Status-Production%20Deployed-brightgreen)
 ![Live](https://img.shields.io/badge/Live-livrestaka.fr-blue)
-![Docker](https://img.shields.io/badge/Docker-Simplifié-blue)
+![Docker](https://img.shields.io/badge/Docker-Optimis%C3%A9-blue)
+![Local Storage](https://img.shields.io/badge/Storage-Local%20Unified-green)
 
-Guide simplifié du workflow Docker dev → prod pour Staka-Livres.
+Guide complet du workflow Docker dev → prod pour Staka-Livres avec stockage local unifié.
 
-**✨ Version 3 Août 2025 - Architecture simplifiée & HTTPS Let's Encrypt**  
+**✨ Version 4 Août 2025 - Architecture optimisée & Stockage Local Unifié**  
 **🌐 Production** : [https://livrestaka.fr](https://livrestaka.fr/)  
 **👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
 
 > **🎯 Status** : Production HTTPS opérationnelle ✅  
-> **🔧 Configuration** : 2 docker-compose + 1 script deploy + SSL  
-> **🚀 Déploiement** : Docker Hub → VPS automatisé + Let's Encrypt
+> **🔧 Configuration** : 3 docker-compose + 1 script deploy + SSL  
+> **🚀 Déploiement** : Docker Hub → VPS automatisé + Let's Encrypt  
+> **📁 Stockage** : Local unifié (AWS S3 supprimé) + TypeScript optimisé
 
-## 📋 Architecture Simplifiée
+## 📋 Architecture Optimisée
 
 ```
 Staka-livres/
-├── docker-compose.yml          # 🛠️ Développement local (hot-reload)
+├── docker-compose.yml          # 🛠️ Développement local (volumes mounting)
+├── docker-compose.dev.yml      # 🔧 Développement avec build contexte racine
 ├── docker-compose.prod.yml     # 🚀 Production (images registry)
 ├── deploy.sh                   # 📦 Script unique de déploiement
+├── backend/
+│   ├── Dockerfile              # 🏭 Production multi-stage build
+│   ├── Dockerfile.dev          # 🛠️ Développement optimisé Prisma
+│   └── uploads/                # 📁 Stockage local unifié
+│       ├── projects/           # Fichiers projets clients
+│       ├── orders/             # Fichiers commandes
+│       ├── messages/           # Pièces jointes messages
+│       └── invoices/           # Factures PDF générées
+├── frontend/
+│   ├── Dockerfile              # 🏭 Production nginx + Vite build
+│   ├── Dockerfile.dev          # 🛠️ Développement HMR optimisé
+│   ├── nginx.conf              # ⚙️ Configuration nginx production
+│   ├── nginx-working.conf      # 🔧 Configuration nginx development
+│   └── nginx-http-only.conf    # 🌐 Configuration nginx sans SSL
 ├── scripts/
 │   ├── dev-reset.sh           # 🔄 Reset environnement dev
 │   └── testing/
-│       └── run-e2e-tests.sh   # 🧪 Tests E2E
-└── .env.deploy                # 🔧 Config VPS
+│       └── run-e2e-tests.sh   # 🧪 Tests E2E (34 tests Cypress)
+└── .env.deploy                # 🔧 Config VPS (exclu du Git)
 ```
 
 ## 🛠️ Développement Local
 
-### Lancement simple
+### Lancement simple (recommandé)
 ```bash
-# Avec Docker Desktop actif
+# Avec Docker Desktop actif - build optimisé
+docker-compose -f docker-compose.dev.yml up --build
+```
+
+### Lancement rapide (volumes)
+```bash
+# Pour développement rapide avec volumes
 docker-compose up --build
 ```
 
-**Services :**
-- Frontend : http://localhost:3000 (React + Vite dev server)
-- Backend : http://localhost:3001 (Node.js + Express + nodemon hot-reload)  
-- MySQL : localhost:3306 (Base de données avec seed complet)
-- API : http://localhost:3001/api (Routes REST + authentification JWT)
+**Services disponibles :**
+- **Frontend** : http://localhost:3000 (React + Vite HMR + TypeScript optimisé)
+- **Backend** : http://localhost:3001 (Node.js + Express + nodemon hot-reload)  
+- **MySQL** : localhost:3306 (Base de données avec seed complet)
+- **API** : http://localhost:3001/api (Routes REST + JWT + stockage local)
+- **Uploads** : `/backend/uploads/` (Stockage local unifié - remplace AWS S3)
+
+### 🔧 Configurations Docker disponibles
+
+| Fichier | Usage | Contexte | Volume | Hot Reload |
+|---------|-------|----------|--------|------------|
+| `docker-compose.yml` | Développement rapide | Dossier local | ✅ Volumes | ✅ HMR |
+| `docker-compose.dev.yml` | Build optimisé | Racine | ❌ Build | ✅ HMR |
+| `docker-compose.prod.yml` | Production | Images Docker Hub | ❌ Registry | ❌ Static |
 
 ## 🚀 Déploiement Production
 
@@ -55,13 +87,13 @@ docker-compose up --build
 ```
 
 **Le script fait automatiquement :**
-1. Build frontend + backend (avec context racine)
-2. Push vers Docker Hub (krismos64/frontend, krismos64/backend)
-3. Connexion SSH au VPS (51.254.102.133)
-4. Pull des nouvelles images
-5. Redémarrage des services avec docker-compose
-6. **Exécution du seed de production automatique**
-7. Nettoyage automatique (docker system prune)
+1. **Build multi-arch** (linux/amd64) frontend + backend avec contexte racine optimisé
+2. **Push vers Docker Hub** (krismos64/frontend, krismos64/backend) avec buildx
+3. **Connexion SSH au VPS** (51.254.102.133) sécurisée
+4. **Pull des nouvelles images** avec `docker compose pull`
+5. **Redémarrage avec force-recreate** pour appliquer toutes les modifications
+6. **Exécution du seed de production** automatique (utilisateurs + tarifs + FAQ + pages)
+7. **Nettoyage automatique** (docker system prune) pour libérer l'espace
 
 ## 🔧 Configuration
 
@@ -125,9 +157,24 @@ lsof -i :3000
 
 **Erreur contexte Docker build**
 ```bash
-# Le script deploy.sh utilise le bon contexte :
-docker build -t krismos64/frontend:latest -f ./frontend/Dockerfile .
+# Le script deploy.sh utilise le bon contexte multi-arch :
+docker buildx build --platform linux/amd64 -t krismos64/frontend:latest -f ./frontend/Dockerfile . --push
 # (contexte racine ., pas ./frontend)
+```
+
+**Erreur Prisma génération**
+```bash
+# Le Dockerfile.dev corrigé génère automatiquement le client Prisma
+# Si problème persiste, rebuilder sans cache :
+docker-compose -f docker-compose.dev.yml build --no-cache backend
+```
+
+**Erreurs TypeScript @shared imports**
+```bash
+# Les imports @shared ont été remplacés par des chemins relatifs
+# Si erreurs persistent, vérifier les imports dans :
+frontend/src/components/admin/CommandeStatusSelect.tsx
+frontend/src/types/shared.ts
 ```
 
 **HTTPS ne fonctionne pas**
@@ -201,7 +248,41 @@ curl https://livrestaka.fr/health
 
 ---
 
-## 📦 Nouvelles Fonctionnalités v3 (Août 2025)
+## 🆕 Améliorations Majeures v4 (4 Août 2025)
+
+### ✅ Migration AWS S3 → Stockage Local Unifié
+- **Suppression complète** des services AWS S3 et fichiers deprecated
+- **Stockage local** dans `/backend/uploads/` avec organisation par type :
+  - `/uploads/projects/` : Fichiers projets clients
+  - `/uploads/orders/` : Fichiers de commandes
+  - `/uploads/messages/` : Pièces jointes messagerie
+  - `/uploads/invoices/` : Factures PDF générées
+- **Configuration multer** automatique par endpoint
+- **Sécurité** : Validation de types de fichiers et tailles
+
+### ✅ Optimisations Docker & TypeScript
+- **Dockerfile.dev** corrigé avec génération Prisma fonctionnelle
+- **docker-compose.dev.yml** avec contexte racine pour builds optimisés
+- **Imports TypeScript** : suppression des imports `@shared` problématiques
+- **Configuration Vite** et **tsconfig.json** optimisés pour le développement
+- **Types partagés** : architecture locale robuste sans dépendances externes
+
+### ✅ Infrastructure & Configuration
+- **3 configurations Docker** : dev rapide, dev build, production
+- **nginx configurations** multiples selon l'environnement
+- **Scripts de déploiement** avec buildx multi-arch automatique
+- **Seed de développement** synchronisé avec la production
+- **Tests E2E** : 34 tests Cypress complets et fonctionnels
+
+### ✅ Nettoyage & Sécurité
+- **Suppression** de 12 fichiers deprecated et temp-fixed
+- **Suppression** des composants inutilisés (ErrorMessage, Loader)
+- **.env.deploy** exclu du Git pour la sécurité
+- **.gitignore** optimisé pour le nouveau système de fichiers
+
+---
+
+## 📦 Fonctionnalités v3 (Août 2025) - Précédentes
 
 ### ✅ Certificats SSL Automatiques
 - **Let's Encrypt** installé et configuré
@@ -233,9 +314,19 @@ curl -I https://livrestaka.fr/api/tarifs
 
 # Sauvegarder la base de données
 ssh root@51.254.102.133 "docker compose exec db mysqldump -u root -pStakaRootPass2024! stakalivres > /opt/staka/backup/db-$(date +%Y%m%d).sql"
+
+# Mettre à jour le seed de production (nouveau)
+scp backend/prisma/seed.ts root@51.254.102.133:/opt/staka-livres/backend/prisma/seed.ts
+ssh root@51.254.102.133 "cd /opt/staka-livres && docker compose exec backend npx ts-node prisma/seed.ts"
+
+# Vérifier l'espace disque stockage local
+ssh root@51.254.102.133 "du -sh /opt/staka-livres/backend/uploads/*"
+
+# Nettoyer les anciens fichiers (si nécessaire)
+ssh root@51.254.102.133 "find /opt/staka-livres/backend/uploads -name '*.tmp' -delete"
 ```
 
 ---
 
-**✅ Déploiement simplifié avec HTTPS complet + SSL automatique - Guide détaillé dans CLAUDE.md**
+**✅ Architecture Docker optimisée + Stockage Local Unifié + TypeScript corrigé - Guide détaillé dans CLAUDE.md**
 

@@ -10,7 +10,7 @@
 ![Production](https://img.shields.io/badge/Status-Production%20Deployed-success)
 ![HTTPS](https://img.shields.io/badge/HTTPS-Let's%20Encrypt-green)
 
-**📅 Mis à jour le 3 août 2025 par Christophe Mostefaoui - https://livrestaka.fr/**
+**📅 Mis à jour le 4 août 2025 par Christophe Mostefaoui - https://livrestaka.fr/**
 
 ---
 
@@ -18,18 +18,18 @@
 
 Backend REST API pour **Staka Livres**, plateforme professionnelle de correction de manuscrits déployée en production avec **HTTPS Let's Encrypt** (https://livrestaka.fr/) via Docker. Architecture enterprise-grade avec TypeScript, Express, Prisma ORM, stockage local unifié et intégrations Stripe avancées.
 
-### 🏆 **Métriques Production (3 Août 2025)**
+### 🏆 **Métriques Production (4 Août 2025)**
 
 | Composant | Détail | Statut |
 |-----------|--------|---------|
 | **🌐 Endpoints API** | 124+ endpoints répartis sur 30 fichiers routes | ✅ Production |
-| **📁 Contrôleurs** | 26 contrôleurs spécialisés | ✅ Optimisés |
-| **🧪 Tests** | 23 fichiers tests source (87% couverture) | ✅ Robustes |
+| **📁 Contrôleurs** | 26 contrôleurs spécialisés + unifiedFileController | ✅ Optimisés |
+| **🧪 Tests** | 44 fichiers tests (87% couverture) | ✅ Robustes |
 | **🗄️ Base de données** | 16 modèles Prisma avec relations avancées | ✅ Optimisée |
 | **🔒 Sécurité** | JWT + RGPD + Audit logs + Rate limiting + HTTPS | ✅ Conforme |
 | **📧 Emails** | 26 templates HTML + queue asynchrone + événementiel | ✅ Production |
 | **💳 Paiements** | Stripe webhooks + facturation PDF + méthodes sauvegardées | ✅ Opérationnel |
-| **📁 Stockage** | Migration AWS S3 → Stockage local unifié | ✅ Optimisé |
+| **📁 Stockage** | Stockage local unifié (AWS S3 migré) | ✅ Optimisé |
 | **🐳 Déploiement** | Docker + HTTPS Let's Encrypt + Auto-renewal | ✅ Production |
 
 ---
@@ -69,7 +69,7 @@ backend/
 │   │   ├── commandeClientController.ts # Commandes côté client avec notifications
 │   │   ├── fileController.ts       # Contrôleur fichiers alternatif
 │   │   ├── publicCommandeController.ts # Commandes publiques visiteurs
-│   │   └── unifiedFileController.ts # Gestion fichiers unifiée (migration S3→Local)
+│   │   └── unifiedFileController.ts # 🆕 Gestion fichiers unifiée (stockage local)
 │   ├── routes/                     # 30+ fichiers routes REST
 │   │   ├── auth.ts                 # Routes authentification
 │   │   ├── public.ts               # Routes publiques (contact, échantillons)
@@ -901,9 +901,9 @@ const emailQueue = {
 
 ## ⚡ **Architecture Événementielle & Services Avancés**
 
-### 🎯 **EventBus Centralisé**
+### 🎯 **EventBus Centralisé (Août 2025)**
 
-Le backend utilise une architecture événementielle moderne pour découpler les services et automatiser les workflows :
+Le backend utilise une **architecture événementielle moderne** pour découpler les services et automatiser les workflows de notifications. **Chaque notification créée déclenche automatiquement un email admin correspondant** :
 
 ```typescript
 // EventBus singleton pattern
@@ -1778,12 +1778,13 @@ SHOW INDEX FROM table_name;    # Index disponibles
    - Tests S3 conditionnels avec skip intelligent
    - Synchronisation Stripe avec mode verbose
 
-6. **Migration S3→Local Terminée et Stockage Local Unifié (Août 2025)**
-   - Variables AWS supprimées du `.env.example`
-   - Upload local avec Multer dans `/uploads/`
-   - Service `unifiedFileController` pour stockage unifié
+6. **Stockage Local Unifié (Août 2025) - Migration AWS S3 Terminée**
+   - 🆕 `unifiedFileController.ts` : Gestion uniforme projets + messages + commandes
+   - Variables AWS supprimées du `.env.example` + script `cleanup-aws-env.js`
+   - Upload local avec Multer dans `/uploads/` (3 sous-dossiers)
    - Tests S3 désactivés avec helper `skipIfNoAws`
-   - Code AWS déplacé dans `/deprecated-aws/`
+   - Code AWS déplacé dans `/deprecated-aws/` (non utilisé)
+   - **Architecture unifiée** : memes endpoints pour tous types de fichiers
 
 7. **Système d'Activation Utilisateur**
    - `activationController.ts` pour activation comptes
@@ -1791,26 +1792,27 @@ SHOW INDEX FROM table_name;    # Index disponibles
    - Templates emails activation dédiés
    - Workflow activation avec tokens sécurisés
 
-### 🔢 **Métriques Finales (3 Août 2025)**
+### 🔢 **Métriques Finales (4 Août 2025)**
 
 - **API** : 124+ endpoints sur 30 fichiers routes
-- **Contrôleurs** : 26 contrôleurs spécialisés
-- **Tests** : 23 fichiers tests source (87% couverture)
+- **Contrôleurs** : 26 contrôleurs spécialisés + unifiedFileController
+- **Tests** : 44 fichiers tests (87% couverture)
 - **Services** : 16 services métier
 - **Base de données** : 16 modèles Prisma avec 9 statuts commandes
 - **Déploiement** : HTTPS Let's Encrypt avec auto-renewal
-- **Templates** : 25 templates emails HTML (+3 activation)
+- **Templates** : 26 templates emails HTML (admin + user + client)
 - **Scripts** : 29 scripts npm optimisés (+9 secrets/build)
 - **Audit** : 40+ actions standardisées
-- **Migration** : S3→Local terminée (juillet 2025)
+- **Stockage** : Local unifié (AWS S3 migré - août 2025)
+- **Notifications** : Architecture événementielle centralisée
 
 ---
 
-**✨ Développé par Christophe Mostefaoui - Version Production 3 Août 2025**  
+**✨ Développé par Christophe Mostefaoui - Version Production 4 Août 2025**  
 **🌐 Site Web :** https://livrestaka.fr/ | **👨‍💻 Développeur :** https://christophe-dev-freelance.fr/ | **📧 Contact :** contact@staka.fr  
 **🔒 Architecture enterprise-grade avec HTTPS Let's Encrypt**  
-**🚀 API REST 124+ endpoints production-ready avec 87% coverage tests**  
+**🚀 API REST 124+ endpoints production-ready avec 44 fichiers tests (87% coverage)**  
 **📧 Système notifications centralisé avec 26 templates email professionnels**  
 **🎯 Architecture événementielle avec EventBus, listeners et queues asynchrones**  
 **🔍 Système d'audit enterprise avec 40+ actions standardisées et middleware automatique**  
-**📁 Migration S3→Local terminée - Stockage fichiers local unifié optimisé**
+**🆕 Stockage local unifié (AWS S3 migré) - unifiedFileController pour tous types fichiers**

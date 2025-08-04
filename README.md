@@ -17,11 +17,11 @@
 
 | Composant                  | Détail                                 | Statut           |
 | -------------------------- | -------------------------------------- | ---------------- |
-| **📁 Contrôleurs Backend** | 26 contrôleurs spécialisés             | ✅ Production    |
+| **📁 Contrôleurs Backend** | 26 contrôleurs spécialisés + unifiedFileController | ✅ Production    |
 | **🌐 Endpoints API**       | 70+ endpoints REST sécurisés           | ✅ Fonctionnels  |
 | **⚛️ Composants React**    | 79 composants modulaires              | ✅ Optimisés     |
 | **📄 Pages Frontend**      | 34 pages complètes + landing optimisée | ✅ Responsive    |
-| **🧪 Tests Backend**       | 57 tests (couverture optimisée)              | ✅ Robustes      |
+| **🧪 Tests Backend**       | 44 fichiers tests (87% couverture)          | ✅ Robustes      |
 | **🧪 Tests Frontend**      | 9 fichiers + architecture séparée      | ✅ Optimisés     |
 | **🔍 Tests E2E Cypress**   | 34 tests Cypress + architecture robuste | ✅ Enterprise    |
 | **🗄️ Modèles BDD**         | 15 modèles interconnectés              | ✅ Complets      |
@@ -64,7 +64,7 @@
 - **Système notifications** centralisé (interface + emails)
 - **Support client intégré** via formulaires publics
 - **Réservation consultations** depuis landing/espace client
-- **Templates emails** professionnels (22 templates HTML)
+- **Templates emails** professionnels (26 templates HTML)
 
 #### 📊 **Administration & Analytics**
 
@@ -93,22 +93,22 @@
 Staka-livres/
 ├── backend/                 # API Node.js + Express + Prisma
 │   ├── src/
-│   │   ├── controllers/     # 23 contrôleurs spécialisés
+│   │   ├── controllers/     # 26 contrôleurs spécialisés + unifiedFileController
 │   │   ├── routes/         # Routes REST avec middleware
 │   │   ├── services/       # Logique métier
 │   │   ├── events/         # Architecture événementielle
 │   │   ├── listeners/      # Email automation listeners
 │   │   ├── queues/         # Queue emails asynchrone
-│   │   ├── emails/         # Templates HTML (22 templates)
-│   │   └── __tests__/      # 57 tests (couverture optimisée)
+│   │   ├── emails/         # Templates HTML (26 templates)
+│   │   └── __tests__/      # 44 fichiers tests (87% couverture)
 │   └── prisma/             # Schéma BDD + migrations
 ├── frontend/               # React 18 + Vite + React Query
 │   ├── src/
 │   │   ├── components/     # 79 composants modulaires
 │   │   │   └── landing/    # 15 composants landing optimisés
 │   │   │       └── FloatingBubbles.tsx # Équipe experts interactif
-│   │   ├── pages/         # 28 pages complètes
-│   │   ├── hooks/         # 21 hooks React Query spécialisés
+│   │   ├── pages/         # 34 pages complètes + blog SEO
+│   │   ├── hooks/         # 33 hooks React Query spécialisés + useLocalUpload
 │   │   └── __tests__/     # Tests unitaires CI/CD
 │   ├── tests/             # Tests intégration (local)
 │   └── cypress/           # Tests E2E (34 tests Cypress)
@@ -369,7 +369,7 @@ docker compose build --no-cache
 - **EventBus centralisé** avec listeners spécialisés
 - **Double notification** : Interface clochette + Email automatique
 - **Queue asynchrone** pour traitement emails
-- **22 templates HTML** professionnels par type
+- **26 templates HTML** professionnels par type
 
 #### **Système Multi-Cible**
 
@@ -466,8 +466,8 @@ docker compose build --no-cache
 
 ### 🏗️ **Architecture & Développement**
 
-- **[Guide Backend API](docs/README-backend.md)** : 70+ endpoints avec exemples
-- **[Guide Frontend](docs/README-frontend.md)** : Architecture React + hooks
+- **[Guide Backend API](docs/README-backend.md)** : 124+ endpoints avec exemples
+- **[Guide Frontend](docs/README-frontend.md)** : 79 composants + 33 hooks + SEO complet
 - **[Guide Base de Données](docs/Base-de-donnees-guide.md)** : 15 modèles Prisma optimisés
 - **[Tests Complets](docs/TESTS_COMPLETE_GUIDE.md)** : Architecture 3 niveaux unifiée
 
@@ -496,7 +496,7 @@ docker compose build --no-cache
 ### ✅ **Version Production Déployée - 4 Août 2025**
 
 - **Application en production** : Déployée sur [livrestaka.fr](https://livrestaka.fr/)
-- **Infrastructure tests robuste** : 34 tests E2E Cypress + 57 tests backend
+- **Infrastructure tests robuste** : 34 tests E2E Cypress + 44 fichiers tests backend (87% couverture)
 - **Validation complète** : Tous workflows critiques testés et opérationnels
 - **Documentation exhaustive** : 16 guides spécialisés mis à jour
 - **Architecture scalable** : Prête pour croissance commerciale
@@ -543,7 +543,7 @@ docker compose build --no-cache
 
 🚀 **Déploiement réussi** : Tous les workflows critiques opérationnels, système de tests E2E Cypress fonctionnel, architecture Docker optimisée.
 
-🔬 **Qualité production** : 34 tests E2E Cypress + 57 tests backend (couverture optimisée), validation continue des fonctionnalités.
+🔬 **Qualité production** : 34 tests E2E Cypress + 44 fichiers tests backend (87% couverture), validation continue des fonctionnalités.
 
 🎯 **Mission accomplie** : Application enterprise-grade déployée avec documentation exhaustive et support opérationnel.
 

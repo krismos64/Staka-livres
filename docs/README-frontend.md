@@ -11,7 +11,7 @@
 ![OVH](https://img.shields.io/badge/Deployed-OVH%20Cloud-blue)
 ![Live](https://img.shields.io/badge/Live-livrestaka.fr-blue)
 
-**📅 Mis à jour le 2 août 2025 par Christophe Mostefaoui**  
+**📅 Mis à jour le 4 août 2025 par Christophe Mostefaoui**  
 **🌐 Production URL** : [livrestaka.fr](https://livrestaka.fr/)  
 **👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)  
 **🔍 SEO Optimisé** : 100% conformité standards SEO modernes
@@ -22,14 +22,15 @@
 
 Frontend React pour **Staka Livres**, plateforme professionnelle de correction de manuscrits **déployée en production** sur [livrestaka.fr](https://livrestaka.fr/) via **VPS OVH** et Docker. Architecture moderne avec React 18, TypeScript, Tailwind CSS, React Query et système de tests séparés CI/CD vs local.
 
-### 🏆 **Métriques Frontend (2 Août 2025)**
+### 🏆 **Métriques Frontend (4 Août 2025)**
 
 | Composant            | Détail                                             | Statut              |
 | -------------------- | -------------------------------------------------- | ------------------- |
-| **⚛️ Composants**    | 77 composants modulaires TypeScript + SEOHead     | ✅ Production Ready |
-| **🎣 Hooks**         | 33 hooks personnalisés React Query                | ✅ Optimisés        |
-| **📄 Pages**         | 29 pages complètes responsive + SEO optimisé      | ✅ Production Ready |
-| **🧪 Tests**         | 9 fichiers + architecture séparée (85% couverture)| ✅ Robustes         |
+| **⚛️ Composants**    | 79 composants modulaires TypeScript + SEOHead     | ✅ Production Ready |
+| **🎣 Hooks**         | 33 hooks personnalisés React Query + useLocalUpload | ✅ Optimisés        |
+| **📄 Pages**         | 34 pages complètes responsive + SEO optimisé      | ✅ Production Ready |
+| **🧪 Tests**         | Architecture séparée CI/CD vs local (85% couverture)| ✅ Robustes         |
+| **📁 Stockage**      | Migration vers stockage local unifié (AWS S3 ✂️) | ✅ Optimisé         |
 | **🔍 Tests E2E**     | 34 tests Cypress 3 niveaux                        | ✅ Enterprise       |
 | **🎨 Design System** | Tailwind + Framer Motion + FloatingBubbles        | ✅ Moderne          |
 | **🚀 Performance**   | Lazy loading + code splitting + cache + SEO       | ✅ Optimisé         |
@@ -45,7 +46,7 @@ Frontend React pour **Staka Livres**, plateforme professionnelle de correction d
 ```
 frontend/
 ├── src/
-│   ├── components/                 # 76 composants modulaires
+│   ├── components/                 # 79 composants modulaires
 │   │   ├── admin/                 # 10 composants administration
 │   │   │   ├── AdminLayout.tsx    # Layout admin moderne sidebar
 │   │   │   ├── RequireAdmin.tsx   # Protection routes admin
@@ -76,7 +77,7 @@ frontend/
 │   │   │   ├── SkeletonLoader.tsx # Skeleton loading
 │   │   │   ├── ScrollToTopButton.tsx # Bouton scroll
 │   │   │   ├── ChatWidget.tsx     # Widget chat
-│   │   │   └── SEOHead.tsx        # 🆕 Composant SEO dynamique
+│   │   │   └── SEOHead.tsx        # Composant SEO dynamique (Open Graph + Schema.org)
 │   │   ├── forms/                 # 5 composants formulaires
 │   │   │   ├── LoginForm.tsx      # Formulaire connexion
 │   │   │   ├── SignupForm.tsx     # Formulaire inscription
@@ -89,7 +90,7 @@ frontend/
 │   │   │   ├── PricingCalculator.tsx # Calculateur tarifs
 │   │   │   ├── FreeSample.tsx     # Échantillon gratuit
 │   │   │   ├── Contact.tsx        # Section contact
-│   │   │   ├── FloatingBubbles.tsx # Animation bulles expertes (NOUVEAU)
+│   │   │   ├── FloatingBubbles.tsx # Animation bulles expertes
 │   │   │   ├── Services.tsx       # Services offerts
 │   │   │   ├── Testimonials.tsx   # Témoignages clients
 │   │   │   ├── FAQ.tsx            # Questions fréquentes
@@ -144,8 +145,11 @@ frontend/
 │   │   ├── useInvoices.ts         # Facturation
 │   │   ├── usePricing.ts          # Tarification dynamique
 │   │   ├── useUserPreferences.ts  # Préférences utilisateur (NOUVEAU)
-│   │   └── ... (23 autres hooks)
-│   ├── pages/                     # 29 pages complètes
+│   │   ├── useLocalUpload.ts      # 🆕 Upload stockage local (remplace S3)
+│   │   ├── useProjectFiles.ts     # Gestion fichiers projets
+│   │   └── ... (21 autres hooks)
+│   ├── pages/                     # 34 pages complètes
+│   │   ├── blog/                  # 3 articles de blog SEO
 │   │   ├── admin/                 # 10 pages administration
 │   │   │   ├── AdminDashboard.tsx # Dashboard KPIs
 │   │   │   ├── AdminUtilisateurs.tsx # Gestion utilisateurs
@@ -166,7 +170,9 @@ frontend/
 │   │   ├── NotificationsPage.tsx  # Page notifications
 │   │   ├── HelpPage.tsx           # Page aide client
 │   │   ├── PaymentSuccessPage.tsx # Succès paiement (NOUVEAU)
-│   │   └── ... (10 autres pages)
+│   │   ├── CGVPage.tsx            # Conditions générales de vente
+│   │   ├── MentionsLegalesPage.tsx # Mentions légales
+│   │   └── ... (8 autres pages)
 │   ├── contexts/                  # Contextes React
 │   │   ├── AuthContext.tsx        # Contexte authentification
 │   │   └── ThemeContext.tsx       # Contexte thème
@@ -1032,11 +1038,11 @@ const PricingCalculator: React.FC = () => {
 
 ---
 
-## 🔍 **SEO & Optimisation Référencement (Innovation Août 2025)**
+## 🔍 **SEO & Optimisation Référencement (Août 2025)**
 
 ### 🎯 **SEO Complet Implémenté**
 
-**Optimisation SEO enterprise-grade** avec conformité 100% aux standards modernes des moteurs de recherche.
+**Optimisation SEO enterprise-grade** avec conformité 100% aux standards modernes des moteurs de recherche. Le composant `SEOHead` dynamique gère automatiquement les meta tags, Open Graph, Twitter Cards et données structurées Schema.org.
 
 #### 🏗️ **Architecture SEO**
 
@@ -2228,9 +2234,11 @@ volumes:
 ### 🧪 **Commandes Tests**
 
 ```bash
-# Tests unitaires (CI/CD optimisé)
-npm run test:unit        # Tests avec mocks uniquement
+# Tests unitaires (CI/CD optimisé) - Configuration séparée
+npm run test:unit        # Tests avec mocks uniquement (vite.config.ts)
 npm run test:coverage    # Coverage avec rapport HTML
+npm run test:integration # Tests avec backend (vite.config.integration.ts)
+npm run test:all         # Suite complète (local uniquement)
 
 # Tests intégration (local avec backend)
 npm run test:integration # Tests avec API réelle
@@ -2295,9 +2303,14 @@ curl http://localhost:3001/api/health  # Santé backend via proxy
 
 ```bash
 # Tests unitaires échouent en CI/CD
-- Vérifier exclusion tests/integration/ dans vite.config.ts
+- Utilise vite.config.ts (exclut tests/integration/)
 - S'assurer que les mocks sont corrects
 - Tests doivent être indépendants du backend
+
+# Migration stockage local (remplacement S3)
+- Tests deprecated-aws/ ne sont plus exécutés
+- Utiliser useLocalUpload au lieu de useUploadFile
+- Vérifier endpoints /api/files/ au lieu de S3
 
 # Tests intégration échouent en local
 - Vérifier que le backend tourne (docker compose up backend)
@@ -2461,7 +2474,8 @@ npx lighthouse http://localhost:3001 --view
 
 **✨ Développé par [Christophe Mostefaoui](https://christophe-dev-freelance.fr/) - Août 2025**  
 **🎨 Frontend React enterprise-grade déployé sur [livrestaka.fr](https://livrestaka.fr/)**  
-**⚛️ 77 composants + 33 hooks + 29 pages production-ready avec 85% coverage tests**  
+**⚛️ 79 composants + 33 hooks + 34 pages production-ready avec 85% coverage tests**  
 **🔍 SEO Complet** : Schema.org + Open Graph + robots.txt + sitemap + meta dynamiques  
-**🆕 Nouvelles fonctionnalités** : FloatingBubbles animation + PackSelectionModal + PaymentSuccessPage + SEOHead dynamique  
+**📁 Migration récente** : Stockage local unifié (AWS S3 ✂️) + Architecture tests séparée CI/CD  
+**🆕 Nouvelles fonctionnalités** : useLocalUpload + Pages légales + Blog SEO + Tests E2E 34 suites  
 **📧 Contact production** : contact@staka.fr
