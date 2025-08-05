@@ -5,7 +5,7 @@
 ![Demo](https://img.shields.io/badge/Demo-Fully%20Functional-purple)
 ![Backend](https://img.shields.io/badge/Backend-Operational-green)
 
-**✨ Version 28 Juillet 2025 - Production déployée sur livrestaka.fr**  
+**✨ Version 5 Août 2025 - Production déployée sur livrestaka.fr**  
 **🌐 Production URL** : [livrestaka.fr](https://livrestaka.fr/)  
 **👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
 
@@ -46,6 +46,8 @@ Le mode démonstration de Staka Livres permet aux visiteurs, prospects et client
 - **Frontend** : React 18, TypeScript 5, Context API
 - **Backend** : Node.js, Express, Prisma, TypeScript
 - **Base de données** : MySQL avec utilisateurs @demo.staka.fr
+- **Stockage fichiers** : Stockage local unifié (AWS S3 supprimé)
+- **Notifications** : EventBus centralisé avec 22 templates email
 - **State Management** : React Hooks, localStorage persistence
 - **UI/UX** : Tailwind CSS 3, animations, responsive design
 - **Timer** : JavaScript intervals avec gestion mémoire
@@ -67,6 +69,8 @@ backend/src/
 │       └── demo.ts                     # Routes sécurisées admin
 ├── services/
 │   └── demoService.ts                  # Service de génération (optionnel)
+├── deprecated-aws/                     # Ancien code AWS S3 (non utilisé)
+├── uploads/                            # Stockage local des fichiers
 └── routes/
     └── admin.ts                        # Intégration routes /api/admin/demo/*
 ```
@@ -82,8 +86,9 @@ frontend/src/
 │   ├── adminAPI.ts                     # API refresh/reset données démo
 │   ├── mockData.ts                     # Génération données fictives (fallback)
 │   └── testUtils.ts                    # Utilitaires tests démo
-└── hooks/
-    └── useDemoMode.ts                  # Hook intégré dans provider
+├── hooks/
+│   └── useLocalUpload.ts               # Hook upload local (AWS S3 supprimé)
+└── deprecated-aws/                     # Ancien code AWS S3 (non utilisé)
 ```
 
 ### 🗄️ Architecture backend-frontend
@@ -452,8 +457,9 @@ const DEMO_BOOK_TITLES = [
 - **6 utilisateurs fictifs** : Profils complets avec @demo.staka.fr, mots de passe hash, statuts actifs/inactifs
 - **10 commandes réalistes** : Tous statuts (EN_ATTENTE, EN_COURS, TERMINÉ, ANNULÉ), prix variables, dates échelonnées
 - **8 messages démo** : Conversations avec admin, sujets client service réalistes
+- **Fichiers stockés localement** : Stockage unifié dans /backend/uploads/ (AWS S3 supprimé)
+- **Notifications centralisées** : EventBus avec emails automatiques via 22 templates
 - **0 factures** : À implémenter selon besoins
-- **0 notifications** : À implémenter selon besoins
 
 ### 🔄 Workflow de rafraîchissement
 
@@ -830,7 +836,7 @@ Le système de mode démonstration de Staka Livres offre une **expérience utili
 - ✅ **Tests complets** : Validation manuelle et API automatisée
 - ✅ **Monitoring intégré** : Analytics, debugging, troubleshooting
 
-Le système est **déployé en production sur [livrestaka.fr](https://livrestaka.fr/)** et génère maintenant de **vraies données fictives en base de données** pour une démonstration réaliste des capacités de la plateforme.
+Le système est **déployé en production sur [livrestaka.fr](https://livrestaka.fr/)** et génère maintenant de **vraies données fictives en base de données** pour une démonstration réaliste des capacités de la plateforme. **Migration AWS S3 → stockage local complètement terminée** et système de notifications centralisé avec EventBus opérationnel.
 
 ### 🚀 Utilisation recommandée
 
@@ -856,6 +862,6 @@ https://livrestaka.fr/admin?demo=true&duration=45
 ---
 
 **📧 Contact production** : contact@staka.fr  
-**👨‍💻 Développé par** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/) - Juillet 2025
+**👨‍💻 Développé par** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/) - Août 2025
 
-*Guide mis à jour le 28 juillet 2025 - Version 2.0 (Backend complet + vraies données) - Production déployée*
+*Guide mis à jour le 5 août 2025 - Version 2.1 (Migration stockage local + notifications centralisées) - Production déployée*

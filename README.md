@@ -11,24 +11,25 @@
 
 **Staka Livres** est une plateforme web **enterprise-grade** dédiée aux **services de correction et d'édition de manuscrits**. Cette application monorepo sophistiquée offre une expérience complète aux auteurs avec authentification sécurisée, administration avancée, paiements Stripe intégrés et système de messagerie temps réel.
 
-**✨ Version Production - 4 Août 2025** : Application déployée en production sur [livrestaka.fr](https://livrestaka.fr/) avec infrastructure de tests enterprise-grade (34 tests E2E Cypress), architecture Docker optimisée, **système de fichiers local unifié** (AWS S3 supprimé), et nouveau composant FloatingBubbles interactif.
+**✨ Version Production - 5 Août 2025** : Application déployée en production sur [livrestaka.fr](https://livrestaka.fr/) avec infrastructure de tests enterprise-grade (34 tests E2E Cypress + 57 tests backend), architecture Docker optimisée, **système de fichiers local unifié** (AWS S3 complètement supprimé), système de notifications centralisé avec EventBus, et composant FloatingBubbles interactif.
 
-### 📊 **Métriques du Projet (4 Août 2025)**
+### 📊 **Métriques du Projet (5 Août 2025)**
 
 | Composant                  | Détail                                 | Statut           |
 | -------------------------- | -------------------------------------- | ---------------- |
-| **📁 Contrôleurs Backend** | 26 contrôleurs spécialisés + unifiedFileController | ✅ Production    |
+| **📁 Contrôleurs Backend** | 26 contrôleurs + unifiedFileController (AWS S3 supprimé) | ✅ Production    |
 | **🌐 Endpoints API**       | 70+ endpoints REST sécurisés           | ✅ Fonctionnels  |
-| **⚛️ Composants React**    | 79 composants modulaires              | ✅ Optimisés     |
+| **⚛️ Composants React**    | 79 composants modulaires + SEO optimisé | ✅ Optimisés     |
 | **📄 Pages Frontend**      | 34 pages complètes + landing optimisée | ✅ Responsive    |
-| **🧪 Tests Backend**       | 44 fichiers tests (87% couverture)          | ✅ Robustes      |
-| **🧪 Tests Frontend**      | 9 fichiers + architecture séparée      | ✅ Optimisés     |
+| **🧪 Tests Backend**       | 57 tests Vitest (couverture optimisée) | ✅ Robustes      |
+| **🧪 Tests Frontend**      | 6 tests unitaires + architecture séparée | ✅ Optimisés     |
 | **🔍 Tests E2E Cypress**   | 34 tests Cypress + architecture robuste | ✅ Enterprise    |
 | **🗄️ Modèles BDD**         | 15 modèles interconnectés              | ✅ Complets      |
 | **📚 Documentation**       | Guide unifié + 16 guides spécialisés   | ✅ Exhaustive    |
 | **🐳 Infrastructure**      | Docker multi-arch ARM64/x86            | ✅ Production    |
 | **⚙️ Scripts Automatisés** | Reset dev, build multi-arch, deploy    | ✅ Opérationnels |
 | **🔒 Sécurité**            | RGPD + Audit logs + JWT                | ✅ Conforme      |
+| **🔔 Notifications**       | EventBus centralisé + 22 templates email | ✅ Automatisées  |
 
 ### 🌟 **Fonctionnalités Principales**
 
@@ -55,16 +56,17 @@
 - **Facturation automatique** avec génération PDF
 - **Moyens de paiement** avec gestion cartes défaut
 - **Statistiques revenus** et suivi performances
-- **Tests paiement enterprise-grade** (80+ tests Cypress)
+- **Tests paiement enterprise-grade** (34 tests E2E Cypress)
 - **✅ CORRECTIF PRODUCTION 30 JUILLET** : Paiements Stripe réels fonctionnels
 
 #### 💬 **Communication & Support**
 
 - **Messagerie temps réel** avec threading avancé
-- **Système notifications** centralisé (interface + emails)
+- **Système notifications centralisé** avec EventBus et listeners automatiques
+- **Emails automatiques** : 22 templates HTML par type de notification
 - **Support client intégré** via formulaires publics
 - **Réservation consultations** depuis landing/espace client
-- **Templates emails** professionnels (26 templates HTML)
+- **Architecture événementielle** : zéro oubli d'envoi d'emails
 
 #### 📊 **Administration & Analytics**
 
@@ -80,8 +82,9 @@
 - **Composant FloatingBubbles** interactif avec équipe d'experts
 - **Tarification dynamique** avec synchronisation Stripe
 - **Design responsive** mobile-first avec animations
-- **Upload fichiers** avec progression et **stockage local unifié**
+- **Upload fichiers** avec progression et **stockage local unifié** (AWS S3 supprimé)
 - **Navigation intelligente** avec persistance choix
+- **Composants SEO optimisés** avec meta descriptions et structured data
 
 ---
 
@@ -93,24 +96,26 @@
 Staka-livres/
 ├── backend/                 # API Node.js + Express + Prisma
 │   ├── src/
-│   │   ├── controllers/     # 26 contrôleurs spécialisés + unifiedFileController
+│   │   ├── controllers/     # 26 contrôleurs + unifiedFileController (stockage local)
 │   │   ├── routes/         # Routes REST avec middleware
 │   │   ├── services/       # Logique métier
-│   │   ├── events/         # Architecture événementielle
-│   │   ├── listeners/      # Email automation listeners
+│   │   ├── events/         # EventBus centralisé pour notifications
+│   │   ├── listeners/      # Listeners automatiques emails admin/user
 │   │   ├── queues/         # Queue emails asynchrone
-│   │   ├── emails/         # Templates HTML (26 templates)
-│   │   └── __tests__/      # 44 fichiers tests (87% couverture)
+│   │   ├── emails/         # Templates HTML (22 templates)
+│   │   ├── deprecated-aws/ # Ancien code AWS S3 (non utilisé)
+│   │   ├── uploads/        # Stockage local des fichiers
+│   │   └── tests/          # 57 tests Vitest (couverture optimisée)
 │   └── prisma/             # Schéma BDD + migrations
 ├── frontend/               # React 18 + Vite + React Query
 │   ├── src/
-│   │   ├── components/     # 79 composants modulaires
+│   │   ├── components/     # 79 composants modulaires + SEO optimisés
 │   │   │   └── landing/    # 15 composants landing optimisés
 │   │   │       └── FloatingBubbles.tsx # Équipe experts interactif
 │   │   ├── pages/         # 34 pages complètes + blog SEO
-│   │   ├── hooks/         # 33 hooks React Query spécialisés + useLocalUpload
-│   │   └── __tests__/     # Tests unitaires CI/CD
-│   ├── tests/             # Tests intégration (local)
+│   │   ├── hooks/         # 33 hooks React Query + useLocalUpload (S3 supprimé)
+│   │   └── tests/         # Tests unitaires CI/CD séparés
+│   ├── tests/             # Tests intégration (local uniquement)
 │   └── cypress/           # Tests E2E (34 tests Cypress)
 ├── shared/                # Types TypeScript partagés
 ├── docs/                  # Documentation complète (15 guides)
@@ -174,9 +179,9 @@ npm run test:e2e:open     # Interface interactive Cypress
 | Type Tests           | Nombre | Couverture  | Statut           |
 | -------------------- | ------ | ----------- | ---------------- |
 | **Tests E2E Cypress** | 34     | Fonctionnel | ✅ Production    |
-| **Tests Backend**     | 57     | Optimisée         | ✅ Robuste       |
-| **Tests Frontend**    | 6      | Unitaire    | ✅ Optimisé      |
-| **TOTAL**            | **91** | **Complet** | **✅ Déployé**   |
+| **Tests Backend**     | 57     | Optimisée   | ✅ Robuste       |
+| **Tests Frontend**    | 6      | Unitaire CI/CD | ✅ Optimisé      |
+| **TOTAL**            | **97** | **Complet** | **✅ Déployé**   |
 
 ---
 
@@ -260,10 +265,13 @@ FROM_NAME="Staka Livres"
 SUPPORT_EMAIL="support@votre-domaine.com"
 ADMIN_EMAIL="admin@votre-domaine.com"
 
-# Stockage des fichiers (local uniquement - AWS S3 supprimé)
-# Plus de configuration AWS nécessaire
-# Les fichiers sont stockés dans /backend/uploads/
-# Configuration automatique via multer
+# Stockage des fichiers (local uniquement - AWS S3 complètement supprimé)
+# Les fichiers sont automatiquement stockés dans /backend/uploads/
+# Configuration multer automatique par type :
+# - /uploads/projects/ : fichiers de projets
+# - /uploads/orders/ : fichiers de commandes  
+# - /uploads/messages/ : pièces jointes messages
+# Plus aucune configuration AWS nécessaire
 ```
 
 ### 🧪 **Tests et Validation**
@@ -373,10 +381,11 @@ docker compose build --no-cache
 
 #### **Système Multi-Cible**
 
-- **Admin** : 9 templates avec notifications critiques
-- **Utilisateurs** : 9 templates avec préférences opt-out
-- **Visiteurs** : 4 templates confirmations automatiques
-- **Polling 15s** pour refresh interface temps réel
+- **Architecture EventBus** : `admin.notification.created` → email automatique
+- **22 templates HTML** par type de notification (MESSAGE, PAYMENT, ORDER, etc.)
+- **Listeners spécialisés** : adminNotificationEmailListener, userNotificationEmailListener
+- **Queue asynchrone** : traitement emails sans bloquer l'API
+- **Zéro oubli** : chaque `createAdminNotification()` génère automatiquement un email
 
 ### 📞 **Support Client Intégré**
 
@@ -493,14 +502,16 @@ docker compose build --no-cache
 
 ## 🎯 **Roadmap & Évolutions**
 
-### ✅ **Version Production Déployée - 4 Août 2025**
+### ✅ **Version Production Déployée - 5 Août 2025**
 
 - **Application en production** : Déployée sur [livrestaka.fr](https://livrestaka.fr/)
-- **Infrastructure tests robuste** : 34 tests E2E Cypress + 44 fichiers tests backend (87% couverture)
+- **Infrastructure tests robuste** : 34 tests E2E Cypress + 57 tests backend (couverture optimisée)
 - **Validation complète** : Tous workflows critiques testés et opérationnels
 - **Documentation exhaustive** : 16 guides spécialisés mis à jour
 - **Architecture scalable** : Prête pour croissance commerciale
 - **Support production** : Monitoring et maintenance opérationnels
+- **Migration AWS S3** : Stockage local unifié complètement opérationnel
+- **Notifications centralisées** : EventBus avec emails automatiques fonctionnel
 
 #### 🎯 **CORRECTIF CRITIQUE STRIPE - 30 JUILLET 2025** (✅ **RÉSOLU**)
 
@@ -537,13 +548,15 @@ docker compose build --no-cache
 
 ## 🎉 **État du Projet**
 
-**✅ Application Production Déployée - 4 Août 2025**
+**✅ Application Production Déployée - 5 Août 2025**
 
 🏆 **Plateforme en production** sur [livrestaka.fr](https://livrestaka.fr/) avec infrastructure robuste et tests complets validés.
 
 🚀 **Déploiement réussi** : Tous les workflows critiques opérationnels, système de tests E2E Cypress fonctionnel, architecture Docker optimisée.
 
-🔬 **Qualité production** : 34 tests E2E Cypress + 44 fichiers tests backend (87% couverture), validation continue des fonctionnalités.
+🔬 **Qualité production** : 34 tests E2E Cypress + 57 tests backend (couverture optimisée), validation continue des fonctionnalités.
+
+🎯 **Améliorations récentes** : Migration AWS S3 → stockage local unifié complète, système de notifications centralisé avec EventBus opérationnel.
 
 🎯 **Mission accomplie** : Application enterprise-grade déployée avec documentation exhaustive et support opérationnel.
 
