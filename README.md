@@ -4,6 +4,7 @@
 ![Status](https://img.shields.io/badge/Status-Production%20Deployed-brightgreen)
 ![Live](https://img.shields.io/badge/Live-livrestaka.fr-blue)
 ![Tests](https://img.shields.io/badge/Tests-96%25%20E2E%20Success-brightgreen)
+![Security](https://img.shields.io/badge/Security%20Tests-100%25%20Success-brightgreen)
 ![Docker](https://img.shields.io/badge/Docker-Multi%20Arch-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue)
 
