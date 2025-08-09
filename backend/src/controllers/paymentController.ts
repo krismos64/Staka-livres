@@ -3,7 +3,13 @@ import { Request, Response } from "express";
 import { stripeService } from "../services/stripeService";
 import { AuditService, AUDIT_ACTIONS } from "../services/auditService";
 
-const prisma = new PrismaClient();
+// Export prisma instance for testing
+export let prisma = new PrismaClient();
+
+// Allow replacing prisma instance for testing
+export const setPrismaInstance = (newPrisma: PrismaClient) => {
+  prisma = newPrisma;
+};
 
 // Helper pour extraire les infos de la requête
 const getRequestInfo = (req: Request) => ({
@@ -21,6 +27,11 @@ export const paymentController = {
       const { commandeId, priceId } = req.body;
       const userId = req.user?.id;
 
+      // Validation des paramètres requis
+      if (!commandeId || !priceId) {
+        return res.status(400).json({ error: "ID de commande et ID de prix requis" });
+      }
+
       if (!userId) {
         await AuditService.logSecurityEvent(
           userEmail,
@@ -31,6 +42,19 @@ export const paymentController = {
           'HIGH'
         );
         return res.status(401).json({ error: "Utilisateur non authentifié" });
+      }
+
+      // Vérifier si le compte utilisateur est actif
+      if (!req.user?.isActive) {
+        await AuditService.logSecurityEvent(
+          userEmail,
+          'PAYMENT_UNAUTHORIZED_ACCESS',
+          { action: 'CREATE_CHECKOUT_SESSION', reason: 'inactive_account' },
+          ip,
+          userAgent,
+          'HIGH'
+        );
+        return res.status(401).json({ error: "Compte désactivé" });
       }
 
       // Log tentative de création de session
@@ -49,6 +73,16 @@ export const paymentController = {
           id: commandeId,
           userId: userId,
         },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              prenom: true,
+              nom: true
+            }
+          }
+        }
       });
 
       if (!commande) {
@@ -63,13 +97,29 @@ export const paymentController = {
         return res.status(404).json({ error: "Commande non trouvée" });
       }
 
+      // Vérifier que la commande n'est pas déjà payée
+      if (commande.paymentStatus === 'paid') {
+        return res.status(400).json({ error: "Cette commande a déjà été payée" });
+      }
+
       const session = await stripeService.createCheckoutSession({
         priceId,
         userId,
         commandeId,
+        userEmail: commande.user?.email || userEmail,
         successUrl: `${process.env.FRONTEND_URL}?payment=success`,
         cancelUrl: `${process.env.FRONTEND_URL}?payment=cancel`,
+        amount: commande.prixTotal,
+        metadata: {
+          commandeId,
+          userId,
+          userEmail: commande.user?.email || userEmail,
+        }
       });
+
+      if (!session || !session.id) {
+        throw new Error("Impossible de créer la session Stripe");
+      }
 
       // Marquer la commande comme en attente de paiement
       await prisma.commande.update({
@@ -94,7 +144,7 @@ export const paymentController = {
 
       res.json({ sessionId: session.id, url: session.url });
     } catch (error) {
-      console.error("❌ [Payment] Erreur création session paiement:", error);
+      console.error("Erreur lors de la création de la session de paiement:", error);
       
       await AuditService.logPaymentOperation(
         userEmail,
@@ -105,7 +155,7 @@ export const paymentController = {
         userAgent
       );
 
-      res.status(500).json({ error: "Erreur interne du serveur" });
+      res.status(500).json({ error: "Erreur lors de la création de la session de paiement" });
     }
   },
 

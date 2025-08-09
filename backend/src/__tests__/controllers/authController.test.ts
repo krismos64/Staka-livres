@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import { register, login, me, requestPasswordReset, resetPassword } from "../../controllers/authController";
+import { register, login, me, requestPasswordReset, resetPassword, setPrismaInstance } from "../../controllers/authController";
 import { signToken } from "../../utils/token";
 import { AuthValidators } from "../../validators/authValidators";
 import { PasswordResetService } from "../../services/passwordResetService";
@@ -10,7 +10,7 @@ import { MailerService } from "../../utils/mailer";
 
 // Mock Prisma Client avec configuration simplifiée
 vi.mock("@prisma/client", () => ({
-  PrismaClient: vi.fn(() => ({
+  PrismaClient: vi.fn().mockImplementation(() => ({
     user: {
       findUnique: vi.fn(),
       create: vi.fn(),
@@ -85,12 +85,15 @@ interface MockRequest extends Partial<Request> {
 interface MockResponse extends Partial<Response> {
   status: vi.MockedFunction<any>;
   json: vi.MockedFunction<any>;
+  statusCode?: number;
+  responseData?: any;
 }
 
 describe("🔐 AuthController Security Tests", () => {
   let mockRequest: MockRequest;
   let mockResponse: MockResponse;
   let mockPrisma: any;
+  let consoleSpy: any;
 
   beforeEach(() => {
     // Reset tous les mocks
@@ -104,13 +107,29 @@ describe("🔐 AuthController Security Tests", () => {
       get: vi.fn().mockReturnValue("test-user-agent"),
     };
     
-    // Récupérer l'instance mock Prisma créée par vi.mock
+    // Create mock Prisma instance and inject it into the controller
     const { PrismaClient } = require("@prisma/client");
     mockPrisma = new PrismaClient();
 
+    // Configurer les mocks Prisma
+    mockPrisma.user.findUnique = vi.fn();
+    mockPrisma.user.create = vi.fn();
+    mockPrisma.user.update = vi.fn();
+    
+    // Inject the mock into the controller
+    setPrismaInstance(mockPrisma);
+
     mockResponse = {
-      status: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnThis(),
+      status: vi.fn().mockImplementation((code) => {
+        mockResponse.statusCode = code;
+        return mockResponse;
+      }),
+      json: vi.fn().mockImplementation((data) => {
+        mockResponse.responseData = data;
+        return mockResponse;
+      }),
+      statusCode: 200,
+      responseData: null,
     };
 
     // Mock validateurs par défaut (succès)
@@ -133,10 +152,16 @@ describe("🔐 AuthController Security Tests", () => {
     vi.mocked(PasswordResetService.invalidateUserTokens).mockResolvedValue(undefined);
     vi.mocked(AuditService.logPasswordResetEvent).mockResolvedValue(undefined);
     vi.mocked(MailerService.sendEmail).mockResolvedValue(true);
+
+    // Mock console pour les logs
+    consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    if (consoleSpy) {
+      consoleSpy.mockRestore();
+    }
   });
 
   describe("🚫 Registration Security Tests", () => {
@@ -157,8 +182,8 @@ describe("🔐 AuthController Security Tests", () => {
 
       await register(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({ 
+      expect(mockResponse.statusCode).toBe(400);
+      expect(mockResponse.responseData).toEqual({ 
         error: "Format d'email invalide" 
       });
     });
@@ -179,8 +204,8 @@ describe("🔐 AuthController Security Tests", () => {
 
       await register(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({ 
+      expect(mockResponse.statusCode).toBe(400);
+      expect(mockResponse.responseData).toEqual({ 
         error: "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre" 
       });
     });
@@ -193,6 +218,11 @@ describe("🔐 AuthController Security Tests", () => {
         password: "SecurePass123!",
       };
 
+      // Réinitialiser les validateurs pour ce test spécifique
+      vi.mocked(AuthValidators.validateRegistrationFields).mockReturnValue({ isValid: true });
+      vi.mocked(AuthValidators.validateEmail).mockReturnValue({ isValid: true });
+      vi.mocked(AuthValidators.validatePasswordComplexity).mockReturnValue({ isValid: true });
+
       // Mock utilisateur existant
       mockPrisma.user.findUnique.mockResolvedValue({
         id: "existing-user-123",
@@ -201,8 +231,8 @@ describe("🔐 AuthController Security Tests", () => {
 
       await register(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(409);
-      expect(mockResponse.json).toHaveBeenCalledWith({ 
+      expect(mockResponse.statusCode).toBe(409);
+      expect(mockResponse.responseData).toEqual({ 
         error: "Un utilisateur avec cet email existe déjà" 
       });
     });
@@ -231,7 +261,7 @@ describe("🔐 AuthController Security Tests", () => {
 
       // Vérifier que bcrypt.hash est appelé avec 12 rounds
       expect(bcrypt.hash).toHaveBeenCalledWith("SecurePass123!", 12);
-      expect(mockResponse.status).toHaveBeenCalledWith(201);
+      expect(mockResponse.statusCode).toBe(201);
     });
 
     test("should log registration attempts for security monitoring", async () => {
@@ -295,8 +325,8 @@ describe("🔐 AuthController Security Tests", () => {
 
       await login(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({ 
+      expect(mockResponse.statusCode).toBe(401);
+      expect(mockResponse.responseData).toEqual({ 
         error: "Identifiants incorrects" 
       });
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -325,8 +355,8 @@ describe("🔐 AuthController Security Tests", () => {
 
       await login(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({ 
+      expect(mockResponse.statusCode).toBe(401);
+      expect(mockResponse.responseData).toEqual({ 
         error: "Compte désactivé" 
       });
     });
@@ -343,8 +373,8 @@ describe("🔐 AuthController Security Tests", () => {
       await login(mockRequest as Request, mockResponse as Response);
 
       // Même message pour utilisateur inexistant et mot de passe incorrect
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({ 
+      expect(mockResponse.statusCode).toBe(401);
+      expect(mockResponse.responseData).toEqual({ 
         error: "Identifiants incorrects" 
       });
     });
@@ -377,8 +407,8 @@ describe("🔐 AuthController Security Tests", () => {
         role: "USER",
       });
       
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith(
+      expect(mockResponse.statusCode).toBe(200);
+      expect(mockResponse.responseData).toEqual(
         expect.objectContaining({
           message: "Connexion réussie",
           token: "jwt-token-123",
@@ -400,8 +430,8 @@ describe("🔐 AuthController Security Tests", () => {
       await requestPasswordReset(mockRequest as Request, mockResponse as Response);
 
       // Même message de succès pour éviter l'énumération d'utilisateurs
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith({ 
+      expect(mockResponse.statusCode).toBe(200);
+      expect(mockResponse.responseData).toEqual({ 
         message: "Si cet email existe, un lien de réinitialisation vous a été envoyé" 
       });
       
@@ -430,8 +460,8 @@ describe("🔐 AuthController Security Tests", () => {
 
       await requestPasswordReset(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith({ 
+      expect(mockResponse.statusCode).toBe(200);
+      expect(mockResponse.responseData).toEqual({ 
         message: "Si cet email existe, un lien de réinitialisation vous a été envoyé" 
       });
       
@@ -459,8 +489,8 @@ describe("🔐 AuthController Security Tests", () => {
 
       await resetPassword(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({ 
+      expect(mockResponse.statusCode).toBe(400);
+      expect(mockResponse.responseData).toEqual({ 
         error: "Token invalide ou expiré" 
       });
       
@@ -488,8 +518,8 @@ describe("🔐 AuthController Security Tests", () => {
 
       await resetPassword(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({ 
+      expect(mockResponse.statusCode).toBe(400);
+      expect(mockResponse.responseData).toEqual({ 
         error: "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre" 
       });
     });
@@ -521,8 +551,8 @@ describe("🔐 AuthController Security Tests", () => {
       // Vérifier que le mot de passe est hashé avec 12 rounds
       expect(bcrypt.hash).toHaveBeenCalledWith("NewSecurePass123!", 12);
       
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith({ 
+      expect(mockResponse.statusCode).toBe(200);
+      expect(mockResponse.responseData).toEqual({ 
         message: "Mot de passe réinitialisé avec succès" 
       });
     });
@@ -534,8 +564,8 @@ describe("🔐 AuthController Security Tests", () => {
 
       await me(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith({ 
+      expect(mockResponse.statusCode).toBe(401);
+      expect(mockResponse.responseData).toEqual({ 
         error: "Utilisateur non authentifié" 
       });
     });
@@ -554,8 +584,8 @@ describe("🔐 AuthController Security Tests", () => {
 
       await me(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith(mockAuthenticatedUser);
+      expect(mockResponse.statusCode).toBe(200);
+      expect(mockResponse.responseData).toEqual(mockAuthenticatedUser);
     });
   });
 
@@ -575,8 +605,8 @@ describe("🔐 AuthController Security Tests", () => {
 
       await register(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(500);
-      expect(mockResponse.json).toHaveBeenCalledWith({ 
+      expect(mockResponse.statusCode).toBe(500);
+      expect(mockResponse.responseData).toEqual({ 
         error: "Erreur interne du serveur" 
       });
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -602,8 +632,8 @@ describe("🔐 AuthController Security Tests", () => {
 
       await login(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({ 
+      expect(mockResponse.statusCode).toBe(400);
+      expect(mockResponse.responseData).toEqual({ 
         error: "Email et mot de passe requis" 
       });
     });

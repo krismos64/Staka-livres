@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { Request, Response, NextFunction } from "express";
-import { authenticateToken } from "../../middleware/auth";
+import { authenticateToken, setPrismaInstance } from "../../middleware/auth";
 import { verifyToken } from "../../utils/token";
 
 // Mock Prisma Client
@@ -56,10 +56,13 @@ describe("🔒 JWT Middleware Security Tests", () => {
 
     mockNext = vi.fn();
 
-    // Mock Prisma
+    // Create mock Prisma instance and inject it into the middleware
     const { PrismaClient } = require("@prisma/client");
     mockPrisma = new PrismaClient();
     mockPrisma.user.findUnique = vi.fn();
+    
+    // Inject the mock into the middleware
+    setPrismaInstance(mockPrisma);
 
     // Mock console pour les tests de logging
     consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});

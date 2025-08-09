@@ -8,7 +8,14 @@ import { WelcomeConversationService } from "../../services/welcomeConversationSe
 import bcrypt from "bcryptjs";
 
 const router = express.Router();
-const prisma = new PrismaClient();
+
+// Export prisma instance for testing
+export let prisma = new PrismaClient();
+
+// Allow replacing prisma instance for testing
+export const setPrismaInstance = (newPrisma: PrismaClient) => {
+  prisma = newPrisma;
+};
 
 /**
  * Webhook Stripe pour recevoir les notifications de paiement

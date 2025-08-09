@@ -9,7 +9,13 @@ import { AuditService } from "../services/auditService";
 import { MailerService } from "../utils/mailer";
 import { WelcomeEmailService } from "../services/welcomeEmailService";
 
-const prisma = new PrismaClient();
+// Export prisma instance for testing
+export let prisma = new PrismaClient();
+
+// Allow replacing prisma instance for testing
+export const setPrismaInstance = (newPrisma: PrismaClient) => {
+  prisma = newPrisma;
+};
 
 // Types pour les requêtes
 interface RegisterRequest {

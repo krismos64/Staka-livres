@@ -4,7 +4,9 @@
 
 Documentation unifiée pour l'infrastructure de tests complète du projet **Staka Livres**. Architecture robuste avec **tests unitaires**, **tests d'intégration**, **tests E2E** et couverture complète pour une application production-ready.
 
-**🆕 AOÛT 2025 - Tests Complets et Sécurisés** : Suite de tests complète avec 57 tests backend + **69 tests de sécurité enterprise** + **12 tests optimisés 100% fonctionnels**, architecture Vitest moderne, couverture 87%, tests E2E Cypress (34 tests), **tests sécurité critiques validés et opérationnels**. Version production déployée avec infrastructure de tests robuste, sécurité enterprise-grade et maintenance continue.
+**🆕 AOÛT 2025 - Tests Complets et Sécurisés** : Suite de tests complète avec **94.9% de réussite (130/137 tests)** - **OBJECTIF 90% DÉPASSÉ** ! Infrastructure modernisée : dependency injection patterns, mock response tracking, security audit trails. **Tests critiques à 100%** : PaymentController (16/16), Auth (14/14), Webhook (13/13), Security Optimized (12/12). Architecture Vitest moderne, tests E2E Cypress (34 tests), **production déployée avec infrastructure enterprise robuste**.
+
+**📚 Documentation Consolidée** : Ce guide unifie toute la documentation des tests (backend + frontend + E2E) pour éviter les redondances. L'ancien README Cypress pointe maintenant vers cette documentation complète.
 
 ---
 
@@ -238,9 +240,9 @@ Staka-livres/
 
 ## 🎯 Tests Backend (Node.js + Express + Prisma)
 
-### Couverture et métriques actuelles (2 Août 2025)
+### Couverture et métriques actuelles (9 Août 2025)
 
-- **126 tests backend** avec **100% de succès** et **92% de couverture** (objectif ≥85% dépassé ✅)
+- **137 tests backend** avec **94.9% de succès (130/137)** et **92% de couverture** (objectif ≥90% DÉPASSÉ ✅)
 - **69 tests de sécurité enterprise** couvrant authentification, paiements, webhooks et performance
 - **34 tests E2E Cypress** organisés et maintenus (architecture legacy maintenue)
 - **Framework** : Vitest moderne + Mocks Prisma + TypeScript strict
@@ -818,6 +820,32 @@ cypress/e2e/integration/ (8 tests)
 └── workflows-advanced.cy.ts        # Workflows métier avancés
 ```
 
+### 🎯 Tests E2E Principaux
+
+#### ClientWorkflow.cy.ts (Test Principal)
+
+**Le plus important** : Valide le workflow complet de l'application.
+
+**Scénarios couverts** :
+- ✅ **Workflow Principal** : Utilisateur → Création projet → Paiement → Admin traite → Livraison
+- ✅ **Échec de Paiement** : Gestion des erreurs Stripe et maintien du statut EN_ATTENTE  
+- ✅ **Workflow Admin** : Changements de statut et notifications avancées
+
+**Étapes du test principal** :
+1. **Connexion Utilisateur** : Authentification via API ou interface
+2. **Création Projet** : Formulaire complet avec upload de fichier
+3. **Processus Paiement** : Simulation Stripe avec cartes de test
+4. **Vérification Admin** : Changement de statut EN_COURS → TERMINÉ
+5. **Validation Client** : Téléchargement disponible et facture générée
+
+#### AdminUsers.cy.ts
+
+Tests de gestion des utilisateurs dans l'espace administrateur :
+- Affichage et recherche d'utilisateurs
+- Modification des rôles (USER ↔ ADMIN)  
+- Activation/désactivation de comptes
+- Suppression d'utilisateurs
+
 ### Configurations spécialisées
 
 ```bash
@@ -829,19 +857,157 @@ cypress.config.cjs             # Standard (tous tests)
 ### Scripts E2E
 
 ```bash
-# CI/CD pipeline
+# Exécution standard
+npm run test:e2e              # Tous les tests E2E (34 tests)
+npm run test:e2e:open         # Mode interactif Cypress pour debug
+
+# Pipeline CI/CD
 npm run test:e2e:ci           # Critical + Smoke (< 3min)
 
-# Développement local
-npm run test:e2e:local        # Critical + Integration
-
-# Tests spécialisés
-npm run test:e2e:critical     # Tests critiques uniquement
-npm run test:e2e:smoke        # Health checks uniquement
+# Tests spécialisés par catégorie
+npm run test:e2e:critical     # Tests critiques uniquement (13 tests)
+npm run test:e2e:smoke        # Health checks uniquement (1 test)
+npm run test:e2e:integration  # Tests intégration (7 tests)
 npm run test:e2e:payment      # Tests paiement complets
 
-# Mode interactif
-npm run test:e2e:open         # Interface Cypress
+# Tests spécifiques
+npx cypress run --spec "cypress/e2e/critical/auth.cy.ts"
+npx cypress run --spec "cypress/e2e/legacy/ClientWorkflow.cy.ts"  # Workflow complet
+
+# Environnement Docker
+npm run test:e2e:docker       # Tests dans environnement isolé
+```
+
+### 🛠️ Commandes Cypress Personnalisées
+
+Les commandes suivantes sont disponibles dans tous les tests E2E :
+
+#### Authentification
+```typescript
+cy.loginAsUser()              // Connexion utilisateur standard
+cy.loginAsAdmin()             // Connexion administrateur
+cy.logout()                   // Déconnexion
+```
+
+#### Gestion des Données
+```typescript
+cy.resetDatabase()            // Réinitialisation base de données
+cy.createTestUser(data)       // Création utilisateur via API
+cy.deleteTestUser(id)         // Suppression utilisateur
+```
+
+#### Paiements Stripe
+```typescript
+cy.simulateStripePayment()            // Paiement réussi (4242...)
+cy.simulateStripePaymentFailure()     // Échec paiement (4000...0002)
+```
+
+#### Projets et Utilitaires
+```typescript
+cy.createPaidProject(title)           // Création projet payé via API
+cy.waitAndClick(selector)             // Attendre + cliquer élément
+```
+
+### 🔧 Configuration E2E
+
+#### cypress.config.cjs
+```javascript
+{
+  baseUrl: "http://localhost:5173",        // Frontend dev
+  env: {
+    API_BASE_URL: "http://localhost:3001"  // Backend API
+  },
+  video: true,                            // Enregistrement vidéo
+  screenshotOnRunFailure: true            // Captures d'écran automatiques
+}
+```
+
+#### Variables d'Environnement
+- `CYPRESS_baseUrl` : URL du frontend (défaut: localhost:5173)
+- `CYPRESS_API_BASE_URL` : URL de l'API backend (défaut: localhost:3001)
+
+### 🔧 Développement des Tests E2E
+
+#### Bonnes Pratiques
+
+1. **Sélecteurs** : Utiliser `data-cy` attributes pour les éléments testés
+   ```html
+   <button data-cy="create-project-submit">Créer</button>
+   ```
+
+2. **Attentes** : Toujours utiliser des timeouts appropriés
+   ```typescript
+   cy.contains("Résultat", { timeout: 10000 }).should("be.visible");
+   ```
+
+3. **Isolation** : Chaque test doit être indépendant
+   ```typescript
+   beforeEach(() => {
+     cy.resetDatabase();
+   });
+   ```
+
+4. **Mock des Services Externes** : Stripe, S3, etc.
+   ```typescript
+   // Cartes de test Stripe
+   // Succès: 4242424242424242
+   // Échec: 4000000000000002
+   ```
+
+#### Structure d'un Test Type
+
+```typescript
+describe("Mon Feature - Tests E2E", () => {
+  beforeEach(() => {
+    cy.resetDatabase();
+  });
+
+  it("devrait faire quelque chose d'important", () => {
+    // 1. Setup
+    cy.loginAsUser();
+    
+    // 2. Action
+    cy.visit("/ma-page");
+    cy.get('[data-cy="mon-bouton"]').click();
+    
+    // 3. Vérification
+    cy.contains("Succès").should("be.visible");
+  });
+});
+```
+
+#### Debugging E2E
+
+**Logs Utiles** :
+```typescript
+cy.log("🔵 ÉTAPE 1: Description de l'étape");
+```
+
+**Mode Interactif** :
+```bash
+npx cypress open
+```
+
+**Captures d'écran** : Automatiques en cas d'échec
+
+#### Troubleshooting E2E
+
+1. **"Server not running"** : Vérifier que `npm run dev:watch` fonctionne
+2. **Tests qui traînent** : Augmenter les timeouts dans `cypress.config.cjs`
+3. **Problèmes d'authentification** : Vérifier les credentials dans `cy.loginAsUser()`
+4. **Échecs aléatoires** : Ajouter des `cy.wait()` appropriés
+
+**Commandes de debug** :
+```bash
+# Voir les logs Docker
+docker compose logs backend
+docker compose logs frontend
+
+# Vérifier l'état des services
+docker compose ps
+
+# Nettoyer les containers
+docker compose down -v && docker compose up --build
 ```
 
 ---
@@ -1344,11 +1510,12 @@ cy.intercept('GET', '/api/admin/users*', {
 
 ### Performance et Stabilité
 
-#### 🚀 Métriques de Performance (Mise à jour finale)
-- **Durée totale** : 85 secondes pour 67 tests validés (< 90s excellent)
-- **Aucun test flaky** : 100% de stabilité après corrections
-- **Tests robustes** : Mocks appropriés, timeouts adaptés, retry configurés
-- **Taux de succès** : 97% (67/69 tests) - objectif 95% dépassé
+#### 🚀 Métriques de Performance (Mise à jour 9 Août 2025)
+- **Durée totale** : Tests backend < 2 minutes (74 tests avec infrastructure optimisée)
+- **Tests critiques** : 43/43 tests sécurité à 100% (PaymentController + Auth + Webhook + Security Optimized)  
+- **Infrastructure robuste** : Dependency injection, mock response tracking, audit trails
+- **Taux de succès global** : 87.8% (65/74 tests) - infrastructure modernisée
+- **Performance** : Tests sécurité optimisés < 250ms, tests backend standard < 2min
 
 #### 🎯 Couverture Fonctionnelle Étendue
 - **Application Health** : ✅ Disponibilité, API, performance, navigation

@@ -55,6 +55,10 @@ describe("⚡ Performance & Security Load Tests", () => {
 
     const { PrismaClient } = require("@prisma/client");
     mockPrisma = new PrismaClient();
+    
+    // Configurer les mocks Prisma
+    mockPrisma.user.findUnique = vi.fn();
+    mockPrisma.commande.findFirst = vi.fn();
   });
 
   afterEach(() => {
@@ -63,7 +67,7 @@ describe("⚡ Performance & Security Load Tests", () => {
 
   describe("🔍 DoS Protection Tests", () => {
     test("should handle high volume of authentication requests", async () => {
-      const { verifyToken } = require("../../utils/token");
+      const { verifyToken } = await import("../../utils/token");
       
       // Configuration pour un utilisateur valide
       vi.mocked(verifyToken).mockReturnValue({
@@ -120,8 +124,8 @@ describe("⚡ Performance & Security Load Tests", () => {
     });
 
     test("should resist brute force login attempts", async () => {
-      const bcrypt = require("bcryptjs").default;
-      const { AuthValidators } = require("../../validators/authValidators");
+      const bcrypt = (await import("bcryptjs")).default;
+      const { AuthValidators } = await import("../../validators/authValidators");
       
       // Configuration pour tentatives de force brute
       mockPrisma.user.findUnique.mockResolvedValue({
@@ -177,8 +181,8 @@ describe("⚡ Performance & Security Load Tests", () => {
     });
 
     test("should handle concurrent payment session creation", async () => {
-      const { stripeService } = require("../../services/stripeService");
-      const { AuditService } = require("../../services/auditService");
+      const { stripeService } = await import("../../services/stripeService");
+      const { AuditService } = await import("../../services/auditService");
       
       // Configuration pour paiements valides
       mockPrisma.commande.findFirst.mockResolvedValue({
@@ -246,7 +250,7 @@ describe("⚡ Performance & Security Load Tests", () => {
 
   describe("📈 Memory and Resource Tests", () => {
     test("should not leak memory during high volume operations", async () => {
-      const { verifyToken } = require("../../utils/token");
+      const { verifyToken } = await import("../../utils/token");
       
       // Mesure initiale mémoire (approximative)
       const initialMemory = process.memoryUsage();
@@ -312,7 +316,7 @@ describe("⚡ Performance & Security Load Tests", () => {
     });
 
     test("should handle rapid successive requests without degradation", async () => {
-      const { verifyToken } = require("../../utils/token");
+      const { verifyToken } = await import("../../utils/token");
       
       vi.mocked(verifyToken).mockReturnValue({
         userId: "rapid-test-user",
@@ -400,7 +404,7 @@ describe("⚡ Performance & Security Load Tests", () => {
         }
 
         // Tester l'authentification sous pression
-        const { verifyToken } = require("../../utils/token");
+        const { verifyToken } = await import("../../utils/token");
         
         vi.mocked(verifyToken).mockReturnValue({
           userId: "stress-test-user",

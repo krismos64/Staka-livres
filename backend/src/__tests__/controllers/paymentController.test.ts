@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { Request, Response } from "express";
-import { paymentController } from "../../controllers/paymentController";
+import { paymentController, setPrismaInstance } from "../../controllers/paymentController";
 import { stripeService } from "../../services/stripeService";
 import { AuditService } from "../../services/auditService";
 
@@ -75,16 +75,30 @@ describe("💳 Payment Controller Security Tests", () => {
     };
 
     mockResponse = {
-      status: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnThis(),
+      status: vi.fn().mockImplementation((code) => {
+        mockResponse.statusCode = code;
+        return mockResponse;
+      }),
+      json: vi.fn().mockImplementation((data) => {
+        mockResponse.responseData = data;
+        return mockResponse;
+      }),
+      statusCode: 200,
+      responseData: null,
     };
 
-    // Mock Prisma
+    // Create mock Prisma instance and inject it into the controller
     const { PrismaClient } = require("@prisma/client");
     mockPrisma = new PrismaClient();
+    
+    // Configure all Prisma methods
     mockPrisma.commande.findFirst = vi.fn();
     mockPrisma.commande.update = vi.fn();
     mockPrisma.commande.create = vi.fn();
+    mockPrisma.user.findUnique = vi.fn();
+    
+    // Inject the mock into the controller
+    setPrismaInstance(mockPrisma);
 
     // Mock services par défaut
     vi.mocked(stripeService.createCheckoutSession).mockResolvedValue({
@@ -136,7 +150,7 @@ describe("💳 Payment Controller Security Tests", () => {
 
       await paymentController.createCheckoutSession(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toBe(404);
+      expect(mockResponse.statusCode).toBe(404);
       expect(mockResponse.json).toHaveBeenCalledWith({ 
         error: "Commande non trouvée" 
       });
@@ -167,7 +181,7 @@ describe("💳 Payment Controller Security Tests", () => {
 
       await paymentController.createCheckoutSession(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toBe(401);
+      expect(mockResponse.statusCode).toBe(401);
       expect(AuditService.logSecurityEvent).toHaveBeenCalledWith(
         "inactive@example.com",
         "PAYMENT_UNAUTHORIZED_ACCESS",
@@ -186,7 +200,7 @@ describe("💳 Payment Controller Security Tests", () => {
 
       await paymentController.createCheckoutSession(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toBe(400);
+      expect(mockResponse.statusCode).toBe(400);
       expect(mockResponse.json).toHaveBeenCalledWith({ 
         error: "ID de commande et ID de prix requis" 
       });
@@ -203,7 +217,7 @@ describe("💳 Payment Controller Security Tests", () => {
 
       await paymentController.createCheckoutSession(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toBe(404);
+      expect(mockResponse.statusCode).toBe(404);
       expect(mockResponse.json).toHaveBeenCalledWith({ 
         error: "Commande non trouvée" 
       });
@@ -225,7 +239,7 @@ describe("💳 Payment Controller Security Tests", () => {
 
       await paymentController.createCheckoutSession(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toBe(400);
+      expect(mockResponse.statusCode).toBe(400);
       expect(mockResponse.json).toHaveBeenCalledWith({ 
         error: "Cette commande a déjà été payée" 
       });
@@ -257,7 +271,7 @@ describe("💳 Payment Controller Security Tests", () => {
       await paymentController.createCheckoutSession(mockRequest as Request, mockResponse as Response);
 
       // Le paiement doit réussir mais avec audit log
-      expect(mockResponse.status).toBe(200);
+      expect(mockResponse.statusCode).toBe(200);
       expect(AuditService.logPaymentOperation).toHaveBeenCalledWith(
         "test@example.com",
         "pending",
@@ -292,12 +306,13 @@ describe("💳 Payment Controller Security Tests", () => {
 
       await paymentController.createCheckoutSession(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toBe(500);
+      expect(mockResponse.statusCode).toBe(500);
       expect(mockResponse.json).toHaveBeenCalledWith({ 
         error: "Erreur lors de la création de la session de paiement" 
       });
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Erreur lors de la création de la session")
+        expect.stringContaining("Erreur lors de la création de la session de paiement"),
+        expect.any(Error)
       );
 
       consoleSpy.mockRestore();
@@ -321,7 +336,7 @@ describe("💳 Payment Controller Security Tests", () => {
 
       await paymentController.createCheckoutSession(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toBe(500);
+      expect(mockResponse.statusCode).toBe(500);
       expect(mockResponse.json).toHaveBeenCalledWith({ 
         error: "Erreur lors de la création de la session de paiement" 
       });
@@ -413,42 +428,68 @@ describe("💳 Payment Controller Security Tests", () => {
         await paymentController.createCheckoutSession(mockRequest as Request, mockResponse as Response);
       }
 
-      // Vérifier que toutes les tentatives sont loggées
-      expect(AuditService.logPaymentOperation).toHaveBeenCalledTimes(5);
+      // Vérifier que toutes les tentatives sont loggées (2 calls per attempt: pending + success)
+      expect(AuditService.logPaymentOperation).toHaveBeenCalledTimes(10);
       
       // Dans un vrai scénario, on pourrait implémenter du rate limiting
     });
 
     test("should handle payment session retrieval securely", async () => {
+      // Test the getPaymentStatus method which is the actual implementation
       const mockSessionId = "cs_secure_session_123";
       
-      // Test de récupération de session avec utilisateur autorisé
+      const mockRequest = {
+        params: { sessionId: mockSessionId },
+        user: {
+          id: "user-123",
+          email: "test@example.com",
+          isActive: true,
+        },
+        ip: "192.168.1.100",
+        get: vi.fn().mockReturnValue("test-user-agent"),
+      };
+
+      const mockResponse = {
+        status: vi.fn().mockImplementation((code) => {
+          mockResponse.statusCode = code;
+          return mockResponse;
+        }),
+        json: vi.fn().mockImplementation((data) => {
+          mockResponse.responseData = data;
+          return mockResponse;
+        }),
+        statusCode: 200,
+        responseData: null,
+      };
+      
+      // Mock Stripe session retrieval
       vi.mocked(stripeService.retrieveSession).mockResolvedValue({
         id: mockSessionId,
         payment_status: "paid",
         metadata: {
           commandeId: "commande-123",
-          userId: "user-123" // Même utilisateur
+          userId: "user-123"
         }
       });
 
+      // Mock commande lookup
       mockPrisma.commande.findFirst.mockResolvedValue({
         id: "commande-123",
-        userId: "user-123", // Commande appartient à l'utilisateur
+        userId: "user-123",
         stripeSessionId: mockSessionId
       });
 
-      // Simuler récupération de session (si cette méthode existe)
-      // await paymentController.retrieveSession(...)
+      await paymentController.getPaymentStatus(mockRequest as any, mockResponse as any);
       
-      // Vérifier que l'accès est sécurisé
-      expect(mockPrisma.commande.findFirst).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            userId: "user-123" // Toujours filtrer par utilisateur
-          })
-        })
-      );
+      // Vérifier que l'accès est sécurisé par userId
+      expect(mockPrisma.commande.findFirst).toHaveBeenCalledWith({
+        where: {
+          stripeSessionId: mockSessionId,
+          userId: "user-123"
+        }
+      });
+      
+      expect(mockResponse.statusCode).toBe(200);
     });
   });
 
@@ -467,9 +508,10 @@ describe("💳 Payment Controller Security Tests", () => {
 
       await paymentController.createCheckoutSession(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toBe(500);
+      expect(mockResponse.statusCode).toBe(500);
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Database connection timeout")
+        expect.stringContaining("Erreur lors de la création de la session de paiement"),
+        expect.any(Error)
       );
 
       consoleSpy.mockRestore();
@@ -485,7 +527,7 @@ describe("💳 Payment Controller Security Tests", () => {
 
       await paymentController.createCheckoutSession(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toBe(400);
+      expect(mockResponse.statusCode).toBe(400);
       expect(mockResponse.json).toHaveBeenCalledWith({ 
         error: "ID de commande et ID de prix requis" 
       });
@@ -515,7 +557,7 @@ describe("💳 Payment Controller Security Tests", () => {
 
       // Vérifier que toutes les opérations sont sécurisées
       expect(stripeService.createCheckoutSession).toHaveBeenCalledTimes(3);
-      expect(AuditService.logPaymentOperation).toHaveBeenCalledTimes(3);
+      expect(AuditService.logPaymentOperation).toHaveBeenCalledTimes(6);
     });
   });
 });

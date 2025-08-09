@@ -2,7 +2,13 @@ import { PrismaClient } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
 import { JwtPayload, verifyToken } from "../utils/token";
 
-const prisma = new PrismaClient();
+// Export prisma instance for testing
+export let prisma = new PrismaClient();
+
+// Allow replacing prisma instance for testing
+export const setPrismaInstance = (newPrisma: PrismaClient) => {
+  prisma = newPrisma;
+};
 
 // Extension de l'interface Request pour inclure user
 declare global {
