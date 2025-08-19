@@ -11,9 +11,16 @@
 
 > **Guide unifié consolidé** : Système complet de paiement Stripe + génération automatique de factures PDF + stockage local sécurisé - **déployé et opérationnel en production**. Migration S3→Local terminée juillet 2025.
 
-## 🎯 **MISE À JOUR TECHNIQUE - 3 AOÛT 2025**
+## 🎯 **MISE À JOUR TECHNIQUE - 19 AOÛT 2025**
 
-**✅ ÉTAT ACTUEL CONFIRMÉ** : Système de paiement et facturation **100% opérationnel**
+**✅ CORRECTIF CRITIQUE WEBHOOK APPLIQUÉ** : Système de paiement et facturation **100% opérationnel**
+
+**Corrections majeures 19 Août 2025** :
+- **Webhook 405 → 400** : Route `/payments/webhook` ajoutée à nginx ✅ **RÉSOLU**
+- **Configuration nginx** : Port 3000 + conteneur `staka_backend_prod` ✅ **CORRIGÉ**  
+- **Headers Stripe** : `Stripe-Signature` préservé + buffering désactivé ✅ **OPÉRATIONNEL**
+- **Timeouts optimisés** : 30s pour traitement des webhooks ✅ **CONFIGURÉ**
+- **Scripts monitoring** : Outils de debug et surveillance créés ✅ **DISPONIBLES**
 
 **Architecture validée** :
 - **Webhook double flux** : Gestion utilisateurs connectés + commandes invitées (PendingCommande)
@@ -22,7 +29,7 @@
 - **Mode développement** : Mock Stripe intelligent avec simulation webhook
 - **Tests de base** : Tests unitaires pour formatting paiement implémentés
 
-**Impact** : Système production-ready avec double flux de paiement sur livrestaka.fr
+**Impact** : Système production-ready avec webhooks Stripe 100% fonctionnels sur livrestaka.fr
 
 ---
 
@@ -61,16 +68,23 @@ Client Paiement → Stripe Checkout → Webhook Sécurisé → PDF Génération 
 
 ## 🔌 1. Webhooks Stripe Production
 
-### ✅ **Architecture Webhook Validée** ✅ **CORRECTIF APPLIQUÉ 30 JUILLET 2025**
+### ✅ **Architecture Webhook Validée** ✅ **CORRECTIF APPLIQUÉ 19 AOÛT 2025**
 
-**Status production vérifié et corrigé (30 Juillet 2025) :**
+**Status production vérifié et corrigé (19 Août 2025) :**
+- ✅ **Erreur 405 résolue** : Route nginx `/payments/webhook` ajoutée et configurée
+- ✅ **Configuration nginx** : Port 3000 + conteneur `staka_backend_prod` correct
 - ✅ **Implémentation moderne** : `src/routes/payments/webhook.ts` (déployée en production)
-- ✅ **Duplication résolue** : `paymentController.handleWebhook` SUPPRIMÉ
-- ✅ **Route conflictuelle** : `/webhook` dans `payments.ts` SUPPRIMÉE  
-- ✅ **Configuration serveur** : `app.ts` avec routeur séparé prioritaire
-- ✅ **CORRECTIF CRITIQUE** : Mode Stripe production activé (fin du mode mock)
-- ✅ **NGINX CONFIGURÉ** : Route `/payments/webhook` ajoutée pour proxy backend
-- ✅ **URL VALIDÉE** : `https://livrestaka.fr/payments/webhook` opérationnelle
+- ✅ **Headers préservés** : `Stripe-Signature` transmis correctement
+- ✅ **Buffering désactivé** : `proxy_buffering off` + `proxy_request_buffering off`
+- ✅ **Timeouts optimisés** : 30s pour traitement des webhooks longs
+- ✅ **Scripts monitoring** : `/root/test-stripe-webhook.sh` + monitoring automatique
+- ✅ **URL VALIDÉE** : `https://livrestaka.fr/payments/webhook` → 400 (vs 405 avant)
+
+**Diagnostics avancés ajoutés** :
+- Scripts de test automatique du webhook
+- Monitoring des événements orphelins 
+- Outils d'analyse des sessions Stripe
+- Documentation troubleshooting complète
 
 ### 🔐 **Sécurité Cryptographique**
 
@@ -888,18 +902,38 @@ console.error(`❌ [Payment] Erreur webhook:`, {
 
 ### 🚨 **Troubleshooting Production**
 
-#### Problèmes Webhook
+#### Problèmes Webhook ✅ **RÉSOLUS 19 AOÛT 2025**
+
+**Problème principal résolu :**
 ```bash
-# Vérifier signature Stripe
+# AVANT (Erreur 405) :
+curl -X POST https://livrestaka.fr/payments/webhook -> 405 Method Not Allowed
+
+# APRÈS (Correct) :
 curl -X POST https://livrestaka.fr/payments/webhook \
   -H "Content-Type: application/json" \
-  -H "stripe-signature: t=123,v1=invalid" \
+  -H "stripe-signature: test" \
   -d '{"test": "data"}'
-# → 400 "Signature webhook invalide"
+# → 400 "Signature webhook invalide" (comportement attendu)
+```
+
+**Scripts de diagnostic créés :**
+```bash
+# Test automatique du webhook
+/root/test-stripe-webhook.sh
+
+# Monitoring des événements Stripe
+/root/monitor-stripe-events.sh
 
 # Logs webhook en temps réel
-tail -f /var/log/staka/webhook.log | grep "Stripe Webhook"
+docker logs -f staka_backend_prod | grep "Stripe Webhook"
 ```
+
+**Configuration nginx corrigée :**
+- Route `location = /payments/webhook` ajoutée
+- Port `staka_backend_prod:3000` (pas 3001) 
+- Headers `Stripe-Signature` préservés
+- Buffering désactivé pour webhooks
 
 #### Problèmes Stockage Local
 ```bash
