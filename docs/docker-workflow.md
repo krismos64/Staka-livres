@@ -7,16 +7,16 @@
 
 Guide complet du workflow Docker dev → prod pour Staka-Livres avec stockage local unifié.
 
-**✨ Version 4 Août 2025 - Architecture optimisée & Stockage Local Unifié**  
+**✨ Version 5 - 22 Août 2025 - Architecture nginx externe + HTTPS**  
 **🌐 Production** : [https://livrestaka.fr](https://livrestaka.fr/)  
 **👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
 
-> **🎯 Status** : Production HTTPS opérationnelle ✅  
-> **🔧 Configuration** : 3 docker-compose + 1 script deploy + SSL  
-> **🚀 Déploiement** : Docker Hub → VPS automatisé + Let's Encrypt  
-> **📁 Stockage** : Local unifié (AWS S3 supprimé) + TypeScript optimisé
+> **🎯 Status** : Production HTTPS + API + Webhook 100% opérationnels ✅  
+> **🏗️ Architecture** : nginx externe → conteneurs Docker (ports internes)  
+> **🚀 Déploiement** : Docker Hub → VPS + nginx reverse proxy  
+> **📁 Stockage** : Local unifié + Filtrage multi-sites Stripe
 
-## 📋 Architecture Optimisée
+## 📋 Architecture v5 - nginx externe
 
 ```
 Staka-livres/
@@ -107,13 +107,19 @@ DOCKERHUB_TOKEN=YOUR_TOKEN_HERE
 DOCKER_REGISTRY=krismos64
 ```
 
-### Mapping des ports
+### Mapping des ports (MISE À JOUR v5)
 
-| Service  | Dev (local) | Prod (VPS) | Container | Description      |
-| -------- | ----------- | ---------- | --------- | ---------------- |
-| Frontend | 3000        | 80/443     | 5173      | React + Vite HMR |
-| Backend  | 3001        | 3000       | 3000      | Node + Express   |
-| MySQL    | 3306        | 3306       | 3306      | Base de données  |
+| Service  | Dev (local) | Prod (nginx externe) | Prod (conteneur) | Description      |
+| -------- | ----------- | ------------------- | --------------- | ---------------- |
+| Frontend | 3000        | → 443 (HTTPS)       | 8080            | React + Vite HMR |
+| Backend  | 3001        | → 443/api           | 3000            | Node + Express   |
+| MySQL    | 3306        | (interne)           | 3306            | Base de données  |
+
+**🔑 Points clés nginx externe :**
+- **Port 443** : nginx externe gère HTTPS + certificats Let's Encrypt
+- **Port 8080** : Frontend Docker interne (HTTP)
+- **Port 3000** : Backend Docker interne (API + webhooks)
+- **Avantage** : Séparation SSL/TLS du code applicatif
 
 ## ⚙️ Commandes Utiles
 

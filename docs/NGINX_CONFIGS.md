@@ -1,12 +1,19 @@
 # 🔧 Configurations Nginx - Staka Livres
 
-## 📁 **Fichiers de configuration**
+![Architecture](https://img.shields.io/badge/Architecture-nginx%20externe%20v5-blue)
+![SSL](https://img.shields.io/badge/SSL-Let's%20Encrypt-green)
+![Status](https://img.shields.io/badge/Status-Production%20Active-brightgreen)
 
-| Fichier | Usage | Backend | Noms conteneurs | SSL |
-|---------|-------|---------|------------------|-----|
-| `nginx.conf` | **Production** (livrestaka.fr) | Port 3000 | `staka_backend_prod` | ✅ HTTPS |
-| `nginx-dev.conf` | **Développement** local | Port 3000 | `backend` (docker-compose) | ❌ HTTP |
-| `nginx-production.conf` | Template production VPS | Port 3001 | `localhost:3001` | ✅ HTTPS |
+## 📁 **Fichiers de configuration (Architecture v5)**
+
+| Fichier | Usage | Proxy vers | SSL | Context |
+|---------|-------|------------|-----|---------|
+| `nginx-external.conf` | **nginx externe VPS** | localhost:8080 + 3000 | ✅ HTTPS | Système |
+| `nginx-prod.conf` | **Conteneur frontend** | staka_backend_prod:3000 | ❌ HTTP | Docker |
+| `nginx-dev.conf` | **Développement local** | backend:3000 | ❌ HTTP | Docker |
+| `nginx.conf` | **Historique (v4)** | staka_backend_prod:3000 | ✅ HTTPS | Deprecated |
+
+**🆕 Architecture v5** : nginx externe gère HTTPS, conteneurs utilisent HTTP interne
 
 ## 🎯 **Corrections appliquées pour Stripe Webhook**
 
