@@ -12,25 +12,27 @@
 
 **Staka Livres** est une plateforme web **enterprise-grade** dédiée aux **services de correction et d'édition de manuscrits**. Cette application monorepo sophistiquée offre une expérience complète aux auteurs avec authentification sécurisée, administration avancée, paiements Stripe intégrés et système de messagerie temps réel.
 
-**✨ Version Production - 9 Août 2025** : Application déployée en production sur [livrestaka.fr](https://livrestaka.fr/) avec infrastructure de tests enterprise-grade (97 tests totaux avec 94.9% de réussite : 34 tests E2E Cypress + 57 tests backend + 6 tests frontend), architecture Docker optimisée, **système de fichiers local unifié** (AWS S3 complètement supprimé), système de notifications centralisé avec EventBus, et documentation consolidée.
+**✨ Version Production - 26 Août 2025** : Application déployée en production sur [livrestaka.fr](https://livrestaka.fr/) avec infrastructure de tests enterprise-grade (97 tests totaux avec 94.9% de réussite : 34 tests E2E Cypress + 57 tests backend + 6 tests frontend), architecture Docker optimisée, **système de fichiers local unifié**, **webhooks Stripe filtrés par domaine**, **déploiement automatisé avec gestion BDD**, système de notifications centralisé avec EventBus, et documentation consolidée.
 
-### 📊 **Métriques du Projet (9 Août 2025)**
+### 📊 **Métriques du Projet (26 Août 2025)**
 
-| Composant                  | Détail                                 | Statut           |
-| -------------------------- | -------------------------------------- | ---------------- |
+| Composant                  | Détail                                                   | Statut           |
+| -------------------------- | -------------------------------------------------------- | ---------------- |
 | **📁 Contrôleurs Backend** | 26 contrôleurs + unifiedFileController (AWS S3 supprimé) | ✅ Production    |
-| **🌐 Endpoints API**       | 70+ endpoints REST sécurisés           | ✅ Fonctionnels  |
-| **⚛️ Composants React**    | 79 composants modulaires + SEO optimisé | ✅ Optimisés     |
-| **📄 Pages Frontend**      | 34 pages complètes + landing optimisée | ✅ Responsive    |
-| **🧪 Tests Backend**       | 57 tests Vitest (94.9% réussite globale) | ✅ Optimisés     |
-| **🧪 Tests Frontend**      | 6 tests unitaires + architecture séparée | ✅ Robustes      |
-| **🔍 Tests E2E Cypress**   | 34 tests Cypress + architecture robuste | ✅ Enterprise    |
-| **🗄️ Modèles BDD**         | 15 modèles interconnectés              | ✅ Complets      |
-| **📚 Documentation**       | Guide unifié consolidé + 16 guides spécialisés | ✅ Optimisée     |
-| **🐳 Infrastructure**      | Docker multi-arch ARM64/x86            | ✅ Production    |
-| **⚙️ Scripts Automatisés** | Reset dev, build multi-arch, deploy    | ✅ Opérationnels |
-| **🔒 Sécurité**            | RGPD + Audit logs + JWT                | ✅ Conforme      |
-| **🔔 Notifications**       | EventBus centralisé + 22 templates email | ✅ Automatisées  |
+| **🌐 Endpoints API**       | 70+ endpoints REST sécurisés                             | ✅ Fonctionnels  |
+| **⚛️ Composants React**    | 79 composants modulaires + SEO optimisé                  | ✅ Optimisés     |
+| **📄 Pages Frontend**      | 34 pages complètes + landing optimisée                   | ✅ Responsive    |
+| **🧪 Tests Backend**       | 57 tests Vitest (94.9% réussite globale)                 | ✅ Optimisés     |
+| **🧪 Tests Frontend**      | 6 tests unitaires + architecture séparée                 | ✅ Robustes      |
+| **🔍 Tests E2E Cypress**   | 34 tests Cypress + architecture robuste                  | ✅ Enterprise    |
+| **🗄️ Modèles BDD**         | 15 modèles interconnectés                                | ✅ Complets      |
+| **📚 Documentation**       | Guide unifié consolidé + 16 guides spécialisés           | ✅ Optimisée     |
+| **🐳 Infrastructure**      | Docker multi-arch ARM64/x86                              | ✅ Production    |
+| **⚙️ Scripts Automatisés** | Reset dev, build multi-arch, deploy                      | ✅ Opérationnels |
+| **🔒 Sécurité**            | RGPD + Audit logs + JWT                                  | ✅ Conforme      |
+| **🔔 Notifications**       | EventBus centralisé + 22 templates email                 | ✅ Automatisées  |
+| **💳 Webhooks Stripe**     | Filtrage par domaine livrestaka.fr                       | ✅ Sécurisés     |
+| **🚀 Déploiement**         | Script automatisé + migrations BDD                       | ✅ Production    |
 
 ### 🌟 **Fonctionnalités Principales**
 
@@ -55,12 +57,13 @@
 
 #### 💳 **Paiements & Facturation**
 
-- **Intégration Stripe complète** avec webhooks (✅ **PRODUCTION OPÉRATIONNELLE**)
-- **Facturation automatique** avec génération PDF
+- **Stripe LIVE intégré** avec webhooks filtrés par domaine (✅ **PRODUCTION OPÉRATIONNELLE**)
+- **Facturation automatique** avec génération et envoi PDF par email
+- **Sécurité multi-sites** : Rejet automatique des webhooks d'autres domaines
 - **Moyens de paiement** avec gestion cartes défaut
 - **Statistiques revenus** et suivi performances
 - **Tests paiement enterprise-grade** (34 tests E2E Cypress)
-- **✅ CORRECTIF PRODUCTION 30 JUILLET** : Paiements Stripe réels fonctionnels
+- **✅ CORRECTIF PRODUCTION 26 AOÛT** : Filtrage webhooks + facturation automatique
 
 #### 💬 **Communication & Support**
 
@@ -170,7 +173,7 @@ npm run test:e2e:open     # Interface interactive Cypress
 
 # Validation fonctionnalités critiques
 - Authentification & rôles utilisateur
-- Administration complète (10 pages)  
+- Administration complète (10 pages)
 - Paiements Stripe & facturation
 - Messagerie temps réel
 - Upload fichiers & gestion projets
@@ -179,12 +182,12 @@ npm run test:e2e:open     # Interface interactive Cypress
 
 ### 📊 **Couverture Tests Complete (Phase Finalisée - 9 Août 2025)**
 
-| Type Tests           | Nombre | Taux Réussite | Statut           |
-| -------------------- | ------ | ------------- | ---------------- |
-| **Tests E2E Cypress** | 34     | Production    | ✅ Enterprise    |
-| **Tests Backend**     | 57     | Optimisée     | ✅ Finalisés     |
-| **Tests Frontend**    | 6      | CI/CD         | ✅ Robustes      |
-| **Tests totaux**     | **97** | **94.9%**     | **✅ Phase terminée** |
+| Type Tests            | Nombre | Taux Réussite | Statut                |
+| --------------------- | ------ | ------------- | --------------------- |
+| **Tests E2E Cypress** | 34     | Production    | ✅ Enterprise         |
+| **Tests Backend**     | 57     | Optimisée     | ✅ Finalisés          |
+| **Tests Frontend**    | 6      | CI/CD         | ✅ Robustes           |
+| **Tests totaux**      | **97** | **94.9%**     | **✅ Phase terminée** |
 
 **🏆 Résultat final** : **130 tests réussis sur 137** - Objectif 90%+ dépassé avec **94.9% de réussite** !
 
@@ -224,7 +227,11 @@ npm run docker:dev
 # Reset frontend uniquement (plus rapide)
 ./scripts/dev-reset.sh --frontend-only
 
-# Build et déploiement automatisés
+# Déploiement automatisé intégré (NOUVEAU)
+./deploy.sh                                     # Script unifié : build + migrations + deploy
+./deploy.sh v1.5.0                            # Version spécifique avec tag
+
+# Scripts legacy (toujours disponibles)
 ./scripts/docker-build.sh v1.4.0 --push        # Build multi-arch + push
 ./scripts/deploy-vps.sh v1.4.0                 # Déploiement VPS avec sauvegarde
 ```
@@ -274,7 +281,7 @@ ADMIN_EMAIL="admin@votre-domaine.com"
 # Les fichiers sont automatiquement stockés dans /backend/uploads/
 # Configuration multer automatique par type :
 # - /uploads/projects/ : fichiers de projets
-# - /uploads/orders/ : fichiers de commandes  
+# - /uploads/orders/ : fichiers de commandes
 # - /uploads/messages/ : pièces jointes messages
 # Plus aucune configuration AWS nécessaire
 ```
@@ -362,6 +369,7 @@ docker compose build --no-cache
 - Statistiques revenus et évolutions mensuelles ✅ **DISPONIBLE**
 
 **🔧 CORRECTIFS MAJEURS APPLIQUÉS** :
+
 - **19 AOÛT 2025** : Webhook 405 → 400 ✅ **RÉSOLU** (Route `/payments/webhook` ajoutée)
 - **19 AOÛT 2025** : Configuration nginx corrigée ✅ **OPÉRATIONNEL** (Port 3000 + conteneur correct)
 - Mode Stripe production activé (plus de mode mock)
@@ -523,7 +531,8 @@ docker compose build --no-cache
 
 #### 🎯 **CORRECTIFS CRITIQUES STRIPE**
 
-**✅ 19 AOÛT 2025 - WEBHOOK 405 RÉSOLU** : 
+**✅ 19 AOÛT 2025 - WEBHOOK 405 RÉSOLU** :
+
 - **Erreur 405 "Method Not Allowed"** → **400 "Bad Request"** ✅ **CORRIGÉ**
 - **Route manquante** : `location = /payments/webhook` ajoutée à nginx ✅ **OPÉRATIONNEL**
 - **Port incorrect** : Backend 3000 (pas 3001) configuré ✅ **CORRIGÉ**
@@ -531,6 +540,7 @@ docker compose build --no-cache
 - **Configuration synchronisée** : VPS ↔ Local ✅ **FAIT**
 
 **✅ 30 JUILLET 2025 - PAIEMENTS OPÉRATIONNELS** :
+
 - **Mode Stripe production** : Activation réelle des clés `sk_live_*` (fin du mode mock)
 - **Variables production** : `.env.prod` mis à jour avec secrets Stripe valides
 - **Validation complète** : Tests de bout en bout Stripe → Backend → Webhook confirmés
@@ -550,7 +560,7 @@ docker compose build --no-cache
 
 - [ ] Tests de charge pour validation performance
 - [ ] Tests sécurité automatisés avancés
-- [ ] Visual regression tests 
+- [ ] Visual regression tests
 - [ ] Optimisation pipeline CI/CD
 - [ ] Extensions fonctionnelles selon feedback client
 - [ ] Multi-tenant architecture si nécessaire
@@ -616,19 +626,54 @@ npm run docker:build   # Build multi-architecture
 npm run docker:build:push # Build + push registry
 ```
 
-### 🚀 **Déploiement**
+### 🚀 **Déploiement Production**
+
+**Le script `deploy.sh` gère automatiquement :**
+
+- ✅ **Tests build multi-plateforme** avant déploiement
+- ✅ **Migrations Prisma** automatiques
+- ✅ **Seed conditionnel** (uniquement si base vide)
+- ✅ **Gestion erreurs** avec rollback sécurisé
+- ✅ **Variables d'environnement** synchronisées
+- ✅ **Health checks** post-déploiement
 
 ```bash
-npm run deploy:vps     # Déploiement VPS automatisé
-npm run deploy:vps:dry # Simulation déploiement
+# Déploiement automatisé complet
+./deploy.sh                    # Version latest
+./deploy.sh v1.5.0             # Version spécifique
 
-# Migration base de données
-npm run migrate:db             # Migration complète
-npm run migrate:db:schema      # Migration schéma uniquement  
-npm run migrate:db:dry         # Simulation migration
-npm run migrate:db:reverse     # Rollback migration
-npm run migrate:db:reverse:dry # Simulation rollback
+# Commandes de développement
+npm run deploy:vps             # Déploiement via npm script
+npm run migrate:db             # Migrations manuelles si besoin
 ```
+
+**⚠️ Prérequis :**
+
+- Fichier `.env.deploy.local` avec token Docker Hub
+- Clés Stripe LIVE dans `.env.prod`
+- VPS configuré avec docker-compose.prod.yml
+
+### 🆕 **Nouvelles Fonctionnalités - 26 Août 2025**
+
+#### 🔒 **Sécurité Webhooks Stripe**
+
+- **Filtrage par domaine** : Rejet automatique des webhooks d'autres sites
+- **Source validation** : Seuls les événements `livrestaka.fr` sont traités
+- **Protection multi-sites** : Fini les erreurs 404 et conflits webhook
+
+#### 🚀 **Déploiement Automatisé**
+
+- **Script unifié** `deploy.sh` : Build + migrations + deploy
+- **Migrations automatiques** : Application des nouvelles migrations BDD
+- **Seed conditionnel** : Seed automatique uniquement si base vide
+- **Health checks** : Vérification post-déploiement des services
+- **Gestion d'erreurs** : Rollback automatique en cas d'échec
+
+#### 📧 **Facturation Automatique**
+
+- **Email automatique** : Facture PDF envoyée par email après paiement
+- **Templates améliorés** : Design professionnel des emails
+- **Workflow complet** : Paiement → Génération PDF → Envoi email → Notification admin
 
 ---
 

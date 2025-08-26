@@ -5,22 +5,21 @@
 ![Stripe](https://img.shields.io/badge/Stripe-Integration-blueviolet)
 ![Invoice](https://img.shields.io/badge/PDF-Generation-orange)
 
-**✨ Version Août 2025 - Dernière mise à jour : 3 Août 2025**  
+**✨ Version Août 2025 - Dernière mise à jour : 26 Août 2025**  
 **🌐 Production URL** : [livrestaka.fr](https://livrestaka.fr/)  
 **👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
 
 > **Guide unifié consolidé** : Système complet de paiement Stripe + génération automatique de factures PDF + stockage local sécurisé - **déployé et opérationnel en production**. Migration S3→Local terminée juillet 2025.
 
-## 🎯 **MISE À JOUR TECHNIQUE - 19 AOÛT 2025**
+## 🎯 **MISE À JOUR TECHNIQUE - 26 AOÛT 2025**
 
-**✅ CORRECTIF CRITIQUE WEBHOOK APPLIQUÉ** : Système de paiement et facturation **100% opérationnel**
+**✅ SYSTÈME COMPLET WEBHOOK + FACTURATION OPÉRATIONNEL** : Nouvelles fonctionnalités majeures ajoutées
 
-**Corrections majeures 19 Août 2025** :
-- **Webhook 405 → 400** : Route `/payments/webhook` ajoutée à nginx ✅ **RÉSOLU**
-- **Configuration nginx** : Port 3000 + conteneur `staka_backend_prod` ✅ **CORRIGÉ**  
-- **Headers Stripe** : `Stripe-Signature` préservé + buffering désactivé ✅ **OPÉRATIONNEL**
-- **Timeouts optimisés** : 30s pour traitement des webhooks ✅ **CONFIGURÉ**
-- **Scripts monitoring** : Outils de debug et surveillance créés ✅ **DISPONIBLES**
+**Nouveautés 26 Août 2025** :
+- **🔒 Filtrage webhooks multi-sites** : Seulement `livrestaka.fr` traité ✅ **SÉCURISÉ**
+- **📧 Facturation automatique par email** : PDF envoyé automatiquement après paiement ✅ **OPÉRATIONNEL**
+- **🚀 Déploiement automatisé** : Migrations BDD + seed conditionnel ✅ **INTÉGRÉ**
+- **✅ Corrections précédentes maintenues** : Routes nginx + headers + timeouts ✅ **STABLE**
 
 **Architecture validée** :
 - **Webhook double flux** : Gestion utilisateurs connectés + commandes invitées (PendingCommande)

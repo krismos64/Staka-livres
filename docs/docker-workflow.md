@@ -7,14 +7,14 @@
 
 Guide complet du workflow Docker dev → prod pour Staka-Livres avec stockage local unifié.
 
-**✨ Version 5 - 22 Août 2025 - Architecture nginx externe + HTTPS**  
+**✨ Version 5 - 26 Août 2025 - Déploiement automatisé + Filtrage Stripe**  
 **🌐 Production** : [https://livrestaka.fr](https://livrestaka.fr/)  
 **👨‍💻 Développeur** : [Christophe Mostefaoui](https://christophe-dev-freelance.fr/)
 
-> **🎯 Status** : Production HTTPS + API + Webhook 100% opérationnels ✅  
+> **🎯 Status** : Production HTTPS + API + Webhook + Déploiement automatisé ✅  
 > **🏗️ Architecture** : nginx externe → conteneurs Docker (ports internes)  
-> **🚀 Déploiement** : Docker Hub → VPS + nginx reverse proxy  
-> **📁 Stockage** : Local unifié + Filtrage multi-sites Stripe
+> **🚀 Déploiement** : Script unifié `deploy.sh` avec migrations BDD automatiques  
+> **📁 Stockage** : Local unifié + Filtrage multi-sites Stripe + Facturation email auto
 
 ## 📋 Architecture v5 - nginx externe
 

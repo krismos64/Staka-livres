@@ -3,6 +3,8 @@
 ![Architecture](https://img.shields.io/badge/Architecture-nginx%20externe%20v5-blue)
 ![SSL](https://img.shields.io/badge/SSL-Let's%20Encrypt-green)
 ![Status](https://img.shields.io/badge/Status-Production%20Active-brightgreen)
+![Webhooks](https://img.shields.io/badge/Webhooks-Filtered%20by%20Domain-green)
+![Updated](https://img.shields.io/badge/Updated-26%20Août%202025-blue)
 
 ## 📁 **Fichiers de configuration (Architecture v5)**
 
@@ -99,11 +101,47 @@ curl -X POST http://localhost:3001/payments/webhook \
    docker exec staka_frontend_ssl nginx -s reload
    ```
 
-## 🔍 **Debugging**
+## 🆕 **MISE À JOUR 26 AOÛT 2025 : Filtrage Webhooks Stripe**
+
+### 🔒 **Sécurité Multi-Sites Implémentée**
+
+**Problème résolu** : Webhooks Stripe d'autres sites traités par erreur  
+**Solution** : Filtrage automatique par domaine `livrestaka.fr`
+
+**Modifications backend** (`stripeService.ts` + `webhook.ts`) :
+```typescript
+// Ajout source dans sessions Stripe
+metadata: {
+  userId: params.userId,
+  commandeId: params.commandeId,
+  source: 'livrestaka.fr'  // 🔒 Nouveau
+}
+
+// Filtrage dans webhook
+const allowedSources = ['livrestaka.fr'];
+if (!eventSource || !allowedSources.includes(eventSource)) {
+  return res.status(200).json({ 
+    received: true, 
+    ignored: true,
+    reason: 'Source non autorisée'
+  });
+}
+```
+
+**Résultat** : Plus d'erreurs 404 Stripe, seulement les événements `livrestaka.fr` traités.
+
+## 🔍 **Debugging et Monitoring**
 
 ```bash
-# Logs webhook VPS
-docker logs staka_backend_prod | grep Stripe
+# Logs webhook VPS avec filtrage
+docker logs staka_backend_prod | grep "Stripe Webhook"
+
+# Test filtrage local
+curl -X POST http://localhost:3000/payments/webhook \
+  -H "Content-Type: application/json" \
+  -H "Stripe-Signature: test" \
+  -d '{"id":"evt_test","type":"checkout.session.completed","data":{"object":{"id":"cs_test","metadata":{"source":"autre-site.fr"}}}}'
+# Doit retourner: "ignored": true
 
 # Logs nginx VPS
 docker logs staka_frontend_ssl
