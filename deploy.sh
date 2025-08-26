@@ -20,8 +20,11 @@ sshpass -p $VPS_PASSWORD ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 
     cd /opt/staka-livres
     docker compose pull
     docker compose up -d --force-recreate
-    echo "🌱 Exécution du seed de production..."
-    docker compose exec backend npx ts-node prisma/seed-prod.ts
+    
+    # ⚠️ SEED DÉSACTIVÉ PAR SÉCURITÉ - Préserve les données clients
+    # echo "🌱 Exécution du seed de production..."
+    # docker compose exec backend npx ts-node prisma/seed-prod.ts
+    
     docker system prune -f
 EOF
 

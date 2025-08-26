@@ -94,11 +94,6 @@ function PricingCalculator({
     // Utiliser les règles de pricing pour construire les cartes selon la maquette
     // La structure doit toujours être : GRATUIT | TIER2 | TIER3
 
-    // Récupérer les règles depuis le hook usePricing
-    const { debugInfo } = usePricing({
-      enableDebugLogs: process.env.NODE_ENV === "development",
-    });
-
     // Si on a accès aux règles de pricing via les tarifs
     if (tarifs && tarifs.length > 0) {
       const correctionTarifs = tarifs

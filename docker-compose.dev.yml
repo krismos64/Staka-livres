@@ -1,39 +1,48 @@
+# Configuration Docker pour développement avec build optimisé 
+# Usage: docker-compose -f docker-compose.dev.yml up --build
+# Avantages: Context racine, shared types intégrés, build reproductible
 services:
   frontend:
     build: 
-      context: .
+      context: .  # Context racine pour accès aux shared types
       dockerfile: ./frontend/Dockerfile.dev
-    container_name: staka_frontend
+    container_name: staka_frontend_build
     ports:
-      - "3000:5173"
+      - "3000:5173"  # Frontend accessible sur http://localhost:3000
     environment:
       - VITE_API_URL=http://localhost:3001
+      - NODE_ENV=development
     volumes:
       - ./frontend:/app
-      - ./shared:/app/shared
+      - ./shared:/shared  # Shared types pour développement
       - /app/node_modules
     depends_on:
       - backend
+    restart: unless-stopped
 
   backend:
     build:
-      context: .
+      context: .  # Context racine pour accès aux shared types  
       dockerfile: ./backend/Dockerfile.dev
-    container_name: staka_backend
+    container_name: staka_backend_build
     ports:
-      - "3001:3001"
+      - "3001:3000"  # Backend interne sur 3000, externe sur 3001
     env_file:
       - ./backend/.env
+    environment:
+      - NODE_ENV=development
     volumes:
       - ./backend:/app
-      - ./shared:/app/shared
+      - ./shared:/shared  # Shared types pour développement
       - /app/node_modules
+      - ./backend/uploads:/app/uploads  # Stockage local persistant
     depends_on:
       - db
+    restart: unless-stopped
 
   db:
-    image: mysql:8
-    container_name: staka_db
+    image: mysql:8.0
+    container_name: staka_db_build
     ports:
       - "3306:3306"
     environment:
@@ -42,7 +51,10 @@ services:
       - MYSQL_USER=staka
       - MYSQL_PASSWORD=staka
     volumes:
-      - db_data:/var/lib/mysql
+      - db_data_build:/var/lib/mysql
+      - ./backend/prisma/migrations:/migrations
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
 
 volumes:
-  db_data:
+  db_data_build:

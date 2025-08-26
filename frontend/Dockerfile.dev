@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
 RUN corepack enable
 
 # Copy package files (ne pas copier node_modules du host)
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+COPY frontend/package.json frontend/yarn.lock* frontend/package-lock.json* frontend/pnpm-lock.yaml* ./
 
 # Install dependencies (sera dans le volume isolé)  
 # Force la recompilation des modules natifs pour ARM64
@@ -30,10 +30,10 @@ RUN if [ -f yarn.lock ]; then \
     fi
 
 # Copy shared types  
-COPY ../shared/ /shared
+COPY shared/ /shared
 
 # Copy frontend source code
-COPY . ./
+COPY frontend/. ./
 
 WORKDIR /app
 

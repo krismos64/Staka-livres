@@ -68,11 +68,31 @@ docker-compose up --build
 
 ### 🔧 Configurations Docker disponibles
 
-| Fichier | Usage | Contexte | Volume | Hot Reload |
-|---------|-------|----------|--------|------------|
-| `docker-compose.yml` | Développement rapide | Dossier local | ✅ Volumes | ✅ HMR |
-| `docker-compose.dev.yml` | Build optimisé | Racine | ❌ Build | ✅ HMR |
-| `docker-compose.prod.yml` | Production | Images Docker Hub | ❌ Registry | ❌ Static |
+| Fichier | Usage | Contexte | Volume | Hot Reload | Ports |
+|---------|-------|----------|--------|------------|-------|
+| `docker-compose.yml` | Développement rapide | Dossier local | ✅ Volumes | ✅ HMR | Frontend:3000, Backend:3001 |
+| `docker-compose.dev.yml` | Build optimisé | Racine | ❌ Build | ✅ HMR | Frontend:3000, Backend:3001 |
+| `docker-compose.prod.yml` | Production | Images Docker Hub | ❌ Registry | ❌ Static | Frontend:8080, Backend:3000 |
+
+**🗂️ Structure Docker finalisée :**
+```
+├── docker-compose.yml          # Dev rapide (volumes + hot reload)
+├── docker-compose.dev.yml      # Dev build (context racine)
+├── docker-compose.prod.yml     # Production (images registry)
+├── backend/
+│   ├── Dockerfile              # Production multi-stage
+│   └── Dockerfile.dev          # Développement avec Prisma
+└── frontend/
+    ├── Dockerfile              # Production nginx
+    └── Dockerfile.dev          # Développement HMR
+```
+
+**✅ Optimisations appliquées :**
+- Suppression `Dockerfile.dev` obsolète à la racine
+- Ports cohérents : backend interne:3000, externe:3001
+- Volumes stockage local : `/backend/uploads` persistants
+- Healthchecks production activés
+- Containers nommés par environnement (_dev, _build, _prod)
 
 ## 🚀 Déploiement Production
 
@@ -107,13 +127,18 @@ DOCKERHUB_TOKEN=YOUR_TOKEN_HERE
 DOCKER_REGISTRY=krismos64
 ```
 
-### Mapping des ports (MISE À JOUR v5)
+### Mapping des ports (MISE À JOUR v5 - Optimisé)
 
 | Service  | Dev (local) | Prod (nginx externe) | Prod (conteneur) | Description      |
 | -------- | ----------- | ------------------- | --------------- | ---------------- |
 | Frontend | 3000        | → 443 (HTTPS)       | 8080            | React + Vite HMR |
 | Backend  | 3001        | → 443/api           | 3000            | Node + Express   |
 | MySQL    | 3306        | (interne)           | 3306            | Base de données  |
+
+**🔧 Cohérence ports :**
+- **Développement** : Frontend:3000 ↔ Backend:3001 
+- **Production** : nginx:443 → Frontend:8080 + Backend:3000
+- **Interne** : Backend toujours sur port 3000 dans le conteneur
 
 **🔑 Points clés nginx externe :**
 - **Port 443** : nginx externe gère HTTPS + certificats Let's Encrypt

@@ -8,17 +8,18 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-# Copier les package.json 
-COPY package*.json ./
+# Copier les package.json et le schema Prisma
+COPY backend/package*.json ./
+COPY backend/prisma ./prisma
 
 # Installer les dépendances
 RUN npm install --legacy-peer-deps --omit=optional
 
-# Copier le code source
-COPY . ./
-
 # Générer Prisma Client
 RUN npx prisma generate
+
+# Copier le reste du code source
+COPY backend/. ./
 
 WORKDIR /app
 

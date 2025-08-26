@@ -39,9 +39,11 @@
 - **Monorepo TypeScript** moderne avec workspace npm
 - **Backend Node.js/Express** avec Prisma ORM et MySQL 8
 - **Frontend React 18** avec Vite, React Query et Tailwind CSS
-- **Infrastructure Docker** multi-architecture avec volumes isolés (résout erreurs Rollup)
+- **Infrastructure Docker optimisée** : 3 configurations (dev rapide, build, production)
+- **Ports cohérents** : Frontend:3000/8080, Backend:3001→3000 interne
 - **CI/CD optimisé** avec tests séparés unitaires/intégration
 - **Scripts automatisés** : build multi-arch, déploiement VPS, reset développement
+- **Structure finalisée** : Dockerfiles spécialisés par environnement
 
 #### 🔐 **Sécurité & Authentification**
 

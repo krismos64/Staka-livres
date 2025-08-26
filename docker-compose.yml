@@ -1,39 +1,48 @@
+# Configuration Docker pour développement rapide avec volumes
+# Usage: docker-compose up --build
+# Avantages: Hot reload immédiat, modifications directes
 services:
   frontend:
     build: 
       context: ./frontend
       dockerfile: Dockerfile.dev
-    container_name: staka_frontend
+    container_name: staka_frontend_dev
     ports:
-      - "3000:5173"
+      - "3000:5173"  # Frontend accessible sur http://localhost:3000
     environment:
       - VITE_API_URL=http://localhost:3001
+      - NODE_ENV=development
     volumes:
       - ./frontend:/app
-      - ./shared:/app/shared
-      - /app/node_modules
+      - ./shared:/shared  # Shared types accessible
+      - /app/node_modules  # Évite conflits node_modules
     depends_on:
       - backend
+    restart: unless-stopped
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    container_name: staka_backend
+    container_name: staka_backend_dev
     ports:
-      - "3001:3001"
+      - "3001:3000"  # Backend interne sur 3000, externe sur 3001
     env_file:
       - ./backend/.env
+    environment:
+      - NODE_ENV=development
     volumes:
       - ./backend:/app
-      - ./shared:/app/shared
-      - /app/node_modules
+      - ./shared:/shared  # Shared types accessibles
+      - /app/node_modules  # Évite conflits node_modules
+      - ./backend/uploads:/app/uploads  # Persistance stockage local
     depends_on:
       - db
+    restart: unless-stopped
 
   db:
-    image: mysql:8
-    container_name: staka_db
+    image: mysql:8.0
+    container_name: staka_db_dev
     ports:
       - "3306:3306"
     environment:
@@ -43,6 +52,9 @@ services:
       - MYSQL_PASSWORD=staka
     volumes:
       - db_data:/var/lib/mysql
+      - ./backend/prisma/migrations:/migrations  # Migrations persistées
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
 
 volumes:
   db_data:
