@@ -4,6 +4,12 @@ set -e
 # Configuration
 source .env.deploy
 
+# Override avec les credentials locaux si le fichier existe
+if [ -f .env.deploy.local ]; then
+    source .env.deploy.local
+    echo "🔑 Credentials locaux chargés depuis .env.deploy.local"
+fi
+
 TAG=${1:-latest}
 echo "🚀 Déploiement Staka-livres version: $TAG"
 
