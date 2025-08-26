@@ -40,7 +40,7 @@ eventBus.on("admin.notification.created", async (notification) => {
       processedNotifications.delete(notificationKey);
     }, 2 * 60 * 1000);
 
-    const adminEmail = process.env.ADMIN_EMAIL || "admin@staka-livres.fr";
+    const adminEmail = process.env.ADMIN_EMAIL || "contact@staka.fr";
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3001";
     
     // Parse data if it's a JSON string

@@ -1251,7 +1251,7 @@ FRONTEND_URL="http://localhost:3001"
 
 # Email & notifications
 SENDGRID_API_KEY="SG.xxx..."
-ADMIN_EMAIL="admin@staka-livres.fr"
+ADMIN_EMAIL="contact@staka.fr"
 
 # Stripe
 STRIPE_SECRET_KEY="sk_test_..."    # Mode test pour dev

@@ -23,7 +23,7 @@ export async function sendHelpMessageToSupport(
   req: Request
 ): Promise<void> {
   try {
-    const supportEmail = process.env.SUPPORT_EMAIL || "support@staka-livres.fr";
+    const supportEmail = process.env.SUPPORT_EMAIL || "contact@staka.fr";
     
     // Construire le contenu HTML de l'email
     const attachmentsList = attachments.length > 0 
@@ -376,6 +376,17 @@ export const createConversation = async (
         },
       },
     });
+
+    // 🔔 NOTIFICATION ADMIN : Créer une notification admin pour nouveau message client
+    if (senderRole !== Role.ADMIN) {
+      try {
+        const senderName = `${req.user!.prenom} ${req.user!.nom}`;
+        await notifyAdminNewMessage(senderName, content || "", false);
+      } catch (notificationError) {
+        console.error('❌ [Messages] Erreur lors de la création de la notification admin:', notificationError);
+        // Ne pas faire échouer la création du message si la notification échoue
+      }
+    }
 
     // 🔥 NOUVELLE FONCTIONNALITÉ : Envoi d'email au support si le message provient du formulaire d'aide
     if (source === 'client-help' && senderRole !== Role.ADMIN) {

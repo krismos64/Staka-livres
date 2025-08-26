@@ -23,7 +23,7 @@ export interface EmailOptions {
  */
 export class MailerService {
   private static fromEmail =
-    process.env.FROM_EMAIL || "noreply@staka-livres.com";
+    process.env.FROM_EMAIL || "contact@staka.fr";
   private static fromName = process.env.FROM_NAME || "Staka Livres";
 
   /**

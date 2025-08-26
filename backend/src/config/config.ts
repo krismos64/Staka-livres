@@ -19,7 +19,7 @@ export const CONFIG = {
       line2: '123 Rue des Livres',
       line3: '75000 Paris, France',
       phone: '+33 1 23 45 67 89',
-      email: 'contact@staka-livres.com',
+      email: 'contact@staka.fr',
       siret: '123 456 789 00010',
     },
     TVA_RATE: 0.20, // 20%

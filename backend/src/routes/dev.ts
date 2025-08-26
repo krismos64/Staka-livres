@@ -282,7 +282,7 @@ router.post("/reset-database", async (_req, res) => {
       data: {
         prenom: "Admin",
         nom: "System",
-        email: "admin@staka-livres.fr",
+        email: "contact@staka.fr",
         password: hashedPassword,
         role: Role.ADMIN,
         isActive: true
