@@ -29,6 +29,14 @@ echo "🔄 Deploying to VPS..."
 sshpass -p $VPS_PASSWORD ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << EOF
     cd /opt/staka
     
+    # Vérifier l'existence du projet
+    if [ ! -f docker-compose.prod.yml ]; then
+        echo "❌ ERREUR: docker-compose.prod.yml introuvable dans /opt/staka"
+        echo "📍 Contenu du répertoire:"
+        ls -la
+        exit 1
+    fi
+    
     # Vérifier que le fichier .env.prod a été copié
     if [ -f .env.prod ]; then
         echo "✅ Fichier .env.prod détecté"

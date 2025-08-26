@@ -59,6 +59,23 @@ router.post("/", async (req: express.Request, res: express.Response) => {
       case "checkout.session.completed": {
         const session = event.data.object;
 
+        // 🔒 FILTRAGE PAR SOURCE : Vérifier que l'événement provient de livrestaka.fr
+        const allowedSources = ['livrestaka.fr'];
+        const eventSource = session.metadata?.source;
+
+        if (!eventSource || !allowedSources.includes(eventSource)) {
+          console.log(`🚫 [Stripe Webhook] Événement rejeté - source: ${eventSource || 'non définie'} (session: ${session.id})`);
+          console.log(`🚫 [Stripe Webhook] Sources autorisées: ${allowedSources.join(', ')}`);
+          return res.status(200).json({ 
+            received: true, 
+            ignored: true,
+            reason: 'Source non autorisée',
+            eventSource: eventSource || 'undefined',
+            allowedSources 
+          });
+        }
+
+        console.log(`✅ [Stripe Webhook] Source autorisée: ${eventSource}`);
         console.log(`🎯 [Stripe Webhook] Session complétée: ${session.id}`);
         console.log(
           `📊 [Stripe Webhook] Statut paiement: ${session.payment_status}`
@@ -393,6 +410,20 @@ router.post("/", async (req: express.Request, res: express.Response) => {
       case "payment_intent.payment_failed": {
         const paymentIntent = event.data.object;
 
+        // 🔒 FILTRAGE PAR SOURCE pour payment_intent
+        const allowedSources = ['livrestaka.fr'];
+        const eventSource = paymentIntent.metadata?.source;
+
+        if (!eventSource || !allowedSources.includes(eventSource)) {
+          console.log(`🚫 [Stripe Webhook] Payment Intent rejeté - source: ${eventSource || 'non définie'} (${paymentIntent.id})`);
+          return res.status(200).json({ 
+            received: true, 
+            ignored: true,
+            reason: 'Source non autorisée',
+            eventType: 'payment_intent.payment_failed'
+          });
+        }
+
         console.log(`❌ [Stripe Webhook] Paiement échoué: ${paymentIntent.id}`);
         console.log(
           `📝 [Stripe Webhook] Raison: ${
@@ -424,6 +455,20 @@ router.post("/", async (req: express.Request, res: express.Response) => {
       case "invoice.payment_succeeded": {
         const invoice = event.data.object;
 
+        // 🔒 FILTRAGE PAR SOURCE pour invoice
+        const allowedSources = ['livrestaka.fr'];
+        const eventSource = invoice.metadata?.source;
+
+        if (!eventSource || !allowedSources.includes(eventSource)) {
+          console.log(`🚫 [Stripe Webhook] Invoice rejetée - source: ${eventSource || 'non définie'} (${invoice.id})`);
+          return res.status(200).json({ 
+            received: true, 
+            ignored: true,
+            reason: 'Source non autorisée',
+            eventType: 'invoice.payment_succeeded'
+          });
+        }
+
         console.log(`💳 [Stripe Webhook] Facture payée: ${invoice.id}`);
         console.log(
           `💰 [Stripe Webhook] Montant: ${invoice.amount_paid} ${invoice.currency}`
@@ -447,6 +492,20 @@ router.post("/", async (req: express.Request, res: express.Response) => {
       case "invoice.payment_failed": {
         const invoice = event.data.object;
 
+        // 🔒 FILTRAGE PAR SOURCE pour invoice failed
+        const allowedSources = ['livrestaka.fr'];
+        const eventSource = invoice.metadata?.source;
+
+        if (!eventSource || !allowedSources.includes(eventSource)) {
+          console.log(`🚫 [Stripe Webhook] Invoice failed rejetée - source: ${eventSource || 'non définie'} (${invoice.id})`);
+          return res.status(200).json({ 
+            received: true, 
+            ignored: true,
+            reason: 'Source non autorisée',
+            eventType: 'invoice.payment_failed'
+          });
+        }
+
         console.log(
           `❌ [Stripe Webhook] Paiement facture échoué: ${invoice.id}`
         );
@@ -459,6 +518,29 @@ router.post("/", async (req: express.Request, res: express.Response) => {
       }
 
       default: {
+        // 🔒 FILTRAGE GÉNÉRIQUE pour tous les autres événements
+        const eventObject = event.data.object;
+        const allowedSources = ['livrestaka.fr'];
+        const eventSource = eventObject?.metadata?.source;
+
+        if (eventSource && !allowedSources.includes(eventSource)) {
+          console.log(`🚫 [Stripe Webhook] Événement ${event.type} rejeté - source: ${eventSource} (non autorisée)`);
+          return res.status(200).json({ 
+            received: true, 
+            ignored: true,
+            reason: 'Source non autorisée',
+            eventType: event.type
+          });
+        } else if (!eventSource) {
+          console.log(`⚠️ [Stripe Webhook] Événement ${event.type} sans source - probablement d'un autre site`);
+          return res.status(200).json({ 
+            received: true, 
+            ignored: true,
+            reason: 'Pas de source définie - probablement autre site',
+            eventType: event.type
+          });
+        }
+
         console.log(`🔔 [Stripe Webhook] Événement non géré: ${event.type}`);
         console.log(
           `📄 [Stripe Webhook] Données:`,

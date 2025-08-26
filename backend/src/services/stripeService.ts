@@ -86,6 +86,7 @@ export const stripeService = {
       metadata: {
         userId: params.userId,
         commandeId: params.commandeId,
+        source: 'livrestaka.fr', // 🔒 Identifier la source pour filtrage webhook
       },
       success_url: params.successUrl,
       cancel_url: params.cancelUrl,
