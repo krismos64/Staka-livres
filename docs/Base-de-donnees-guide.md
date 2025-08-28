@@ -7,7 +7,7 @@
 
 ## 📋 **Vue d'ensemble**
 
-**✨ Version Production - Déployée le 3 Août 2025 - https://livrestaka.fr/ :**
+**✨ Version Production - Mise à jour le 28 Août 2025 - https://livrestaka.fr/ :**
 
 La base de données **Staka Livres** est une architecture complète MySQL 8 gérée par **Prisma ORM** et déployée avec **Docker**. Elle couvre tous les aspects d'une plateforme de correction de manuscrits moderne avec **HTTPS Let's Encrypt** : utilisateurs, projets, **système de messagerie unifié**, **notifications temps réel**, **système de tarification dynamique**, support client, **facturation automatique** et contenu éditorial.
 
@@ -19,9 +19,9 @@ La base de données **Staka Livres** est une architecture complète MySQL 8 gér
 - **📊 Commande enrichie** : Nouveaux champs packType, pagesDeclarees, pagesVerifiees, prixEstime, prixFinal
 - **🆕 PendingCommande amélioré** : Ajout nombrePages et description pour tunnel invité
 - **🧪 Tests E2E production** : 34 tests Cypress validés sur livrestaka.fr
-- **📈 Métriques actualisées** : 16 modèles de données, 20+ relations, 70+ index optimisés
+- **📈 Métriques actualisées** : 16 modèles de données, 21 relations, 65 index optimisés
 - **🔧 Scripts automatisés** : Seed production avec 3 tarifs + 8 FAQ + utilisateurs
-- **🌐 API REST complète** : 60+ endpoints avec authentification JWT et CORS
+- **🌐 API REST complète** : 70+ endpoints avec authentification JWT et CORS
 - **📱 Architecture responsive** : Optimisations mobile/desktop avec React 18 + Vite 5
 
 ### 🏗️ **Architecture Technique Production**
@@ -32,8 +32,8 @@ La base de données **Staka Livres** est une architecture complète MySQL 8 gér
 - **Containers** : `staka_frontend_ssl` (Nginx + SSL), `staka_backend_prod` (API), `staka_db_prod` (MySQL)
 - **Stockage** : Stockage local unifié dans `/backend/uploads/` (AWS S3 supprimé)
 - **Modèles** : **16 modèles** de données interconnectés (100% déployés)
-- **Relations** : **25+ relations** avec contraintes d'intégrité strictes
-- **Index** : **70+ index optimisés** pour performance maximale
+- **Relations** : **21 relations** avec contraintes d'intégrité strictes
+- **Index** : **65 index optimisés** pour performance maximale
 - **Enums** : **17 énumérations** pour validation stricte des données
 
 ---
@@ -239,7 +239,7 @@ model Message {
 
   // Relations
   attachments      MessageAttachment[]
-  parent           Message?            @relation("MessageThread", fields: [parentId], references: [id])
+  parent           Message?            @relation("MessageThread", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   replies          Message[]           @relation("MessageThread")
   receiver         User?               @relation("MessageReceiver", fields: [receiverId], references: [id])
   sender           User?               @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
@@ -248,7 +248,7 @@ model Message {
   @@index([senderId])
   @@index([receiverId])
   @@index([visitorEmail])
-  @@index([parentId])
+  @@index([parentId], map: "messages_parentId_fkey")
   @@map("messages")
 }
 
@@ -749,7 +749,7 @@ docker compose exec backend npx ts-node prisma/seed-prod.ts
 
 ## 📊 **Optimisations Performance Avancées**
 
-### 🚀 **Index Stratégiques (70+ index optimisés)**
+### 🚀 **Index Stratégiques (65 index optimisés)**
 
 ```prisma
 // Index primaires utilisateur
@@ -967,8 +967,8 @@ curl -s https://livrestaka.fr/api/admin/stats | jq '.'
 ### **📊 Statistiques Architecture Validées**
 
 - **16 modèles** de données interconnectés (100% déployés HTTPS)
-- **25+ relations** avec contraintes d'intégrité strictes
-- **70+ index optimisés** pour performance maximale
+- **21 relations** avec contraintes d'intégrité strictes
+- **65 index optimisés** pour performance maximale
 - **17 enums** pour validation stricte (9 statuts commande, 3 rôles, etc.)
 - **GDPR/RGPD compliant** avec soft deletes et consentement explicite
 - **Stockage local unifié** : Migration complète AWS S3 → `/backend/uploads/`
@@ -1055,7 +1055,7 @@ curl -s https://livrestaka.fr/api/admin/stats | jq '.'
 
 **Résultat : Base de données 100% déployée en production HTTPS sur https://livrestaka.fr/** 🚀🔒
 
-_Dernière mise à jour : 3 août 2025 - Architecture 16 modèles + HTTPS Let's Encrypt + stockage local_
+_Dernière mise à jour : 28 août 2025 - Architecture 16 modèles + HTTPS Let's Encrypt + stockage local_
 
 **👨‍💻 Développeur :** Christophe Mostefaoui - https://christophe-dev-freelance.fr/  
 **🌐 Site Web :** https://livrestaka.fr/ (HTTPS opérationnel)  
