@@ -44,7 +44,7 @@ Le système d'échantillon gratuit de Staka Livres permet aux visiteurs de la la
 
 - **Backend** : Node.js 20.15.1, Express 4.18.2, Prisma 6.10.1, TypeScript 5.8.3
 - **Frontend** : React 18.2.0, TypeScript, Fetch API native, FormData pour upload
-- **Email** : **SendGrid 8.1.5** + **emailQueue** + **templates Handlebars** 
+- **Email** : **Resend 8.1.5** + **emailQueue** + **templates Handlebars** 
 - **Messagerie** : Prisma **Message** model avec support **visitorEmail/visitorName**
 - **Notifications** : **EventBus centralisé** + **adminNotificationEmailListener**
 - **Upload** : **Multer 2.0.1** + **MessageAttachment** + stockage local `/uploads/`
@@ -439,7 +439,7 @@ docker compose exec backend npx ts-node scripts/checkNotifications.ts
 # 3. Vérifier logs backend
 docker compose logs backend | grep -i "FreeSample\|échantillon"
 
-# 4. Vérifier email reçu (si configuration SendGrid active)
+# 4. Vérifier email reçu (si configuration Resend active)
 # → Boîte SUPPORT_EMAIL doit contenir email avec template HTML
 ```
 
@@ -484,8 +484,8 @@ curl -X POST https://livrestaka.fr/api/public/free-sample \
 # Support email pour demandes d'échantillon gratuit
 SUPPORT_EMAIL="contact@staka.fr"
 
-# Configuration SendGrid pour emails automatiques
-SENDGRID_API_KEY="your-sendgrid-api-key"
+# Configuration Resend pour emails automatiques
+RESEND_API_KEY="your-resend-api-key"
 FROM_EMAIL="contact@staka.fr"
 FROM_NAME="Staka Livres"
 
@@ -510,7 +510,7 @@ Template utilise les variables d'environnement :
 // Adresse email de support (configurable)
 const supportEmail = process.env.SUPPORT_EMAIL || "contact@staka.fr";
 
-// Configuration SendGrid
+// Configuration Resend
 await MailerService.sendEmail({
   to: supportEmail,
   subject: `🎯 Échantillon gratuit demandé par ${cleanData.nom}`,
@@ -543,14 +543,14 @@ await MailerService.sendEmail({
 
 **Symptômes** : L'équipe ne reçoit pas l'email de notification
 **Solutions** :
-- Vérifier configuration SendGrid (SENDGRID_API_KEY)
+- Vérifier configuration Resend (RESEND_API_KEY)
 - Contrôler SUPPORT_EMAIL dans les variables d'environnement
 - Vérifier les spams de la boîte support
 - Consulter les logs backend pour erreurs email
 
 ```bash
 # Vérifier logs email
-docker compose logs backend | grep -i "sendgrid\|email\|mailer"
+docker compose logs backend | grep -i "resend\|email\|mailer"
 ```
 
 #### 2. Message non créé dans messagerie
@@ -642,7 +642,7 @@ LIMIT 10;
 
 ### 🔗 Références techniques
 
-- [SendGrid API](https://docs.sendgrid.com/) - Documentation email
+- [Resend API](https://docs.resend.com/) - Documentation email
 - [Prisma Docs](https://www.prisma.io/docs/) - ORM base de données
 - [React Docs](https://react.dev/) - Framework frontend
 
@@ -680,7 +680,7 @@ Le système d'échantillon gratuit utilise l'**architecture EventBus centralisé
 #### ✅ **Variables production** :
 - `ADMIN_EMAIL="contact@staka.fr"` (✅ confirmé)
 - `FRONTEND_URL="https://livrestaka.fr"` (✅ confirmé)
-- **SendGrid** opérationnel avec queue asynchrone
+- **Resend** opérationnel avec queue asynchrone
 
 Cette architecture garantit **zéro oubli d'email admin** et **cohérence templates**.
 

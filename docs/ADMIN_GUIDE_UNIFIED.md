@@ -187,7 +187,7 @@ export function useExportAuditLogs() {
 - ✅ **Double notification automatique** : Interface clochette + Email envoyé automatiquement pour chaque événement
 - ✅ **EventBus centralisé** : Architecture événementielle avec listeners spécialisés pour admin et utilisateurs
 - ✅ **Templates HTML dynamiques** : Sélection automatique selon type de notification avec design cohérent
-- ✅ **Queue emails asynchrone** : Traitement Handlebars + SendGrid avec gestion d'erreurs et retry automatique
+- ✅ **Queue emails asynchrone** : Traitement Handlebars + Resend avec gestion d'erreurs et retry automatique
 - ✅ **Tests production validés** : 5+ emails admin envoyés à `ADMIN_EMAIL=contact@staka.fr` confirmés
 - ✅ **Zero duplication de code** : Tous les emails centralisés via listeners événementiels (474 lignes)
 - ✅ **Préférences utilisateurs** : Opt-out via champ `preferences.emailNotifications`
@@ -219,7 +219,7 @@ export function useExportAuditLogs() {
     ↓
 ⚡ emailQueue.add("sendAdminNotifEmail", emailData)
     ↓
-📧 SendGrid → ADMIN_EMAIL (contact@staka.fr)
+📧 Resend → ADMIN_EMAIL (contact@staka.fr)
     ↓
 ✅ Double notification : Interface + Email automatique
 ```
@@ -281,7 +281,7 @@ await createAdminNotification(title, message, type, priority, actionUrl, data);
 → adminNotificationEmailListener déclenché
 → Template sélectionné selon notification.type
 → emailQueue.add("sendAdminNotifEmail", emailData)
-→ Email envoyé via SendGrid
+→ Email envoyé via Resend
 ```
 
 ### Hooks React Query (`useNotifications.ts` - 167 lignes)
@@ -316,7 +316,7 @@ export function useNotifications() {
 
 ```env
 # Variables d'environnement production (3 août 2025)
-SENDGRID_API_KEY="SG.xxx..."          # Clé SendGrid validée
+RESEND_API_KEY="re_xxx_your_resend_key_here"          # Clé Resend validée
 FROM_EMAIL="contact@staka.fr"         # Email expéditeur officiel
 ADMIN_EMAIL="contact@staka.fr"        # Email admin production
 SUPPORT_EMAIL="contact@staka.fr"      # Email support client
@@ -1064,7 +1064,7 @@ DATABASE_URL=<production-mysql-db>
 STRIPE_SECRET_KEY=<live-stripe-key>
 
 # Emails centralisés production
-SENDGRID_API_KEY=<production-sendgrid>
+RESEND_API_KEY=<production-resend>
 ADMIN_EMAIL=contact@staka.fr
 SUPPORT_EMAIL=contact@staka.fr
 FROM_EMAIL=contact@staka.fr

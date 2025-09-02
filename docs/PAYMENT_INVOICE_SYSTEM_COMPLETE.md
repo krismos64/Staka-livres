@@ -755,7 +755,7 @@ ADMIN_EMAIL=contact@staka.fr          # Notifications paiements
 SUPPORT_EMAIL=contact@staka.fr        # Support client
 
 # === SYSTÈME NOTIFICATIONS ===
-SENDGRID_API_KEY=SG...
+RESEND_API_KEY=SG...
 EMAIL_QUEUE_ENABLED=true
 NOTIFICATION_TEMPLATES_PATH=./src/emails/templates
 

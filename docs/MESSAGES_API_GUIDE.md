@@ -604,8 +604,8 @@ curl -X POST https://livrestaka.fr/api/messages/conversations \
 
 Variables d'environnement nécessaires dans `backend/.env` :
 ```env
-# SendGrid Configuration
-SENDGRID_API_KEY="SG.xxx..."
+# Resend Configuration
+RESEND_API_KEY="re_xxx_your_resend_key_here"
 FROM_EMAIL="contact@staka.fr"
 FROM_NAME="Staka Livres"
 SUPPORT_EMAIL="contact@staka.fr"
@@ -1037,7 +1037,7 @@ Les consultations ont leurs propres endpoints séparés :
 - ✅ **Suppression simulation** : Math.random remplacé par intégration API réelle
 - ✅ **Authentification JWT** : Support utilisateurs connectés et non connectés
 - ✅ **Source tracking** : Paramètre `source: 'client-help'` pour classification
-- ✅ **Email automatique** : Notification directe équipe support via SendGrid
+- ✅ **Email automatique** : Notification directe équipe support via Resend
 - ✅ **Interface unifiée** : Messages visibles dans la messagerie admin
 - ✅ **Validation backend** : Contrôles Zod stricts côté serveur
 - ✅ **Tests curl** : Validation complète de l'intégration
@@ -1045,7 +1045,7 @@ Les consultations ont leurs propres endpoints séparés :
 ### **📈 Performance & Fiabilité**
 
 - **< 150ms** : Temps de réponse formulaire d'aide
-- **100%** : Taux de livraison des emails support via SendGrid
+- **100%** : Taux de livraison des emails support via Resend
 - **Zéro perte** : Tous les messages stockés en base de données
 - **Audit complet** : Traçabilité de toutes les demandes d'aide
 

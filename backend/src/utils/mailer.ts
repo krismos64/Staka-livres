@@ -1,8 +1,9 @@
-import sgMail from "@sendgrid/mail";
+import { Resend } from 'resend';
 
-// Configuration SendGrid
-if (process.env.SENDGRID_API_KEY) {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+// Configuration Resend - initialisation conditionnelle
+let resend: Resend | null = null;
+if (process.env.RESEND_API_KEY) {
+  resend = new Resend(process.env.RESEND_API_KEY);
 }
 
 export interface EmailOptions {
@@ -30,9 +31,9 @@ export class MailerService {
    * Envoie un email
    */
   static async sendEmail(options: EmailOptions): Promise<void> {
-    if (!process.env.SENDGRID_API_KEY) {
+    if (!process.env.RESEND_API_KEY) {
       console.warn(
-        "⚠️ [Mailer] SENDGRID_API_KEY non configuré - simulation d'envoi"
+        "⚠️ [Mailer] RESEND_API_KEY non configuré - simulation d'envoi"
       );
       console.log(`📧 [Mailer] Simulation envoi à ${options.to}`);
       console.log(`📧 [Mailer] Sujet: ${options.subject}`);
@@ -40,21 +41,35 @@ export class MailerService {
     }
 
     try {
-      const msg: any = {
+      const emailData: any = {
+        from: `${this.fromName} <${this.fromEmail}>`,
         to: options.to,
-        from: {
-          email: this.fromEmail,
-          name: this.fromName,
-        },
         subject: options.subject,
         text: options.text,
         html: options.html,
-        attachments: options.attachments,
       };
 
+      // Resend utilise un format différent pour les pièces jointes
+      if (options.attachments && options.attachments.length > 0) {
+        emailData.attachments = options.attachments.map(att => ({
+          filename: att.filename,
+          content: att.content, // Base64
+        }));
+      }
+
       console.log(`📧 [Mailer] Envoi email à ${options.to}...`);
-      await sgMail.send(msg);
-      console.log(`✅ [Mailer] Email envoyé avec succès à ${options.to}`);
+      
+      if (!resend) {
+        throw new Error('Resend non initialisé - clé API manquante');
+      }
+      
+      const { data, error } = await resend.emails.send(emailData);
+      
+      if (error) {
+        throw new Error(`Resend API Error: ${JSON.stringify(error)}`);
+      }
+      
+      console.log(`✅ [Mailer] Email envoyé avec succès à ${options.to} (ID: ${data?.id})`);
     } catch (error) {
       console.error(`❌ [Mailer] Erreur lors de l'envoi:`, error);
       throw new Error(`Échec de l'envoi d'email: ${error}`);

@@ -44,7 +44,7 @@ Le système de réinitialisation de mot de passe de Staka Livres est conçu pour
 - **Backend** : Node.js, Express, Prisma, JWT
 - **Frontend** : React, TypeScript, Tailwind CSS
 - **Sécurité** : Crypto (SHA-256), Rate limiting, Audit logging
-- **Email** : SendGrid avec templates HTML
+- **Email** : Resend avec templates HTML
 - **Tests** : Vitest, Cypress
 
 ---
@@ -415,8 +415,8 @@ JWT_SECRET="your-jwt-secret-change-in-production"
 FRONTEND_URL="https://livrestaka.fr"  # URL frontend pour les liens
 PORT=3000
 
-# Email - Configuration SendGrid
-SENDGRID_API_KEY="SG.xxx..."
+# Email - Configuration Resend
+RESEND_API_KEY="re_xxx_your_resend_key_here"
 FROM_EMAIL="contact@staka.fr"
 FROM_NAME="Staka Livres"
 SUPPORT_EMAIL="contact@staka.fr"
@@ -460,7 +460,7 @@ Le système utilise un template Handlebars professionnel avec :
 
 **Symptômes** : L'utilisateur ne reçoit pas l'email
 **Solutions** :
-- Vérifier configuration SendGrid
+- Vérifier configuration Resend
 - Contrôler les spams
 - Vérifier FROM_EMAIL dans les DNS
 

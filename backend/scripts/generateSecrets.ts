@@ -265,8 +265,8 @@ APP_URL="https://livres.staka.fr"
 # 📧 SYSTÈME D'EMAILS CENTRALISÉ
 # =============================================================================
 
-# Configuration SendGrid (REMPLACER PAR VOS VRAIES CLÉS)
-SENDGRID_API_KEY="SG.VOTRE_CLE_SENDGRID_PRODUCTION_ICI"
+# Configuration Resend (REMPLACER PAR VOS VRAIES CLÉS)
+RESEND_API_KEY="re_VOTRE_CLE_RESEND_PRODUCTION_ICI"
 FROM_EMAIL="noreply@staka-livres.fr"
 FROM_NAME="Staka Livres"
 ADMIN_EMAIL="admin@staka-livres.fr"

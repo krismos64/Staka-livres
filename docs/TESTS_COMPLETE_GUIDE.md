@@ -1268,7 +1268,7 @@ FRONTEND_URL="http://localhost:3000"    # Corrigé depuis 3001
 PORT=3000                               # Port unifié backend
 
 # Email & notifications - Production Ready
-SENDGRID_API_KEY="SG.xxx...your_sendgrid_key_here"
+RESEND_API_KEY="re_xxx_your_resend_key_hereyour_resend_key_here"
 ADMIN_EMAIL="contact@staka.fr"          # Email unifié client
 SUPPORT_EMAIL="contact@staka.fr"        # Standardisé
 FROM_EMAIL="contact@staka.fr"           # Standardisé

@@ -608,8 +608,8 @@ DATABASE_URL="mysql://staka:staka@db:3306/stakalivres"
 JWT_SECRET="production_jwt_secret"
 FRONTEND_URL="https://livrestaka.fr"
 
-# Configuration emails (SendGrid)
-SENDGRID_API_KEY="SG.xxx..."
+# Configuration emails (Resend)
+RESEND_API_KEY="re_xxx_your_resend_key_here"
 FROM_EMAIL="contact@staka.fr"
 FROM_NAME="Staka Livres"
 SUPPORT_EMAIL="contact@staka.fr"

@@ -569,7 +569,7 @@ console.log(`Nouvelle demande de consultation: ${email} - ${requestedDateTime}`)
 
 ### Intégrations Tierces
 - **Calendly** : Remplacement possible de la solution custom
-- **SendGrid** : Emails de confirmation automatiques
+- **Resend** : Emails de confirmation automatiques
 - **Stripe** : Éventuel système de consultations payantes premium
 
 ---

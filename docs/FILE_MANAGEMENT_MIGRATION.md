@@ -366,7 +366,7 @@ En cas de problème majeur (non rencontré) :
 - ✅ **Upload fichiers** : **25+ types MIME**, limite 20 Mo projet/50 Mo commandes
 - ✅ **Téléchargement** : Permissions ADMIN/OWNER/UPLOADER vérifiées
 - ✅ **Suppression** : Protection `ADMIN_FILE:` confirmée, non-supprimable client
-- ✅ **Notifications** : Emails admin fonctionnels (problème SendGrid identifié)
+- ✅ **Notifications** : Emails admin fonctionnels (problème Resend identifié)
 - ✅ **Permissions** : Contrôles JWT + rôles stricts opérationnels
 - ✅ **Performance** : < 50ms latence moyenne mesurée
 - ✅ **Sécurité** : Validation Zod + filtrage MIME actifs

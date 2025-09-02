@@ -653,7 +653,7 @@ FRONTEND_URL=https://livrestaka.fr   # Production
 PORT=3000
 
 # E-mails centralisés
-SENDGRID_API_KEY=SG.xxx...
+RESEND_API_KEY=re_xxx_your_resend_key_here
 FROM_EMAIL=contact@staka.fr
 FROM_NAME=Staka Livres
 ADMIN_EMAIL=contact@staka.fr         # Notifications admin

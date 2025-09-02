@@ -127,7 +127,7 @@ backend/
 │   │   ├── userNotificationEmailListener.ts  # Emails utilisateurs
 │   │   └── clientNotificationEmailListener.ts # Emails clients
 │   ├── queues/                     # Queue asynchrone
-│   │   └── emailQueue.ts           # Traitement emails Handlebars + SendGrid
+│   │   └── emailQueue.ts           # Traitement emails Handlebars + Resend
 │   ├── emails/                     # Templates HTML professionnels
 │   │   └── templates/              # 26 templates (admin/users/visitors/activation)
 │   ├── middleware/                 # Middlewares Express
@@ -137,7 +137,7 @@ backend/
 │   │   └── fileUpload.ts           # Middleware upload fichiers
 │   ├── utils/                      # Utilitaires
 │   │   ├── token.ts                # Gestion tokens JWT
-│   │   └── mailer.ts               # Service SendGrid
+│   │   └── mailer.ts               # Service Resend
 │   ├── validators/                 # Validation schémas
 │   │   └── authValidators.ts       # Validateurs authentification
 │   ├── types/                      # Types TypeScript
@@ -192,7 +192,7 @@ backend/
 
 #### **Intégrations Externes**
 - **Stripe 18.2.1** : Plateforme paiement avec webhooks
-- **SendGrid 8.1.5** : Service emails transactionnels
+- **Resend 8.1.5** : Service emails transactionnels
 - **PDF-lib 1.17.1** : Génération factures PDF A4
 - **Multer 2.0.1** : Upload fichiers local (/uploads/projects, /orders, /messages)
 
@@ -807,7 +807,7 @@ eventBus.on('admin.notification.created', async (notification) => {
 
 #### **Queue Emails Asynchrone**
 ```typescript
-// Queue processing avec Handlebars + SendGrid
+// Queue processing avec Handlebars + Resend
 const emailQueue = {
   async add(jobType: string, data: any) {
     try {
@@ -819,7 +819,7 @@ const emailQueue = {
       const compiledTemplate = Handlebars.compile(templateSource);
       const html = compiledTemplate(templateData);
       
-      // Envoi via SendGrid
+      // Envoi via Resend
       await sgMail.send({
         to,
         from: {
@@ -984,7 +984,7 @@ export const emailQueue = {
       
       const html = compiledTemplate(templateData);
       
-      // Envoi via SendGrid avec retry logic
+      // Envoi via Resend avec retry logic
       await sendEmailWithRetry({
         to,
         from: {
@@ -1310,7 +1310,7 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - RESEND_API_KEY=${RESEND_API_KEY}
     restart: unless-stopped
     depends_on:
       - db
@@ -1470,7 +1470,7 @@ app.get('/health', async (req, res) => {
     services: {
       database: 'checking...',
       stripe: 'checking...',
-      sendgrid: 'checking...',
+      resend: 'checking...',
       s3: 'checking...'
     }
   };
@@ -1764,7 +1764,7 @@ SHOW INDEX FROM table_name;    # Index disponibles
    - 26 templates HTML responsive Handlebars
    - Helpers personnalisés (formatDate, formatPrice, capitalize)
    - Templates admin (9) + utilisateurs (9) + visiteurs (4)
-   - Tracking ouvertures et clics intégré SendGrid
+   - Tracking ouvertures et clics intégré Resend
 
 4. **Services Métier Avancés**
    - AuditService avec méthodes spécialisées par domaine
