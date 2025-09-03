@@ -178,13 +178,16 @@ export default function Packs({ onSignupClick }: PacksProps) {
 
               <div className="text-center mb-6">
                 <h3 className="text-lg font-bold mb-2">{pack.nom}</h3>
-                <div
-                  className={`text-4xl font-bold mb-2 ${
-                    pack.featured ? "text-white" : "text-blue-600"
-                  }`}
-                >
-                  {pack.prix}
-                </div>
+                {/* 🎯 PACK 3 SPÉCIAL : Masquer le prix pour les packs rédaction/coaching */}
+                {!isPack3Detection(pack) && (
+                  <div
+                    className={`text-4xl font-bold mb-2 ${
+                      pack.featured ? "text-white" : "text-blue-600"
+                    }`}
+                  >
+                    {pack.prix}
+                  </div>
+                )}
                 <div
                   className={`inline-block px-3 py-1 rounded-md text-sm ${
                     pack.featured
@@ -295,6 +298,7 @@ function buildPacksFromTarifs(tarifs: TarifAPI[]): Pack[] {
         "Conception couverture",
         "Fichiers ePub & Mobi",
         "Accompagnement KDP",
+        "Relecture",
       ],
       delai: kdpTarif.dureeEstimee || "5-7 jours",
       featured: false,
@@ -421,6 +425,7 @@ function getDefaultPacks(): Pack[] {
         "Format ePub optimisé",
         "Fichiers print-ready",
         "Guide de publication inclus",
+        "Relecture",
       ],
       delai: "5-7 jours",
       featured: false,
