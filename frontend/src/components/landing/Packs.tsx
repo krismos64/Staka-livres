@@ -21,6 +21,15 @@ interface PacksProps {
   onSignupClick?: () => void;
 }
 
+// Fonction utilitaire pour détecter le Pack 3
+const isPack3Detection = (pack: Pack) => {
+  return pack.id === "pack-redaction-default" || 
+         pack.id.includes("redaction") || 
+         pack.id.includes("coaching") ||
+         pack.nom.toLowerCase().includes("rédaction") ||
+         pack.nom.toLowerCase().includes("coaching");
+};
+
 export default function Packs({ onSignupClick }: PacksProps) {
   // Utilisation du hook usePricing au lieu de useState+useEffect
   const { tarifs, isLoading, error, refreshTarifs } = usePricing({
@@ -36,8 +45,46 @@ export default function Packs({ onSignupClick }: PacksProps) {
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9\-]/g, "");
 
+  /**
+   * 🎯 COMPORTEMENT SPÉCIAL PACK 3 (Rédaction/Coaching)
+   * 
+   * IMPORTANT: Le Pack 3 a un comportement différent des autres packs :
+   * - Services cachés (pas de liste d'inclusions)
+   * - Délai masqué 
+   * - Bouton "Contactez-nous" au lieu de "Choisir ce pack"
+   * - Redirection vers formulaire de contact (#contact) au lieu de commande
+   * 
+   * DÉTECTION AUTOMATIQUE : Fonctionne avec :
+   * - Pack par défaut : "pack-redaction-default"
+   * - Tarifs admin contenant "redaction" ou "coaching" dans l'ID/nom
+   * 
+   * ⚠️ ATTENTION ADMIN : Si vous modifiez les noms des tarifs de coaching/rédaction 
+   * en admin, assurez-vous qu'ils contiennent "redaction" ou "coaching" pour 
+   * conserver ce comportement spécial.
+   */
   const handlePackClick = (packId: string) => {
+    // DEBUG: Console log pour vérifier la détection
+    console.log("🐛 DEBUG - Pack cliqué:", packId);
+    console.log("🐛 DEBUG - Est Pack 3?", packId === "pack-redaction-default" || packId.includes("redaction") || packId.includes("coaching"));
+    
+    // Pack 3 redirige vers le formulaire de contact
+    // CORRECTION: Vérifier aussi par le nom du pack trouvé
     const pack = packs.find((p) => p.id === packId);
+    const isPack3 = packId === "pack-redaction-default" || 
+                   packId.includes("redaction") || 
+                   packId.includes("coaching") ||
+                   (pack && (pack.nom.toLowerCase().includes("rédaction") || 
+                            pack.nom.toLowerCase().includes("coaching")));
+                            
+    if (isPack3) {
+      const element = document.getElementById("contact");
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+      return;
+    }
+    
+    // Pack normal - redirection vers commande
     if (pack) {
       const slug = getSlug(pack.nom);
       navigate(`/commande-invitee?pack=${slug}`);
@@ -53,10 +100,21 @@ export default function Packs({ onSignupClick }: PacksProps) {
 
   // Générer les packs depuis les tarifs ou utiliser les fallbacks
   const packs = React.useMemo(() => {
+    let finalPacks;
     if (!tarifs || tarifs.length === 0) {
-      return getDefaultPacks();
+      finalPacks = getDefaultPacks();
+    } else {
+      finalPacks = buildPacksFromTarifs(tarifs);
     }
-    return buildPacksFromTarifs(tarifs);
+    
+    // DEBUG: Log des packs générés
+    console.log("🐛 DEBUG - Packs générés:", finalPacks.map(p => ({
+      id: p.id,
+      nom: p.nom,
+      isPack3: p.id === "pack-redaction-default" || p.id.includes("redaction") || p.id.includes("coaching")
+    })));
+    
+    return finalPacks;
   }, [tarifs]);
 
   // État de chargement
@@ -140,36 +198,44 @@ export default function Packs({ onSignupClick }: PacksProps) {
                 </div>
               </div>
 
-              <ul className="space-y-3 mb-8">
-                {pack.services.map((service, serviceIndex) => (
-                  <li key={serviceIndex} className="flex items-center gap-3">
-                    <i
-                      className={`fas fa-check ${
-                        pack.featured ? "text-green-300" : "text-green-500"
-                      }`}
-                    ></i>
-                    <span className="text-sm">{service}</span>
-                  </li>
-                ))}
-              </ul>
+              {/* 🎯 PACK 3 SPÉCIAL : Masquer la liste de services pour les packs rédaction/coaching
+                  Cette condition détecte automatiquement le pack 3 qu'il vienne des tarifs admin ou des packs par défaut */}
+              {!isPack3Detection(pack) && (
+                <ul className="space-y-3 mb-8">
+                  {pack.services.map((service, serviceIndex) => (
+                    <li key={serviceIndex} className="flex items-center gap-3">
+                      <i
+                        className={`fas fa-check ${
+                          pack.featured ? "text-green-300" : "text-green-500"
+                        }`}
+                      ></i>
+                      <span className="text-sm">{service}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
               <button
                 onClick={() => handlePackClick(pack.id)}
                 className={pack.buttonStyle}
               >
-                Choisir ce pack
+{/* 🎯 PACK 3 SPÉCIAL : Bouton "Contactez-nous" pour packs rédaction/coaching */}
+                {isPack3Detection(pack) ? "Contactez-nous" : "Choisir ce pack"}
               </button>
 
-              <div className="mt-4 text-center">
-                <span
-                  className={`text-sm flex items-center justify-center gap-1 ${
-                    pack.featured ? "text-white/80" : "text-gray-500"
-                  }`}
-                >
-                  <i className="fas fa-clock"></i>
-                  Délai: {pack.delai}
-                </span>
-              </div>
+              {/* 🎯 PACK 3 SPÉCIAL : Masquer le délai pour les packs rédaction/coaching */}
+              {!isPack3Detection(pack) && (
+                <div className="mt-4 text-center">
+                  <span
+                    className={`text-sm flex items-center justify-center gap-1 ${
+                      pack.featured ? "text-white/80" : "text-gray-500"
+                    }`}
+                  >
+                    <i className="fas fa-clock"></i>
+                    Délai: {pack.delai}
+                  </span>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -381,9 +447,9 @@ function getDefaultPacks(): Pack[] {
     },
     {
       id: "pack-redaction-default",
-      nom: "Pack Rédaction Complète",
+      nom: "Coaching complet",
       prix: "1450€",
-      description: "Coaching complet",
+      description: "Service complet de coaching et édition professionnelle",
       services: [
         "Coaching rédactionnel",
         "Correction complète",
