@@ -25,10 +25,10 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const { toasts, showToast, removeToast } = useToastsCore();
 
-  // Log pour debug
-  React.useEffect(() => {
-    console.log('🍞 ToastProvider - Toasts actuels:', toasts.length, toasts.map(t => t.title));
-  }, [toasts]);
+  // Log pour debug (désactivé pour réduire la verbosité)
+  // React.useEffect(() => {
+  //   console.log('🍞 ToastProvider - Toasts actuels:', toasts.length, toasts.map(t => t.title));
+  // }, [toasts]);
 
   return (
     <ToastContext.Provider value={{ showToast }}>
@@ -83,7 +83,7 @@ function ToastComponent({
 }) {
   const config = toastConfig[toast.type];
 
-  console.log('🍞 Rendu toast:', toast.title, toast.type);
+  // console.log('🍞 Rendu toast:', toast.title, toast.type); // Debug désactivé
 
   return (
     <motion.div

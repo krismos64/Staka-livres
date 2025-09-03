@@ -11,7 +11,7 @@ interface LogConfig {
 }
 
 const LOG_CONFIGS: Record<LogLevel, LogConfig> = {
-  debug: { level: 'debug', enabled: IS_DEVELOPMENT, prefix: '[DEBUG FRONTEND]', color: '#6b7280' },
+  debug: { level: 'debug', enabled: false, prefix: '[DEBUG FRONTEND]', color: '#6b7280' }, // ✅ Désactivé en dev
   info: { level: 'info', enabled: IS_DEVELOPMENT, prefix: '[INFO FRONTEND]', color: '#3b82f6' },
   warn: { level: 'warn', enabled: IS_DEVELOPMENT, prefix: '[WARN FRONTEND]', color: '#f59e0b' },
   error: { level: 'error', enabled: true, prefix: '[ERROR FRONTEND]', color: '#ef4444' }

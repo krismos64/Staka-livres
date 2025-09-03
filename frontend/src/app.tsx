@@ -81,7 +81,10 @@ const App: React.FC = () => (
   <AuthProvider>
     <ToastProvider>
       <DemoModeProvider>
-        <BrowserRouter>
+        <BrowserRouter future={{ 
+          v7_startTransition: true,
+          v7_relativeSplatPath: true 
+        }}>
           <AppRoutes />
         </BrowserRouter>
       </DemoModeProvider>
