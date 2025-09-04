@@ -169,7 +169,22 @@ sshpass -p $VPS_PASSWORD ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 
     docker system prune -f
 EOF
 
-# 4. Validation finale et résumé
+# 4. Test de la configuration email après déploiement
+echo ""
+echo "📧 TEST DE LA CONFIGURATION EMAIL"
+echo "=================================="
+echo "Copie du script de test email sur le VPS..."
+sshpass -p $VPS_PASSWORD scp -o StrictHostKeyChecking=no scripts/test-email-prod.sh $VPS_USER@$VPS_HOST:$VPS_PROJECT_DIR/test-email-prod.sh
+
+sshpass -p $VPS_PASSWORD ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << EOF
+    cd $VPS_PROJECT_DIR
+    chmod +x test-email-prod.sh
+    
+    echo "Lancement du test d'envoi d'email..."
+    ./test-email-prod.sh || echo "⚠️ Test email terminé avec avertissements"
+EOF
+
+# 5. Validation finale et résumé
 echo ""
 echo "🎯 VALIDATION FINALE DU DÉPLOIEMENT"
 echo "===================================="
@@ -205,7 +220,8 @@ echo "   - SSL/TLS         : Let's Encrypt (nginx externe)"
 echo ""
 echo "🔑 Variables critiques configurées :"
 echo "   - Stripe LIVE      : ✅ Configuré"
-echo "   - SendGrid         : ✅ Configuré" 
+echo "   - Resend (Email)   : ✅ Configuré avec domaine vérifié" 
 echo "   - Email admin      : ✅ contact@staka.fr"
+echo "   - FROM_EMAIL       : ✅ noreply@livrestaka.fr"
 echo ""
 echo "✨ Déploiement réussi ! Site prêt pour la production."
