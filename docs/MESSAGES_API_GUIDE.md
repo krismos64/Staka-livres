@@ -945,6 +945,19 @@ enum MessageType {
 5. **Classification** : Marquage automatique pour traitement par l'équipe support
 6. **Workflow admin** : Traitement via l'interface de messagerie unifiée
 
+### **Workflow d'Intégration Échantillon Gratuit (MIS À JOUR 05/09/2025)**
+
+1. **Visiteur** remplit le formulaire d'échantillon gratuit avec fichier manuscrit
+2. **API** `/api/public/free-sample` traite la demande avec upload fichier
+3. **Message** créé dans la messagerie avec toutes les informations
+4. **Email enrichi** envoyé à l'admin avec :
+   - **Informations complètes** du prospect (nom, email, téléphone)
+   - **Détails du projet** (genre littéraire, description)
+   - **Message intégral** de la demande
+   - **Fichier manuscrit en pièce jointe** (attaché directement à l'email)
+5. **Notification admin** avec priorité haute et lien direct vers la conversation
+6. **Confirmation visiteur** avec engagement de réponse sous 48h
+
 ### **Format des Messages de Consultation**
 
 ```json

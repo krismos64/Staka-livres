@@ -24,6 +24,7 @@ export interface EmailJob {
   to: string;
   template: string;
   variables: Record<string, any>;
+  attachments?: any[];
 }
 
 class EmailQueue {
@@ -95,6 +96,7 @@ class EmailQueue {
         to: job.to,
         subject,
         html,
+        attachments: job.attachments,
       });
     } catch (error) {
       console.error("Error processing email job:", error);

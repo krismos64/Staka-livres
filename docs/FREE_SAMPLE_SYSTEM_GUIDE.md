@@ -297,15 +297,16 @@ graph TD
     J --> K[Réponse JSON success + conversationId]
 ```
 
-### 2️⃣ Traitement automatique (✅ ÉTAPES CONFIRMÉES)
+### 2️⃣ Traitement automatique (✅ ÉTAPES CONFIRMÉES - MIS À JOUR 05/09/2025)
 
 1. **Validation données** : Nom/email requis + regex email + limites caractères
 2. **Attribution admin** : `prisma.user.findFirst({ role: ADMIN, orderBy: createdAt })`
 3. **Message messagerie** : **Message** model avec `visitorEmail/visitorName` + `receiverId`
 4. **Upload fichier** : **File** + **MessageAttachment** si `req.file` fourni
-5. **Notification centralisée** : `notifyAdminNewMessage()` → **EventBus** → email automatique
-6. **Double email** : Admin (`admin-message.hbs`) + Visiteur (`visitor-sample-confirmation.hbs`)
-7. **Audit complet** : **AuditService** avec `USER_MESSAGE_SUPPORT_EMAIL_SENT` + métadonnées
+5. **Notification centralisée** : `createAdminNotification()` → **EventBus** → email automatique enrichi
+6. **Email admin enrichi** : Template `admin-message.hbs` avec toutes les infos + **pièce jointe automatique**
+7. **Email visiteur** : Confirmation via `visitor-sample-confirmation.hbs`
+8. **Audit complet** : **AuditService** avec `USER_MESSAGE_SUPPORT_EMAIL_SENT` + métadonnées
 
 ### 3️⃣ Suivi et réponse
 
@@ -318,59 +319,64 @@ graph TD
 
 ## 📧 Templates email
 
-### 📨 Template HTML équipe support
+### 📨 Template HTML équipe support (MIS À JOUR 05/09/2025)
+
+**NOUVEAU** : L'email admin contient maintenant :
+- ✅ **Toutes les informations complètes** du prospect et du projet
+- ✅ **Le message intégral** de la demande
+- ✅ **Le fichier manuscrit en pièce jointe** (attaché directement à l'email)
+- ✅ **Liens directs** vers la messagerie et le tableau de bord
+
+Le template `admin-message.hbs` s'adapte automatiquement pour les demandes d'échantillon gratuit avec une présentation enrichie incluant :
 
 ```html
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px;">
-  <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-    <h2 style="color: #16a34a; margin-bottom: 20px;">🎯 Nouvelle demande d'échantillon gratuit</h2>
-    
-    <!-- Informations prospect -->
-    <div style="background-color: #f0fdf4; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #16a34a;">
-      <h3 style="margin: 0 0 10px 0; color: #15803d;">👤 Informations du prospect</h3>
-      <p style="margin: 5px 0;"><strong>Nom :</strong> Jean Dupont</p>
-      <p style="margin: 5px 0;"><strong>Email :</strong> <a href="mailto:jean.dupont@test.com">jean.dupont@test.com</a></p>
-      <p style="margin: 5px 0;"><strong>Téléphone :</strong> 06 12 34 56 78</p>
-    </div>
-
-    <!-- Détails projet -->
-    <div style="margin-bottom: 20px;">
-      <h3 style="color: #15803d; margin-bottom: 10px;">📚 Détails du projet</h3>
-      <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0;">
-        <p style="margin: 5px 0;"><strong>Genre littéraire :</strong> Roman</p>
-        <p style="margin: 5px 0;"><strong>Description du projet :</strong></p>
-        <div style="background-color: white; padding: 10px; border-radius: 4px; margin-top: 10px;">
-          Premier roman de 300 pages sur une histoire d'amour
-        </div>
-      </div>
-    </div>
-
-    <!-- Action requise -->
-    <div style="background-color: #fef3c7; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #f59e0b;">
-      <h3 style="margin: 0 0 10px 0; color: #d97706;">🎯 Action requise</h3>
-      <p style="margin: 0; font-weight: bold;">Le prospect souhaite recevoir 10 pages corrigées gratuitement</p>
-      <p style="margin: 5px 0 0 0; color: #059669;">✅ Fichier joint fourni</p>
-    </div>
-
-    <!-- Messagerie admin -->
-    <div style="background-color: #eff6ff; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
-      <h3 style="margin: 0 0 10px 0; color: #2563eb;">📨 Messagerie admin</h3>
-      <p style="margin: 0;">Cette demande a été automatiquement ajoutée à la messagerie de <strong>Admin Staka</strong></p>
-      <p style="margin: 5px 0 0 0; font-size: 14px; color: #6b7280;">ID conversation : uuid-conversation</p>
-    </div>
-
-    <!-- Footer -->
-    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #6b7280; font-size: 12px;">
-      <p style="margin: 0;">
-        Cette demande provient de la landing page section "Testez notre expertise gratuitement".<br>
-        Réponse attendue sous 48h selon les engagements du site.
-      </p>
-      <p style="margin: 10px 0 0 0;">
-        <strong>Staka Livres</strong> - Système d'échantillons gratuits automatique
-      </p>
-    </div>
+<!-- Template adaptatif pour échantillons gratuits -->
+{{#if isFreeSample}}
+  <!-- Affichage spécial pour les demandes d'échantillon -->
+  <h2 style="color: #16a34a;">🎯 {{title}}</h2>
+  
+  <!-- Informations complètes du prospect -->
+  <div style="background-color: #f0fdf4; padding: 15px;">
+    <h3>👤 Informations du prospect</h3>
+    <p><strong>Nom :</strong> {{prospectName}}</p>
+    <p><strong>Email :</strong> <a href="mailto:{{prospectEmail}}">{{prospectEmail}}</a></p>
+    {{#if prospectPhone}}
+      <p><strong>Téléphone :</strong> <a href="tel:{{prospectPhone}}">{{prospectPhone}}</a></p>
+    {{/if}}
   </div>
-</div>
+
+  <!-- Détails complets du projet -->
+  <div>
+    <h3>📚 Détails du projet</h3>
+    <p><strong>Genre littéraire :</strong> {{genre}}</p>
+    {{#if description}}
+      <p><strong>Description :</strong></p>
+      <pre>{{description}}</pre>
+    {{/if}}
+  </div>
+
+  <!-- Statut du fichier joint -->
+  <div style="background-color: #fef3c7; padding: 15px;">
+    <h3>🎯 Action requise</h3>
+    <p><strong>10 pages à corriger gratuitement</strong></p>
+    {{#if fileName}}
+      <p style="color: #059669;">✅ Fichier joint : {{fileName}} ({{fileSize}})</p>
+      <p><em>Le fichier est attaché à cet email</em></p>
+    {{else}}
+      <p style="color: #dc2626;">⚠️ Aucun fichier - Contacter le prospect</p>
+    {{/if}}
+  </div>
+
+  <!-- Message complet -->
+  {{#if fullMessage}}
+    <div>
+      <h3>📨 Message complet</h3>
+      <pre>{{fullMessage}}</pre>
+    </div>
+  {{/if}}
+{{else}}
+  <!-- Template standard pour autres messages -->
+{{/if}}
 ```
 
 ### 📝 Template texte alternatif

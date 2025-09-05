@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { MailerService } from "../utils/mailer";
 import { emailQueue } from "../queues/emailQueue";
-import { PrismaClient, Role, MessageType, MessageStatut, FileType } from "@prisma/client";
+import { PrismaClient, Role, MessageType, MessageStatut, FileType, NotificationType, NotificationPriority } from "@prisma/client";
 import { notifyAdminNewMessage } from "./notificationsController";
 import { AuditService, AUDIT_ACTIONS } from "../services/auditService";
 import fs from "fs";
@@ -436,12 +436,39 @@ Staka Livres - Système d'échantillons gratuits automatique
     // Email removal: Now handled by admin notification system via eventBus
     // The notification below will trigger an automatic email
 
-    // Notification dans l'interface admin
+    // Notification dans l'interface admin avec toutes les informations
     try {
-      await notifyAdminNewMessage(
-        `${cleanData.nom} (échantillon gratuit)`, 
-        "Demande d'échantillon gratuit de 10 pages", 
-        true
+      // Import de la fonction createAdminNotification
+      const { createAdminNotification } = await import("./notificationsController");
+      
+      // Préparer les données complètes pour l'email
+      const notificationData = {
+        isFreeSample: true,
+        prospectName: cleanData.nom,
+        prospectEmail: cleanData.email,
+        prospectPhone: cleanData.telephone || null,
+        genre: cleanData.genre || null,
+        description: cleanData.description || null,
+        fileName: cleanData.fichier?.originalname || null,
+        fileSize: cleanData.fichier ? `${Math.round(cleanData.fichier.size / 1024)} Ko` : null,
+        fullMessage: messageContent,
+        conversationId: message.conversationId,
+        // Ajouter les données du fichier pour l'attachment
+        fileAttachment: cleanData.fichier ? {
+          content: fs.readFileSync(cleanData.fichier.path, { encoding: 'base64' }),
+          filename: cleanData.fichier.originalname,
+          type: cleanData.fichier.mimetype,
+          disposition: 'attachment'
+        } : null
+      };
+      
+      await createAdminNotification(
+        `Nouvelle demande d'échantillon gratuit - ${cleanData.nom}`,
+        `${cleanData.nom} souhaite recevoir 10 pages corrigées gratuitement`,
+        NotificationType.MESSAGE,
+        NotificationPriority.HAUTE,
+        `/admin/messagerie?conversation=${message.conversationId}`,
+        notificationData
       );
     } catch (notificationError) {
       console.error("Erreur lors de la création de la notification:", notificationError);

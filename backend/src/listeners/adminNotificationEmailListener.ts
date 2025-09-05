@@ -60,6 +60,9 @@ eventBus.on("admin.notification.created", async (notification) => {
       formattedData.amount = (data.amount / 100).toFixed(2);
     }
 
+    // Extraire les attachments si présents
+    const attachments = data?.fileAttachment ? [data.fileAttachment] : undefined;
+    
     await emailQueue.add("sendAdminNotifEmail", {
       to: adminEmail,
       template,
@@ -76,6 +79,7 @@ eventBus.on("admin.notification.created", async (notification) => {
         subject: `[Admin] ${notification.title}`,
         ...formattedData, // Spread formatted notification data
       },
+      attachments,
     });
 
     console.log(`✅ Admin email queued for notification: ${notification.title}`);
