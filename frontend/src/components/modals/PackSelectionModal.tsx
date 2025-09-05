@@ -8,6 +8,7 @@ import { buildApiUrl, getAuthHeaders } from "../../utils/api";
 import { useToast } from "../layout/ToastProvider";
 import { usePricing } from "../landing/hooks/usePricing";
 import FileUploadSection, { FileAttachment } from "../forms/FileUploadSection";
+import { useEcommerceTracking } from "../../hooks/usePiwikTracking";
 
 // Schéma de validation pour utilisateur connecté (moins de champs requis)
 const userProjectSchema = z.object({
@@ -47,6 +48,7 @@ export default function PackSelectionModal({
   const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
   const { showToast } = useToast();
   const { user } = useAuth();
+  const { trackAddToCart, trackCheckoutStart } = useEcommerceTracking();
   
   // Hook de tarification pour calculer les prix dynamiques
   const { calculatePrice, pricing, setPages } = usePricing({
@@ -210,6 +212,28 @@ export default function PackSelectionModal({
         "Projet créé ! Redirection vers le paiement...",
         { duration: 3000 }
       );
+
+      // Tracking Piwik PRO - Ajout au panier et début du checkout
+      const finalPrice = dynamicPrice || selectedService?.prix || 0;
+      const serviceName = selectedService?.nom || 'Service de correction';
+      
+      // Stocker les données de la commande pour le tracking de conversion après paiement
+      localStorage.setItem('currentOrder', JSON.stringify({
+        amount: finalPrice,
+        packTitle: serviceName,
+        items: [{
+          name: serviceName,
+          price: finalPrice,
+          quantity: 1,
+          category: 'Correction'
+        }]
+      }));
+      
+      // Tracker l'ajout au panier
+      trackAddToCart(serviceName, finalPrice, 'Correction');
+      
+      // Tracker le début du checkout
+      trackCheckoutStart(finalPrice, 1);
 
       // Fermer le modal
       onClose();

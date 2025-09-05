@@ -14,7 +14,7 @@
 
 **✨ Version Production - 26 Août 2025** : Application déployée en production sur [livrestaka.fr](https://livrestaka.fr/) avec infrastructure de tests enterprise-grade (97 tests totaux avec 94.9% de réussite : 34 tests E2E Cypress + 57 tests backend + 6 tests frontend), architecture Docker optimisée, **système de fichiers local unifié**, **webhooks Stripe filtrés par domaine**, **déploiement automatisé avec gestion BDD**, système de notifications centralisé avec EventBus, et documentation consolidée.
 
-### 📊 **Métriques du Projet (26 Août 2025)**
+### 📊 **Métriques du Projet (05 Sep 2025)**
 
 | Composant                  | Détail                                                   | Statut           |
 | -------------------------- | -------------------------------------------------------- | ---------------- |
@@ -32,6 +32,7 @@
 | **🔒 Sécurité**            | RGPD + Audit logs + JWT                                  | ✅ Conforme      |
 | **🔔 Notifications**       | EventBus centralisé + 22 templates email                 | ✅ Automatisées  |
 | **💳 Webhooks Stripe**     | Filtrage par domaine livrestaka.fr                       | ✅ Sécurisés     |
+| **📈 Analytics**           | Piwik PRO intégré avec consentement RGPD                 | ✅ Production    |
 | **🚀 Déploiement**         | Script automatisé + migrations BDD                       | ✅ Production    |
 
 ### 🌟 **Fonctionnalités Principales**
@@ -81,6 +82,7 @@
 - **Gestion utilisateurs** avec CRUD et recherche avancée
 - **Suivi commandes** avec changement statuts
 - **Mode démonstration** professionnel pour prospects
+- **Tracking Piwik PRO** intégré pour analytics RGPD-compliant
 
 #### 🎨 **Interface Utilisateur Moderne**
 
@@ -265,6 +267,10 @@ DATABASE_URL="mysql://staka:staka@db:3306/stakalivres"
 JWT_SECRET="dev_secret_key_change_in_production"
 FRONTEND_URL="http://localhost:3001"
 PORT=3000
+
+# Analytics (configuré automatiquement)
+# Piwik PRO Container ID: a6698d95-0435-4197-a9d4-c5d2e9f0af08
+# Configuration dans frontend/src/utils/piwikPro.ts
 
 # Stripe (OBLIGATOIRE pour paiements) - ✅ PRODUCTION OPÉRATIONNELLE
 STRIPE_SECRET_KEY="sk_live_VOTRE_CLE_PRODUCTION"  # Clé production (sk_live_*)
@@ -653,7 +659,16 @@ npm run migrate:db             # Migrations manuelles si besoin
 - Clés Stripe LIVE dans `.env.prod`
 - VPS configuré avec docker-compose.prod.yml
 
-### 🆕 **Nouvelles Fonctionnalités - 26 Août 2025**
+### 🆕 **Nouvelles Fonctionnalités - 05 Sep 2025**
+
+#### 📈 **Analytics & Tracking Piwik PRO**
+
+- **Solution RGPD-compliant** : Alternative européenne à Google Analytics
+- **Bannière de consentement** : Gestion granulaire des cookies (analytics, marketing, remarketing)
+- **Tracking e-commerce** : Conversions Stripe, paniers, abandons
+- **Tracking campagnes** : Mesure ROI Google Ads et Instagram
+- **Architecture modulaire** : Hooks React dédiés (`usePiwikTracking`, `useEcommerceTracking`, `useMarketingTracking`)
+- **Container ID** : `a6698d95-0435-4197-a9d4-c5d2e9f0af08`
 
 #### 🔒 **Sécurité Webhooks Stripe**
 

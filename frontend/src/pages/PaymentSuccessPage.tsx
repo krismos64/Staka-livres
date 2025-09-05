@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useEcommerceTracking } from "../hooks/usePiwikTracking";
 
 interface PaymentSuccessPageProps {
   onBackToApp: () => void;
@@ -12,7 +13,9 @@ export default function PaymentSuccessPage({
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingComplete, setProcessingComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [conversionTracked, setConversionTracked] = useState(false);
   const sessionId = searchParams.get("session_id");
+  const { trackOrderComplete } = useEcommerceTracking();
 
   useEffect(() => {
     if (sessionId && !processingComplete) {
@@ -57,10 +60,44 @@ export default function PaymentSuccessPage({
     }
   }, [sessionId, processingComplete]);
 
-  // Google Ads conversion tracking
+  // Tracking des conversions (Piwik PRO + Google Ads)
   useEffect(() => {
     // N'injecter le script que si le paiement est complètement traité
-    if (processingComplete && sessionId) {
+    if (processingComplete && sessionId && !conversionTracked) {
+      // Tracking Piwik PRO pour l'e-commerce
+      // Récupérer les informations de la session depuis le localStorage ou l'API
+      const orderData = localStorage.getItem('currentOrder');
+      if (orderData) {
+        try {
+          const order = JSON.parse(orderData);
+          trackOrderComplete(
+            sessionId,
+            order.amount || 0,
+            order.items || [{
+              name: order.packTitle || 'Service de correction',
+              price: order.amount || 0,
+              quantity: 1,
+              category: 'Correction'
+            }]
+          );
+          console.log('[Piwik PRO] Conversion e-commerce trackée:', sessionId);
+          
+          // Nettoyer les données de commande du localStorage
+          localStorage.removeItem('currentOrder');
+        } catch (e) {
+          console.error('[Piwik PRO] Erreur lors du tracking de conversion:', e);
+        }
+      } else {
+        // Si pas de données stockées, tracker avec les infos minimales
+        trackOrderComplete(sessionId, 0, [{
+          name: 'Service de correction',
+          price: 0,
+          quantity: 1,
+          category: 'Correction'
+        }]);
+      }
+      
+      setConversionTracked(true);
       // Vérifier si le script n'est pas déjà injecté
       if (!window.gtag && !document.querySelector('script[src*="googletagmanager.com/gtag/js"]')) {
         
@@ -95,7 +132,7 @@ export default function PaymentSuccessPage({
         console.log('[Google Ads] Tag de conversion déjà présent - événement enregistré');
       }
     }
-  }, [processingComplete, sessionId]);
+  }, [processingComplete, sessionId, conversionTracked, trackOrderComplete]);
 
   const handleRetryProcessing = () => {
     setError(null);

@@ -14,6 +14,8 @@ import MainLayout from "./components/layout/MainLayout";
 import { ToastProvider } from "./components/layout/ToastProvider";
 import PackSelectionModal from "./components/modals/PackSelectionModal";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { PiwikProProvider } from "./components/analytics/PiwikProProvider";
+import { CookieConsentBanner } from "./components/analytics/CookieConsentBanner";
 import ActivateAccountPage from "./pages/ActivateAccountPage";
 // Lazy loading des pages admin pour code splitting
 const AdminAuditLogs = lazy(() => import("./pages/admin/AdminAuditLogs"));
@@ -85,7 +87,10 @@ const App: React.FC = () => (
           v7_startTransition: true,
           v7_relativeSplatPath: true 
         }}>
-          <AppRoutes />
+          <PiwikProProvider>
+            <CookieConsentBanner />
+            <AppRoutes />
+          </PiwikProProvider>
         </BrowserRouter>
       </DemoModeProvider>
     </ToastProvider>
