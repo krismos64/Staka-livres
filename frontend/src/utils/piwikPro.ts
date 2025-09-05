@@ -82,6 +82,14 @@ class PiwikProTracker {
       return;
     }
 
+    // Vérifier si le script est déjà présent
+    if (document.querySelector('script[src*="staka.containers.piwik.pro"]')) {
+      console.warn('Piwik PRO script already loaded');
+      this.initialized = true;
+      this.checkStoredConsent();
+      return;
+    }
+
     // Merge avec la config par défaut
     if (customConfig) {
       this.config = { ...this.config, ...customConfig };
@@ -171,15 +179,20 @@ class PiwikProTracker {
     localStorage.setItem('piwik_consent', JSON.stringify(consent));
     localStorage.setItem('piwik_consent_date', new Date().toISOString());
 
-    // Appliquer le consentement via Consent Manager API
-    if (window.ppms?.cm?.api) {
-      // Activer/désactiver les différents types de tracking
-      Object.entries(consent).forEach(([type, enabled]) => {
-        window.ppms.cm!.api!('consent', type, enabled ? 'grant' : 'deny');
+    // Pour Piwik PRO, on utilise directement le dataLayer au lieu de l'API CM
+    // qui n'est pas toujours disponible selon la configuration du container
+    if (consent.analytics && window.dataLayer) {
+      window.dataLayer.push({
+        event: 'consent_granted',
+        consent_analytics: consent.analytics,
+        consent_conversion: consent.conversion,
+        consent_marketing: consent.marketing,
+        consent_remarketing: consent.remarketing,
+        consent_preferences: consent.preferences
       });
 
-      // Si le consentement analytics est donné, traiter les événements en attente
-      if (consent.analytics && this.pendingEvents.length > 0) {
+      // Traiter les événements en attente
+      if (this.pendingEvents.length > 0) {
         this.pendingEvents.forEach(event => event());
         this.pendingEvents = [];
       }

@@ -32,7 +32,8 @@
 | **🔒 Sécurité**            | RGPD + Audit logs + JWT                                  | ✅ Conforme      |
 | **🔔 Notifications**       | EventBus centralisé + 22 templates email                 | ✅ Automatisées  |
 | **💳 Webhooks Stripe**     | Filtrage par domaine livrestaka.fr                       | ✅ Sécurisés     |
-| **📈 Analytics**           | Piwik PRO intégré avec consentement RGPD                 | ✅ Production    |
+| **📈 Analytics Piwik PRO** | Tracking RGPD + campagnes + e-commerce                  | ✅ Production    |
+| **🍪 Consentement RGPD**   | Bannière cookies + gestion granulaire                   | ✅ Conforme      |
 | **🚀 Déploiement**         | Script automatisé + migrations BDD                       | ✅ Production    |
 
 ### 🌟 **Fonctionnalités Principales**
@@ -82,7 +83,9 @@
 - **Gestion utilisateurs** avec CRUD et recherche avancée
 - **Suivi commandes** avec changement statuts
 - **Mode démonstration** professionnel pour prospects
-- **Tracking Piwik PRO** intégré pour analytics RGPD-compliant
+- **Analytics Piwik PRO** : Tracking RGPD-compliant pour campagnes Google Ads/Instagram
+- **Bannière consentement** : Gestion granulaire cookies (analytics, marketing, remarketing)
+- **Tracking e-commerce** : Conversions Stripe, abandons panier, tunnels de vente
 
 #### 🎨 **Interface Utilisateur Moderne**
 
@@ -118,10 +121,12 @@ Staka-livres/
 ├── frontend/               # React 18 + Vite + React Query
 │   ├── src/
 │   │   ├── components/     # 79 composants modulaires + SEO optimisés
+│   │   │   ├── analytics/  # Piwik PRO Provider + CookieConsentBanner
 │   │   │   └── landing/    # 15 composants landing optimisés
 │   │   │       └── FloatingBubbles.tsx # Équipe experts interactif
 │   │   ├── pages/         # 34 pages complètes + blog SEO
-│   │   ├── hooks/         # 33 hooks React Query + useLocalUpload (S3 supprimé)
+│   │   ├── hooks/         # 33 hooks React Query + useLocalUpload + usePiwikTracking
+│   │   ├── utils/         # piwikPro.ts - Tracker RGPD-compliant
 │   │   └── tests/         # Tests unitaires CI/CD séparés
 │   ├── tests/             # Tests intégration (local uniquement)
 │   └── cypress/           # Tests E2E (34 tests Cypress)
@@ -268,9 +273,11 @@ JWT_SECRET="dev_secret_key_change_in_production"
 FRONTEND_URL="http://localhost:3001"
 PORT=3000
 
-# Analytics (configuré automatiquement)
-# Piwik PRO Container ID: a6698d95-0435-4197-a9d4-c5d2e9f0af08
-# Configuration dans frontend/src/utils/piwikPro.ts
+# Analytics Piwik PRO (configuré automatiquement - RGPD compliant)
+# Container ID: a6698d95-0435-4197-a9d4-c5d2e9f0af08
+# URL Container: https://staka.containers.piwik.pro/
+# Configuration complète dans frontend/src/utils/piwikPro.ts
+# Bannière consentement intégrée (granularité par type de cookie)
 
 # Stripe (OBLIGATOIRE pour paiements) - ✅ PRODUCTION OPÉRATIONNELLE
 STRIPE_SECRET_KEY="sk_live_VOTRE_CLE_PRODUCTION"  # Clé production (sk_live_*)
@@ -510,6 +517,7 @@ docker compose build --no-cache
 
 ### 🔧 **Guides Techniques Spécialisés**
 
+- **[Analytics Piwik PRO](docs/PIWIK_PRO_ANALYTICS_GUIDE.md)** : ✅ **NOUVEAU** - Tracking RGPD + campagnes
 - **[Système Tarifs](docs/SYSTEME_TARIFS_COMPLET.md)** : Tarification dynamique
 - **[Messagerie API](docs/MESSAGES_API_GUIDE.md)** : Communication temps réel
 - **[Reset Mot de Passe](docs/PASSWORD_RESET_GUIDE.md)** : Sécurité utilisateur

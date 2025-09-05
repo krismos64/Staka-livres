@@ -46,18 +46,30 @@ export const PiwikProProvider: React.FC<PiwikProProviderProps> = ({ children }) 
 
   // Initialise Piwik PRO au chargement
   useEffect(() => {
-    piwikPro.init();
+    // Attendre que le DOM soit complètement chargé
+    const initializeTracking = () => {
+      piwikPro.init();
 
-    // Vérifie le consentement stocké
-    const storedConsent = localStorage.getItem('piwik_consent');
-    if (storedConsent) {
-      try {
-        const consent = JSON.parse(storedConsent);
-        setConsentSettings(consent);
-        setHasConsent(consent.analytics);
-      } catch (e) {
-        console.error('Failed to parse stored consent', e);
+      // Vérifie le consentement stocké
+      const storedConsent = localStorage.getItem('piwik_consent');
+      if (storedConsent) {
+        try {
+          const consent = JSON.parse(storedConsent);
+          setConsentSettings(consent);
+          setHasConsent(consent.analytics);
+        } catch (e) {
+          console.error('Failed to parse stored consent', e);
+        }
       }
+    };
+
+    // Si le document est déjà chargé, initialiser immédiatement
+    if (document.readyState === 'complete') {
+      initializeTracking();
+    } else {
+      // Sinon, attendre le chargement complet
+      window.addEventListener('load', initializeTracking);
+      return () => window.removeEventListener('load', initializeTracking);
     }
   }, []);
 

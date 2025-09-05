@@ -541,6 +541,58 @@ window.ppms;
 // → Doit afficher les APIs disponibles
 ```
 
+#### Test de validation complet
+
+**Exemple de dataLayer fonctionnel :**
+```javascript
+// Console → window.dataLayer
+[
+  {Consents: {…}, Piwik PRO Anonymization: ƒ},
+  {event: 'stg.start', gtm.uniqueEventId: 7},
+  {
+    event: 'consent_granted',
+    consent_analytics: true,
+    consent_conversion: true,
+    consent_marketing: true,
+    consent_remarketing: true
+  },
+  {
+    event: 'pageView',
+    pageTitle: "Staka Éditions - Correction professionnelle...",
+    pageUrl: 'http://localhost:3000/',
+    customDimensions: {path: '/', userRole: 'anonymous'}
+  },
+  {
+    event: 'customEvent',
+    category: 'Landing',
+    action: 'View',
+    name: 'Homepage'
+  },
+  {event: 'stg.timer', timeOnWebsite: '5 sec'}
+]
+```
+
+**Signification des événements :**
+- ✅ `stg.start` : Container Piwik PRO chargé
+- ✅ `consent_granted` : Consentement RGPD accordé
+- ✅ `pageView` : Page trackée avec métadonnées
+- ✅ `customEvent` : Événements React personnalisés
+- ✅ `stg.timer` : Engagement utilisateur mesuré
+
+### Résolution des problèmes courants
+
+#### Problème : Double initialisation
+**Erreur :** `Multiple PPAS containers on one page`
+**Solution :** ✅ Corrigé - Vérification script déjà chargé
+
+#### Problème : API Consent Manager
+**Erreur :** `consent: not implemented`
+**Solution :** ✅ Corrigé - Utilisation du dataLayer direct
+
+#### Problème : Tracking inactif
+**Cause :** Consentement pas accordé
+**Vérification :** Chercher `consent_granted` dans dataLayer
+
 ## 📊 Métriques de succès
 
 ### KPIs à suivre
