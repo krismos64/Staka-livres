@@ -13,6 +13,7 @@ import Hero from "../components/landing/Hero";
 import Navigation from "../components/landing/Navigation";
 import Packs from "../components/landing/Packs";
 import PricingCalculator from "../components/landing/PricingCalculator";
+import PromotionalBanner from "../components/landing/PromotionalBanner";
 import Services from "../components/landing/Services";
 import Testimonials from "../components/landing/Testimonials";
 import TrustIndicators from "../components/landing/TrustIndicators";
@@ -91,6 +92,8 @@ export default function LandingPage({ onLoginClick, onSignupClick }: LandingPage
       <main id="main-content">
         {/* Hero Section */}
         <Hero />
+        {/* Promotional Banner */}
+        <PromotionalBanner />
         {/* Trust Indicators Section */}
         <TrustIndicators />
         {/* Testimonials Section */}
