@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Cookie, Shield, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Cookie, ChevronDown, ChevronUp } from 'lucide-react';
 import { usePiwikPro } from './PiwikProProvider';
 import { ConsentSettings } from '../../utils/piwikPro';
 
@@ -75,23 +75,17 @@ export const CookieConsentBanner: React.FC = () => {
 
   return (
     <>
-      {/* Overlay */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 z-[9998]" />
-      
-      {/* Bannière */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl z-[9999] max-h-[90vh] overflow-y-auto">
-        <div className="max-w-7xl mx-auto p-6">
-          {/* Header */}
-          <div className="flex items-start justify-between mb-4">
+      {/* Bannière plus discrète sans overlay */}
+      <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:max-w-md bg-white rounded-xl shadow-lg border border-gray-200 z-[9999] max-h-[80vh] overflow-y-auto">
+        <div className="p-4">
+          {/* Header compact */}
+          <div className="flex items-start justify-between mb-3">
             <div className="flex items-center">
-              <Cookie className="w-8 h-8 text-blue-600 mr-3" />
+              <Cookie className="w-5 h-5 text-blue-600 mr-2" />
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Paramètres de confidentialité
+                <h2 className="text-base font-semibold text-gray-900">
+                  Cookies
                 </h2>
-                <p className="text-gray-600 mt-1">
-                  Nous utilisons des cookies pour améliorer votre expérience et analyser notre trafic
-                </p>
               </div>
             </div>
             <button
@@ -99,76 +93,57 @@ export const CookieConsentBanner: React.FC = () => {
               className="text-gray-400 hover:text-gray-600 transition-colors"
               aria-label="Fermer"
             >
-              <X className="w-6 h-6" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Description principale */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <div className="flex items-start">
-              <Shield className="w-5 h-5 text-blue-600 mt-1 mr-3 flex-shrink-0" />
-              <div className="text-sm text-gray-700">
-                <p className="mb-2">
-                  <strong>Votre confidentialité est importante pour nous.</strong> Nous utilisons Piwik PRO, 
-                  une solution d'analyse respectueuse du RGPD, pour comprendre comment vous utilisez notre site 
-                  et améliorer nos services.
-                </p>
-                <p>
-                  Les cookies essentiels sont toujours actifs car ils sont nécessaires au bon fonctionnement du site. 
-                  Vous pouvez personnaliser vos préférences pour les autres types de cookies.
-                </p>
-              </div>
-            </div>
-          </div>
+          {/* Description courte */}
+          <p className="text-xs text-gray-600 mb-3">
+            Nous utilisons des cookies pour améliorer votre expérience.
+          </p>
 
           {/* Toggle détails */}
           <button
             onClick={() => setShowDetails(!showDetails)}
-            className="flex items-center text-blue-600 hover:text-blue-700 mb-4 font-medium"
+            className="flex items-center text-blue-600 hover:text-blue-700 mb-3 text-sm"
           >
             {showDetails ? (
               <>
-                <ChevronUp className="w-5 h-5 mr-1" />
-                Masquer les détails
+                <ChevronUp className="w-4 h-4 mr-1" />
+                Masquer
               </>
             ) : (
               <>
-                <ChevronDown className="w-5 h-5 mr-1" />
-                Personnaliser les préférences
+                <ChevronDown className="w-4 h-4 mr-1" />
+                Personnaliser
               </>
             )}
           </button>
 
           {/* Détails des cookies */}
           {showDetails && (
-            <div className="space-y-4 mb-6 bg-gray-50 rounded-lg p-4">
+            <div className="space-y-3 mb-4 bg-gray-50 rounded-lg p-3 text-xs">
               {/* Cookies essentiels - toujours activés */}
-              <div className="border-b border-gray-200 pb-4">
+              <div className="border-b border-gray-200 pb-2">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-semibold text-gray-900">
-                      Cookies essentiels
+                    <h3 className="font-semibold text-gray-900 text-xs">
+                      Essentiels
                     </h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Nécessaires au fonctionnement du site (authentification, sécurité, navigation)
-                    </p>
                   </div>
-                  <span className="text-sm font-medium text-green-600 bg-green-100 px-3 py-1 rounded-full">
+                  <span className="text-xs text-green-600">
                     Toujours actifs
                   </span>
                 </div>
               </div>
 
               {/* Cookies analytiques */}
-              <div className="border-b border-gray-200 pb-4">
+              <div className="border-b border-gray-200 pb-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex-1 mr-4">
-                    <h3 className="font-semibold text-gray-900">
-                      Cookies analytiques
+                  <div className="flex-1 mr-2">
+                    <h3 className="font-semibold text-gray-900 text-xs">
+                      Analytiques
                     </h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Nous aident à comprendre comment vous utilisez le site (pages visitées, durée, sources de trafic)
-                    </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -180,21 +155,18 @@ export const CookieConsentBanner: React.FC = () => {
                       })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
               </div>
 
               {/* Cookies de conversion */}
-              <div className="border-b border-gray-200 pb-4">
+              <div className="border-b border-gray-200 pb-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex-1 mr-4">
-                    <h3 className="font-semibold text-gray-900">
-                      Cookies de conversion
+                  <div className="flex-1 mr-2">
+                    <h3 className="font-semibold text-gray-900 text-xs">
+                      Conversion
                     </h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Mesurent l'efficacité de nos campagnes publicitaires (Google Ads, Instagram)
-                    </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -206,21 +178,18 @@ export const CookieConsentBanner: React.FC = () => {
                       })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
               </div>
 
               {/* Cookies marketing */}
-              <div className="border-b border-gray-200 pb-4">
+              <div className="border-b border-gray-200 pb-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex-1 mr-4">
-                    <h3 className="font-semibold text-gray-900">
-                      Cookies marketing
+                  <div className="flex-1 mr-2">
+                    <h3 className="font-semibold text-gray-900 text-xs">
+                      Marketing
                     </h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Permettent de vous proposer des publicités pertinentes sur d'autres sites
-                    </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -232,21 +201,18 @@ export const CookieConsentBanner: React.FC = () => {
                       })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
               </div>
 
               {/* Cookies de remarketing */}
-              <div className="border-b border-gray-200 pb-4">
+              <div className="border-b border-gray-200 pb-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex-1 mr-4">
-                    <h3 className="font-semibold text-gray-900">
-                      Cookies de remarketing
+                  <div className="flex-1 mr-2">
+                    <h3 className="font-semibold text-gray-900 text-xs">
+                      Remarketing
                     </h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Permettent de vous recontacter avec des offres personnalisées
-                    </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -258,7 +224,7 @@ export const CookieConsentBanner: React.FC = () => {
                       })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
               </div>
@@ -266,13 +232,10 @@ export const CookieConsentBanner: React.FC = () => {
               {/* Cookies de préférences */}
               <div>
                 <div className="flex items-center justify-between">
-                  <div className="flex-1 mr-4">
-                    <h3 className="font-semibold text-gray-900">
-                      Cookies de préférences
+                  <div className="flex-1 mr-2">
+                    <h3 className="font-semibold text-gray-900 text-xs">
+                      Préférences
                     </h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Mémorisent vos choix et préférences pour améliorer votre expérience
-                    </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -284,7 +247,7 @@ export const CookieConsentBanner: React.FC = () => {
                       })}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
               </div>
@@ -292,40 +255,36 @@ export const CookieConsentBanner: React.FC = () => {
           )}
 
           {/* Boutons d'action */}
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex gap-2">
             <button
               onClick={handleRejectAll}
-              className="px-6 py-3 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              className="px-3 py-1.5 text-xs text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
             >
-              Refuser tout
+              Refuser
             </button>
-            
+
             {showDetails && (
               <button
                 onClick={handleSaveCustom}
-                className="px-6 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                className="px-3 py-1.5 text-xs text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
               >
-                Enregistrer mes préférences
+                Enregistrer
               </button>
             )}
-            
+
             <button
               onClick={handleAcceptAll}
-              className="px-6 py-3 text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors font-medium flex-1 sm:flex-initial"
+              className="px-3 py-1.5 text-xs text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors flex-1"
             >
-              Accepter tout
+              Accepter
             </button>
           </div>
 
-          {/* Liens légaux */}
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <p className="text-xs text-gray-500">
-              En continuant sur notre site, vous acceptez notre{' '}
-              <a href="/mentions-legales" className="text-blue-600 hover:underline">
-                politique de confidentialité
-              </a>
-              . Vous pouvez modifier vos préférences à tout moment dans les paramètres.
-            </p>
+          {/* Lien légal minimal */}
+          <div className="mt-2 pt-2 border-t border-gray-200">
+            <a href="/mentions-legales" className="text-xs text-gray-500 hover:text-blue-600 hover:underline">
+              Politique de confidentialité
+            </a>
           </div>
         </div>
       </div>
