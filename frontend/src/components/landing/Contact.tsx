@@ -94,23 +94,6 @@ export default function Contact({ onChatClick }: ContactProps) {
               💬 Parlons de votre projet
             </h3>
             <div className="space-y-6">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <i className="fas fa-envelope text-blue-600"></i>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-1">Email</h4>
-                  <a
-                    href="mailto:contact@staka.fr"
-                    className="text-blue-600 hover:underline"
-                  >
-                    contact@staka.fr
-                  </a>
-                  <p className="text-sm text-gray-500">
-                    Réponse garantie sous 24h
-                  </p>
-                </div>
-              </div>
 
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
@@ -157,9 +140,12 @@ export default function Contact({ onChatClick }: ContactProps) {
                   <p className="text-gray-600">
                     Échange téléphonique de 30 min
                   </p>
-                  <button className="text-purple-600 hover:underline text-sm font-medium">
+                  <a
+                    href="#consultation"
+                    className="text-purple-600 hover:underline text-sm font-medium"
+                  >
                     Réserver un créneau →
-                  </button>
+                  </a>
                 </div>
               </div>
 

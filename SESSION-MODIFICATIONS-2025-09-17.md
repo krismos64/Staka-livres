@@ -196,7 +196,34 @@ L'admin reçoit maintenant **un seul email complet** avec toutes les information
 
 ---
 
-## 🗑️ 8. Nettoyage template - Suppression bouton "Voir nos tarifs"
+## 📧 8. Suppression adresse email de la page d'accueil
+
+### Problème initial
+- Adresse email `contact@staka.fr` visible directement sur la page d'accueil
+- Client ne souhaite pas exposer l'adresse email publiquement
+- Préférence pour les autres canaux de contact (formulaire, téléphone, chat)
+
+### ✅ Solution implémentée
+**Fichiers modifiés** :
+- `/frontend/src/components/landing/Contact.tsx`
+- `/frontend/src/components/landing/Footer.tsx`
+
+**Changements** :
+- Suppression complète de la section email du composant Contact
+- Suppression de l'élément email du Footer
+- Conservation des autres moyens de contact : téléphone, WhatsApp, chat, formulaire
+- **Adresses email conservées** dans les pages internes (BillingPage, HelpPage, SupportCard)
+
+**Canaux de contact restants** :
+- ✅ Formulaire de contact (avec téléphone obligatoire)
+- ✅ Téléphone : 06 15 07 81 52
+- ✅ WhatsApp : Chat direct instantané
+- ✅ Chat widget en direct
+- ✅ Consultation gratuite : Réservation de créneau
+
+---
+
+## 🗑️ 9. Nettoyage template - Suppression bouton "Voir nos tarifs"
 
 ### Problème
 - Bouton inapproprié dans l'email de confirmation client
@@ -208,7 +235,7 @@ L'admin reçoit maintenant **un seul email complet** avec toutes les information
 
 ---
 
-## 🔧 9. Résolution problèmes techniques EventBus
+## 🔧 10. Résolution problèmes techniques EventBus
 
 ### Problèmes rencontrés
 1. **Instance EventBus différente** : Import dynamique vs statique
@@ -227,6 +254,8 @@ L'admin reçoit maintenant **un seul email complet** avec toutes les information
 ### Frontend (React/TypeScript)
 - `/frontend/src/components/analytics/CookieConsentBanner.tsx`
 - `/frontend/src/components/landing/FreeSample.tsx`
+- `/frontend/src/components/landing/Contact.tsx`
+- `/frontend/src/components/landing/Footer.tsx`
 - `/frontend/src/components/common/ChatWidget.tsx`
 - `/frontend/src/components/modals/ModalConsultationBooking.tsx`
 - `/frontend/src/components/forms/GuestOrderForm.tsx`
@@ -280,5 +309,7 @@ Toutes les modifications ont été testées et validées. Le système d'emails p
 - ✅ Bannière cookies discrète
 - ✅ Formulaire de contact avec téléphone obligatoire
 - ✅ Emails admin de contact enrichis avec toutes les données
+- ✅ Suppression adresse email de la page d'accueil
+- ✅ Conservation des canaux de contact préférés (téléphone, WhatsApp, chat, formulaire)
 
 **Prêt pour la production ! 🎉**

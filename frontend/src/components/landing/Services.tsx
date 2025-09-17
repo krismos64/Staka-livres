@@ -125,7 +125,7 @@ export default function Services() {
         </div>
 
         {/* Consultation gratuite */}
-        <div className="mt-16 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-3xl p-8 md:p-12">
+        <div id="consultation" className="mt-16 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-3xl p-8 md:p-12">
           <div className="text-center mb-8">
             <h3 className="text-2xl md:text-3xl font-bold mb-4">
               📅 Réservez votre consultation gratuite

@@ -15,12 +15,6 @@ export default function About({ onChatClick }: AboutProps) {
     }
   };
 
-  const handleBookingClick = () => {
-    // Simulation d'ouverture de la modal de réservation
-    debugLog("Ouverture de la modal de réservation...");
-    // Ici on pourrait intégrer un vrai système de réservation
-    alert("Système de réservation en cours d'ouverture... 📅");
-  };
 
   return (
     <section
@@ -126,12 +120,12 @@ export default function About({ onChatClick }: AboutProps) {
                     <p className="text-gray-600">
                       Échange téléphonique de 30 min
                     </p>
-                    <button
-                      onClick={handleBookingClick}
+                    <a
+                      href="#consultation"
                       className="text-purple-600 hover:underline text-sm font-medium"
                     >
                       Réserver un créneau →
-                    </button>
+                    </a>
                   </div>
                 </div>
 

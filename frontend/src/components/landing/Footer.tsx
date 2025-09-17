@@ -197,18 +197,6 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3 text-gray-300">
               <li className="flex items-start gap-3">
-                <i className="fas fa-envelope text-blue-400 mt-1"></i>
-                <div>
-                  <div className="font-medium">Email</div>
-                  <a
-                    href="mailto:contact@staka.fr"
-                    className="text-gray-400 hover:text-blue-400 transition"
-                  >
-                    contact@staka.fr
-                  </a>
-                </div>
-              </li>
-              <li className="flex items-start gap-3">
                 <i className="fas fa-phone text-blue-400 mt-1"></i>
                 <div>
                   <div className="font-medium">Téléphone</div>
