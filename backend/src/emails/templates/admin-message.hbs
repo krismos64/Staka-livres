@@ -82,6 +82,32 @@
             <p style="margin: 0;"><strong>⚡ Ce message provient du chat direct du site.</strong></p>
             <p style="margin: 5px 0 0 0;">Le visiteur attend une réponse rapide par email.</p>
         </div>
+        {{else if isContactMessage}}
+        <div style="background-color: #f0f9ff; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #0ea5e9;">
+            <h3 style="margin: 0 0 10px 0; color: #0369a1;">👤 Informations du contact</h3>
+            <p style="margin: 5px 0;"><strong>Nom :</strong> {{contactName}}</p>
+            <p style="margin: 5px 0;"><strong>Email :</strong> <a href="mailto:{{contactEmail}}" style="color: #2563eb;">{{contactEmail}}</a></p>
+            <p style="margin: 5px 0;"><strong>Téléphone :</strong> <a href="tel:{{contactPhone}}" style="color: #2563eb;">{{contactPhone}}</a></p>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <h3 style="color: #0369a1; margin-bottom: 10px;">📋 Sujet</h3>
+            <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <p style="margin: 0; font-weight: bold; color: #1e40af;">{{contactSubject}}</p>
+            </div>
+        </div>
+
+        <div style="background-color: #eff6ff; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 10px 0; color: #2563eb;">💬 Message complet</h3>
+            <div style="background-color: white; padding: 15px; border-radius: 4px; margin-top: 10px; border: 1px solid #e2e8f0;">
+                <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; font-size: 14px;">{{contactMessage}}</pre>
+            </div>
+        </div>
+
+        <div style="background-color: #fef3c7; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #f59e0b;">
+            <p style="margin: 0;"><strong>📧 Ce message provient du formulaire de contact du site.</strong></p>
+            <p style="margin: 5px 0 0 0;">Réponse attendue sous 24h selon les engagements du site.</p>
+        </div>
         {{else}}
         <div style="background-color: #f1f5f9; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
             <p style="margin: 0; font-size: 16px;">{{message}}</p>

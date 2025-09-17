@@ -89,12 +89,32 @@
 
 ---
 
-## 📧 6. Optimisation complète du système d'emails admin
+## 📞 6. Numéros de téléphone obligatoires - Formulaire de contact
+
+### Problème initial
+- Champ téléphone absent du formulaire "Une question ? Contactez-nous"
+
+### ✅ Solution implémentée
+**Fichiers modifiés** :
+- `/frontend/src/components/landing/Contact.tsx`
+- `/backend/src/controllers/publicController.ts`
+
+**Changements** :
+- Ajout du champ téléphone dans le formulaire de contact
+- Validation côté frontend avec astérisque obligatoire
+- Mise à jour du state du formulaire : `telephone: ""`
+- Modification du contrôleur pour utiliser le nouveau système d'événements
+- Émission de l'événement `admin.contact-message.created` avec toutes les données
+
+---
+
+## 📧 7. Optimisation complète du système d'emails admin
 
 ### Problème majeur initial
 - Emails admin incomplets pour les échantillons gratuits
 - Manque d'informations : téléphone, description, genre littéraire, pièces jointes
 - Admin obligé de se connecter systématiquement à l'interface
+- **NOUVEAU** : Emails admin de contact manquaient les données complètes
 
 ### ✅ Solution révolutionnaire implémentée
 
@@ -104,12 +124,19 @@
 **Système mis en place** :
 1. **Listener principal** (`admin.notification.created`) : notifications classiques
 2. **Listener spécialisé** (`admin.free-sample.created`) : échantillons gratuits avec données complètes
+3. **Listener spécialisé** (`admin.contact-message.created`) : messages de contact avec données complètes
 
 #### Filtrage intelligent anti-duplication
 ```typescript
 // Ignorer les échantillons gratuits - ils sont traités par le listener spécialisé
 if (notification.title && notification.title.includes("échantillon gratuit")) {
   console.log(`⏭️  Skipping free sample notification (handled by specialized listener): ${notification.title}`);
+  return;
+}
+
+// Ignorer les messages de contact - ils sont traités par le listener spécialisé
+if (notification.title && (notification.title.includes("message de contact") || notification.title.includes("contact site"))) {
+  console.log(`⏭️  Skipping contact message notification (handled by specialized listener): ${notification.title}`);
   return;
 }
 ```
@@ -129,18 +156,47 @@ if (notification.title && notification.title.includes("échantillon gratuit")) {
 **Fichier utilisé** : `/backend/src/emails/templates/admin-message.hbs`
 
 **Contenu structuré** :
-- Section informations prospect
+- Section informations prospect (échantillons gratuits)
+- Section informations contact (formulaire de contact)
 - Détails du projet littéraire
 - Action requise clairement définie
 - Pièces jointes automatiques
 - Liens directs vers messagerie admin
 
+#### Template enrichi pour messages de contact
+**Section ajoutée dans `admin-message.hbs`** :
+```handlebars
+{{else if isContactMessage}}
+<div style="background-color: #f0f9ff; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #0ea5e9;">
+    <h3 style="margin: 0 0 10px 0; color: #0369a1;">👤 Informations du contact</h3>
+    <p style="margin: 5px 0;"><strong>Nom :</strong> {{contactName}}</p>
+    <p style="margin: 5px 0;"><strong>Email :</strong> <a href="mailto:{{contactEmail}}">{{contactEmail}}</a></p>
+    <p style="margin: 5px 0;"><strong>Téléphone :</strong> <a href="tel:{{contactPhone}}">{{contactPhone}}</a></p>
+</div>
+
+<div style="margin-bottom: 20px;">
+    <h3 style="color: #0369a1; margin-bottom: 10px;">📋 Sujet</h3>
+    <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0;">
+        <p style="margin: 0; font-weight: bold; color: #1e40af;">{{contactSubject}}</p>
+    </div>
+</div>
+
+<div style="background-color: #eff6ff; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+    <h3 style="margin: 0 0 10px 0; color: #2563eb;">💬 Message complet</h3>
+    <div style="background-color: white; padding: 15px; border-radius: 4px; margin-top: 10px; border: 1px solid #e2e8f0;">
+        <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; font-size: 14px;">{{contactMessage}}</pre>
+    </div>
+</div>
+```
+
 ### 🎯 Résultat final
-L'admin reçoit maintenant **un seul email complet** avec toutes les informations nécessaires pour traiter la demande sans se connecter à l'interface.
+L'admin reçoit maintenant **un seul email complet** avec toutes les informations nécessaires pour traiter les demandes sans se connecter à l'interface :
+- **Échantillons gratuits** : nom, email, téléphone, genre, description, pièces jointes
+- **Messages de contact** : nom, email, téléphone, sujet, message complet
 
 ---
 
-## 🗑️ 7. Nettoyage template - Suppression bouton "Voir nos tarifs"
+## 🗑️ 8. Nettoyage template - Suppression bouton "Voir nos tarifs"
 
 ### Problème
 - Bouton inapproprié dans l'email de confirmation client
@@ -152,7 +208,7 @@ L'admin reçoit maintenant **un seul email complet** avec toutes les information
 
 ---
 
-## 🔧 8. Résolution problèmes techniques EventBus
+## 🔧 9. Résolution problèmes techniques EventBus
 
 ### Problèmes rencontrés
 1. **Instance EventBus différente** : Import dynamique vs statique
@@ -220,7 +276,9 @@ Toutes les modifications ont été testées et validées. Le système d'emails p
 - ✅ Soumission formulaire échantillon gratuit
 - ✅ Email admin avec données complètes
 - ✅ Pièces jointes transmises automatiquement
-- ✅ Numéros de téléphone obligatoires sur tous les formulaires
+- ✅ Numéros de téléphone obligatoires sur tous les formulaires (y compris contact)
 - ✅ Bannière cookies discrète
+- ✅ Formulaire de contact avec téléphone obligatoire
+- ✅ Emails admin de contact enrichis avec toutes les données
 
 **Prêt pour la production ! 🎉**

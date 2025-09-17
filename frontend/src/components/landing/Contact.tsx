@@ -9,6 +9,7 @@ export default function Contact({ onChatClick }: ContactProps) {
   const [formData, setFormData] = useState({
     nom: "",
     email: "",
+    telephone: "",
     sujet: "",
     message: "",
   });
@@ -40,7 +41,7 @@ export default function Contact({ onChatClick }: ContactProps) {
           type: 'success',
           message: result.message || 'Votre message a bien été envoyé à notre équipe.'
         });
-        setFormData({ nom: "", email: "", sujet: "", message: "" });
+        setFormData({ nom: "", email: "", telephone: "", sujet: "", message: "" });
       } else {
         setSubmitStatus({
           type: 'error',
@@ -226,6 +227,26 @@ export default function Contact({ onChatClick }: ContactProps) {
                   />
                 </div>
               </div>
+
+              <div>
+                <label
+                  htmlFor="contact-telephone"
+                  className="block mb-2 font-semibold text-gray-700"
+                >
+                  Téléphone *
+                </label>
+                <input
+                  type="tel"
+                  id="contact-telephone"
+                  name="telephone"
+                  value={formData.telephone}
+                  onChange={handleChange}
+                  className="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-blue-500 focus:outline-none transition"
+                  required
+                  placeholder="06 12 34 56 78"
+                />
+              </div>
+
               <div>
                 <label
                   htmlFor="contact-sujet"

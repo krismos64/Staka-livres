@@ -26,13 +26,13 @@ export const sendContactMessage = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { nom, email, sujet, message } = req.body;
+    const { nom, email, telephone, sujet, message } = req.body;
 
     // Validation des champs requis (avant nettoyage)
-    if (!nom || !email || !sujet || !message) {
+    if (!nom || !email || !telephone || !sujet || !message) {
       res.status(400).json({
         error: "Tous les champs sont requis",
-        details: "Nom, email, sujet et message sont obligatoires"
+        details: "Nom, email, téléphone, sujet et message sont obligatoires"
       });
       return;
     }
@@ -41,12 +41,13 @@ export const sendContactMessage = async (
     const cleanData = {
       nom: nom.trim(),
       email: email.trim().toLowerCase(),
+      telephone: telephone.trim(),
       sujet: sujet.trim(),
       message: message.trim()
     };
 
     // Validation des champs requis APRÈS nettoyage
-    if (!cleanData.nom || !cleanData.email || !cleanData.sujet || !cleanData.message) {
+    if (!cleanData.nom || !cleanData.email || !cleanData.telephone || !cleanData.sujet || !cleanData.message) {
       res.status(400).json({
         error: "Tous les champs sont requis",
         details: "Les champs ne peuvent pas être vides (après suppression des espaces)"
@@ -102,6 +103,7 @@ export const sendContactMessage = async (
             <h3 style="margin: 0 0 10px 0; color: #1e40af;">👤 Informations du contact</h3>
             <p style="margin: 5px 0;"><strong>Nom :</strong> ${cleanData.nom}</p>
             <p style="margin: 5px 0;"><strong>Email :</strong> ${cleanData.email}</p>
+            <p style="margin: 5px 0;"><strong>Téléphone :</strong> ${cleanData.telephone}</p>
           </div>
 
           <div style="margin-bottom: 20px;">
@@ -138,6 +140,7 @@ Nouveau message de contact depuis le site
 Informations du contact :
 - Nom : ${cleanData.nom}
 - Email : ${cleanData.email}
+- Téléphone : ${cleanData.telephone}
 
 Sujet : ${cleanData.sujet}
 
@@ -151,15 +154,27 @@ Vous pouvez répondre directement à l'expéditeur : ${cleanData.email}
 Staka Livres - Système de contact automatique
     `;
 
-    // Créer une notification admin au lieu d'envoyer l'email directement
+    // Émettre un événement avec les données complètes pour l'email admin
     try {
-      await notifyAdminNewMessage(
-        `${cleanData.nom} (contact site)`,
-        `${cleanData.sujet}: ${cleanData.message.substring(0, 100)}${cleanData.message.length > 100 ? "..." : ""}`,
-        true
-      );
+      const contactData = {
+        contactName: cleanData.nom,
+        contactEmail: cleanData.email,
+        contactPhone: cleanData.telephone,
+        subject: cleanData.sujet,
+        message: cleanData.message
+      };
+
+      console.log("🔥 [ContactMessage] Émission événement admin.contact-message.created avec données:", {
+        contactName: contactData.contactName,
+        contactEmail: contactData.contactEmail,
+        contactPhone: contactData.contactPhone,
+        subject: contactData.subject,
+        hasMessage: !!contactData.message
+      });
+
+      eventBus.emit("admin.contact-message.created", contactData);
     } catch (notificationError) {
-      console.error("Erreur lors de la création de la notification:", notificationError);
+      console.error("Erreur lors de l'émission de l'événement de contact:", notificationError);
       // Continue even if notification fails
     }
 

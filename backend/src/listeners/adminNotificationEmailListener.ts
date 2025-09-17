@@ -25,6 +25,12 @@ eventBus.on("admin.notification.created", async (notification) => {
       return;
     }
 
+    // Ignorer les messages de contact - ils sont traités par le listener spécialisé
+    if (notification.title && (notification.title.includes("message de contact") || notification.title.includes("contact site"))) {
+      console.log(`⏭️  Skipping contact message notification (handled by specialized listener): ${notification.title}`);
+      return;
+    }
+
     const template = templateMap[notification.type as NotificationType];
     if (!template) {
       console.log(`No email template configured for notification type: ${notification.type}`);
@@ -141,4 +147,51 @@ eventBus.on("admin.free-sample.created", async (data) => {
 
 console.log("🔧 [FreeSample] Listener d'échantillons gratuits réinitialisé dans le fichier principal");
 console.log(`🔧 [FreeSample] Nombre de listeners enregistrés pour 'admin.free-sample.created': ${eventBus.listenerCount('admin.free-sample.created')}`);
+
+// Listener spécifique pour les messages de contact avec données complètes
+eventBus.on("admin.contact-message.created", async (data) => {
+  try {
+    console.log("🔥 [ContactMessage] Listener reçu données:", {
+      contactName: data.contactName,
+      contactEmail: data.contactEmail,
+      contactPhone: data.contactPhone,
+      subject: data.subject,
+      hasMessage: !!data.message
+    });
+
+    const adminEmail = process.env.ADMIN_EMAIL || "contact@staka.fr";
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3001";
+
+    await emailQueue.add("sendAdminNotifEmail", {
+      to: adminEmail,
+      template: "admin-message.hbs",
+      variables: {
+        title: `Nouveau message de contact - ${data.contactName}`,
+        message: `${data.contactName} vous a envoyé un message depuis le formulaire de contact`,
+        type: "MESSAGE",
+        priority: "NORMALE",
+        createdAt: new Date().toISOString(),
+        actionUrl: `${frontendUrl}/admin/messagerie`,
+        dashboardUrl: `${frontendUrl}/admin`,
+        frontendUrl,
+        supportEmail: process.env.SUPPORT_EMAIL || "contact@staka.fr",
+        subject: `[Admin] Nouveau message de contact - ${data.contactName}`,
+        // Données spécifiques au contact
+        isContactMessage: true,
+        contactName: data.contactName,
+        contactEmail: data.contactEmail,
+        contactPhone: data.contactPhone,
+        contactSubject: data.subject,
+        contactMessage: data.message,
+        fullMessage: `📧 MESSAGE DE CONTACT\n\n👤 Contact :\n• Nom : ${data.contactName}\n• Email : ${data.contactEmail}\n• Téléphone : ${data.contactPhone}\n\n📋 Sujet : ${data.subject}\n\n💬 Message :\n${data.message}`
+      }
+    });
+
+    console.log(`✅ Email de contact envoyé pour: ${data.contactName}`);
+  } catch (error) {
+    console.error("❌ Failed to send contact message admin email:", error);
+  }
+});
+
+console.log("🔧 [ContactMessage] Listener de messages de contact initialisé");
 
