@@ -9,7 +9,7 @@ const consultationBookingSchema = z.object({
   firstName: z.string().min(1, "Le prénom est requis"),
   lastName: z.string().min(1, "Le nom est requis"),
   email: z.string().email("Email invalide"),
-  phone: z.string().optional(),
+  phone: z.string().min(1, "Le téléphone est requis"),
   date: z.string().min(1, "La date est requise"),
   time: z.string().min(1, "L'heure est requise"),
   message: z.string().optional(),
@@ -44,7 +44,7 @@ export const bookConsultation = async (req: Request, res: Response) => {
 **Informations du client :**
 - Nom : ${validatedData.firstName} ${validatedData.lastName}
 - Email : ${validatedData.email}
-- Téléphone : ${validatedData.phone || "Non renseigné"}
+- Téléphone : ${validatedData.phone}
 
 **Créneaux souhaités :**
 - Date : ${validatedData.date}
@@ -104,21 +104,30 @@ ${validatedData.message || "Aucun message spécifique"}
       },
     });
 
-    // Créer une notification pour l'admin
-    await prisma.notification.create({
-      data: {
-        type: "CONSULTATION",
-        title: "Nouvelle demande de consultation",
-        message: `${validatedData.firstName} ${validatedData.lastName} souhaite planifier un appel le ${validatedData.date} à ${validatedData.time}`,
-        isRead: false,
-        userId: adminUser.id,
-        data: JSON.stringify({
-          messageId: message.id,
-          email: validatedData.email,
-          requestedDateTime: requestedDateTime.toISOString(),
-        }),
-      },
-    });
+    // Créer une notification admin avec email automatique
+    try {
+      const { createAdminNotification } = await import("./notificationsController");
+
+      await createAdminNotification(
+        "Nouvelle demande de consultation gratuite",
+        `${validatedData.firstName} ${validatedData.lastName} souhaite réserver une consultation`,
+        "CONSULTATION" as any,
+        "HAUTE" as any,
+        "/admin/messagerie",
+        {
+          isConsultationRequest: true,
+          clientName: `${validatedData.firstName} ${validatedData.lastName}`,
+          clientEmail: validatedData.email,
+          clientPhone: validatedData.phone,
+          requestedDate: validatedData.date,
+          requestedTime: validatedData.time,
+          clientMessage: validatedData.message,
+          source: validatedData.source === "landing_page" ? "Page d'accueil" : "Espace client"
+        }
+      );
+    } catch (notificationError) {
+      console.error("Erreur lors de la création de la notification consultation:", notificationError);
+    }
 
     res.status(201).json({
       success: true,

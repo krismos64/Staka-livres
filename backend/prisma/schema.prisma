@@ -117,6 +117,7 @@ model Message {
   conversationId   String              @default(uuid())
   visitorEmail     String?             @db.VarChar(255)
   visitorName      String?             @db.VarChar(100)
+  visitorPhone     String?             @db.VarChar(20)
   deletedByAdmin   Boolean             @default(false)
   displayFirstName String?             @db.VarChar(100)
   displayLastName  String?             @db.VarChar(100)

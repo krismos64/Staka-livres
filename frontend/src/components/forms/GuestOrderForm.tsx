@@ -17,7 +17,7 @@ const createGuestOrderSchema = (services: Service[] = []) => z.object({
     .max(100),
   nom: z.string().min(2, "Le nom doit contenir au moins 2 caractères").max(100),
   email: z.string().email("Format d'email invalide").max(255),
-  telephone: z.string().optional(),
+  telephone: z.string().min(1, "Le numéro de téléphone est requis"),
   serviceId: z.string().min(1, "Veuillez sélectionner un service"),
   nombrePages: z.number().min(1, "Le nombre de pages doit être au minimum 1").max(1000, "Maximum 1000 pages").optional(),
   titre: z.string().max(200, "Le titre ne peut pas dépasser 200 caractères").optional(),
@@ -366,21 +366,28 @@ export default function GuestOrderForm({
           </p>
         </div>
 
-        {/* Informations de contact optionnelles */}
+        {/* Téléphone obligatoire */}
         <div>
           <label
             htmlFor="telephone"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Téléphone
+            Téléphone *
           </label>
           <input
             type="tel"
             id="telephone"
             {...register("telephone")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              errors.telephone ? "border-red-500" : "border-gray-300"
+            }`}
             placeholder="+33 1 23 45 67 89"
           />
+          {errors.telephone && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.telephone.message}
+            </p>
+          )}
           <p className="mt-1 text-xs text-gray-500">
             L'adresse de facturation sera collectée lors du paiement sécurisé.
           </p>

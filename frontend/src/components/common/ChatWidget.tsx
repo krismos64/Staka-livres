@@ -17,6 +17,7 @@ const ChatWidget = forwardRef<ChatWidgetRef, ChatWidgetProps>(
     const [isOpen, setIsOpen] = useState(false);
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
     const [message, setMessage] = useState("");
     const [isSending, setIsSending] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -29,8 +30,8 @@ const ChatWidget = forwardRef<ChatWidgetRef, ChatWidgetProps>(
 
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!email || !message) {
-        toast.error("Email et message sont requis.");
+      if (!name || !email || !phone || !message) {
+        toast.error("Tous les champs sont requis.");
         return;
       }
       setIsSending(true);
@@ -38,7 +39,7 @@ const ChatWidget = forwardRef<ChatWidgetRef, ChatWidgetProps>(
         const response = await fetch(buildApiUrl("/messages/visitor"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, content: message }),
+          body: JSON.stringify({ name, email, phone, content: message }),
         });
         const data = await response.json();
         if (!response.ok) {
@@ -49,6 +50,7 @@ const ChatWidget = forwardRef<ChatWidgetRef, ChatWidgetProps>(
         setIsOpen(false);
         setName("");
         setEmail("");
+        setPhone("");
         setMessage("");
       } catch (error) {
         if (error instanceof Error) {
@@ -97,21 +99,30 @@ const ChatWidget = forwardRef<ChatWidgetRef, ChatWidgetProps>(
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Votre nom (optionnel)"
+                  placeholder="Votre nom *"
+                  required
                   className="w-full p-2 border rounded"
                 />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Votre email"
+                  placeholder="Votre email *"
+                  required
+                  className="w-full p-2 border rounded"
+                />
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="Votre téléphone *"
                   required
                   className="w-full p-2 border rounded"
                 />
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Votre message..."
+                  placeholder="Votre message... *"
                   required
                   rows={5}
                   className="w-full p-2 border rounded"

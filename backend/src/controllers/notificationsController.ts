@@ -255,7 +255,7 @@ export const createAdminNotification = async (
       type,
       priority,
       actionUrl,
-      data: data ? JSON.stringify(data) : null,
+      data: data ? JSON.stringify(data).substring(0, 1000) : null, // Limiter la taille du JSON
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 jours
     }));
 

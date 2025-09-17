@@ -19,7 +19,7 @@ export default function FreeSample() {
     e.preventDefault();
 
     // Validation basique côté client
-    if (!formData.nom || !formData.email) {
+    if (!formData.nom || !formData.email || !formData.telephone) {
       alert("Veuillez remplir tous les champs obligatoires");
       return;
     }
@@ -220,7 +220,7 @@ export default function FreeSample() {
                 htmlFor="telephone"
                 className="block mb-2 font-semibold text-gray-700"
               >
-                Téléphone
+                Téléphone *
               </label>
               <input
                 type="tel"
@@ -229,8 +229,12 @@ export default function FreeSample() {
                 value={formData.telephone}
                 onChange={handleChange}
                 className="w-full border-2 border-gray-200 rounded-xl p-4 focus:border-blue-500 focus:outline-none transition"
+                required
                 placeholder="06 12 34 56 78"
               />
+              <div className="invalid-feedback text-red-500 text-sm mt-1 hidden">
+                Veuillez entrer votre numéro de téléphone
+              </div>
             </div>
             <div>
               <label

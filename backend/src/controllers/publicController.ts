@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
 import { MailerService } from "../utils/mailer";
 import { emailQueue } from "../queues/emailQueue";
-import { PrismaClient, Role, MessageType, MessageStatut, FileType, NotificationType, NotificationPriority } from "@prisma/client";
+import { PrismaClient, Role, MessageType, MessageStatut, FileType } from "@prisma/client";
 import { notifyAdminNewMessage } from "./notificationsController";
 import { AuditService, AUDIT_ACTIONS } from "../services/auditService";
+import { eventBus } from "../events/eventBus";
 import fs from "fs";
 
 // Interface pour étendre Request avec le fichier multer
@@ -213,9 +214,9 @@ export const sendFreeSampleRequest = async (
     const fichier = req.file; // Le fichier uploadé via multer
 
     // Validation des champs requis
-    if (!nom || !email) {
+    if (!nom || !email || !telephone) {
       res.status(400).json({
-        error: "Nom et email sont requis",
+        error: "Nom, email et téléphone sont requis",
         details: "Ces champs sont obligatoires pour traiter votre demande"
       });
       return;
@@ -438,11 +439,8 @@ Staka Livres - Système d'échantillons gratuits automatique
 
     // Notification dans l'interface admin avec toutes les informations
     try {
-      // Import de la fonction createAdminNotification
-      const { createAdminNotification } = await import("./notificationsController");
-      
-      // Préparer les données complètes pour l'email
-      const notificationData = {
+      // Données complètes pour l'email (via event listener)
+      const emailData: any = {
         isFreeSample: true,
         prospectName: cleanData.nom,
         prospectEmail: cleanData.email,
@@ -452,24 +450,38 @@ Staka Livres - Système d'échantillons gratuits automatique
         fileName: cleanData.fichier?.originalname || null,
         fileSize: cleanData.fichier ? `${Math.round(cleanData.fichier.size / 1024)} Ko` : null,
         fullMessage: messageContent,
-        conversationId: message.conversationId,
-        // Ajouter les données du fichier pour l'attachment
-        fileAttachment: cleanData.fichier ? {
-          content: fs.readFileSync(cleanData.fichier.path, { encoding: 'base64' }),
-          filename: cleanData.fichier.originalname,
-          type: cleanData.fichier.mimetype,
-          disposition: 'attachment'
-        } : null
+        conversationId: message.conversationId
       };
-      
-      await createAdminNotification(
-        `Nouvelle demande d'échantillon gratuit - ${cleanData.nom}`,
-        `${cleanData.nom} souhaite recevoir 10 pages corrigées gratuitement`,
-        NotificationType.MESSAGE,
-        NotificationPriority.HAUTE,
-        `/admin/messagerie?conversation=${message.conversationId}`,
-        notificationData
-      );
+
+      // Gestion de la pièce jointe pour l'email
+      if (cleanData.fichier) {
+        try {
+          const fileContent = fs.readFileSync(cleanData.fichier.path, { encoding: 'base64' });
+          emailData.fileAttachment = {
+            content: fileContent,
+            filename: cleanData.fichier.originalname,
+            type: cleanData.fichier.mimetype,
+            disposition: 'attachment'
+          };
+        } catch (fileError) {
+          console.error("Erreur lecture fichier pour email:", fileError);
+        }
+      }
+
+      // Note: Notification créée via l'événement admin.free-sample.created ci-dessous
+
+      // Envoyer un événement avec les données complètes pour l'email
+      console.log("🔥 [FreeSample] Émission événement admin.free-sample.created avec données:", {
+        prospectName: emailData.prospectName,
+        prospectPhone: emailData.prospectPhone,
+        genre: emailData.genre,
+        description: emailData.description,
+        fileName: emailData.fileName,
+        hasFileAttachment: !!emailData.fileAttachment
+      });
+
+      eventBus.emit("admin.free-sample.created", emailData);
+
     } catch (notificationError) {
       console.error("Erreur lors de la création de la notification:", notificationError);
     }

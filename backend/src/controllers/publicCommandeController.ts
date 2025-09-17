@@ -13,7 +13,7 @@ const publicOrderSchema = z.object({
   prenom: z.string().min(2, "Le prénom doit contenir au moins 2 caractères").max(100),
   nom: z.string().min(2, "Le nom doit contenir au moins 2 caractères").max(100),
   email: z.string().email("Format d'email invalide").max(255),
-  telephone: z.string().optional(),
+  telephone: z.string().min(1, "Le numéro de téléphone est requis"),
   serviceId: z.string().min(1, "L'ID du service est requis"),
   nombrePages: z.number().min(1).max(1000).optional(),
   description: z.string().max(2000, "La description ne peut pas dépasser 2000 caractères").optional(),
@@ -25,7 +25,7 @@ interface PublicOrderRequest {
   prenom: string;
   nom: string;
   email: string;
-  telephone?: string;
+  telephone: string;
   serviceId: string;
   nombrePages?: number;
   description?: string;

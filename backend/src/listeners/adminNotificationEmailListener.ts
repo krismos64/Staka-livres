@@ -19,6 +19,12 @@ const processedNotifications = new Set<string>();
 
 eventBus.on("admin.notification.created", async (notification) => {
   try {
+    // Ignorer les échantillons gratuits - ils sont traités par le listener spécialisé
+    if (notification.title && notification.title.includes("échantillon gratuit")) {
+      console.log(`⏭️  Skipping free sample notification (handled by specialized listener): ${notification.title}`);
+      return;
+    }
+
     const template = templateMap[notification.type as NotificationType];
     if (!template) {
       console.log(`No email template configured for notification type: ${notification.type}`);
@@ -87,3 +93,52 @@ eventBus.on("admin.notification.created", async (notification) => {
     console.error("❌ Failed to queue admin notification email:", error);
   }
 });
+
+// Listener spécifique pour les échantillons gratuits avec données complètes
+eventBus.on("admin.free-sample.created", async (data) => {
+  try {
+    console.log("🔥 [FreeSample] Listener reçu données:", {
+      prospectName: data.prospectName,
+      prospectPhone: data.prospectPhone,
+      genre: data.genre,
+      description: data.description,
+      fileName: data.fileName,
+      hasFileAttachment: !!data.fileAttachment
+    });
+
+    const adminEmail = process.env.ADMIN_EMAIL || "contact@staka.fr";
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3001";
+
+    // La notification sera créée par le système standard dans publicController.ts
+
+    // Extraire les attachments si présents
+    const attachments = data?.fileAttachment ? [data.fileAttachment] : undefined;
+
+    await emailQueue.add("sendAdminNotifEmail", {
+      to: adminEmail,
+      template: "admin-message.hbs",
+      variables: {
+        title: `Nouvelle demande d'échantillon gratuit - ${data.prospectName}`,
+        message: `${data.prospectName} souhaite recevoir 10 pages corrigées gratuitement`,
+        type: "MESSAGE",
+        priority: "HAUTE",
+        createdAt: new Date().toISOString(),
+        actionUrl: `${frontendUrl}/admin/messagerie?conversation=${data.conversationId}`,
+        dashboardUrl: `${frontendUrl}/admin`,
+        frontendUrl,
+        supportEmail: process.env.SUPPORT_EMAIL || "contact@staka.fr",
+        subject: `[Admin] Nouvelle demande d'échantillon gratuit - ${data.prospectName}`,
+        ...data, // Toutes les données complètes pour le template
+      },
+      attachments,
+    });
+
+    console.log(`✅ Email échantillon gratuit envoyé pour: ${data.prospectName}`);
+  } catch (error) {
+    console.error("❌ Failed to send free sample admin email:", error);
+  }
+});
+
+console.log("🔧 [FreeSample] Listener d'échantillons gratuits réinitialisé dans le fichier principal");
+console.log(`🔧 [FreeSample] Nombre de listeners enregistrés pour 'admin.free-sample.created': ${eventBus.listenerCount('admin.free-sample.created')}`);
+

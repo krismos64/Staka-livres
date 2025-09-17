@@ -8,6 +8,35 @@
     <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
         <h2 style="color: #7c3aed; margin-bottom: 20px;">📅 {{title}}</h2>
         
+        {{#if isConsultationRequest}}
+        <div style="background-color: #faf5ff; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #7c3aed;">
+            <h3 style="margin: 0 0 10px 0; color: #7c3aed;">👤 Informations du client</h3>
+            <p style="margin: 5px 0;"><strong>Nom :</strong> {{clientName}}</p>
+            <p style="margin: 5px 0;"><strong>Email :</strong> <a href="mailto:{{clientEmail}}" style="color: #2563eb;">{{clientEmail}}</a></p>
+            <p style="margin: 5px 0;"><strong>Téléphone :</strong> <a href="tel:{{clientPhone}}" style="color: #2563eb;">{{clientPhone}}</a></p>
+        </div>
+
+        <div style="background-color: #f0fdf4; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #16a34a;">
+            <h3 style="margin: 0 0 10px 0; color: #16a34a;">📅 Créneau souhaité</h3>
+            <p style="margin: 5px 0;"><strong>Date :</strong> {{requestedDate}}</p>
+            <p style="margin: 5px 0;"><strong>Heure :</strong> {{requestedTime}}</p>
+            <p style="margin: 5px 0;"><strong>Source :</strong> {{source}}</p>
+        </div>
+
+        {{#if clientMessage}}
+        <div style="background-color: #eff6ff; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 10px 0; color: #2563eb;">💬 Message du client</h3>
+            <div style="background-color: white; padding: 15px; border-radius: 4px; margin-top: 10px; border: 1px solid #e2e8f0;">
+                <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; font-size: 14px;">{{clientMessage}}</pre>
+            </div>
+        </div>
+        {{/if}}
+
+        <div style="background-color: #fef3c7; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #f59e0b;">
+            <p style="margin: 0;"><strong>⚡ Action requise :</strong></p>
+            <p style="margin: 5px 0 0 0;">Confirmer le rendez-vous par email ou téléphone dans les plus brefs délais.</p>
+        </div>
+        {{else}}
         <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #7c3aed;">
             <p style="margin: 0; font-size: 16px;">{{message}}</p>
         </div>
@@ -22,6 +51,7 @@
 
         {{#if consultationType}}
         <p><strong>Type :</strong> {{consultationType}}</p>
+        {{/if}}
         {{/if}}
 
         {{#if actionUrl}}

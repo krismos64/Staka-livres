@@ -192,10 +192,10 @@ export const createVisitorMessage = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { email, name, subject, content } = req.body;
+    const { email, name, phone, subject, content } = req.body;
 
-    if (!email || !content) {
-      res.status(400).json({ error: "Email et contenu sont requis." });
+    if (!email || !name || !phone || !content) {
+      res.status(400).json({ error: "Nom, email, téléphone et message sont requis." });
       return;
     }
 
@@ -218,6 +218,7 @@ export const createVisitorMessage = async (
       data: {
         visitorEmail: email,
         visitorName: name,
+        visitorPhone: phone,
         receiverId: admin.id,
         subject: subject || `Message de ${name || "visiteur"}`,
         content,
@@ -226,9 +227,25 @@ export const createVisitorMessage = async (
       },
     });
 
-    // Notifier les admins du nouveau message visiteur
+    // Notifier les admins du nouveau message visiteur avec toutes les infos
     try {
-      await notifyAdminNewMessage(name || "Visiteur", content, true);
+      // Importer la fonction createAdminNotification directement
+      const { createAdminNotification } = await import("./notificationsController");
+
+      await createAdminNotification(
+        `Nouveau message du chat direct`,
+        `Message reçu via le chat direct du site`,
+        "MESSAGE" as any,
+        "HAUTE" as any,
+        "/admin/messagerie",
+        {
+          visitorName: name,
+          visitorEmail: email,
+          visitorPhone: phone,
+          messageContent: content,
+          isDirectChat: true
+        }
+      );
     } catch (notificationError) {
       console.error(
         "Erreur lors de la création de la notification:",

@@ -8,6 +8,8 @@
     <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
         {{#if isFreeSample}}
         <h2 style="color: #16a34a; margin-bottom: 20px;">🎯 {{title}}</h2>
+        {{else if isDirectChat}}
+        <h2 style="color: #9333ea; margin-bottom: 20px;">💬 {{title}}</h2>
         {{else}}
         <h2 style="color: #2563eb; margin-bottom: 20px;">💬 {{title}}</h2>
         {{/if}}
@@ -61,6 +63,25 @@
             </div>
         </div>
         {{/if}}
+        {{else if isDirectChat}}
+        <div style="background-color: #f3e8ff; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #9333ea;">
+            <h3 style="margin: 0 0 10px 0; color: #7c3aed;">👤 Informations du visiteur</h3>
+            <p style="margin: 5px 0;"><strong>Nom :</strong> {{visitorName}}</p>
+            <p style="margin: 5px 0;"><strong>Email :</strong> <a href="mailto:{{visitorEmail}}" style="color: #2563eb;">{{visitorEmail}}</a></p>
+            <p style="margin: 5px 0;"><strong>Téléphone :</strong> <a href="tel:{{visitorPhone}}" style="color: #2563eb;">{{visitorPhone}}</a></p>
+        </div>
+
+        <div style="background-color: #eff6ff; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+            <h3 style="margin: 0 0 10px 0; color: #2563eb;">📨 Message du visiteur</h3>
+            <div style="background-color: white; padding: 15px; border-radius: 4px; margin-top: 10px; border: 1px solid #e2e8f0;">
+                <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; font-size: 14px;">{{messageContent}}</pre>
+            </div>
+        </div>
+
+        <div style="background-color: #fef3c7; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #f59e0b;">
+            <p style="margin: 0;"><strong>⚡ Ce message provient du chat direct du site.</strong></p>
+            <p style="margin: 5px 0 0 0;">Le visiteur attend une réponse rapide par email.</p>
+        </div>
         {{else}}
         <div style="background-color: #f1f5f9; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
             <p style="margin: 0; font-size: 16px;">{{message}}</p>
