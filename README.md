@@ -26,7 +26,7 @@
 | **🧪 Tests Frontend**      | 6 tests unitaires + architecture séparée                 | ✅ Robustes      |
 | **🔍 Tests E2E Cypress**   | 34 tests Cypress + architecture robuste                  | ✅ Enterprise    |
 | **🗄️ Modèles BDD**         | 15 modèles interconnectés                                | ✅ Complets      |
-| **📚 Documentation**       | Guide unifié consolidé + 16 guides spécialisés           | ✅ Optimisée     |
+| **📚 Documentation**       | Guide unifié consolidé + 17 guides spécialisés           | ✅ Optimisée     |
 | **🐳 Infrastructure**      | Docker multi-arch ARM64/x86                              | ✅ Production    |
 | **⚙️ Scripts Automatisés** | Reset dev, build multi-arch, deploy                      | ✅ Opérationnels |
 | **🔒 Sécurité**            | RGPD + Audit logs + JWT                                  | ✅ Conforme      |
@@ -131,7 +131,7 @@ Staka-livres/
 │   ├── tests/             # Tests intégration (local uniquement)
 │   └── cypress/           # Tests E2E (34 tests Cypress)
 ├── shared/                # Types TypeScript partagés
-├── docs/                  # Documentation complète (15 guides)
+├── docs/                  # Documentation complète (17 guides)
 └── docker-compose.yml     # Orchestration multi-services
 ```
 
@@ -512,6 +512,7 @@ docker compose build --no-cache
 - **[Guide Admin Unifié](docs/ADMIN_GUIDE_UNIFIED.md)** : 10 pages + mode démo
 - **[Guide Facturation](docs/PAYMENT_INVOICE_SYSTEM_COMPLETE.md)** : Stripe + PDF + stockage local
 - **[Troubleshooting Webhook](docs/WEBHOOK_STRIPE_TROUBLESHOOTING.md)** : ✅ **NOUVEAU** - Guide de résolution webhook
+- **[Renouvellement SSL](docs/SSL_RENEWAL_GUIDE.md)** : ✅ **NOUVEAU** - Procédure rapide mode rescue
 - **[Configurations Nginx](NGINX_CONFIGS.md)** : ✅ **NOUVEAU** - Configs dev/prod + troubleshooting
 - **[Docker Workflow](docs/docker-workflow.md)** : Guide dev → prod + déploiement complet
 
