@@ -50,6 +50,7 @@ build/
 # Fichiers de configuration sensibles
 .envrc
 .env.example.local
+.env.deploy
 
 # ===== TYPESCRIPT =====
 # Fichiers générés TypeScript
