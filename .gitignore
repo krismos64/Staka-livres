@@ -266,6 +266,10 @@ docs/build/
 docs/dist/
 .docusaurus/
 
+# Documentation développeur (ne pas partager avec le client)
+docs/*
+!docs/CLIENT_ACCESS_GUIDE.md
+
 # ===== MONITORING =====
 # Fichiers de monitoring
 .monitoring/
